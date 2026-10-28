@@ -26,13 +26,13 @@ interface PricelistUploadModalProps {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const inputCls =
-  'bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-emerald-500/50 w-full text-white';
+  'bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-emerald-500/50 w-full text-ds-ink';
 
 const primaryBtn =
   'bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl px-4 py-2.5 font-black text-xs uppercase tracking-widest transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
 
 const secondaryBtn =
-  'bg-ds-card2 border border-ds-border hover:bg-ds-card2 text-white rounded-xl px-4 py-2.5 font-black text-xs uppercase tracking-widest transition-colors';
+  'bg-ds-card2 border border-ds-border hover:bg-ds-card2 text-ds-ink rounded-xl px-4 py-2.5 font-black text-xs uppercase tracking-widest transition-colors';
 
 const HEADER_MAP: Record<string, keyof ParsedRow> = {
   brand: 'brand', merk: 'brand', merek: 'brand',
@@ -178,8 +178,8 @@ const PricelistUploadModal: React.FC<PricelistUploadModalProps> = ({ onClose, on
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
       <div className="bg-ds-card border border-ds-border rounded-[2rem] w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-7 pt-7 pb-4 border-b border-ds-border">
-          <h2 className="text-white font-black text-sm uppercase tracking-widest">Upload Pricelist Tahunan</h2>
-          <button onClick={onClose} className="text-ds-ink3 hover:text-white transition-colors">
+          <h2 className="text-ds-ink font-black text-sm uppercase tracking-widest">Upload Pricelist Tahunan</h2>
+          <button onClick={onClose} className="text-ds-ink3 hover:text-ds-ink transition-colors">
             <X size={18} />
           </button>
         </div>
@@ -187,7 +187,7 @@ const PricelistUploadModal: React.FC<PricelistUploadModalProps> = ({ onClose, on
         <div className="px-7 py-6 space-y-5">
           {/* Version label */}
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-1">Label Versi</p>
+            <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-1">Label Versi</p>
             <input
               className={inputCls}
               value={version}
@@ -196,12 +196,12 @@ const PricelistUploadModal: React.FC<PricelistUploadModalProps> = ({ onClose, on
             />
             {versions.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-2">
-                <span className="text-[9px] text-ds-ink3 font-bold uppercase tracking-widest self-center">Versi Ada:</span>
+                <span className="text-2xs text-ds-ink3 font-bold uppercase tracking-widest self-center">Versi Ada:</span>
                 {versions.map(v => (
                   <button
                     key={v}
                     onClick={() => setVersion(v)}
-                    className="text-[9px] px-2 py-0.5 rounded-full bg-ds-card2 border border-ds-border text-ds-ink3 font-bold hover:text-white transition-colors"
+                    className="text-2xs px-2 py-0.5 rounded-full bg-ds-card2 border border-ds-border text-ds-ink3 font-bold hover:text-ds-ink transition-colors"
                   >
                     {v}
                   </button>
@@ -212,7 +212,7 @@ const PricelistUploadModal: React.FC<PricelistUploadModalProps> = ({ onClose, on
 
           {/* File picker */}
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-1">File CSV</p>
+            <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-1">File CSV</p>
             <button
               onClick={() => fileRef.current?.click()}
               className={`${secondaryBtn} flex items-center gap-2`}
@@ -220,11 +220,11 @@ const PricelistUploadModal: React.FC<PricelistUploadModalProps> = ({ onClose, on
               <Upload size={12} /> {fileName || 'Pilih File (.csv)'}
             </button>
             <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={handleFile} />
-            <p className="text-[9px] text-ds-ink2 mt-1">Kolom yang didukung: brand/merk, model, year/tahun, price/harga</p>
+            <p className="text-2xs text-ds-ink2 mt-1">Kolom yang didukung: brand/merk, model, year/tahun, price/harga</p>
           </div>
 
           {error && (
-            <div className="flex items-center gap-2 text-rose-400 text-xs font-bold bg-rose-500/10 rounded-xl px-4 py-3">
+            <div className="flex items-center gap-2 text-rose-700 dark:text-rose-300 text-xs font-bold bg-rose-500/10 rounded-xl px-4 py-3">
               <AlertCircle size={14} /> {error}
             </div>
           )}
@@ -232,13 +232,13 @@ const PricelistUploadModal: React.FC<PricelistUploadModalProps> = ({ onClose, on
           {/* Preview */}
           {preview.length > 0 && !summary && (
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-2">
+              <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-2">
                 Preview ({preview.length} baris — tampil 10 pertama)
               </p>
               <div className="bg-ds-card2 border border-ds-border rounded-2xl overflow-hidden">
-                <table className="w-full text-[10px]">
+                <table className="w-full text-2xs">
                   <thead>
-                    <tr className="text-[9px] font-black uppercase tracking-widest text-ds-ink3 border-b border-ds-border">
+                    <tr className="text-2xs font-black uppercase tracking-widest text-ds-ink3 border-b border-ds-border">
                       <th className="text-left px-4 py-2">Merek</th>
                       <th className="text-left px-4 py-2">Model</th>
                       <th className="text-right px-4 py-2">Tahun</th>
@@ -248,10 +248,10 @@ const PricelistUploadModal: React.FC<PricelistUploadModalProps> = ({ onClose, on
                   <tbody className="divide-y divide-white/[0.03]">
                     {preview.slice(0, 10).map((r, i) => (
                       <tr key={i} className="hover:bg-ds-card2">
-                        <td className="px-4 py-2 text-white font-bold">{r.brand}</td>
+                        <td className="px-4 py-2 text-ds-ink font-bold">{r.brand}</td>
                         <td className="px-4 py-2 text-ds-ink2">{r.model}</td>
                         <td className="px-4 py-2 text-right text-ds-ink2">{r.year}</td>
-                        <td className="px-4 py-2 text-right text-emerald-400 font-black">{r.price}</td>
+                        <td className="px-4 py-2 text-right text-emerald-700 dark:text-emerald-400 font-black">{r.price}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -263,11 +263,11 @@ const PricelistUploadModal: React.FC<PricelistUploadModalProps> = ({ onClose, on
           {/* Summary */}
           {summary && (
             <div className="flex items-start gap-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl px-5 py-4">
-              <CheckCircle size={18} className="text-emerald-400 mt-0.5 shrink-0" />
+              <CheckCircle size={18} className="text-emerald-700 dark:text-emerald-400 mt-0.5 shrink-0" />
               <div className="text-xs font-bold space-y-1">
-                <p className="text-white font-black">Import selesai</p>
-                <p className="text-emerald-400">{summary.inserted} baru ditambahkan</p>
-                <p className="text-amber-400">{summary.updated} diperbarui</p>
+                <p className="text-ds-ink font-black">Import selesai</p>
+                <p className="text-emerald-700 dark:text-emerald-400">{summary.inserted} baru ditambahkan</p>
+                <p className="text-amber-800 dark:text-amber-400">{summary.updated} diperbarui</p>
                 <p className="text-ds-ink3">{summary.skipped} sudah ada (tidak diubah)</p>
               </div>
             </div>

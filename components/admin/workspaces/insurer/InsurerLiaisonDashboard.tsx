@@ -31,7 +31,7 @@ export const InsurerLiaisonDashboard: React.FC<Props> = ({ userRole, currentUser
         <div className="relative overflow-hidden rounded-[1.75rem] bg-[radial-gradient(circle_at_top,_#053B2F,_#021C16)] p-6 text-white">
           <div className="absolute -top-16 -right-16 h-64 w-64 rounded-full bg-emerald-400/10 blur-3xl" />
           <div className="relative">
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-300">Insurer Liaison</p>
+            <p className="text-2xs font-black uppercase tracking-[0.3em] text-emerald-300">Insurer Liaison</p>
             <h2 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">Review, follow-up & koordinasi insurer</h2>
             <p className="mt-2 max-w-2xl text-sm text-white/70">Percepat turnaround review, kelola review token, pantau SLA, dan pastikan polis terbit tepat waktu.</p>
           </div>
@@ -48,7 +48,7 @@ export const InsurerLiaisonDashboard: React.FC<Props> = ({ userRole, currentUser
           <div className="rounded-3xl border border-ds-border bg-ds-card shadow-ds-sm">
             <div className="flex items-center justify-between border-b border-ds-border px-6 py-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-ds-ink3">Antrian Prioritas</p>
+                <p className="text-2xs font-black uppercase tracking-[0.22em] text-ds-ink3">Antrian Prioritas</p>
                 <h3 className="text-lg font-black tracking-tight">Review Insurer</h3>
               </div>
               <button className="text-xs font-bold text-ds-green">Lihat semua</button>
@@ -61,7 +61,7 @@ export const InsurerLiaisonDashboard: React.FC<Props> = ({ userRole, currentUser
           </div>
           <div className="rounded-3xl border border-ds-border bg-ds-card shadow-ds-sm">
             <div className="border-b border-ds-border px-6 py-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-ds-ink3">Aksi Cepat</p>
+              <p className="text-2xs font-black uppercase tracking-[0.22em] text-ds-ink3">Aksi Cepat</p>
               <h3 className="text-lg font-black tracking-tight">Insurer Tools</h3>
             </div>
             <div className="grid gap-2 p-4">

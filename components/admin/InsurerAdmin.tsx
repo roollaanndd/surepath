@@ -65,20 +65,20 @@ const COVERAGE_TYPES = ['COMPREHENSIVE', 'TLO', 'ALL'] as const;
 // ─── Shared UI Primitives ─────────────────────────────────────────────────────
 
 const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-1">{children}</p>
+  <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-1">{children}</p>
 );
 
 const inputCls =
-  'bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-emerald-500/50 w-full text-white';
+  'bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-emerald-500/50 w-full text-ds-ink';
 
 const primaryBtn =
   'bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl px-4 py-2.5 font-black text-xs uppercase tracking-widest transition-colors';
 
 const secondaryBtn =
-  'bg-ds-card2 border border-ds-border hover:bg-ds-card2 text-white rounded-xl px-4 py-2.5 font-black text-xs uppercase tracking-widest transition-colors';
+  'bg-ds-card2 border border-ds-border hover:bg-ds-card2 text-ds-ink rounded-xl px-4 py-2.5 font-black text-xs uppercase tracking-widest transition-colors';
 
 const dangerBtn =
-  'bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500 hover:text-white rounded-xl px-3 py-2 font-black text-xs transition-colors';
+  'bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20 hover:bg-rose-500 hover:text-white rounded-xl px-3 py-2 font-black text-xs transition-colors';
 
 const editBtn =
   'bg-ds-card2 border border-ds-border hover:bg-ds-card2 text-ds-ink2 rounded-xl px-3 py-2 font-black text-xs transition-colors';
@@ -120,9 +120,9 @@ const RateSlider: React.FC<RateSliderProps> = ({
               if (isNaN(raw)) return;
               onChange(Math.min(maxPct, Math.max(minPct, raw)) / 100);
             }}
-            className="w-16 bg-ds-card2 border border-ds-border rounded-lg px-2 py-0.5 text-xs font-black text-white text-right focus:outline-none focus:border-emerald-500/50"
+            className="w-16 bg-ds-card2 border border-ds-border rounded-lg px-2 py-0.5 text-xs font-black text-ds-ink text-right focus:outline-none focus:border-emerald-500/50"
           />
-          <span className="text-[10px] font-black text-ds-ink3">%</span>
+          <span className="text-2xs font-black text-ds-ink3">%</span>
         </div>
       </div>
       <input
@@ -134,9 +134,9 @@ const RateSlider: React.FC<RateSliderProps> = ({
         onChange={e => onChange(parseFloat(e.target.value) / 100)}
         className={`w-full h-1.5 rounded-full appearance-none cursor-pointer bg-ds-card2 ${accentClass}`}
       />
-      <div className="flex justify-between text-[9px] text-ds-ink2 font-bold">
+      <div className="flex justify-between text-2xs text-ds-ink2 font-bold">
         <span>{minPct}%</span>
-        <span className="text-emerald-400 font-black">{displayPct}%</span>
+        <span className="text-emerald-700 dark:text-emerald-400 font-black">{displayPct}%</span>
         <span>{maxPct}%</span>
       </div>
     </div>
@@ -153,8 +153,8 @@ const Modal: React.FC<{ title: string; onClose: () => void; children: React.Reac
   <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
     <div className="bg-ds-card border border-ds-border rounded-[2rem] w-full max-w-lg max-h-[90vh] overflow-y-auto">
       <div className="flex items-center justify-between px-7 pt-7 pb-4 border-b border-ds-border">
-        <h2 className="text-white font-black text-sm uppercase tracking-widest">{title}</h2>
-        <button onClick={onClose} className="text-ds-ink3 hover:text-white transition-colors">
+        <h2 className="text-ds-ink font-black text-sm uppercase tracking-widest">{title}</h2>
+        <button onClick={onClose} className="text-ds-ink3 hover:text-ds-ink transition-colors">
           <X size={18} />
         </button>
       </div>
@@ -317,11 +317,11 @@ const InsurerModal: React.FC<InsurerModalProps> = ({ initial, onSave, onClose })
             className="flex items-center gap-2 text-xs font-black uppercase tracking-widest"
           >
             {form.is_active ? (
-              <ToggleRight size={22} className="text-emerald-400" />
+              <ToggleRight size={22} className="text-emerald-700 dark:text-emerald-400" />
             ) : (
               <ToggleLeft size={22} className="text-ds-ink3" />
             )}
-            <span className={form.is_active ? 'text-emerald-400' : 'text-ds-ink3'}>
+            <span className={form.is_active ? 'text-emerald-700 dark:text-emerald-400' : 'text-ds-ink3'}>
               {form.is_active ? 'Aktif' : 'Nonaktif'}
             </span>
           </button>
@@ -452,9 +452,9 @@ const ProductModal: React.FC<ProductModalProps> = ({ insurerName, initial, onSav
                 onClick={() => set('ojk_rate_band', band)}
                 className={`py-3 rounded-xl text-xs font-black uppercase tracking-widest border-2 transition-all ${
                   form.ojk_rate_band === band
-                    ? band === 'MIN' ? 'border-blue-500 bg-blue-500/10 text-blue-400'
-                      : band === 'MID' ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400'
-                      : 'border-amber-500 bg-amber-500/10 text-amber-400'
+                    ? band === 'MIN' ? 'border-blue-500 bg-blue-500/10 text-blue-700 dark:text-blue-400'
+                      : band === 'MID' ? 'border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                      : 'border-amber-500 bg-amber-500/10 text-amber-800 dark:text-amber-400'
                     : 'border-ds-border text-ds-ink3'
                 }`}
               >
@@ -462,7 +462,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ insurerName, initial, onSav
               </button>
             ))}
           </div>
-          <p className="text-[9px] text-ds-ink3 mt-1.5">
+          <p className="text-2xs text-ds-ink3 mt-1.5">
             {form.product_type === 'CAR'
               ? `Harga kendaraan menentukan kategori OJK. Band ini menentukan posisi tarif dalam rentang yang diizinkan.`
               : `Band menentukan tarif dasar produk non-kendaraan sesuai rentang OJK.`}
@@ -471,11 +471,11 @@ const ProductModal: React.FC<ProductModalProps> = ({ insurerName, initial, onSav
 
         {/* CAR rate band reference table */}
         {form.product_type === 'CAR' && form.ojk_rate_band && (
-          <div className="p-4 bg-ds-card2 border border-ds-border rounded-xl text-[10px] text-ds-ink3 space-y-1">
+          <div className="p-4 bg-ds-card2 border border-ds-border rounded-xl text-2xs text-ds-ink3 space-y-1">
             <p className="font-black text-ds-ink2 text-xs mb-2">
               Referensi Tarif OJK — Komprehensif ({form.ojk_rate_band})
             </p>
-            <div className="grid grid-cols-4 gap-x-3 text-[9px] font-bold text-ds-ink3 mb-1">
+            <div className="grid grid-cols-4 gap-x-3 text-2xs font-bold text-ds-ink3 mb-1">
               <span>Kategori</span><span>Zona 1</span><span>Zona 2</span><span>Zona 3</span>
             </div>
             {([1, 2, 3, 4, 5] as const).map(cat => {
@@ -497,7 +497,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ insurerName, initial, onSav
 
         {/* Non-CAR rate reference */}
         {form.product_type !== 'CAR' && (
-          <div className="p-4 bg-ds-card2 border border-ds-border rounded-xl text-[10px] text-ds-ink3 space-y-1">
+          <div className="p-4 bg-ds-card2 border border-ds-border rounded-xl text-2xs text-ds-ink3 space-y-1">
             <p className="font-black text-ds-ink2 text-xs mb-2">Referensi Tarif OJK — {form.product_type}</p>
             {form.product_type === 'TRAVEL' && (
               <>
@@ -532,14 +532,14 @@ const ProductModal: React.FC<ProductModalProps> = ({ insurerName, initial, onSav
               onChange={e => set('max_vehicle_age_years', parseInt(e.target.value) || 0)}
             />
             {(form.max_vehicle_age_years ?? 0) === 0 && (
-              <p className="text-[10px] text-ds-ink3 mt-1">Tidak terbatas</p>
+              <p className="text-2xs text-ds-ink3 mt-1">Tidak terbatas</p>
             )}
           </div>
         )}
 
         {/* Tarif & Komisi header */}
         <div className="pt-2 border-t border-ds-border">
-          <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3 mb-4">Tarif & Komisi</p>
+          <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-4">Tarif & Komisi</p>
         </div>
 
         {/* Commission Rate */}
@@ -643,11 +643,11 @@ const ProductModal: React.FC<ProductModalProps> = ({ insurerName, initial, onSav
             className="flex items-center gap-2 text-xs font-black uppercase tracking-widest"
           >
             {form.is_active ? (
-              <ToggleRight size={22} className="text-emerald-400" />
+              <ToggleRight size={22} className="text-emerald-700 dark:text-emerald-400" />
             ) : (
               <ToggleLeft size={22} className="text-ds-ink3" />
             )}
-            <span className={form.is_active ? 'text-emerald-400' : 'text-ds-ink3'}>
+            <span className={form.is_active ? 'text-emerald-700 dark:text-emerald-400' : 'text-ds-ink3'}>
               {form.is_active ? 'Aktif' : 'Nonaktif'}
             </span>
           </button>
@@ -735,7 +735,7 @@ const ProductTable: React.FC<ProductTableProps> = ({ insurerId, insurerName, onR
         <div className="overflow-x-auto">
           <table className="w-full text-[11px]">
             <thead>
-              <tr className="text-[9px] font-black uppercase tracking-widest text-ds-ink3 border-b border-ds-border">
+              <tr className="text-2xs font-black uppercase tracking-widest text-ds-ink3 border-b border-ds-border">
                 <th className="text-left py-2 pr-4">Produk</th>
                 <th className="text-left py-2 pr-4">Coverage</th>
                 <th className="text-left py-2 pr-4">Maks. Usia</th>
@@ -751,29 +751,29 @@ const ProductTable: React.FC<ProductTableProps> = ({ insurerId, insurerName, onR
               {products.map(p => (
                 <tr key={p.id} className="hover:bg-ds-card2 transition-colors">
                   <td className="py-2.5 pr-4">
-                    <span className="font-black text-white">{p.product_type}</span>
+                    <span className="font-black text-ds-ink">{p.product_type}</span>
                   </td>
                   <td className="py-2.5 pr-4 text-ds-ink3">{p.vehicle_coverage}</td>
                   <td className="py-2.5 pr-4 text-ds-ink3">
                     {(p.max_vehicle_age_years ?? 0) === 0 ? 'Tidak terbatas' : `${p.max_vehicle_age_years} thn`}
                   </td>
-                  <td className="py-2.5 pr-4 text-right text-emerald-400 font-black">
+                  <td className="py-2.5 pr-4 text-right text-emerald-700 dark:text-emerald-400 font-black">
                     {pct(p.base_commission_rate)}
                   </td>
-                  <td className="py-2.5 pr-4 text-right text-amber-400 font-black">
+                  <td className="py-2.5 pr-4 text-right text-amber-800 dark:text-amber-400 font-black">
                     {pct(p.max_discount_rate)}
                   </td>
-                  <td className="py-2.5 pr-4 text-right text-yellow-400 font-black">
+                  <td className="py-2.5 pr-4 text-right text-yellow-800 dark:text-yellow-400 font-black">
                     {pct(p.coin_rate)}
                   </td>
                   <td className="py-2.5 pr-4 text-right text-ds-ink3">
                     {fmtIDR(p.policy_cost)}
                   </td>
                   <td className="py-2.5 pr-4 text-center">
-                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                    <span className={`px-2 py-0.5 rounded-full text-2xs font-black uppercase tracking-widest ${
                       p.is_active
-                        ? 'bg-emerald-500/10 text-emerald-400'
-                        : 'bg-rose-500/10 text-rose-400'
+                        ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                        : 'bg-rose-500/10 text-rose-700 dark:text-rose-300'
                     }`}>
                       {p.is_active ? 'Aktif' : 'Nonaktif'}
                     </span>
@@ -843,13 +843,13 @@ const InsurerCard: React.FC<InsurerCardProps> = ({ insurer, onEdit, onDelete, on
           {insurer.logo_url ? (
             <img loading="lazy" src={insurer.logo_url} alt={insurer.name} className="w-full h-full object-contain p-1" />
           ) : (
-            <Building2 size={18} className="text-emerald-400" />
+            <Building2 size={18} className="text-emerald-700 dark:text-emerald-400" />
           )}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="font-black text-white text-sm leading-tight">{insurer.name}</h3>
-            <span className="text-[9px] font-black uppercase tracking-widest bg-ds-card2 border border-ds-border text-ds-ink3 rounded-full px-2 py-0.5">
+            <h3 className="font-black text-ds-ink text-sm leading-tight">{insurer.name}</h3>
+            <span className="text-2xs font-black uppercase tracking-widest bg-ds-card2 border border-ds-border text-ds-ink3 rounded-full px-2 py-0.5">
               {insurer.code}
             </span>
           </div>
@@ -859,14 +859,14 @@ const InsurerCard: React.FC<InsurerCardProps> = ({ insurer, onEdit, onDelete, on
         </div>
         <button
           onClick={() => onToggleActive(insurer)}
-          className="flex-shrink-0 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest"
+          className="flex-shrink-0 flex items-center gap-1.5 text-2xs font-black uppercase tracking-widest"
         >
           {insurer.is_active ? (
-            <ToggleRight size={20} className="text-emerald-400" />
+            <ToggleRight size={20} className="text-emerald-700 dark:text-emerald-400" />
           ) : (
             <ToggleLeft size={20} className="text-ds-ink3" />
           )}
-          <span className={insurer.is_active ? 'text-emerald-400' : 'text-ds-ink3'}>
+          <span className={insurer.is_active ? 'text-emerald-700 dark:text-emerald-400' : 'text-ds-ink3'}>
             {insurer.is_active ? 'Aktif' : 'Nonaktif'}
           </span>
         </button>
@@ -972,10 +972,10 @@ const InsurerAdmin: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3">
+          <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3">
             Manajemen
           </p>
-          <h1 className="text-2xl font-black text-white">Mitra Asuransi</h1>
+          <h1 className="text-2xl font-black text-ds-ink">Mitra Asuransi</h1>
         </div>
         {activeTab === 'insurers' && (
           <div className="flex items-center gap-3">
@@ -1011,7 +1011,7 @@ const InsurerAdmin: React.FC = () => {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-colors ${
                 active
-                  ? 'border-emerald-400 text-emerald-400'
+                  ? 'border-emerald-400 text-emerald-700 dark:text-emerald-400'
                   : 'border-transparent text-ds-ink3 hover:text-ds-ink2'
               }`}
             >
@@ -1028,16 +1028,16 @@ const InsurerAdmin: React.FC = () => {
           {/* Stats */}
           <div className="flex items-center gap-6 flex-wrap">
             <div className="bg-ds-card2 border border-ds-border rounded-2xl px-5 py-3">
-              <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3">Total</p>
-              <p className="text-xl font-black text-white">{insurers.length}</p>
+              <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3">Total</p>
+              <p className="text-xl font-black text-ds-ink">{insurers.length}</p>
             </div>
             <div className="bg-ds-card2 border border-ds-border rounded-2xl px-5 py-3">
-              <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3">Aktif</p>
-              <p className="text-xl font-black text-emerald-400">{insurers.filter(i => i.is_active).length}</p>
+              <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3">Aktif</p>
+              <p className="text-xl font-black text-emerald-700 dark:text-emerald-400">{insurers.filter(i => i.is_active).length}</p>
             </div>
             <div className="bg-ds-card2 border border-ds-border rounded-2xl px-5 py-3">
-              <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3">Nonaktif</p>
-              <p className="text-xl font-black text-rose-400">{insurers.filter(i => !i.is_active).length}</p>
+              <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3">Nonaktif</p>
+              <p className="text-xl font-black text-rose-700 dark:text-rose-300">{insurers.filter(i => !i.is_active).length}</p>
             </div>
           </div>
 
@@ -1156,10 +1156,10 @@ const InsurerTokenManagement: React.FC<{ insurers: SpInsurer[] }> = ({ insurers 
     <div className="space-y-6">
       {/* Generate token for insurer */}
       <div className="bg-ds-card2 border border-ds-border rounded-2xl p-5">
-        <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-3">Generate Token Baru</p>
+        <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-3">Generate Token Baru</p>
         <div className="flex items-center gap-3 flex-wrap">
           <select
-            className="bg-ds-card border border-ds-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 [&>option]:bg-ds-card"
+            className="bg-ds-card border border-ds-border rounded-xl px-3 py-2 text-xs text-ds-ink focus:outline-none focus:border-emerald-500 [&>option]:bg-ds-card"
             defaultValue=""
             onChange={e => { if (e.target.value) handleGenerate(e.target.value); }}
           >
@@ -1168,10 +1168,10 @@ const InsurerTokenManagement: React.FC<{ insurers: SpInsurer[] }> = ({ insurers 
               <option key={ins.id} value={ins.id}>{ins.name}</option>
             ))}
           </select>
-          {generatingFor && <Loader2 size={14} className="animate-spin text-emerald-400" />}
+          {generatingFor && <Loader2 size={14} className="animate-spin text-emerald-700 dark:text-emerald-400" />}
         </div>
         {insurers.filter(i => i.is_active).length === 0 && (
-          <p className="text-[10px] text-amber-400 mt-2">⚠ Tidak ada insurer aktif. Tambahkan insurer dulu di tab Perusahaan.</p>
+          <p className="text-2xs text-amber-800 dark:text-amber-400 mt-2">⚠ Tidak ada insurer aktif. Tambahkan insurer dulu di tab Perusahaan.</p>
         )}
       </div>
 
@@ -1180,12 +1180,12 @@ const InsurerTokenManagement: React.FC<{ insurers: SpInsurer[] }> = ({ insurers 
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setGeneratedLink(null)}>
           <div className="bg-ds-card border border-ds-border rounded-2xl p-6 max-w-md w-full space-y-4" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-black text-white">Token Berhasil Dibuat</h3>
-              <button onClick={() => setGeneratedLink(null)} className="text-ds-ink3 hover:text-white"><X size={16} /></button>
+              <h3 className="text-sm font-black text-ds-ink">Token Berhasil Dibuat</h3>
+              <button onClick={() => setGeneratedLink(null)} className="text-ds-ink3 hover:text-ds-ink"><X size={16} /></button>
             </div>
-            <p className="text-xs text-ds-ink3">Untuk: <span className="text-white font-bold">{generatedLink.insurerName}</span> ({generatedLink.email})</p>
+            <p className="text-xs text-ds-ink3">Untuk: <span className="text-ds-ink font-bold">{generatedLink.insurerName}</span> ({generatedLink.email})</p>
             <div className="bg-black/30 border border-ds-border rounded-xl p-3">
-              <p className="text-[9px] font-bold uppercase tracking-widest text-ds-ink3 mb-1">Magic Link (kirim ke PIC insurer):</p>
+              <p className="text-2xs font-bold uppercase tracking-widest text-ds-ink3 mb-1">Magic Link (kirim ke PIC insurer):</p>
               <p className="text-xs text-emerald-400 font-mono break-all">{generatedLink.link}</p>
             </div>
             <button
@@ -1194,7 +1194,7 @@ const InsurerTokenManagement: React.FC<{ insurers: SpInsurer[] }> = ({ insurers 
             >
               {copiedId === 'generated' ? <><Check size={13} /> Tersalin!</> : <><Copy size={13} /> Copy Link</>}
             </button>
-            <p className="text-[10px] text-ds-ink3 text-center">Token berlaku 7 hari, auto-renew setiap insurer buka dashboard.</p>
+            <p className="text-2xs text-ds-ink3 text-center">Token berlaku 7 hari, auto-renew setiap insurer buka dashboard.</p>
           </div>
         </div>
       )}
@@ -1202,8 +1202,8 @@ const InsurerTokenManagement: React.FC<{ insurers: SpInsurer[] }> = ({ insurers 
       {/* Active tokens list */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3">Token Aktif ({tokens.filter(t => !isExpired(t.expires_at)).length})</p>
-          <button onClick={load} className="text-[10px] font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
+          <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3">Token Aktif ({tokens.filter(t => !isExpired(t.expires_at)).length})</p>
+          <button onClick={load} className="text-2xs font-bold text-emerald-700 dark:text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
             <RefreshCw size={10} /> Refresh
           </button>
         </div>
@@ -1222,15 +1222,15 @@ const InsurerTokenManagement: React.FC<{ insurers: SpInsurer[] }> = ({ insurers 
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-bold text-white">{t.insurer_name ?? 'Unknown'}</p>
+                        <p className="text-sm font-bold text-ds-ink">{t.insurer_name ?? 'Unknown'}</p>
                         {expired ? (
-                          <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400">Expired</span>
+                          <span className="text-2xs font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-rose-500/10 text-rose-700 dark:text-rose-300">Expired</span>
                         ) : (
-                          <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400">Active</span>
+                          <span className="text-2xs font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">Active</span>
                         )}
                       </div>
-                      <p className="text-[10px] text-ds-ink3 font-mono mt-0.5">{t.email}</p>
-                      <div className="flex items-center gap-3 mt-2 text-[10px] text-ds-ink3">
+                      <p className="text-2xs text-ds-ink3 font-mono mt-0.5">{t.email}</p>
+                      <div className="flex items-center gap-3 mt-2 text-2xs text-ds-ink3">
                         <span>Dibuat: {new Date(t.created_at).toLocaleDateString('id-ID')}</span>
                         <span>Expire: {new Date(t.expires_at).toLocaleDateString('id-ID')}</span>
                         {t.used_at && <span>Last used: {new Date(t.used_at).toLocaleDateString('id-ID')}</span>}
@@ -1334,14 +1334,14 @@ const ReviewLinkManagement: React.FC = () => {
           <button
             key={f.id}
             onClick={() => setFilter(f.id)}
-            className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors ${
-              filter === f.id ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-ds-card2 text-ds-ink3 border border-ds-border'
+            className={`px-3 py-1.5 rounded-xl text-2xs font-black uppercase tracking-widest transition-colors ${
+              filter === f.id ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20' : 'bg-ds-card2 text-ds-ink3 border border-ds-border'
             }`}
           >
             {f.label}
           </button>
         ))}
-        <button onClick={load} className="ml-auto text-[10px] font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
+        <button onClick={load} className="ml-auto text-2xs font-bold text-emerald-700 dark:text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
           <RefreshCw size={10} /> Refresh
         </button>
       </div>
@@ -1349,20 +1349,20 @@ const ReviewLinkManagement: React.FC = () => {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="bg-ds-card2 border border-ds-border rounded-2xl px-4 py-3">
-          <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3">Total</p>
-          <p className="text-lg font-black text-white">{tokens.length}</p>
+          <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3">Total</p>
+          <p className="text-lg font-black text-ds-ink">{tokens.length}</p>
         </div>
         <div className="bg-ds-card2 border border-ds-border rounded-2xl px-4 py-3">
-          <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3">Menunggu</p>
-          <p className="text-lg font-black text-amber-400">{tokens.filter(t => !t.insurer_action && !isExpired(t.expires_at)).length}</p>
+          <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3">Menunggu</p>
+          <p className="text-lg font-black text-amber-800 dark:text-amber-400">{tokens.filter(t => !t.insurer_action && !isExpired(t.expires_at)).length}</p>
         </div>
         <div className="bg-ds-card2 border border-ds-border rounded-2xl px-4 py-3">
-          <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3">Diproses</p>
-          <p className="text-lg font-black text-emerald-400">{tokens.filter(t => t.insurer_action).length}</p>
+          <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3">Diproses</p>
+          <p className="text-lg font-black text-emerald-700 dark:text-emerald-400">{tokens.filter(t => t.insurer_action).length}</p>
         </div>
         <div className="bg-ds-card2 border border-ds-border rounded-2xl px-4 py-3">
-          <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3">Expired</p>
-          <p className="text-lg font-black text-rose-400">{tokens.filter(t => isExpired(t.expires_at) && !t.insurer_action).length}</p>
+          <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3">Expired</p>
+          <p className="text-lg font-black text-rose-700 dark:text-rose-300">{tokens.filter(t => isExpired(t.expires_at) && !t.insurer_action).length}</p>
         </div>
       </div>
 
@@ -1382,27 +1382,27 @@ const ReviewLinkManagement: React.FC = () => {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-bold text-white">{t.order_number ?? t.order_id.slice(0, 8)}</p>
-                      <span className="text-[10px] text-ds-ink3">{t.insurer_name ?? '-'}</span>
+                      <p className="text-sm font-bold text-ds-ink">{t.order_number ?? t.order_id.slice(0, 8)}</p>
+                      <span className="text-2xs text-ds-ink3">{t.insurer_name ?? '-'}</span>
                       {t.insurer_action ? (
-                        <span className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full ${
-                          t.insurer_action === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-400'
-                          : t.insurer_action === 'REQUEST_INFO' ? 'bg-amber-500/10 text-amber-400'
-                          : 'bg-rose-500/10 text-rose-400'
+                        <span className={`text-2xs font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full ${
+                          t.insurer_action === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                          : t.insurer_action === 'REQUEST_INFO' ? 'bg-amber-500/10 text-amber-800 dark:text-amber-400'
+                          : 'bg-rose-500/10 text-rose-700 dark:text-rose-300'
                         }`}>
                           {t.insurer_action}
                         </span>
                       ) : expired ? (
-                        <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400">Expired</span>
+                        <span className="text-2xs font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-rose-500/10 text-rose-700 dark:text-rose-300">Expired</span>
                       ) : (
-                        <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400">Pending</span>
+                        <span className="text-2xs font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-700 dark:text-blue-400">Pending</span>
                       )}
                     </div>
                     <p className="text-xs text-ds-ink3 mt-0.5">{t.client_name ?? '-'} · {t.product_name ?? '-'}</p>
                     {t.insurer_notes && (
-                      <p className="text-[10px] text-ds-ink3 mt-1 italic">"{t.insurer_notes}"</p>
+                      <p className="text-2xs text-ds-ink3 mt-1 italic">"{t.insurer_notes}"</p>
                     )}
-                    <div className="flex items-center gap-3 mt-2 text-[10px] text-ds-ink3">
+                    <div className="flex items-center gap-3 mt-2 text-2xs text-ds-ink3">
                       <span>Dibuat: {new Date(t.created_at).toLocaleDateString('id-ID')}</span>
                       <span>Akses: {t.accessed_count}x</span>
                       {t.last_accessed_at && <span>Last: {new Date(t.last_accessed_at).toLocaleDateString('id-ID')}</span>}

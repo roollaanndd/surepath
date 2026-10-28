@@ -129,7 +129,7 @@ const ActivityLogView: React.FC = () => {
             <button
               key={r.id}
               onClick={() => { setRange(r.id); }}
-              className={`px-4 py-2 rounded-xl text-[0.65rem] font-black uppercase tracking-widest transition-all ${
+              className={`px-4 py-2 rounded-xl text-2xs font-black uppercase tracking-widest transition-all ${
                 range === r.id ? 'bg-ds-card text-ds-green shadow-ds-sm' : 'text-ds-ink3'
               }`}
             >
@@ -192,7 +192,7 @@ const ActivityLogView: React.FC = () => {
               { label: 'Ditolak', value: totals.ditolak, tone: totals.ditolak > 0 ? 'text-ds-amber' : 'text-ds-ink3' },
             ].map(s => (
               <div key={s.label} className="p-5 rounded-[2rem] bg-ds-card border border-ds-border shadow-ds-sm">
-                <p className="text-[0.55rem] font-black uppercase tracking-[0.25em] text-ds-ink3 mb-2">{s.label}</p>
+                <p className="text-2xs font-black uppercase tracking-[0.25em] text-ds-ink3 mb-2">{s.label}</p>
                 <p className={`text-2xl font-black ${s.tone}`}>{s.value.toLocaleString('id-ID')}</p>
               </div>
             ))}
@@ -204,7 +204,7 @@ const ActivityLogView: React.FC = () => {
                 <thead>
                   <tr className="border-b border-ds-border">
                     {['Pengguna', 'Peran', 'Aksi', 'Ditolak', 'Paling Sering', 'Terakhir'].map(h => (
-                      <th key={h} className="px-5 py-3 text-[0.55rem] font-black uppercase tracking-[0.2em] text-ds-ink3 whitespace-nowrap">{h}</th>
+                      <th key={h} className="px-5 py-3 text-2xs font-black uppercase tracking-[0.2em] text-ds-ink3 whitespace-nowrap">{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -220,11 +220,11 @@ const ActivityLogView: React.FC = () => {
                       <td className="px-5 py-3.5 text-xs font-black text-ds-green">{s.total}</td>
                       <td className="px-5 py-3.5">
                         {s.denied > 0
-                          ? <span className="px-2 py-1 rounded-lg bg-ds-amber-lt text-ds-amber text-[0.6rem] font-black">{s.denied}</span>
+                          ? <span className="px-2 py-1 rounded-lg bg-ds-amber-lt text-ds-amber text-2xs font-black">{s.denied}</span>
                           : <span className="text-[0.7rem] text-ds-ink3">0</span>}
                       </td>
                       <td className="px-5 py-3.5 text-[0.7rem] text-ds-ink2 whitespace-nowrap">{humanAction(s.top_action)}</td>
-                      <td className="px-5 py-3.5 text-[0.65rem] text-ds-ink3 whitespace-nowrap">{fmtTime(s.last_seen)}</td>
+                      <td className="px-5 py-3.5 text-2xs text-ds-ink3 whitespace-nowrap">{fmtTime(s.last_seen)}</td>
                     </tr>
                   ))}
                   {!loading && visibleSummary.length === 0 && (
@@ -232,7 +232,7 @@ const ActivityLogView: React.FC = () => {
                       <td colSpan={6} className="px-5 py-12 text-center">
                         <Activity size={24} className="mx-auto text-ds-ink3 mb-3" />
                         <p className="text-xs font-bold text-ds-ink2 mb-1">Belum ada aktivitas tercatat</p>
-                        <p className="text-[0.65rem] text-ds-ink3 max-w-sm mx-auto leading-relaxed">
+                        <p className="text-2xs text-ds-ink3 max-w-sm mx-auto leading-relaxed">
                           Jejak ditulis oleh data-gateway. Kalau kosong padahal aplikasi dipakai,
                           kemungkinan besar gateway versi terbaru belum ter-deploy.
                         </p>
@@ -251,9 +251,9 @@ const ActivityLogView: React.FC = () => {
         <>
           <div className="flex items-center justify-between p-5 rounded-[2rem] bg-ds-card border border-ds-border shadow-ds-sm">
             <div>
-              <p className="text-[0.55rem] font-black uppercase tracking-[0.25em] text-ds-ink3 mb-1">Jejak Pengguna</p>
+              <p className="text-2xs font-black uppercase tracking-[0.25em] text-ds-ink3 mb-1">Jejak Pengguna</p>
               <p className="text-sm font-black text-ds-ink">{focus.actor_email ?? focus.actor_id}</p>
-              <p className="text-[0.65rem] text-ds-ink3 mt-0.5">{focus.actor_role ?? '—'} · {focus.total} aksi</p>
+              <p className="text-2xs text-ds-ink3 mt-0.5">{focus.actor_role ?? '—'} · {focus.total} aksi</p>
             </div>
             <button
               onClick={() => { setFocus(null); setRows([]); }}
@@ -270,26 +270,26 @@ const ActivityLogView: React.FC = () => {
                 <thead>
                   <tr className="border-b border-ds-border">
                     {['Waktu', 'Aksi', 'Target', 'Status', 'Durasi', 'Parameter', 'IP'].map(h => (
-                      <th key={h} className="px-5 py-3 text-[0.55rem] font-black uppercase tracking-[0.2em] text-ds-ink3 whitespace-nowrap">{h}</th>
+                      <th key={h} className="px-5 py-3 text-2xs font-black uppercase tracking-[0.2em] text-ds-ink3 whitespace-nowrap">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {rows.map(r => (
                     <tr key={r.id} className="border-b border-ds-border last:border-0 hover:bg-ds-card2 transition-colors">
-                      <td className="px-5 py-3 text-[0.65rem] text-ds-ink3 whitespace-nowrap">{fmtTime(r.created_at)}</td>
+                      <td className="px-5 py-3 text-2xs text-ds-ink3 whitespace-nowrap">{fmtTime(r.created_at)}</td>
                       <td className="px-5 py-3 text-xs font-bold text-ds-ink whitespace-nowrap">{humanAction(r.action)}</td>
-                      <td className="px-5 py-3 text-[0.65rem] font-mono text-ds-ink3 max-w-[160px] truncate">{r.target_id ?? '—'}</td>
+                      <td className="px-5 py-3 text-2xs font-mono text-ds-ink3 max-w-[160px] truncate">{r.target_id ?? '—'}</td>
                       <td className="px-5 py-3">
-                        <span className={`px-2 py-1 rounded-lg text-[0.55rem] font-black uppercase tracking-widest ${STATUS_STYLE[r.status]}`}>
+                        <span className={`px-2 py-1 rounded-lg text-2xs font-black uppercase tracking-widest ${STATUS_STYLE[r.status]}`}>
                           {r.status}
                         </span>
                       </td>
-                      <td className="px-5 py-3 text-[0.65rem] text-ds-ink3 whitespace-nowrap">{r.duration_ms ?? '—'} ms</td>
-                      <td className="px-5 py-3 text-[0.6rem] text-ds-ink3 max-w-[200px] truncate" title={(r.param_keys ?? []).join(', ')}>
+                      <td className="px-5 py-3 text-2xs text-ds-ink3 whitespace-nowrap">{r.duration_ms ?? '—'} ms</td>
+                      <td className="px-5 py-3 text-2xs text-ds-ink3 max-w-[200px] truncate" title={(r.param_keys ?? []).join(', ')}>
                         {(r.param_keys ?? []).join(', ') || '—'}
                       </td>
-                      <td className="px-5 py-3 text-[0.6rem] font-mono text-ds-ink3 whitespace-nowrap">{r.ip ?? '—'}</td>
+                      <td className="px-5 py-3 text-2xs font-mono text-ds-ink3 whitespace-nowrap">{r.ip ?? '—'}</td>
                     </tr>
                   ))}
                   {!loading && rows.length === 0 && (
@@ -304,7 +304,7 @@ const ActivityLogView: React.FC = () => {
             </div>
           </div>
 
-          <p className="text-[0.6rem] text-ds-ink3 leading-relaxed flex items-start gap-2">
+          <p className="text-2xs text-ds-ink3 leading-relaxed flex items-start gap-2">
             <ShieldAlert size={12} className="shrink-0 mt-0.5" />
             Kolom Parameter hanya menampilkan <em>nama</em> kunci permintaan, bukan isinya.
             Nilai seperti NIK, foto, dan kata sandi sengaja tidak pernah disimpan di tabel ini.

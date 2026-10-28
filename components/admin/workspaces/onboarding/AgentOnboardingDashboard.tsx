@@ -66,7 +66,7 @@ export const AgentOnboardingDashboard: React.FC<Props> = ({ userRole, currentUse
         <div className="relative overflow-hidden rounded-[1.75rem] bg-[radial-gradient(circle_at_top,_#431407,_#1A0A03)] p-6 text-white">
           <div className="absolute -top-16 -right-16 h-64 w-64 rounded-full bg-orange-400/10 blur-3xl" />
           <div className="relative">
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-orange-300">Agent Onboarding</p>
+            <p className="text-2xs font-black uppercase tracking-[0.3em] text-orange-300">Agent Onboarding</p>
             <h2 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">Registrasi, KYC & aktivasi agen</h2>
             <p className="mt-2 max-w-2xl text-sm text-white/70">Tinjau pendaftaran mitra, pastikan dokumen lengkap, lalu aktifkan. Setiap keputusan tercatat dan mitra menerima notifikasi.</p>
           </div>
@@ -80,7 +80,7 @@ export const AgentOnboardingDashboard: React.FC<Props> = ({ userRole, currentUse
         </div>
 
         {error && (
-          <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm font-bold text-rose-500">
+          <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm font-bold text-rose-700 dark:text-rose-200">
             {error}
           </div>
         )}
@@ -88,7 +88,7 @@ export const AgentOnboardingDashboard: React.FC<Props> = ({ userRole, currentUse
         <div className="rounded-3xl border border-ds-border bg-ds-card shadow-ds-sm">
           <div className="flex items-center justify-between border-b border-ds-border px-6 py-4">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-ds-ink3">Antrean Verifikasi</p>
+              <p className="text-2xs font-black uppercase tracking-[0.22em] text-ds-ink3">Antrean Verifikasi</p>
               <h3 className="text-lg font-black tracking-tight">Registrasi Mitra</h3>
             </div>
             <span className="rounded-full bg-ds-card2 px-3 py-1 text-xs font-bold text-ds-ink3">{pending.length} pending</span>
@@ -110,7 +110,7 @@ export const AgentOnboardingDashboard: React.FC<Props> = ({ userRole, currentUse
                   <div className="min-w-0">
                     <p className="truncate text-sm font-bold">{a.name}</p>
                     <p className="truncate text-xs text-ds-ink3">{a.email} · {a.agent_code ?? 'Tanpa kode'}</p>
-                    <div className="mt-1 flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-wide">
+                    <div className="mt-1 flex flex-wrap gap-2 text-2xs font-bold uppercase tracking-wide">
                       <span className={a.agreement ? 'text-ds-green' : 'text-ds-amber'}>
                         {a.agreement ? 'Perjanjian ✓' : 'Perjanjian belum ada'}
                       </span>

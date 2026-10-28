@@ -60,7 +60,7 @@ export const MarketingDashboard: React.FC<Props> = ({ userRole, currentUser, onL
         <div className="relative overflow-hidden rounded-[1.75rem] bg-[radial-gradient(circle_at_top,_#2E1065,_#0B0418)] p-6 text-white">
           <div className="absolute -top-16 -right-16 h-64 w-64 rounded-full bg-purple-400/10 blur-3xl" />
           <div className="relative">
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-purple-300">Marketing Workspace</p>
+            <p className="text-2xs font-black uppercase tracking-[0.3em] text-purple-300">Marketing Workspace</p>
             <h2 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">Leads, tim & pertumbuhan</h2>
             <p className="mt-2 max-w-2xl text-sm text-white/70">Pantau produktivitas handler, pipeline B2B, dan target bulanan dalam satu tampilan.</p>
           </div>
@@ -77,7 +77,7 @@ export const MarketingDashboard: React.FC<Props> = ({ userRole, currentUser, onL
           <div className="xl:col-span-2 rounded-3xl border border-ds-border bg-ds-card shadow-ds-sm">
             <div className="flex items-center justify-between border-b border-ds-border px-6 py-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-ds-ink3">Kinerja Tim</p>
+                <p className="text-2xs font-black uppercase tracking-[0.22em] text-ds-ink3">Kinerja Tim</p>
                 <h3 className="text-lg font-black tracking-tight">Handler & Agen</h3>
               </div>
               {totalTarget > 0 && (
@@ -101,11 +101,11 @@ export const MarketingDashboard: React.FC<Props> = ({ userRole, currentUser, onL
                     <div className="flex items-center gap-6">
                       <div className="text-right">
                         <p className="text-sm font-black tabular-nums">{m.jumlah_agen ?? 0}</p>
-                        <p className="text-[10px] font-bold uppercase tracking-wide text-ds-ink3">Agen</p>
+                        <p className="text-2xs font-bold uppercase tracking-wide text-ds-ink3">Agen</p>
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-black tabular-nums">{conv}%</p>
-                        <p className="text-[10px] font-bold uppercase tracking-wide text-ds-ink3">Produktif</p>
+                        <p className="text-2xs font-bold uppercase tracking-wide text-ds-ink3">Produktif</p>
                       </div>
                     </div>
                   </div>
@@ -116,7 +116,7 @@ export const MarketingDashboard: React.FC<Props> = ({ userRole, currentUser, onL
 
           <div className="rounded-3xl border border-ds-border bg-ds-card shadow-ds-sm">
             <div className="border-b border-ds-border px-6 py-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-ds-ink3">Pipeline</p>
+              <p className="text-2xs font-black uppercase tracking-[0.22em] text-ds-ink3">Pipeline</p>
               <h3 className="text-lg font-black tracking-tight">Pengajuan B2B</h3>
             </div>
             <div className="divide-y divide-ds-border">

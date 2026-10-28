@@ -12,13 +12,13 @@ import { formatIDR } from '../car-wizard/WizardUI';
 const RISK_COLOR: Record<string, string> = {
   LOW:    'text-ds-green',
   MEDIUM: 'text-ds-amber',
-  HIGH:   'text-red-400',
+  HIGH:   'text-red-700 dark:text-red-400',
 };
 
 const REC_STYLE: Record<string, string> = {
-  APPROVE:      'bg-emerald-500/10 text-emerald-400',
-  REJECT:       'bg-red-500/10 text-red-400',
-  REQUEST_INFO: 'bg-amber-500/10 text-amber-400',
+  APPROVE:      'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+  REJECT:       'bg-red-500/10 text-red-700 dark:text-red-400',
+  REQUEST_INFO: 'bg-amber-500/10 text-amber-800 dark:text-amber-400',
 };
 
 interface OrderWithAI extends SpPolicyOrder {
@@ -163,7 +163,7 @@ const AIAdminView: React.FC = () => {
       <div className="grid grid-cols-3 gap-3">
         {[
           { label: 'Antrean', value: orders.length, color: 'text-ds-ink' },
-          { label: 'Teranalisis', value: analyzedCount, color: 'text-blue-400' },
+          { label: 'Teranalisis', value: analyzedCount, color: 'text-blue-700 dark:text-blue-400' },
           { label: 'Siap Diproses', value: orders.filter(o => o._aiReview && (o._aiReview.confidence ?? 0) >= 80).length, color: 'text-ds-green' },
         ].map(s => (
           <div key={s.label} className="rounded-2xl bg-ds-card border border-ds-border shadow-sm p-4 text-center">
@@ -227,12 +227,12 @@ const AIAdminView: React.FC = () => {
                           <span className="text-xs text-ds-ink3">Conf: {ai.confidence}%</span>
                         </>
                       )}
-                      {order._error && <span className="text-xs text-red-400">{order._error}</span>}
+                      {order._error && <span className="text-xs text-red-700 dark:text-red-400">{order._error}</span>}
                     </div>
                     {ai && ai.flags.length > 0 && (
                       <div className="flex gap-1 mt-2 flex-wrap">
                         {ai.flags.slice(0, 3).map((f, i) => (
-                          <span key={i} className="rounded-full px-2.5 py-0.5 text-xs font-semibold bg-red-500/10 text-red-400 truncate max-w-[180px]">⚠ {f}</span>
+                          <span key={i} className="rounded-full px-2.5 py-0.5 text-xs font-semibold bg-red-500/10 text-red-700 dark:text-red-400 truncate max-w-[180px]">⚠ {f}</span>
                         ))}
                       </div>
                     )}
@@ -271,7 +271,7 @@ const AIAdminView: React.FC = () => {
               {selected._analyzing && (
                 <div className="flex items-center gap-3 p-4 bg-emerald-500/10 rounded-2xl">
                   <RefreshCw size={16} className="text-ds-green animate-spin" />
-                  <p className="text-sm text-emerald-400 font-semibold">Menganalisis dengan AI…</p>
+                  <p className="text-sm text-emerald-700 dark:text-emerald-400 font-semibold">Menganalisis dengan AI…</p>
                 </div>
               )}
               {selected._aiReview && (
@@ -286,7 +286,7 @@ const AIAdminView: React.FC = () => {
                     </div>
                     <div className="p-4 rounded-2xl bg-ds-card2 border border-ds-border text-center">
                       <p className="text-xs font-semibold uppercase tracking-wide text-ds-ink3 mb-1">Confidence</p>
-                      <p className={`font-bold text-xl ${selected._aiReview.confidence >= 80 ? 'text-ds-green' : selected._aiReview.confidence >= 60 ? 'text-ds-amber' : 'text-red-400'}`}>
+                      <p className={`font-bold text-xl ${selected._aiReview.confidence >= 80 ? 'text-ds-green' : selected._aiReview.confidence >= 60 ? 'text-ds-amber' : 'text-red-700 dark:text-red-400'}`}>
                         {selected._aiReview.confidence}%
                       </p>
                     </div>
@@ -323,8 +323,8 @@ const AIAdminView: React.FC = () => {
                   {/* Suggested notes */}
                   {selected._aiReview.suggested_notes && (
                     <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-blue-300 mb-1">Catatan untuk File</p>
-                      <p className="text-xs text-blue-300">{selected._aiReview.suggested_notes}</p>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-300 mb-1">Catatan untuk File</p>
+                      <p className="text-xs text-blue-700 dark:text-blue-300">{selected._aiReview.suggested_notes}</p>
                     </div>
                   )}
 

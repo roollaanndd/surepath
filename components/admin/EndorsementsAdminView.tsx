@@ -16,18 +16,18 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const TYPE_COLOR: Record<string, string> = {
-  ADDRESS:     'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  PLATE:       'bg-purple-500/10 text-purple-400 border-purple-500/20',
-  SUM_INSURED: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  ADDON:       'bg-teal-500/10 text-teal-400 border-teal-500/20',
-  DRIVER:      'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
+  ADDRESS:     'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20',
+  PLATE:       'bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20',
+  SUM_INSURED: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20',
+  ADDON:       'bg-teal-500/10 text-teal-700 dark:text-teal-400 border-teal-500/20',
+  DRIVER:      'bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/20',
   OTHER:       'bg-gray-500/10 text-ds-ink3 border-gray-500/20',
 };
 
 const STATUS_STYLE: Record<string, string> = {
-  PENDING:  'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  APPROVED: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-  REJECTED: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+  PENDING:  'bg-amber-500/10 text-amber-800 dark:text-amber-400 border-amber-500/20',
+  APPROVED: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
+  REJECTED: 'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/20',
 };
 
 function fmtDate(iso?: string) {
@@ -83,16 +83,16 @@ const EndorsementsAdminView: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-black tracking-tight text-white">
+          <h2 className="text-2xl font-black tracking-tight text-ds-ink">
             Endorsemen <span className="text-ds-green">Polis</span>
           </h2>
-          <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3 mt-1">
+          <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3 mt-1">
             Persetujuan perubahan polis dari agen
           </p>
         </div>
         <button
           onClick={load}
-          className="flex items-center gap-2 px-4 py-2.5 bg-ds-card2 border border-ds-border rounded-2xl text-[9px] font-black uppercase tracking-widest text-ds-ink3 hover:text-white transition-colors"
+          className="flex items-center gap-2 px-4 py-2.5 bg-ds-card2 border border-ds-border rounded-2xl text-2xs font-black uppercase tracking-widest text-ds-ink3 hover:text-ds-ink transition-colors"
         >
           <RefreshCw size={13} /> Refresh
         </button>
@@ -104,10 +104,10 @@ const EndorsementsAdminView: React.FC = () => {
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${
+            className={`px-4 py-2 rounded-full text-2xs font-black uppercase tracking-widest transition-all ${
               tab === t
                 ? 'bg-emerald-500 text-white shadow-md'
-                : 'bg-ds-card2 text-ds-ink3 hover:text-white border border-ds-border'
+                : 'bg-ds-card2 text-ds-ink3 hover:text-ds-ink border border-ds-border'
             }`}
           >
             {t === 'PENDING' ? `Menunggu (${pending.length})` : `Riwayat (${history.length})`}
@@ -119,7 +119,7 @@ const EndorsementsAdminView: React.FC = () => {
       {notesFor && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
           <div className="bg-ds-card2 border border-ds-border rounded-[2rem] w-full max-w-sm p-6 shadow-2xl space-y-4">
-            <h3 className="font-black text-white">
+            <h3 className="font-black text-ds-ink">
               {notesFor.action === 'APPROVED' ? 'Setujui Endorsemen' : 'Tolak Endorsemen'}
             </h3>
             <textarea
@@ -127,7 +127,7 @@ const EndorsementsAdminView: React.FC = () => {
               placeholder={notesFor.action === 'APPROVED' ? 'Catatan persetujuan (opsional)' : 'Alasan penolakan…'}
               value={notesInput}
               onChange={(e) => setNotesInput(e.target.value)}
-              className="w-full bg-ds-card2 border border-ds-border rounded-xl px-3 py-2.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500 resize-none"
+              className="w-full bg-ds-card2 border border-ds-border rounded-xl px-3 py-2.5 text-xs text-ds-ink placeholder-gray-600 focus:outline-none focus:border-emerald-500 resize-none"
             />
             <div className="flex gap-2">
               <button
@@ -143,7 +143,7 @@ const EndorsementsAdminView: React.FC = () => {
               </button>
               <button
                 onClick={() => setNotesFor(null)}
-                className="px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest bg-ds-card2 border border-ds-border text-ds-ink3 hover:text-white transition-all"
+                className="px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest bg-ds-card2 border border-ds-border text-ds-ink3 hover:text-ds-ink transition-all"
               >
                 Batal
               </button>
@@ -180,21 +180,21 @@ const EndorsementsAdminView: React.FC = () => {
                 <div className="flex items-start gap-3 justify-between">
                   <div className="space-y-1 min-w-0 flex-1">
                     <div className="flex flex-wrap gap-2 items-center">
-                      <span className={`inline-flex px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${TYPE_COLOR[e.type] ?? TYPE_COLOR.OTHER}`}>
+                      <span className={`inline-flex px-2 py-0.5 rounded-lg text-2xs font-black uppercase tracking-widest border ${TYPE_COLOR[e.type] ?? TYPE_COLOR.OTHER}`}>
                         {TYPE_LABELS[e.type] ?? e.type}
                       </span>
-                      <span className={`inline-flex px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${STATUS_STYLE[e.status]}`}>
+                      <span className={`inline-flex px-2 py-0.5 rounded-lg text-2xs font-black uppercase tracking-widest border ${STATUS_STYLE[e.status]}`}>
                         {e.status}
                       </span>
                     </div>
-                    <p className="text-xs font-black text-white">
+                    <p className="text-xs font-black text-ds-ink">
                       Mitra: {agentName} <span className="text-ds-green">{agentCode}</span>
                     </p>
-                    <p className="text-[10px] text-ds-ink3">
+                    <p className="text-2xs text-ds-ink3">
                       Order: <span className="text-ds-ink2">{orderNum}</span> — {clientName}
                     </p>
                   </div>
-                  <span className="text-[9px] text-ds-ink2 flex-shrink-0">{fmtDate(e.created_at)}</span>
+                  <span className="text-2xs text-ds-ink2 flex-shrink-0">{fmtDate(e.created_at)}</span>
                 </div>
 
                 {/* Description */}
@@ -202,14 +202,14 @@ const EndorsementsAdminView: React.FC = () => {
 
                 {/* Old / New */}
                 {(e.old_value || e.new_value) && (
-                  <div className="flex gap-2 flex-wrap text-[10px]">
+                  <div className="flex gap-2 flex-wrap text-2xs">
                     {e.old_value && (
-                      <span className="px-2 py-1 bg-rose-500/10 text-rose-400 rounded-lg border border-rose-500/20">
+                      <span className="px-2 py-1 bg-rose-500/10 text-rose-700 dark:text-rose-300 rounded-lg border border-rose-500/20">
                         Lama: {e.old_value}
                       </span>
                     )}
                     {e.new_value && (
-                      <span className="px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded-lg border border-emerald-500/20">
+                      <span className="px-2 py-1 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 rounded-lg border border-emerald-500/20">
                         Baru: {e.new_value}
                       </span>
                     )}
@@ -217,14 +217,14 @@ const EndorsementsAdminView: React.FC = () => {
                 )}
 
                 {/* Fee */}
-                <div className="flex items-center justify-between text-[10px] text-ds-ink3">
+                <div className="flex items-center justify-between text-2xs text-ds-ink3">
                   <span>Biaya endorsemen</span>
-                  <span className="font-black text-amber-400">{formatIDR(e.fee ?? 50000)}</span>
+                  <span className="font-black text-amber-800 dark:text-amber-400">{formatIDR(e.fee ?? 50000)}</span>
                 </div>
 
                 {/* Reviewer notes */}
                 {e.reviewer_notes && (
-                  <div className={`text-[10px] px-3 py-2 rounded-xl border ${e.status === 'REJECTED' ? 'bg-rose-500/5 border-rose-500/20 text-rose-400' : 'bg-ds-card2 border-ds-border text-ds-ink3'}`}>
+                  <div className={`text-2xs px-3 py-2 rounded-xl border ${e.status === 'REJECTED' ? 'bg-rose-500/5 border-rose-500/20 text-rose-700 dark:text-rose-300' : 'bg-ds-card2 border-ds-border text-ds-ink3'}`}>
                     <span className="font-black">Catatan reviewer: </span>{e.reviewer_notes}
                   </div>
                 )}
@@ -235,14 +235,14 @@ const EndorsementsAdminView: React.FC = () => {
                     <button
                       onClick={() => promptAction(e.id, 'APPROVED')}
                       disabled={actionId === e.id}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-emerald-500/10 hover:bg-emerald-500 border border-emerald-500/30 text-emerald-400 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-40"
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-emerald-500/10 hover:bg-emerald-500 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 hover:text-white rounded-xl text-2xs font-black uppercase tracking-widest transition-all disabled:opacity-40"
                     >
                       <Check size={12} /> Setujui
                     </button>
                     <button
                       onClick={() => promptAction(e.id, 'REJECTED')}
                       disabled={actionId === e.id}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-rose-500/10 hover:bg-rose-500 border border-rose-500/30 text-rose-400 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-40"
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-rose-500/10 hover:bg-rose-500 border border-rose-500/30 text-rose-700 dark:text-rose-300 hover:text-white rounded-xl text-2xs font-black uppercase tracking-widest transition-all disabled:opacity-40"
                     >
                       <X size={12} /> Tolak
                     </button>

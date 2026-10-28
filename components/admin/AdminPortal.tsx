@@ -5,7 +5,7 @@ import {
   LogOut, Search, Menu, Bell, CheckCircle, X, Upload, Loader2, RefreshCw,
   PanelLeftClose, PanelLeftOpen, CornerDownLeft, Sun, Moon, Clock, Keyboard,
   FileText, ShieldCheck, XCircle, AlertTriangle, BadgeCheck, UserX, Info,
-  ClipboardList, Building2, UserPlus,
+  ClipboardList, Building2, UserPlus, LayoutDashboard, ClipboardCheck,
 } from 'lucide-react';
 // ── Performance: lazy-load all admin views ──────────────────────────────────
 // AdminPortal chunk was 724 KB (largest in the app). Each admin view is
@@ -69,6 +69,16 @@ const AdminViewLoader = () => (
 // ─── Menu definition ────────────────────────────────────────────────────────
 // MENU_ITEMS kini diimpor dari ./navigation (ADMIN_MENU_ITEMS) — satu sumber
 // kebenaran bersama dengan matriks izin di Pengaturan (anti-drift).
+
+// ── Bar navigasi bawah (< 1024px) ────────────────────────────────────────────
+// Empat tujuan tersibuk; sisanya tetap lewat drawer. Difilter per izin role
+// dengan allowedLeafIds, jadi role tanpa akses tidak pernah melihat tombolnya.
+const BOTTOM_NAV: Array<{ id: string; label: string; icon: React.ElementType }> = [
+  { id: 'dashboard',    label: 'Ringkasan', icon: LayoutDashboard },
+  { id: 'approvals',    label: 'Review',    icon: ClipboardCheck },
+  { id: 'policy_orders', label: 'Polis',    icon: FileText },
+  { id: 'claims_admin', label: 'Klaim',     icon: ShieldCheck },
+];
 
 const formatRole = (role: string) =>
   role.toLowerCase().replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
@@ -142,16 +152,16 @@ class SettingsErrorBoundary extends Component<
 const ADMIN_NOTIF_META: Record<string, { Icon: React.ElementType; cls: string }> = {
   NEW_ORDER:          { Icon: ClipboardList, cls: 'text-ds-blue' },
   NEW_CLAIM:          { Icon: FileText,      cls: 'text-ds-blue' },
-  CLAIM_FRAUD_ALERT:  { Icon: AlertTriangle, cls: 'text-rose-500' },
+  CLAIM_FRAUD_ALERT:  { Icon: AlertTriangle, cls: 'text-rose-700 dark:text-rose-200' },
   POLICY_ISSUED:      { Icon: ShieldCheck,   cls: 'text-ds-green' },
-  ORDER_REJECTED:     { Icon: XCircle,       cls: 'text-rose-500' },
+  ORDER_REJECTED:     { Icon: XCircle,       cls: 'text-rose-700 dark:text-rose-200' },
   ORDER_CANCELLED:    { Icon: XCircle,       cls: 'text-ds-ink3' },
   AGENT_VERIFIED:     { Icon: BadgeCheck,    cls: 'text-ds-green' },
-  AGENT_REJECTED:     { Icon: UserX,         cls: 'text-rose-500' },
+  AGENT_REJECTED:     { Icon: UserX,         cls: 'text-rose-700 dark:text-rose-200' },
   NEW_AGENT:          { Icon: UserPlus,      cls: 'text-ds-green' },
   NEW_CUSTOMER:       { Icon: UserPlus,      cls: 'text-ds-blue' },
   NEW_ADMIN:          { Icon: UserPlus,      cls: 'text-ds-blue' },
-  SECURITY:           { Icon: AlertTriangle, cls: 'text-rose-500' },
+  SECURITY:           { Icon: AlertTriangle, cls: 'text-rose-700 dark:text-rose-200' },
   SYSTEM:             { Icon: Info,          cls: 'text-ds-ink3' },
 };
 
@@ -584,9 +594,9 @@ const AdminPortal = ({
           {!isRail && (
             <div className="min-w-0">
               <h1 className="font-black text-lg tracking-tight leading-none text-white">
-                Sure<span className="text-emerald-300">Path</span>
+                Sure<span className="text-[color:var(--sp-admin-green,#08784E)]">Path</span>
               </h1>
-              <p className="text-[0.5rem] font-bold uppercase tracking-[0.3em] mt-1 text-emerald-100/60">
+              <p className="text-2xs font-bold uppercase tracking-[0.3em] mt-1 text-emerald-100/60">
                 Admin Console
               </p>
             </div>
@@ -595,7 +605,7 @@ const AdminPortal = ({
         {!isMobile && (
           <button
             onClick={toggleRail}
-            className="p-1.5 rounded-lg text-white/45 hover:text-white hover:bg-white/10 transition-all flex-shrink-0"
+            className="p-1.5 rounded-lg text-ds-ink3 hover:text-ds-ink hover:bg-ds-card2 transition-all flex-shrink-0"
             title={isRail ? 'Perlebar sidebar' : 'Ciutkan sidebar'}
             aria-label={isRail ? 'Perlebar sidebar' : 'Ciutkan sidebar'}
           >
@@ -616,7 +626,7 @@ const AdminPortal = ({
               <div className="mx-auto my-2.5 h-px w-6 bg-white/15 rounded-full" />
             ) : (
               <div className={`${groupIndex === 0 ? 'mt-1' : 'mt-5'} mb-1.5 px-2`}>
-                <p className="text-[0.55rem] font-black uppercase tracking-[0.24em] text-white/40">{group.label}</p>
+                <p className="text-2xs font-black uppercase tracking-[0.24em] text-ds-ink3">{group.label}</p>
               </div>
             )}
             {sections.map(section => {
@@ -633,8 +643,8 @@ const AdminPortal = ({
                     isRail ? 'justify-center px-0 py-3' : 'gap-3 px-4 py-2.5'
                   } ${
                     active
-                      ? 'border border-white/10 bg-white/[0.14] text-white shadow-sm'
-                      : 'border border-transparent text-white/65 hover:text-white hover:bg-white/[0.08]'
+                      ? 'border border-ds-green/25 bg-ds-green-tint text-ds-green shadow-sm'
+                      : 'border border-transparent text-ds-ink2 hover:text-ds-ink hover:bg-ds-card2'
                   }`}
                 >
                   {active && (
@@ -643,16 +653,16 @@ const AdminPortal = ({
                   <span className={`relative flex-shrink-0 ${active ? 'drop-shadow-sm' : ''}`}>
                     <PathyNavIcon id={first} size={isRail ? 30 : 28} active={active} />
                     {isRail && badge > 0 && (
-                      <span className="absolute -top-1 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-amber-400 text-[0.55rem] font-black text-emerald-950 flex items-center justify-center shadow">
+                      <span className="absolute -top-1 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-amber-400 text-2xs font-black text-emerald-950 flex items-center justify-center shadow">
                         {badge > 99 ? '99+' : badge}
                       </span>
                     )}
                   </span>
                   {!isRail && (
                     <>
-                      <span className="text-[0.68rem] font-bold tracking-wide flex-1 min-w-0 truncate">{section.label}</span>
+                      <span className="text-2xs font-bold tracking-wide flex-1 min-w-0 truncate">{section.label}</span>
                       {badge > 0 && (
-                        <span className="sp-badge-pop flex-shrink-0 min-w-[20px] h-5 px-1.5 rounded-full bg-amber-400/90 text-[0.6rem] font-black text-emerald-950 flex items-center justify-center shadow-sm">
+                        <span className="sp-badge-pop flex-shrink-0 min-w-[20px] h-5 px-1.5 rounded-full bg-amber-400/90 text-2xs font-black text-emerald-950 flex items-center justify-center shadow-sm">
                           {badge > 99 ? '99+' : badge}
                         </span>
                       )}
@@ -676,15 +686,15 @@ const AdminPortal = ({
           {!isRail && (
             <div className="min-w-0 flex-1">
               <p className="text-xs font-black truncate text-white">{formatRole(userRole)}</p>
-              <p className="text-[0.65rem] font-medium truncate text-white/55">{currentUser?.email ?? 'Admin'}</p>
+              <p className="text-2xs font-medium truncate text-ds-ink3">{currentUser?.email ?? 'Admin'}</p>
             </div>
           )}
         </div>
         <button
           onClick={onLogout}
           title="Keluar"
-          className={`transition-all font-black uppercase tracking-widest flex items-center justify-center border border-white/10 bg-white/[0.06] text-white/75 hover:bg-rose-500 hover:text-white hover:border-rose-400/40 ${
-            isRail ? 'w-9 h-9 rounded-xl' : 'w-full py-2.5 rounded-xl text-[0.6rem] gap-2'
+          className={`transition-all font-black uppercase tracking-widest flex items-center justify-center border border-ds-border bg-ds-card2 text-ds-ink2 hover:bg-rose-500 hover:text-white hover:border-rose-400/40 ${
+            isRail ? 'w-9 h-9 rounded-xl' : 'w-full py-2.5 rounded-xl text-2xs gap-2'
           }`}
         >
           <LogOut size={13} /> {!isRail && 'Keluar'}
@@ -810,7 +820,7 @@ const AdminPortal = ({
           >
             {leaf?.label ?? id}
             {badge > 0 && (
-              <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-amber-400 text-[0.55rem] font-black text-emerald-950 flex items-center justify-center">
+              <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-amber-400 text-2xs font-black text-emerald-950 flex items-center justify-center">
                 {badge > 99 ? '99+' : badge}
               </span>
             )}
@@ -896,7 +906,7 @@ const AdminPortal = ({
                 placeholder="Cari menu atau aksi… (mis. penarikan, tier, muat ulang)"
                 className="flex-1 bg-transparent outline-none text-sm font-semibold text-ds-ink placeholder-ds-ink3"
               />
-              <kbd className="px-1.5 py-0.5 rounded-md bg-ds-card2 border border-ds-border text-[0.55rem] font-black text-ds-ink3">ESC</kbd>
+              <kbd className="px-1.5 py-0.5 rounded-md bg-ds-card2 border border-ds-border text-2xs font-black text-ds-ink3">ESC</kbd>
             </div>
             <div className="max-h-80 overflow-y-auto p-2">
               {paletteRows.length === 0 ? (
@@ -904,10 +914,10 @@ const AdminPortal = ({
               ) : paletteRows.map((r, i) => (
                 <React.Fragment key={r.key}>
                   {i === 0 && paletteActionCount > 0 && (
-                    <p className="px-3 pt-2 pb-1 text-[0.55rem] font-black uppercase tracking-[0.2em] text-ds-ink3">Aksi cepat</p>
+                    <p className="px-3 pt-2 pb-1 text-2xs font-black uppercase tracking-[0.2em] text-ds-ink3">Aksi cepat</p>
                   )}
                   {i === paletteActionCount && paletteActionCount < paletteRows.length && (
-                    <p className="px-3 pt-2 pb-1 text-[0.55rem] font-black uppercase tracking-[0.2em] text-ds-ink3">Menu</p>
+                    <p className="px-3 pt-2 pb-1 text-2xs font-black uppercase tracking-[0.2em] text-ds-ink3">Menu</p>
                   )}
                   <button
                     onMouseEnter={() => setPaletteIndex(i)}
@@ -938,7 +948,7 @@ const AdminPortal = ({
             <div className={`px-5 py-4 border-b flex items-center gap-2.5 ${'border-ds-border'}`}>
               <Keyboard size={16} className="text-ds-green flex-shrink-0" />
               <p className="text-sm font-black text-ds-ink">Shortcut Keyboard</p>
-              <kbd className={`ml-auto px-1.5 py-0.5 rounded-md bg-ds-card2 border border-ds-border text-[0.55rem] font-black text-ds-ink3`}>ESC</kbd>
+              <kbd className={`ml-auto px-1.5 py-0.5 rounded-md bg-ds-card2 border border-ds-border text-2xs font-black text-ds-ink3`}>ESC</kbd>
             </div>
             <div className="p-3">
               {[
@@ -950,7 +960,7 @@ const AdminPortal = ({
               ].map(s => (
                 <div key={s.keys} className="flex items-center justify-between px-3 py-2.5 rounded-xl">
                   <span className="text-xs font-bold text-ds-ink2">{s.desc}</span>
-                  <kbd className="px-2 py-1 rounded-lg bg-ds-card2 border border-ds-border text-[0.6rem] font-black text-ds-ink2 whitespace-nowrap">{s.keys}</kbd>
+                  <kbd className="px-2 py-1 rounded-lg bg-ds-card2 border border-ds-border text-2xs font-black text-ds-ink2 whitespace-nowrap">{s.keys}</kbd>
                 </div>
               ))}
             </div>
@@ -975,7 +985,7 @@ const AdminPortal = ({
             >
               <Search size={15} className="text-ds-ink3 flex-shrink-0" />
               <span className="text-ds-ink3 truncate">Cari menu…</span>
-              <span className="ml-auto hidden sm:flex items-center flex-shrink-0 px-1.5 py-0.5 rounded-md bg-ds-bg/60 border border-ds-border text-[0.55rem] font-black text-ds-ink3 tracking-wider">
+              <span className="ml-auto hidden sm:flex items-center flex-shrink-0 px-1.5 py-0.5 rounded-md bg-ds-bg/60 border border-ds-border text-2xs font-black text-ds-ink3 tracking-wider">
                 {/Mac/i.test(navigator.userAgent) ? '⌘K' : 'Ctrl K'}
               </span>
             </button>
@@ -984,7 +994,7 @@ const AdminPortal = ({
           <div className="flex items-center gap-2 shrink-0">
             {currentUser?.email && (
               <span className={`hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl text-2xs font-bold uppercase tracking-wider border ${'bg-ds-card2 border-ds-border text-ds-ink3'}`}>
-                <span className={`w-5 h-5 rounded-full bg-emerald-500/20 text-ds-green flex items-center justify-center font-black text-badge`}>
+                <span className={`w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-900 dark:text-emerald-100 flex items-center justify-center font-black text-badge`}>
                   {(currentUser.name ?? currentUser.email)[0].toUpperCase()}
                 </span>
                 {currentUser.email}
@@ -1014,15 +1024,15 @@ const AdminPortal = ({
                 <div className="fixed inset-0 z-40" onClick={() => setHealthOpen(false)} aria-hidden />
                 <div className={`absolute right-0 top-full mt-2 w-72 rounded-2xl border shadow-2xl z-50 overflow-hidden sp-pop-in ${'bg-ds-card border-ds-border shadow-ds-lg'}`}>
                   <div className={`px-4 py-3 border-b flex items-center justify-between ${'border-ds-border'}`}>
-                    <p className={`text-[0.6rem] font-black uppercase tracking-widest ${'text-ds-ink3'}`}>Kesegaran Data</p>
-                    <button onClick={refreshStats} className="text-[0.55rem] font-bold text-ds-green hover:text-emerald-400">Muat ulang</button>
+                    <p className={`text-2xs font-black uppercase tracking-widest ${'text-ds-ink3'}`}>Kesegaran Data</p>
+                    <button onClick={refreshStats} className="text-2xs font-bold text-ds-green hover:text-emerald-400">Muat ulang</button>
                   </div>
                   <div className="py-1">
                     {healthRows.map(r => (
                       <div key={r.key} className="flex items-center gap-2.5 px-4 py-2">
                         <span className={`w-2 h-2 rounded-full flex-shrink-0 ${r.ok === null ? 'bg-ds-ink3/40' : r.ok ? 'bg-emerald-500' : 'bg-amber-500'}`} />
                         <span className={`text-xs font-bold flex-1 min-w-0 truncate ${r.ok === false ? 'text-ds-ink' : 'text-ds-ink2'}`}>{r.label}</span>
-                        <span className="text-[0.55rem] font-bold text-ds-ink3 whitespace-nowrap">
+                        <span className="text-2xs font-bold text-ds-ink3 whitespace-nowrap">
                           {r.ok === false
                             ? 'gagal'
                             : r.at
@@ -1032,7 +1042,7 @@ const AdminPortal = ({
                       </div>
                     ))}
                   </div>
-                  <p className={`px-4 py-2.5 border-t text-[0.55rem] font-bold ${'border-ds-border text-ds-ink3'}`}>
+                  <p className={`px-4 py-2.5 border-t text-2xs font-bold ${'border-ds-border text-ds-ink3'}`}>
                     Semua angka berasal dari poll gateway nyata — bukan angka karangan.
                   </p>
                 </div>
@@ -1067,9 +1077,9 @@ const AdminPortal = ({
                 shattering at any width where it does show. */}
             {backupStatus !== 'idle' && (
               <div className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-2xs font-black uppercase tracking-wider border whitespace-nowrap shrink-0 ${
-                backupStatus === 'running' ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' :
-                backupStatus === 'ok'      ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
-                                             'bg-rose-500/10 border-rose-500/20 text-rose-400'
+                backupStatus === 'running' ? 'bg-blue-500/10 border-blue-500/20 text-blue-700 dark:text-blue-300' :
+                backupStatus === 'ok'      ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-300' :
+                                             'bg-rose-500/10 border-rose-500/20 text-rose-700 dark:text-rose-200'
               }`}>
                 {backupStatus === 'running' && <Loader2 size={10} className="animate-spin" />}
                 {backupStatus === 'ok'      && <CheckCircle size={10} />}
@@ -1086,7 +1096,7 @@ const AdminPortal = ({
               >
                 <Bell size={17} />
                 {unreadNotifCount > 0 && (
-                  <span className={`absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-rose-500 text-[0.55rem] font-black text-white flex items-center justify-center border-2 ${'border-ds-bg'}`}>
+                  <span style={{ color: '#FFFFFF' }} className={`absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-rose-600 text-2xs font-black flex items-center justify-center border-2 ${'border-ds-bg'}`}>
                     {unreadNotifCount > 99 ? '99+' : unreadNotifCount}
                   </span>
                 )}
@@ -1101,10 +1111,10 @@ const AdminPortal = ({
                 >
                   <div className={`px-4 py-3 border-b flex items-center justify-between gap-2 ${'border-ds-border'}`}>
                     <div className="flex items-center gap-2 min-w-0">
-                      <p className={`text-[0.6rem] font-black uppercase tracking-widest ${'text-ds-ink3'}`}>Notifikasi</p>
+                      <p className={`text-2xs font-black uppercase tracking-widest ${'text-ds-ink3'}`}>Notifikasi</p>
                       <button
                         onClick={() => setNotifUnreadOnly(v => !v)}
-                        className={`px-2 py-0.5 rounded-full text-[0.55rem] font-black transition-colors whitespace-nowrap ${notifUnreadOnly ? 'bg-emerald-500 text-white' : 'bg-ds-card2 text-ds-ink3 border border-ds-border hover:border-ds-green/50'}`}
+                        className={`px-2 py-0.5 rounded-full text-2xs font-black transition-colors whitespace-nowrap ${notifUnreadOnly ? 'bg-emerald-500 text-white' : 'bg-ds-card2 text-ds-ink3 border border-ds-border hover:border-ds-green/50'}`}
                       >
                         Belum dibaca{unreadNotifCount > 0 ? ` (${unreadNotifCount})` : ''}
                       </button>
@@ -1115,7 +1125,7 @@ const AdminPortal = ({
                           await Promise.all(notifications.filter(n => !n.read).map(n => markAdminNotificationRead(n.id)));
                           setNotifications(prev => prev.map(n => ({ ...n, read: true })));
                         }}
-                        className="text-[0.55rem] font-bold text-ds-green hover:text-emerald-400 whitespace-nowrap"
+                        className="text-2xs font-bold text-ds-green hover:text-emerald-400 whitespace-nowrap"
                       >
                         Tandai semua dibaca
                       </button>
@@ -1152,8 +1162,8 @@ const AdminPortal = ({
                             </span>
                             <div className="min-w-0 flex-1">
                               <p className={`text-xs font-black leading-tight ${'text-ds-ink'}`}>{n.title}</p>
-                              <p className={`text-[0.6rem] font-medium mt-0.5 ${'text-ds-ink3'}`}>{n.body}</p>
-                              <p className={`text-[0.5rem] font-bold mt-1 ${'text-ds-ink2'}`}>
+                              <p className={`text-2xs font-medium mt-0.5 ${'text-ds-ink3'}`}>{n.body}</p>
+                              <p className={`text-2xs font-bold mt-1 ${'text-ds-ink2'}`}>
                                 {adminNotifTimeAgo(n.created_at)}
                                 {' · '}
                                 {new Date(n.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
@@ -1173,7 +1183,7 @@ const AdminPortal = ({
             {isMobile && (
               <button
                 onClick={onLogout}
-                className="p-2 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all"
+                className="p-2 rounded-xl bg-rose-500/10 text-rose-700 dark:text-rose-200 hover:bg-rose-500 hover:text-white transition-all"
                 title="Keluar"
               >
                 <X size={17} />
@@ -1192,7 +1202,7 @@ const AdminPortal = ({
             {activeTab !== 'dashboard' && activeSection && (
               <div className="mb-6">
                 {activeGroup && (
-                  <p className={`text-[0.58rem] font-black uppercase tracking-[0.22em] mb-1 ${'text-ds-ink3'}`}>
+                  <p className={`text-2xs font-black uppercase tracking-[0.22em] mb-1 ${'text-ds-ink3'}`}>
                     {activeGroup.label}
                   </p>
                 )}
@@ -1213,8 +1223,53 @@ const AdminPortal = ({
                 {renderContent()}
               </div>
             </Suspense>
+
+            {/* Ruang untuk bar navigasi bawah di layar < 1024px. */}
+            {isMobile && <div aria-hidden className="h-20" />}
           </div>
         </div>
+
+        {/* ── Bar navigasi bawah (< 1024px) ──────────────────────────────────
+            Sebelumnya satu-satunya jalan berpindah di layar kecil adalah
+            drawer di balik ikon hamburger: dua ketukan untuk setiap tujuan,
+            tanpa petunjuk posisi. Spesifikasi redesign meminta bar bawah,
+            jadi empat tujuan tersibuk plus pintu ke menu lengkap duduk
+            permanen di jempol, dan drawer tetap untuk 17 section sisanya. */}
+        {isMobile && (
+          <nav
+            aria-label="Navigasi utama"
+            className={`fixed bottom-0 left-0 right-0 z-30 flex items-stretch border-t ${headerBg}`}
+            style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+          >
+            {BOTTOM_NAV
+              .filter(item => allowedLeafIds.has(item.id))
+              .map(item => {
+                const active = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => goToTab(item.id)}
+                    aria-current={active ? 'page' : undefined}
+                    className={`relative flex-1 flex flex-col items-center justify-center gap-1 py-2.5 text-2xs font-black uppercase tracking-wider transition-colors ${
+                      active ? 'text-ds-green' : 'text-ds-ink3'
+                    }`}
+                  >
+                    {active && <span aria-hidden className="absolute top-0 h-0.5 w-8 rounded-full bg-ds-green" />}
+                    <item.icon size={19} />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            <button
+              onClick={() => setMobileOpen(true)}
+              aria-label="Buka menu lengkap"
+              className="relative flex-1 flex flex-col items-center justify-center gap-1 py-2.5 text-2xs font-black uppercase tracking-wider text-ds-ink3 transition-colors"
+            >
+              <Menu size={19} />
+              <span>Menu</span>
+            </button>
+          </nav>
+        )}
       </main>
     </div>
   );

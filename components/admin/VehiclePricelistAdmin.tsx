@@ -41,20 +41,20 @@ function extractVersions(overrides: SpVehicleOverride[]): string[] {
 // ─── Shared UI ────────────────────────────────────────────────────────────────
 
 const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-1">{children}</p>
+  <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-1">{children}</p>
 );
 
 const inputCls =
-  'bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-emerald-500/50 w-full text-white';
+  'bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-emerald-500/50 w-full text-ds-ink';
 
 const primaryBtn =
   'bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl px-4 py-2.5 font-black text-xs uppercase tracking-widest transition-colors';
 
 const secondaryBtn =
-  'bg-ds-card2 border border-ds-border hover:bg-ds-card2 text-white rounded-xl px-4 py-2.5 font-black text-xs uppercase tracking-widest transition-colors';
+  'bg-ds-card2 border border-ds-border hover:bg-ds-card2 text-ds-ink rounded-xl px-4 py-2.5 font-black text-xs uppercase tracking-widest transition-colors';
 
 const dangerBtn =
-  'bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500 hover:text-white rounded-xl px-3 py-2 font-black text-xs transition-colors';
+  'bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20 hover:bg-rose-500 hover:text-white rounded-xl px-3 py-2 font-black text-xs transition-colors';
 
 const editBtn =
   'bg-ds-card2 border border-ds-border hover:bg-ds-card2 text-ds-ink2 rounded-xl px-3 py-2 font-black text-xs transition-colors';
@@ -67,8 +67,8 @@ const Modal: React.FC<{ title: string; onClose: () => void; children: React.Reac
   <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
     <div className="bg-ds-card border border-ds-border rounded-[2rem] w-full max-w-lg max-h-[90vh] overflow-y-auto">
       <div className="flex items-center justify-between px-7 pt-7 pb-4 border-b border-ds-border">
-        <h2 className="text-white font-black text-sm uppercase tracking-widest">{title}</h2>
-        <button onClick={onClose} className="text-ds-ink3 hover:text-white transition-colors">
+        <h2 className="text-ds-ink font-black text-sm uppercase tracking-widest">{title}</h2>
+        <button onClick={onClose} className="text-ds-ink3 hover:text-ds-ink transition-colors">
           <X size={18} />
         </button>
       </div>
@@ -168,8 +168,8 @@ const OverrideModal: React.FC<OverrideModalProps> = ({ initial, onSave, onClose 
         <div className="flex items-center justify-between">
           <SectionLabel>Status Aktif</SectionLabel>
           <button type="button" onClick={() => set('is_active', !form.is_active)} className="flex items-center gap-2 text-xs font-black uppercase tracking-widest">
-            {form.is_active ? <ToggleRight size={22} className="text-emerald-400" /> : <ToggleLeft size={22} className="text-ds-ink3" />}
-            <span className={form.is_active ? 'text-emerald-400' : 'text-ds-ink3'}>{form.is_active ? 'Aktif' : 'Nonaktif'}</span>
+            {form.is_active ? <ToggleRight size={22} className="text-emerald-700 dark:text-emerald-400" /> : <ToggleLeft size={22} className="text-ds-ink3" />}
+            <span className={form.is_active ? 'text-emerald-700 dark:text-emerald-400' : 'text-ds-ink3'}>{form.is_active ? 'Aktif' : 'Nonaktif'}</span>
           </button>
         </div>
         <div className="flex gap-3 pt-2">
@@ -318,8 +318,8 @@ const VehiclePricelistAdmin: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3">Manajemen</p>
-          <h1 className="text-2xl font-black text-white">Database Kendaraan</h1>
+          <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3">Manajemen</p>
+          <h1 className="text-2xl font-black text-ds-ink">Database Kendaraan</h1>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
           <button onClick={fetchOverrides} className={`${secondaryBtn} flex items-center gap-2`}>
@@ -338,7 +338,7 @@ const VehiclePricelistAdmin: React.FC = () => {
       </div>
 
       {syncMsg && (
-        <div className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3">
+        <div className="text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3">
           {syncMsg}
         </div>
       )}
@@ -346,17 +346,17 @@ const VehiclePricelistAdmin: React.FC = () => {
       {/* Stats */}
       <div className="flex items-center gap-6 flex-wrap">
         <div className="bg-ds-card2 border border-ds-border rounded-2xl px-5 py-3">
-          <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3">Total</p>
-          <p className="text-xl font-black text-white">{overrides.length}</p>
+          <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3">Total</p>
+          <p className="text-xl font-black text-ds-ink">{overrides.length}</p>
         </div>
         <div className="bg-ds-card2 border border-ds-border rounded-2xl px-5 py-3">
-          <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3">Aktif</p>
-          <p className="text-xl font-black text-emerald-400">{overrides.filter(o => o.is_active).length}</p>
+          <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3">Aktif</p>
+          <p className="text-xl font-black text-emerald-700 dark:text-emerald-400">{overrides.filter(o => o.is_active).length}</p>
         </div>
         {versions.length > 0 && (
           <div className="bg-ds-card2 border border-ds-border rounded-2xl px-5 py-3">
-            <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3">Versi</p>
-            <p className="text-xl font-black text-white">{versions.length}</p>
+            <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3">Versi</p>
+            <p className="text-xl font-black text-ds-ink">{versions.length}</p>
           </div>
         )}
       </div>
@@ -366,7 +366,7 @@ const VehiclePricelistAdmin: React.FC = () => {
         <div className="relative max-w-sm flex-1">
           <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-ds-ink3" />
           <input
-            className="bg-ds-card2 border border-ds-border rounded-xl py-3 pl-10 pr-4 text-sm font-bold outline-none focus:border-emerald-500/50 w-full text-white"
+            className="bg-ds-card2 border border-ds-border rounded-xl py-3 pl-10 pr-4 text-sm font-bold outline-none focus:border-emerald-500/50 w-full text-ds-ink"
             placeholder="Cari merek / model..."
             value={query}
             onChange={e => setQuery(e.target.value)}
@@ -374,7 +374,7 @@ const VehiclePricelistAdmin: React.FC = () => {
         </div>
         {versions.length > 0 && (
           <select
-            className="bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+            className="bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm font-bold text-ds-ink outline-none focus:border-emerald-500/50"
             value={activeVersion}
             onChange={e => setActiveVersion(e.target.value)}
           >
@@ -397,7 +397,7 @@ const VehiclePricelistAdmin: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-[11px]">
               <thead>
-                <tr className="text-[9px] font-black uppercase tracking-widest text-ds-ink3 border-b border-ds-border">
+                <tr className="text-2xs font-black uppercase tracking-widest text-ds-ink3 border-b border-ds-border">
                   <th className="text-left px-6 py-4">Merek / Model</th>
                   <th className="text-left px-4 py-4">Tahun</th>
                   <th className="text-right px-4 py-4">Harga List</th>
@@ -411,16 +411,16 @@ const VehiclePricelistAdmin: React.FC = () => {
                 {filtered.map(ov => (
                   <tr key={ov.id} className={`hover:bg-ds-card2 transition-colors ${!ov.is_active ? 'opacity-50' : ''}`}>
                     <td className="px-6 py-3">
-                      <p className="font-black text-white">{ov.brand}</p>
-                      <p className="text-[10px] text-ds-ink3">{ov.model}</p>
+                      <p className="font-black text-ds-ink">{ov.brand}</p>
+                      <p className="text-2xs text-ds-ink3">{ov.model}</p>
                     </td>
                     <td className="px-4 py-3 text-ds-ink2 font-bold">{ov.ref_year}</td>
                     <td className="px-4 py-3 text-right text-ds-ink2 font-bold">{fmtIDR(ov.list_price_m * 1_000_000)}</td>
-                    <td className="px-4 py-3 text-right text-emerald-400 font-black">{fmtIDR(ov.market_value_rp)}</td>
-                    <td className="px-4 py-3 text-right text-amber-400 font-black">{pct(ov.discount_rate)}</td>
+                    <td className="px-4 py-3 text-right text-emerald-700 dark:text-emerald-400 font-black">{fmtIDR(ov.market_value_rp)}</td>
+                    <td className="px-4 py-3 text-right text-amber-800 dark:text-amber-400 font-black">{pct(ov.discount_rate)}</td>
                     <td className="px-4 py-3 text-center">
                       <button onClick={() => handleToggle(ov)}>
-                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${ov.is_active ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+                        <span className={`px-2 py-0.5 rounded-full text-2xs font-black uppercase tracking-widest ${ov.is_active ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'bg-rose-500/10 text-rose-700 dark:text-rose-300'}`}>
                           {ov.is_active ? 'Aktif' : 'Nonaktif'}
                         </span>
                       </button>
@@ -439,7 +439,7 @@ const VehiclePricelistAdmin: React.FC = () => {
         </div>
       )}
 
-      <p className="text-[9px] text-ds-ink2 font-bold">
+      <p className="text-2xs text-ds-ink2 font-bold">
         Override ini digunakan untuk menyesuaikan nilai pertanggungan kendaraan di luar database OJK standar.
         Data pasar aktif akan diprioritaskan saat agen memilih kendaraan dalam wizard.
       </p>

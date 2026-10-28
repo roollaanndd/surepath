@@ -35,9 +35,9 @@ function fmtDate(iso?: string): string {
 }
 
 const STATUS_BADGE: Record<CommissionStatus, string> = {
-  PENDING:   'bg-amber-500/10 text-amber-400',
-  PAID:      'bg-emerald-500/10 text-emerald-400',
-  CANCELLED: 'bg-red-500/10 text-red-400',
+  PENDING:   'bg-amber-500/10 text-amber-800 dark:text-amber-400',
+  PAID:      'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+  CANCELLED: 'bg-red-500/10 text-red-700 dark:text-red-400',
 };
 
 const STATUS_LABEL: Record<CommissionStatus, string> = {
@@ -306,13 +306,13 @@ const CommissionLedger: React.FC = () => {
                         {STATUS_LABEL[row.status]}
                       </span>
                     </div>
-                    <p className="text-[10px] text-ds-ink3 font-semibold">
+                    <p className="text-2xs text-ds-ink3 font-semibold">
                       {row.client_name}
                       {row.order_number && (
                         <span className="ml-2 text-ds-ink2 font-mono">{row.order_number}</span>
                       )}
                     </p>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink2">
+                    <p className="text-2xs font-black uppercase tracking-widest text-ds-ink2">
                       {row.product_type}
                       {row.discount_rate !== undefined && row.discount_rate !== null && (
                         <span className="ml-2 text-rose-500/60">Diskon {(row.discount_rate * 100).toFixed(0)}%</span>
@@ -329,17 +329,17 @@ const CommissionLedger: React.FC = () => {
                   {/* ── Middle: amounts ── */}
                   <div className="flex items-center gap-6 text-right flex-shrink-0">
                     <div>
-                      <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink2">Premi</p>
+                      <p className="text-2xs font-black uppercase tracking-widest text-ds-ink2">Premi</p>
                       <p className="text-xs font-mono text-ds-ink">{formatIDR(row.premium_amount)}</p>
                     </div>
                     <div>
-                      <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink2">Komisi</p>
-                      <p className="text-sm font-black text-amber-400">{formatIDR(row.commission_amount)}</p>
+                      <p className="text-2xs font-black uppercase tracking-widest text-ds-ink2">Komisi</p>
+                      <p className="text-sm font-black text-amber-800 dark:text-amber-400">{formatIDR(row.commission_amount)}</p>
                     </div>
                     {row.coin_reward !== undefined && row.coin_reward !== null && row.coin_reward > 0 && (
                       <div>
-                        <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink2">Koin</p>
-                        <p className="text-xs font-mono text-emerald-400">
+                        <p className="text-2xs font-black uppercase tracking-widest text-ds-ink2">Koin</p>
+                        <p className="text-xs font-mono text-emerald-700 dark:text-emerald-400">
                           {row.coin_reward.toLocaleString('id-ID')}
                         </p>
                       </div>
@@ -352,14 +352,14 @@ const CommissionLedger: React.FC = () => {
                       <button
                         disabled={isBusy}
                         onClick={() => payCommission(row.id)}
-                        className="px-4 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-emerald-500 text-white hover:bg-emerald-600 active:scale-95 transition-all disabled:opacity-40"
+                        className="px-4 py-2 rounded-xl text-2xs font-black uppercase tracking-widest bg-emerald-500 text-white hover:bg-emerald-600 active:scale-95 transition-all disabled:opacity-40"
                       >
                         {isBusy ? '…' : 'Bayar'}
                       </button>
                       <button
                         disabled={isBusy}
                         onClick={() => cancelCommission(row.id)}
-                        className="px-4 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white active:scale-95 transition-all disabled:opacity-40"
+                        className="px-4 py-2 rounded-xl text-2xs font-black uppercase tracking-widest bg-rose-500/10 text-rose-700 dark:text-rose-300 hover:bg-rose-500 hover:text-white active:scale-95 transition-all disabled:opacity-40"
                       >
                         {isBusy ? '…' : 'Batalkan'}
                       </button>

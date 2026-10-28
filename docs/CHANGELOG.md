@@ -1,5 +1,52 @@
 # SurePath — Changelog
 
+## v2.7.15 — 2026-10-28
+
+**Deploy frontend tanpa bergantung pada kuota Vercel** (permintaan pemilik:
+"cari cara agar bisa deploy walupun tanpa vercel").
+
+Tidak ada perubahan pada kode aplikasi — hanya konfigurasi deploy, jadi tidak
+ada perubahan yang terlihat nasabah atau agen.
+
+- **Preview deploy dimatikan** (`git.deploymentEnabled` di `vercel.json`) untuk
+  setiap pola branch kerja: `claude/**`, `dependabot/**`, `feat/**`, `fix/**`,
+  `seo/**`, `tmp/**`, dll. Branch tak terdaftar tetap default `true`, jadi
+  `main` — dan hanya `main` — yang deploy. Pada 24 Okt 2026 akun menghabiskan
+  **52 deploy dalam 5,5 jam, 45 di antaranya preview** (21 dari satu branch),
+  lalu kena batas pada 07:48; commit `a1339b4` yang sudah di `main` tidak bisa
+  naik ke produksi sama sekali. Dengan aturan ini, hari itu hanya butuh **7**.
+- **Dipastikan: CLI tidak melewati batas itu.** Batasnya rate limit API
+  (`api-deployments-free-per-day`, 100/86.400 s) yang dihitung **per akun**,
+  bukan per proyek, dan `vercel deploy --prebuilt --prod`, deploy hook, REST
+  API, maupun push git semuanya membuat deployment dari keranjang yang sama.
+- **Jalur deploy kedua, siap tapi menganggur**:
+  `.github/workflows/deploy-cloudflare-pages.yml` membangun `dist/` sendiri
+  dan mengunggahnya ke Cloudflare Pages (kuota 500 build/bulan, tidak dibagi
+  dengan Vercel). No-op sampai `CLOUDFLARE_API_TOKEN` /
+  `CLOUDFLARE_ACCOUNT_ID` diisi, dengan alasannya ditulis ke run summary.
+  Menyalakannya **tidak** memindahkan `myinsurepath.com`.
+- **`public/_redirects` baru** — fallback SPA `/* /_fallback.html 200`, cermin
+  dari `rewrites` di `vercel.json`. Tanpa ini setiap deep link (`/agapps`,
+  `/admin`, `/blog/<slug>`) dijawab 404 di host statis, sebab routing ditulis
+  tangan di History API. Berkas asli menang, jadi 26 halaman prerender tetap
+  tersaji langsung.
+- **`public/_headers`** ditambah blok `Cache-Control` yang sebelumnya hanya
+  ada di `vercel.json`, supaya host statis tidak meng-cache shell HTML dan
+  mengunci nasabah pada bundle lama.
+- **Koreksi `docs/DEPLOYMENT.md`**: dokumen menyebut project Vercel
+  **myinsurepath** sebagai produksi dan `surepath` sebagai project kedua.
+  Project itu sudah tidak ada (API 404); `myinsurepath.com` terpasang di
+  project **surepath**. Penting karena dua project pada satu repo berarti satu
+  push memakai dua slot kuota.
+- Panduan lengkap + langkah klik-demi-klik: `docs/DEPLOY_FALLBACK.md`.
+  Dicatat di situ juga bahwa paket **Hobby resminya hanya untuk pemakaian
+  non-komersial**, sementara SurePath menjual polis — risiko akun dijeda yang
+  terpisah dari soal kuota.
+
+**Checks:** build + prerender + PWA ✓ (`dist/_headers`, `dist/_redirects`,
+`dist/_fallback.html` terverifikasi ada) · tsc 0 · ESLint 0 error · vitest
+hijau · `vercel.json` valid JSON.
+
 ## v2.7.14 — 2026-10-28
 
 **Integrasi PR #241 ke main terbaru** (permintaan pemilik: "should be good

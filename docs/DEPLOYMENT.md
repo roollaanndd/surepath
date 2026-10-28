@@ -13,9 +13,22 @@
 ## 1. Web — Vercel
 
 - Vercel team: `roollaanndds-projects` (`team_afNqJ8H0darvhUlxlzTjzrjm`)
-- Project production: **myinsurepath** (`prj_PFPNq8TJgm2RMircwtaIVC3rQEzd`), branch `main`.
-- Project kedua: **surepath** (`prj_MLYVdGeboOTxAO5s0Xf2cwLDGohu`) — repo sama.
-- Setiap PR otomatis dapat preview URL (`*-roollaanndds-projects.vercel.app`).
+- Project production: **surepath** (`prj_MLYVdGeboOTxAO5s0Xf2cwLDGohu`), branch
+  `main`. `myinsurepath.com` terpasang di project ini (diverifikasi lewat API
+  Vercel, 28 Okt 2026).
+- Dokumen ini sebelumnya menyebut project **myinsurepath**
+  (`prj_PFPNq8TJgm2RMircwtaIVC3rQEzd`) sebagai produksi dan `surepath` sebagai
+  "project kedua". Itu **tidak lagi benar**: project tersebut sudah tidak ada
+  (API menjawab 404), dan hanya satu project yang tersambung ke repo ini. Yang
+  penting dari koreksi ini: dua project pada satu repo berarti setiap push
+  menghabiskan **dua** slot kuota deploy — sekarang tidak begitu.
+- **Preview deploy sudah dimatikan** untuk semua branch kerja, lewat
+  `git.deploymentEnabled` di `vercel.json`. Jadi PR tidak lagi mendapat
+  preview URL; pagar mutunya adalah CI di GitHub Actions. Alasan dan
+  angkanya: [`DEPLOY_FALLBACK.md`](DEPLOY_FALLBACK.md).
+- **Kalau Vercel menolak deploy** (kuota 100/hari per akun habis), jalur
+  cadangan dan langkah-langkahnya ada di
+  [`DEPLOY_FALLBACK.md`](DEPLOY_FALLBACK.md).
 - Env vars wajib di Vercel: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (+ `VITE_GSC_VERIFY`, dll).
 - Konfigurasi headers/CSP & SPA rewrite: `vercel.json`. CSP `connect-src` sudah mengizinkan `*.supabase.co`.
 

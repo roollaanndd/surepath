@@ -25,6 +25,7 @@ import {
 } from '../../services/supabaseService';
 import { createXenditInvoice } from '../../services/paymentService';
 import { formatIDR } from '../car-wizard/WizardUI';
+import { InsurerLogo, INSURER_BRANDS } from '../shared/InsurerLogos';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -546,8 +547,13 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
         setAvailableProducts(products);
         setExcludedByAgeCount(excludedByAgeCount);
       })
+      .catch(error => {
+        console.error('Unable to load insurer products:', error);
+        setAvailableProducts([]);
+        setExcludedByAgeCount(0);
+      })
       .finally(() => setLoadingProducts(false));
-  }, [province, sumInsured, coverageType, vehicleDetails.year]);
+  }, [province, sumInsured, coverageType, vehicleDetails.year, vehicleType]);
 
   // ─── Step 7: Submit on mount ───────────────────────────────────────────────
 
@@ -590,13 +596,16 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
         const { code: productCode, name: productName } = productInfo(vehicleType, coverageType);
 
         // Commission & coin calculations — insurer product rates take priority
-        const baseCommRate = selectedInsurerProduct?.base_commission_rate
-          ?? productConfig?.base_commission_rate ?? 0.10;
-        const cappedDiscountRate = selectedInsurerProduct
-          ? Math.min(discountRate, selectedInsurerProduct.max_discount_rate)
-          : discountRate;
+        const baseCommRate = Math.min(0.25, selectedInsurerProduct?.base_commission_rate
+          ?? productConfig?.base_commission_rate ?? 0.10);
+        const configuredMaxDiscount = selectedInsurerProduct?.max_discount_rate
+          ?? productConfig?.max_discount_rate ?? 0;
+        const safeMaxDiscount = Math.max(0, Math.min(configuredMaxDiscount, baseCommRate));
+        const cappedDiscountRate = Math.min(discountRate, safeMaxDiscount);
         const effectiveCommRate = Math.max(0, baseCommRate - cappedDiscountRate);
         const discountAmount = Math.round(breakdown.total * cappedDiscountRate);
+        // The client discount is funded from commission; keep the premium breakdown intact
+        // for insurer accounting, while the displayed client net is reduced by the same amount.
         const netPremium = breakdown.total - discountAmount;
         const commissionAmount = Math.round(breakdown.total * effectiveCommRate);
         const coinRate = selectedInsurerProduct?.coin_rate ?? productConfig?.coin_rate ?? 0.05;
@@ -1385,9 +1394,12 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
             </p>
           )}
           {loadingProducts ? (
-            <p className="text-xs text-slate-400">Memuat daftar insurer...</p>
+            <div className="flex items-center gap-2 rounded-xl bg-slate-50 dark:bg-white/5 px-3 py-4 text-xs text-slate-500"><span className="h-4 w-4 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />Memuat daftar asuransi yang sesuai kendaraan dan pertanggungan...</div>
           ) : availableProducts.length === 0 ? (
-            <p className="text-xs text-slate-400">Tidak ada produk tersedia untuk konfigurasi ini.</p>
+            <div className="rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-900/40 dark:bg-amber-950/20 px-4 py-3 space-y-1">
+              <p className="text-sm font-bold text-amber-800 dark:text-amber-300">Belum ada mitra yang cocok untuk pilihan ini</p>
+              <p className="text-xs leading-relaxed text-amber-700 dark:text-amber-200">Daftar hanya menampilkan perusahaan yang aktif, produk yang cocok dengan jenis kendaraan/pertanggungan, dan batas usia kendaraan. Coba ubah pertanggungan atau usia kendaraan. Jika tetap kosong, Admin perlu memeriksa menu Mitra Asuransi dan pemetaan produk.</p>
+            </div>
           ) : (
             <div className="flex flex-col gap-3">
               {availableProducts.map(p => {
@@ -1407,10 +1419,9 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                     }`}
                   >
                     <div className="flex items-center gap-2 mb-2">
-                      {p.insurer_logo_url && (
-                        <img loading="lazy" src={p.insurer_logo_url} alt={p.insurer_name ?? p.insurer_code}
-                          className="w-6 h-6 rounded-lg object-contain bg-white/70 dark:bg-white/10 p-0.5 flex-shrink-0" />
-                      )}
+                      <span className="w-9 h-9 rounded-lg bg-white border border-slate-100 flex items-center justify-center p-1 flex-shrink-0" style={{ background: INSURER_BRANDS[p.insurer_code ?? '']?.bg ?? '#ffffff' }}>
+                        {p.insurer_logo_url ? <img loading="lazy" src={p.insurer_logo_url} alt={p.insurer_name ?? p.insurer_code} className="w-full h-full object-contain" /> : <InsurerLogo id={p.insurer_code ?? p.id} size={28} />}
+                      </span>
                       <p className={`font-black text-sm ${selected ? 'text-ds-green' : 'text-slate-700 dark:text-slate-200'}`}>
                         {p.insurer_name ?? p.insurer_code}
                       </p>
@@ -1430,9 +1441,22 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                       </p>
                     )}
                     <p className="text-[10px] text-slate-400">
-                      Maks diskon {(p.max_discount_rate * 100).toFixed(1)}%
+                      Maks diskon {(Math.max(0, Math.min(p.max_discount_rate ?? 0, Math.min(0.25, p.base_commission_rate ?? 0))) * 100).toFixed(1)}%
                       {p.max_vehicle_age_years ? ` · Maks usia ${p.max_vehicle_age_years} thn` : ''}
                     </p>
+                    <div className="mt-3 border-t border-slate-100 dark:border-white/10 pt-3 space-y-2">
+                      <div className="flex items-center gap-1.5 text-xs">
+                        <span className="flex gap-0.5" aria-label={`Rating ${(p as any).rating ?? 0} dari 5`}>
+                          {[1,2,3,4,5].map(star => <span key={star} className={star <= Math.floor(p.rating ?? 0) ? 'text-amber-500' : 'text-slate-300'}>★</span>)}
+                        </span>
+                        <span className="font-bold text-slate-600 dark:text-slate-300">{(p as any).rating ? `${(p as any).rating}/5` : 'Rating belum tersedia'}</span>
+                      </div>
+                      {Array.isArray((p as any).benefits) && (p as any).benefits.length > 0 && <div><p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 mb-1">Manfaat utama</p><p className="text-[11px] text-slate-500">{(p as any).benefits.slice(0, 3).join(' · ')}</p></div>}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {Array.isArray((p as any).advantages) && (p as any).advantages.length > 0 && <div><p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400">Kelebihan</p><ul className="text-[11px] text-slate-500 list-disc pl-4">{(p as any).advantages.slice(0, 3).map((item: string, i: number) => <li key={i}>{item}</li>)}</ul></div>}
+                        {Array.isArray((p as any).disadvantages) && (p as any).disadvantages.length > 0 && <div><p className="text-[10px] font-bold text-rose-600 dark:text-rose-400">Kekurangan</p><ul className="text-[11px] text-slate-500 list-disc pl-4">{(p as any).disadvantages.slice(0, 3).map((item: string, i: number) => <li key={i}>{item}</li>)}</ul></div>}
+                      </div>
+                    </div>
                   </button>
                 );
               })}
@@ -1763,10 +1787,12 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
 
         {/* Discount & Commission Panel */}
         {(() => {
-          const baseCommRate = selectedInsurerProduct?.base_commission_rate
-            ?? productConfig?.base_commission_rate ?? 0.10;
-          const maxDisc = selectedInsurerProduct?.max_discount_rate
+          const baseCommRate = Math.min(0.25, selectedInsurerProduct?.base_commission_rate
+            ?? productConfig?.base_commission_rate ?? 0.10);
+          const configuredMaxDisc = selectedInsurerProduct?.max_discount_rate
             ?? productConfig?.max_discount_rate ?? 0;
+          // Business guardrail: commission + client discount may never exceed 25% of premium.
+          const maxDisc = Math.max(0, Math.min(configuredMaxDisc, baseCommRate));
           const cappedDisc = Math.min(discountRate, maxDisc);
           const effectiveComm = Math.max(0, baseCommRate - cappedDisc);
           const discountAmt = Math.round(breakdown.total * cappedDisc);

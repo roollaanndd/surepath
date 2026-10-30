@@ -19,7 +19,7 @@ const json = (body: unknown, status = 200): ActionResult => ({ status, body });
 // menambahkan kebijakan lebih ketat untuk coverage_type — payload yang PERLU
 // disanitasi berarti payload kotor dan DITOLAK (caller membalas 400), bukan
 // diam-diam dipaksa jadi nilai lain.
-import { sanitizeFilterValue } from '../_shared/sanitize.ts';
+import { sanitizeFilterValue } from '../../_shared/sanitize.ts';
 
 const SAFE_OR_VALUE_RE = /^[\p{L}\p{N}_-]+$/u;
 export const sanitizeOrValue = (raw: unknown, maxLen = 30): string => {

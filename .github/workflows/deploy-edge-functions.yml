@@ -159,7 +159,13 @@ jobs:
             else
               echo "--- CLI output ($(date -u +%H:%M:%SZ)) ---"
               printf '%s\n' "$out"
-              echo "::error::supabase functions deploy $fn failed — CLI output captured in the run summary."
+              # Annotations are the one failure surface that is PUBLIC on the
+              # run page (job logs are admin-only). Emit every CLI line as a
+              # multi-line ::error:: annotation so maintainers — and any
+              # tooling — can read the real failure without repo admin.
+              printf '%s\n' "$out" | while IFS= read -r line; do
+                printf '::error::%s\n' "$(printf '%s' "$line" | sed 's/%/%25/g; s/\r/%0D/g; s/\n/%0A/g')"
+              done
               {
                 echo "### ❌ supabase functions deploy \`$fn\`"
                 echo

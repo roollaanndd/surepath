@@ -7,18 +7,14 @@ interface Props {
   userRole: string;
   currentUser: any;
   onLogout: () => void;
-  darkMode: boolean;
-  onToggleDark: () => void;
 }
 
-export const InsurerLiaisonDashboard: React.FC<Props> = ({ userRole, currentUser, onLogout, darkMode, onToggleDark }) => {
+export const InsurerLiaisonDashboard: React.FC<Props> = ({ userRole, currentUser, onLogout }) => {
   return (
     <WorkspaceShell
       workspace="insurer"
       userRole={userRole}
       userName={currentUser?.name}
-      darkMode={darkMode}
-      onToggleDark={onToggleDark}
       onLogout={onLogout}
       actions={
         <button className="flex h-9 items-center gap-1.5 rounded-full border border-ds-border px-3 text-xs font-bold text-ds-ink3 transition-all hover:text-ds-ink">

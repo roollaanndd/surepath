@@ -35,7 +35,7 @@ test.use({
   launchOptions: existsSync(LOCAL_CHROME) ? { executablePath: LOCAL_CHROME } : {},
 });
 
-const APP_VERSION = '2.7.16';
+const APP_VERSION = '2.7.17';
 
 const AGENT = {
   id: 'e2e-agent-0001',

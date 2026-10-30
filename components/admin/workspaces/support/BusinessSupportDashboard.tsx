@@ -8,11 +8,9 @@ interface Props {
   userRole: string;
   currentUser: any;
   onLogout: () => void;
-  darkMode: boolean;
-  onToggleDark: () => void;
 }
 
-export const BusinessSupportDashboard: React.FC<Props> = ({ userRole, currentUser, onLogout, darkMode, onToggleDark }) => {
+export const BusinessSupportDashboard: React.FC<Props> = ({ userRole, currentUser, onLogout }) => {
   const [queue, setQueue] = useState<any>(null);
   const [claims, setClaims] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
@@ -43,8 +41,6 @@ export const BusinessSupportDashboard: React.FC<Props> = ({ userRole, currentUse
       workspace="support"
       userRole={userRole}
       userName={currentUser?.name}
-      darkMode={darkMode}
-      onToggleDark={onToggleDark}
       onLogout={onLogout}
       actions={
         <button onClick={load} className="flex h-9 items-center gap-1.5 rounded-full border border-ds-border px-3 text-xs font-bold text-ds-ink3 transition-all hover:text-ds-ink">

@@ -1146,69 +1146,6 @@
   border-color: color-mix(in srgb, var(--ds-primary, #00E07A) 42%, var(--ds-border, #3A3F52));
 }
 
-/* Admin CMS: the premium refresh used literal light colors, overriding DS tokens. */
-.dark .sp-modern-app:has(> aside),
-.dark .sp-modern-app:has(> div > aside) {
-  --sp-admin-green: #00E07A;
-  --sp-admin-green-soft: #0D3328;
-  --sp-admin-orange: #FF9B54;
-  --sp-admin-border: #3A3F52;
-  --sp-admin-ink: #F8FAFC;
-  --sp-admin-muted: #B8BFD0;
-  background: var(--ds-bg, #1A1D29) !important;
-  color: var(--ds-text-primary, #F8FAFC) !important;
-}
-.dark .sp-modern-app:has(> aside) > aside,
-.dark .sp-modern-app:has(> div > aside) > aside {
-  background: rgba(26, 29, 41, .96) !important;
-  border-color: var(--ds-border, #3A3F52) !important;
-  box-shadow: 8px 0 32px -30px rgba(0, 0, 0, .8);
-}
-.dark .sp-modern-app:has(> aside) main,
-.dark .sp-modern-app:has(> div > aside) main {
-  background: var(--ds-bg, #1A1D29) !important;
-  color: var(--ds-text-primary, #F8FAFC);
-}
-.dark .sp-modern-app:has(> aside) aside nav a,
-.dark .sp-modern-app:has(> aside) aside nav button,
-.dark .sp-modern-app:has(> div > aside) aside nav a,
-.dark .sp-modern-app:has(> div > aside) aside nav button {
-  color: var(--ds-text-secondary, #B8BFD0) !important;
-}
-.dark .sp-modern-app:has(> aside) aside nav a:hover,
-.dark .sp-modern-app:has(> aside) aside nav button:hover,
-.dark .sp-modern-app:has(> div > aside) aside nav a:hover,
-.dark .sp-modern-app:has(> div > aside) aside nav button:hover {
-  color: var(--ds-text-primary, #F8FAFC) !important;
-  background: #2C3142 !important;
-  border-color: #3A3F52 !important;
-}
-.dark .sp-modern-app:has(> aside) aside nav a[aria-current="page"],
-.dark .sp-modern-app:has(> aside) aside nav button[aria-current="page"],
-.dark .sp-modern-app:has(> aside) aside nav a[data-active="true"],
-.dark .sp-modern-app:has(> div > aside) aside nav a[aria-current="page"],
-.dark .sp-modern-app:has(> div > aside) aside nav button[aria-current="page"],
-.dark .sp-modern-app:has(> div > aside) aside nav a[data-active="true"] {
-  color: #86EFAC !important;
-  background: linear-gradient(105deg, #0D3328, #3B2418) !important;
-  border-color: #365847 !important;
-  box-shadow: inset 3px 0 0 #FF9B54;
-}
-.dark .sp-modern-app:has(> aside) main :where(input, select, textarea),
-.dark .sp-modern-app:has(> div > aside) main :where(input, select, textarea) {
-  color: var(--ds-text-primary, #F8FAFC) !important;
-  background-color: var(--ds-card2, #2C3142) !important;
-  border-color: var(--ds-border-strong, #4A5066) !important;
-}
-.dark .sp-modern-app:has(> aside) main :where(table thead),
-.dark .sp-modern-app:has(> div > aside) main :where(table thead) {
-  background: var(--ds-card2, #2C3142) !important;
-}
-.dark .sp-modern-app:has(> aside) main :where(th),
-.dark .sp-modern-app:has(> div > aside) main :where(th) {
-  color: var(--ds-text-secondary, #B8BFD0) !important;
-}
-
 /* Operator dashboard: restore dark hero semantics after the light-mode redesign. */
 .dark .sp-operator-premium .sp-operator-hero {
   background:
@@ -1232,7 +1169,6 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .dark .sp-agent-premium *,
-  .dark .sp-modern-app:has(> aside) aside *,
   .dark .sp-operator-premium * {
     animation: none !important;
     transition: none !important;
@@ -1302,9 +1238,6 @@
 }
 :root:not(.dark) .sp-modern-app:has(> aside) main :where(.bg-emerald-500, .bg-emerald-600, .bg-green-600, .bg-blue-500, .bg-rose-500, .bg-amber-500, .bg-gradient-to-br, .bg-gradient-to-r) :where(p, h1, h2, h3, h4, label, span).text-white {
   color: #FFFFFF !important;
-}
-.dark .sp-modern-app:has(> aside) main :where(.bg-ds-card, .bg-ds-card2, .bg-white, .bg-slate-50, .bg-gray-50) {
-  border-color: var(--ds-border, #3A3F52);
 }
 
 
@@ -1531,11 +1464,6 @@ html.dark .sp-modern-app .sp-bottom-nav button[class*="-mt-8"] > span:last-child
   border-right: 1px solid #e4ebf0 !important;
   box-shadow: 4px 0 20px -18px rgba(23, 49, 68, .28) !important;
 }
-.dark .sp-modern-app:has(aside) aside {
-  background: var(--ds-bg, #1A1D29) !important;
-  color: var(--ds-text-primary, #F8FAFC) !important;
-  border-right: 1px solid var(--ds-border, #3A3F52) !important;
-}
 .sp-modern-app:has(aside) aside :where(h1,h2,h3,p,span,button) {
   text-shadow: none !important;
 }
@@ -1757,19 +1685,12 @@ html.dark .sp-modern-app .sp-bottom-nav button[class*="-mt-8"] > span:last-child
 :root:not(.dark) .sp-modern-app:has(> aside) :where(.text-ds-ink2) {
   color: #526477 !important;
 }
-.dark .sp-modern-app:has(> aside) :where(.text-ds-ink2) {
-  color: #C3CBD8 !important;
-}
 /* AA fix: #66788a measured 4.43:1 on white and 3.5:1 on the tinted admin
    canvas. This `!important` rule is the one that actually wins for muted admin
-   text, so the floor has to be met here — and it has to be split by theme,
-   because one ink cannot clear 4.5:1 against both a white and a #1A1D29
-   canvas. */
+   text, so the floor has to be met here.
+   Admin is light-only (design.md §4) — a single ink value is correct. */
 :root:not(.dark) .sp-modern-app:has(> aside) :where(.text-ds-ink3) {
   color: #5B6B7B !important;
-}
-.dark .sp-modern-app:has(> aside) :where(.text-ds-ink3) {
-  color: #9AA6B2 !important;
 }:root:not(.dark) .sp-modern-app:has(> aside) :where(.border-ds-border) {
   border-color: #dfe7ed !important;
 }:root:not(.dark) .sp-modern-app:has(> aside) > aside {
@@ -1938,12 +1859,9 @@ html.dark .sp-modern-app .sp-bottom-nav button[class*="-mt-8"] > span:last-child
   color: #526779 !important;
 }
 /* AA fix: #748896 measured 3.68:1 — this shell is what the admin workspace
-   dashboards render inside. Split by theme for the same reason as above. */
+   dashboards render inside. Admin is light-only (design.md §4). */
 :root:not(.dark) .sp-modern-app:has(> main > header) > main .text-ds-ink3 {
   color: #54677A !important;
-}
-.dark .sp-modern-app:has(> main > header) > main .text-ds-ink3 {
-  color: #9AA6B2 !important;
 }:root:not(.dark) .sp-modern-app:has(> main > header) > main :where(.border-ds-border, .border-white\/10, .border-white\/\[0\.06\]) {
   border-color: #e0e8ed !important;
 }
@@ -2041,125 +1959,6 @@ html.dark .sp-modern-app .sp-bottom-nav button[class*="-mt-8"] > span:last-child
   }
 }
 
-
-/* ── SurePath Admin Portal redesign v2 — dark twin ─────────────────────────
-   v2.7.13: the light pass above hardcodes near-white surfaces with no dark
-   guard, so with the admin theme in dark/"auto" (#326) cards + canvas stayed
-   near-white while sidebars/nav turned dark and plain text stayed white —
-   the exact "hanya bagian tertentu jadi hitam, tulisan tidak terlihat"
-   report. Values mirror styles.css .dark so tokens stay consistent. */
-html.dark .sp-modern-app:has(> main > header) {
-  color-scheme: dark !important;
-  --ds-bg: #1A1D29;
-  --ds-card: #242836;
-  --ds-card2: #2C3142;
-  --ds-surface: #242836;
-  --ds-border: #3A3F52;
-  --ds-ink: #F8FAFC;
-  --ds-ink2: #B8BFD0;
-  --ds-ink3: #99A0B2;
-  --ds-green: #00E07A;
-  --ds-primary-text: #00E07A;
-  --ds-green-tint: #0D3328;
-  --sp-admin-canvas: #131826;
-  --sp-admin-line: #232B3D;
-  --sp-admin-shadow: 0 2px 8px rgba(0, 0, 0, .28), 0 12px 28px -22px rgba(0, 0, 0, .55);
-  background: var(--sp-admin-canvas) !important;
-  color: var(--ds-ink) !important;
-}
-html.dark .sp-modern-app:has(> main > header) > main {
-  background: var(--sp-admin-canvas) !important;
-}
-html.dark .sp-modern-app:has(> main > header) > main > header {
-  background: rgba(21, 27, 40, .94) !important;
-  color: var(--ds-ink) !important;
-  border-color: var(--sp-admin-line) !important;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, .5);
-}
-html.dark .sp-modern-app:has(> main > header) > main > header input {
-  background: #1B2334 !important;
-  border: 1px solid #232B3D !important;
-  color: #E6EAF2 !important;
-}
-html.dark .sp-modern-app:has(> main > header) > main > header input::placeholder {
-  color: #99A0B2 !important;
-}
-html.dark .sp-modern-app:has(> main > header) > main > header > div:last-child > button[title="Mode Terang"],
-html.dark .sp-modern-app:has(> main > header) > main > header > div:last-child > button[title="Mode Gelap"] {
-  display: none !important;
-}
-html.dark .sp-modern-app:has(> main > header) > main > div.flex-1.overflow-y-auto {
-  background: var(--sp-admin-canvas) !important;
-}
-/* ds utilities inside admin content: dark values (the light pass forces white). */
-html.dark .sp-modern-app:has(> main > header) > main .bg-ds-bg {
-  background-color: #1A1D29 !important;
-}
-html.dark .sp-modern-app:has(> main > header) > main .bg-ds-card,
-html.dark .sp-modern-app:has(> main > header) > main .bg-ds-surface {
-  background-color: #242836 !important;
-}
-html.dark .sp-modern-app:has(> main > header) > main .bg-ds-card2 {
-  background-color: #2C3142 !important;
-}
-html.dark .sp-modern-app:has(> main > header) > main .bg-white:not(.text-white):not([data-sp-preserve-light]) {
-  background-color: #242836 !important;
-}
-html.dark .sp-modern-app:has(> main > header) > main .bg-slate-50,
-html.dark .sp-modern-app:has(> main > header) > main .bg-gray-50 {
-  background-color: #2C3142 !important;
-}
-html.dark .sp-modern-app:has(> main > header) > main .text-ds-ink {
-  color: #F8FAFC !important;
-}
-html.dark .sp-modern-app:has(> main > header) > main .text-ds-ink2 {
-  color: #B8BFD0 !important;
-}
-html.dark .sp-modern-app:has(> main > header) > main .text-ds-ink3 {
-  color: #99A0B2 !important;
-}
-html.dark .sp-modern-app:has(> main > header) > main :where(.border-ds-border, .border-white\/10, .border-white\/\[0\.06\]) {
-  border-color: #232B3D !important;
-}
-html.dark .sp-modern-app:has(> main > header) > main :where(.rounded-xl, .rounded-2xl, .rounded-3xl):where([class*="bg-ds-"], [class*="bg-white"], [class*="bg-slate-"], [class*="bg-gray-"]) {
-  box-shadow: var(--sp-admin-shadow);
-}
-html.dark .sp-modern-app:has(> main > header) > main :where(input, select, textarea) {
-  color: #E6EAF2;
-  background-color: #1B2334;
-  border-color: #232B3D;
-}
-html.dark .sp-modern-app:has(> main > header) > main :where(input, select, textarea)::placeholder {
-  color: #99A0B2;
-  opacity: 1;
-}
-html.dark .sp-modern-app:has(> main > header) > main :where(button, a, input, select, textarea):focus-visible {
-  outline: 2px solid #00E07A;
-  outline-offset: 2px;
-}
-html.dark .sp-modern-app:has(> main > header) > main table thead {
-  background: #1B2334 !important;
-}
-html.dark .sp-modern-app:has(> main > header) > main table th {
-  color: #B8BFD0 !important;
-}
-html.dark .sp-modern-app:has(> main > header) > main table td {
-  color: #D6DCE8;
-  border-color: #232B3D;
-}
-html.dark .sp-modern-app:has(> main > header) > main table tbody tr:hover {
-  background: #1B2334;
-}
-html.dark .sp-modern-app:has(> main > header) > main :where(.sp-glass, .sp-glass-strong) {
-  background-color: rgba(36, 40, 54, .94);
-  border-color: #232B3D;
-  box-shadow: var(--sp-admin-shadow);
-}
-/* Keep branded green sidebar shadows legible on the dark canvas. */
-html.dark .sp-modern-app:has(> main > header) > aside,
-html.dark .sp-modern-app:has(> main > header) > div > aside {
-  box-shadow: 5px 0 24px -20px rgba(0, 0, 0, .8);
-}
 
 /* ── Dashboard entrance moment (v2.7.13) ────────────────────────────────────
    The page-level fade (sp-page-enter) stays; within dashboards the first

@@ -8,11 +8,9 @@ interface Props {
   userRole: string;
   currentUser: any;
   onLogout: () => void;
-  darkMode: boolean;
-  onToggleDark: () => void;
 }
 
-export const AgentOnboardingDashboard: React.FC<Props> = ({ userRole, currentUser, onLogout, darkMode, onToggleDark }) => {
+export const AgentOnboardingDashboard: React.FC<Props> = ({ userRole, currentUser, onLogout }) => {
   const [pending, setPending] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -52,8 +50,6 @@ export const AgentOnboardingDashboard: React.FC<Props> = ({ userRole, currentUse
       workspace="onboarding"
       userRole={userRole}
       userName={currentUser?.name}
-      darkMode={darkMode}
-      onToggleDark={onToggleDark}
       onLogout={onLogout}
       actions={
         <button onClick={load} className="flex h-9 items-center gap-1.5 rounded-full border border-ds-border px-3 text-xs font-bold text-ds-ink3 transition-all hover:text-ds-ink">

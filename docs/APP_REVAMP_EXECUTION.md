@@ -169,6 +169,24 @@ This record intentionally distinguishes incremental work from the full target.
 
 Append a new entry after each meaningful implementation/verification milestone.
 
+### 2026-10-30 (v2.7.17) — Admin light-first theme (design.md §4 execution)
+
+- **Direktif pemilik:** "kerjakan yg bisa dan baik untuk dikerjakan… rencanakan
+  dan eksekusikan dengan baik". Scope riset penuh → eksekusi terbatas:
+  **tema admin** (bagian §4 yang belum dieksekusi), bukan redesign penuh
+  (layout & komponen admin sudah converge ke mockup via pass #317–#328).
+- **Core:** `components/admin/themeMode.ts` dihapus; AdminPortal light-only
+  (paksa light saat CMS terpasang, pulihkan `sp_dark_mode` saat keluar, tak
+  pernah menulis key shared); kontrol tema dihapus dari header, command
+  palette, Pengaturan, WorkspaceShell dan 7 workspace dashboard.
+- **CSS:** semua admin dark twins dibedah dari `portal-modernization.css`
+  (8 spot, termasuk blok `redesign v2 — dark twin` & `premium refresh` twin);
+  scan post-op = 0 selector dark-activated admin; twin agent/operator
+  dipertahankan sesuai tabel permukaan §4.
+- **Uji:** `adminThemeMode.test.ts` diganti guard anti-drift light-only
+  (spesifikasi sah berganti — bukan pengecilan); tsc ✓, eslint ✓ (0 error),
+  vitest 444/444 ✓, check:functions ✓, check:android ✓ (2.7.17/vC 49).
+
 ### 2026-10-30 (v2.7.16) — P1 security batch (audit 2026-10-28) + guideline root + merge main #327–#328
 
 - **Direktif pemilik:** "ok push merge and deploy" (perbaikan P1 sudah

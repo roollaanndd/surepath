@@ -94,15 +94,22 @@ Usage rules:
 | Insurer / B2B / Marketing / Operator | Follow token system; verify both modes only where the surface opts into dark |
 
 Current code **delta to resolve (owner-approved, not yet executed as a
-feature):** `components/admin/themeMode.ts` implements `auto|light|dark`
+feature):** ~~`components/admin/themeMode.ts` implements `auto|light|dark`
 (auto-dark 18:00–06:00, #326) and v2.7.13 shipped admin dark twins in
-`src/styles/portal-modernization.css`. Converging to the approved light-first
-admin = **a scoped owner-approved change**: remove/neutralize admin dark
-selectors + the auto-dark timing logic in the same release as the approved
-admin visual redesign (design-proposals), never piecemeal — leave no
-half-removed dark twins. Until executed, the shipped behavior stays
-auto-dark-capable; both `design.md` claims and code stay cross-referenced in
-§15.
+`src/styles/portal-modernization.css`.~~ **EXECUTED in v2.7.17** (2026-10-30):
+`themeMode.ts` removed, the AdminPortal shell is light-only (it forces
+light on `<html>` for the CMS session and restores the customer/agent
+`sp_dark_mode` preference on unmount, never writing that shared key), the
+admin-side dark-mode Settings card (mode buttons + auto-hours schedule) was
+removed, all admin dark-bar props (`darkMode`/`onToggleDark`) were dropped
+from the workspace dashboards and `WorkspaceShell`, the admin dark twins
+were cut from `portal-modernization.css` (verified: zero dark-activated
+admin selectors remain; the global/agent/operator dark rules stay per the
+surface table above), and `adminThemeMode.test.ts` is replaced by a
+light-only anti-drift guard suite. Admin dark themes must not be
+re-introduced without a new owner decision; the remaining admin visual
+work is only the pixel-level converge pass against the resolved mockups
+(`admin-a.html`), tracked in §15.
 
 ## 5. Spacing, radius, elevation
 
@@ -259,7 +266,7 @@ snapshots, not permanent truths — re-scan before acting on them.
 | Hex literals | ~1,130 hardcoded color instances outside tokens (`components/ui/**` code is clean — its remaining 4 hits are comment examples); start with status chips/legacy cards |
 | Fixed widths ≥ 300px | 19 instances (`w-[300px…999px]` notation) — responsive-fit on touch |
 | `div onClick` without role | 59 instances (scan: onClick without `role`/`tabIndex`/keyboard handler) — add semantics on touch |
-| Admin visual migration | Approved light-first admin (§4) — implement from `design-proposals/2026-10-admin-agent/` with themeMode removal in one scoped release |
+| Admin visual migration | **Theme part DONE (v2.7.17)**: light-only enforced, `themeMode.ts` removed, admin dark twins cut (0 dark-activated admin selectors remain); remaining = pixel-level conver­gence pass against the resolved mockup (`admin-a.html`) |
 | Side-tab accent border | `src/pages/HomePage.tsx:120` `borderLeft: 4px solid` — single verified antipattern of the v2.7.14 detector pass |
 | Empty-state primitive | No shared EmptyState component exists in `components/ui/`; ad-hoc dashed boxes remain (e.g. `components/customer/CustomerPortal.tsx:529,571`) — adopt/insert a tokenized shared empty state when touching them |
 

@@ -8,8 +8,6 @@ interface Props {
   userRole: string;
   currentUser: any;
   onLogout: () => void;
-  darkMode: boolean;
-  onToggleDark: () => void;
 }
 
 const UNPAID = ['PENDING_PAYMENT', 'AWAITING_PAYMENT', 'PENDING', 'UNPAID', 'SUBMITTED'];
@@ -28,7 +26,7 @@ const agingBucket = (days: number) => {
 
 const formatIDR = (n: number) => `Rp ${Math.round(n).toLocaleString('id-ID')}`;
 
-export const CollectionsDashboard: React.FC<Props> = ({ userRole, currentUser, onLogout, darkMode, onToggleDark }) => {
+export const CollectionsDashboard: React.FC<Props> = ({ userRole, currentUser, onLogout }) => {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -59,8 +57,6 @@ export const CollectionsDashboard: React.FC<Props> = ({ userRole, currentUser, o
       workspace="collections"
       userRole={userRole}
       userName={currentUser?.name}
-      darkMode={darkMode}
-      onToggleDark={onToggleDark}
       onLogout={onLogout}
       actions={
         <button onClick={load} className="flex h-9 items-center gap-1.5 rounded-full border border-ds-border px-3 text-xs font-bold text-ds-ink3 transition-all hover:text-ds-ink">

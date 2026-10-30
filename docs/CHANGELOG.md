@@ -1,5 +1,34 @@
 # SurePath — Changelog
 
+## v2.7.17 — 2026-10-30
+
+### Admin CMS: light-first theme (design.md §4, owner-approved design-proposals/2026-10-admin-agent)
+
+- **Admin CMS kini terang tetap.** Tanpa tema gelap, tanpa jadwal gelap
+  otomatis 18:00–06:00 (#326 dipensiunkan). `components/admin/themeMode.ts`
+  dihapus; shell AdminPortal memaksa light pada `<html>` selama CMS terpasang
+  dan memulihkan preferensi `sp_dark_mode` portal customer/agent saat CMS
+  ditutup — **tanpa pernah menulis key `sp_dark_mode` yang shared** (perilaku
+  lama menimpanya tiap 5 menit lewat tick auto-dark; bug lintas-portal ikut
+  tertutup).
+- **Selector dark-twin admin dibedah dari `src/styles/portal-modernization.css`**
+  (blok `:has(> aside)` & `:has(> main > header)` + rule/rule tunggal
+  `.dark` yang admin-scoped). Verifikasi scan: **0 selector
+  dark-activated admin tersisa**; rule dark global/agent/operator tetap untuk
+  permukaan yang masih mendukung dark sesuai §4.
+- **Kontrol tema dihapus dari UI**: tombol tema di header CMS, aksi cepat
+  "Ganti tema" di command palette, kartu Pengaturan "Mode Tema CMS +
+  Jadwal Gelap Otomatis", tombol sun/moon di WorkspaceShell, dan properti
+  `darkMode`/`onToggleDark` di 7 workspace dashboard.
+- **Uji diganti, bukan dilonggarkan**: `adminThemeMode.test.ts` yang
+  menguji mesin auto-dark kini menjadi guard anti-drift light-only (modul
+  tema dilarang kembali; `storeDarkMode` dilarang di AdminPortal;
+  `darkMode`/`onToggleDark` dilarang di komponen admin).
+- Verifikasi: tsc ✓ · eslint ✓ (0 error) · vitest 444/444 (38 file) ✓
+  · check:functions ✓ · Android selaras **2.7.17 (versionCode 49)** ✓.
+  Edge functions TIDAK berubah → tanpa deploy edge; render divalidasi via
+  build + Playwright.
+
 ## v2.7.16 — 2026-10-30
 
 **Batch keamanan audit 2026-10-28 (P1) + guideline root `product.md`/`design.md`

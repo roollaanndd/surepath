@@ -9,8 +9,6 @@ interface Props {
   userRole: string;
   currentUser: any;
   onLogout: () => void;
-  darkMode: boolean;
-  onToggleDark: () => void;
 }
 
 const formatIDR = (n: number) => `Rp ${n.toLocaleString('id-ID')}`;
@@ -20,7 +18,7 @@ const formatIDRCompact = (n: number) => {
   return `Rp ${n.toLocaleString('id-ID')}`;
 };
 
-export const FinanceDashboard: React.FC<Props> = ({ userRole, currentUser, onLogout, darkMode, onToggleDark }) => {
+export const FinanceDashboard: React.FC<Props> = ({ userRole, currentUser, onLogout }) => {
   const [stats, setStats] = useState<any>(null);
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,8 +44,6 @@ export const FinanceDashboard: React.FC<Props> = ({ userRole, currentUser, onLog
       workspace="finance"
       userRole={userRole}
       userName={currentUser?.name}
-      darkMode={darkMode}
-      onToggleDark={onToggleDark}
       onLogout={onLogout}
       actions={
         <button

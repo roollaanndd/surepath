@@ -117,8 +117,9 @@ Shared platform behaviors (cross-surface):
 - PWA install (single `pwaInstall` service), service worker (precache +
   runtime cache), Android APK via Capacitor (version-locked with web
   `APP_VERSION`), push notification **not** implemented `(planned)`.
-- Theme: `sp_dark_mode` for the consumer/agent-style app canvases; admin has
-  its own theme layer (see `design.md` §4 — approved target is light-first).
+- Theme: `sp_dark_mode` for the consumer/agent-style app canvases; admin CMS is
+  **light-only** since v2.7.17 (see `design.md` §4 — no dark theme, no auto
+  hours; the admin never writes the shared `sp_dark_mode` key).
 
 ## 6. Priority user journeys (must always work)
 
@@ -280,9 +281,10 @@ Current queue (updated 2026-10-30, v2.7.16 deployed): P1 security batch DONE
 (`.or()` filter-injection guard shipped & deployed; `server.ts` admin gate
 shipped; `camera=(self)` shipped and verified live in production headers) →
 trust gate live & deployed; remaining sub-step is the OWNER-side toggle
-(disable Supabase Auth email auto-confirm, see §8) → admin light-first
-visual migration (`design-proposals/2026-10-admin-agent`, design.md §4) →
-design debt (see `design.md` §15).
+(disable Supabase Auth email auto-confirm, see §8) → admin light-first THEME
+migration DONE v2.7.17 (light-only shell, dark twins removed, anti-drift
+guard tests); remaining admin work is the pixel-level converge pass against
+`admin-a.html` → design debt (see `design.md` §15).
 
 ## 15. Acceptance criteria (release DoD)
 

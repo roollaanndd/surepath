@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useCallback, Component, lazy, Suspe
 import '../../src/styles/portal-modernization.css';
 import {
   LogOut, Search, Menu, Bell, CheckCircle, X, Upload, Loader2, RefreshCw,
-  PanelLeftClose, PanelLeftOpen, CornerDownLeft, Sun, Moon, Clock, Keyboard,
+  PanelLeftClose, PanelLeftOpen, CornerDownLeft, Keyboard,
   FileText, ShieldCheck, XCircle, AlertTriangle, BadgeCheck, UserX, Info,
   ClipboardList, Building2, UserPlus, LayoutDashboard, ClipboardCheck,
 } from 'lucide-react';
@@ -40,14 +40,13 @@ const B2BAdminView = lazy(() => import('./B2BAdminView'));
 const DocumentsAdminView = lazy(() => import('./DocumentsAdminView'));
 const TierPromoConfigAdmin = lazy(() => import('./TierPromoConfigAdmin'));
 import { scrollPortalToTop } from '../shared/scrollReset';
-import { applyDarkMode, readDarkMode, storeDarkMode } from '../shared/theme';
+import { applyDarkMode, readDarkMode } from '../shared/theme';
 import { UserRole } from '../../types';
 import { getAdminStats, type AdminStats, uploadLogoImage, getOnlineUsers, type OnlineUsersResult, getAdminNotifications, markAdminNotificationRead, getTierChangeRequests, type SpAdminNotification, getAllClaims, getAdminWithdrawals, type SpClaim, type Withdrawal } from '../../services/supabaseService';
 import { shouldAutoBackup, performBackup } from '../../services/backupService';
 import { SurePathLogo } from '../Navbar';
 import { PathyNavIcon } from '../shared/PathyNavIcon';
 import { buildVisibleNav, groupForSection, sectionForLeaf, ADMIN_MENU_ITEMS as MENU_ITEMS } from './navigation';
-import { ADMIN_THEME_KEY, nextThemeMode, resolveAdminDark, readThemeSchedule, themeLabel as modeLabel, type AdminThemeMode } from './themeMode';
 // Workspace dashboards per peran (fitur branch redesign — role workspaces):
 // peran tertentu memperoleh dashboard khusus menggantikan DashboardView umum.
 import { getAdminWorkspace } from '../../src/admin/roleConfig';
@@ -214,64 +213,27 @@ const AdminPortal = ({
   const [logoUploading, setLogoUploading] = useState(false);
   const [backupStatus, setBackupStatus] = useState<'idle' | 'running' | 'ok' | 'fail'>('idle');
   const logoInputRef = useRef<HTMLInputElement>(null);
-  // Tema admin: default otomatis (gelap 18.00–06.00). Preferensi aplikasi lain
-  // di memori tetap dipulihkan saat keluar dari CMS.
-  const [themeMode, setThemeMode] = useState<AdminThemeMode>(() => {
-    try {
-      const saved = localStorage.getItem(ADMIN_THEME_KEY);
-      return saved === 'light' || saved === 'dark' ? saved : 'auto';
-    } catch { return 'auto'; }
-  });
-  const [isDarkNow, setIsDarkNow] = useState(() => resolveAdminDark('auto'));
-  // Bump saat jadwal/izin diubah dari halaman Pengaturan supaya shell
-  // bereaksi tanpa reload (Pengaturan men-dispatch event custom di bawah).
-  const [scheduleVersion, setScheduleVersion] = useState(0);
-  const [permsVersion, setPermsVersion] = useState(0);
-  const priorTheme = useRef(readDarkMode(false));
+  // Tema admin: TERANG TETAP (design.md §4 — light-only, tanpa auto-hours).
+  // Kunci shared `sp_dark_mode` milik portal customer/agent TIDAK ditulis:
+  // admin hanya memadamkan class dark pada <html> selama CMS terpasang,
+  // lalu memulihkannya mengikuti preferensi tersimpan saat CMS ditutup.
+  // (Dulu admin menimpa sp_dark_mode setiap 5 menit lewat auto-dark — bug
+  // lintas-portal yang ikut tertutup dengan light-only.)
   useEffect(() => {
-    // Disalin ke lokal: cleanup tidak boleh membaca ref yang bisa berubah.
-    const restoreTheme = priorTheme.current;
-    const apply = () => {
-      const dark = resolveAdminDark(themeMode, new Date(), readThemeSchedule());
-      applyDarkMode(dark);
-      storeDarkMode(dark);
-      setIsDarkNow(dark);
-    };
-    apply();
-    const timer = window.setInterval(apply, 5 * 60 * 1000);
-    const onVisible = () => { if (document.visibilityState === 'visible') apply(); };
-    document.addEventListener('visibilitychange', onVisible);
+    applyDarkMode(false);
     return () => {
-      window.clearInterval(timer);
-      document.removeEventListener('visibilitychange', onVisible);
-      applyDarkMode(restoreTheme);
-      storeDarkMode(restoreTheme);
-    };
-  }, [themeMode, scheduleVersion]);
-  // Preferensi tersimpan di Pengaturan (tema, jadwal, izin menu) disinkronkan
-  // ke shell secara live lewat event — tidak perlu reload.
-  useEffect(() => {
-    const onThemeChanged = () => {
-      try {
-        const saved = localStorage.getItem(ADMIN_THEME_KEY);
-        setThemeMode(saved === 'light' || saved === 'dark' ? saved : 'auto');
-      } catch { /* storage blocked */ }
-      setScheduleVersion(v => v + 1);
-    };
-    const onPermsChanged = () => setPermsVersion(v => v + 1);
-    window.addEventListener('sp-admin-theme-changed', onThemeChanged);
-    window.addEventListener('sp-admin-perms-changed', onPermsChanged);
-    return () => {
-      window.removeEventListener('sp-admin-theme-changed', onThemeChanged);
-      window.removeEventListener('sp-admin-perms-changed', onPermsChanged);
+      applyDarkMode(readDarkMode());
     };
   }, []);
-  const cycleTheme = useCallback(() => {
-    setThemeMode(prev => {
-      const next = nextThemeMode(prev);
-      try { localStorage.setItem(ADMIN_THEME_KEY, next); } catch { /* storage blocked */ }
-      return next;
-    });
+  const [permsVersion, setPermsVersion] = useState(0);
+  // Preferensi tersimpan di Pengaturan (izin menu) disinkronkan ke shell
+  // secara live lewat event — tidak perlu reload.
+  useEffect(() => {
+    const onPermsChanged = () => setPermsVersion(v => v + 1);
+    window.addEventListener('sp-admin-perms-changed', onPermsChanged);
+    return () => {
+      window.removeEventListener('sp-admin-perms-changed', onPermsChanged);
+    };
   }, []);
   // Preserve sidebar position without resetting scroll on every parent render.
   const sidebarScrollTop = useRef(0);
@@ -483,7 +445,6 @@ const AdminPortal = ({
   const quickActions: PaletteRow[] = [
     { key: 'act-refresh', label: 'Muat ulang data dashboard', icon: RefreshCw, onSelect: () => { refreshStats(); closePalette(); } },
     { key: 'act-rail', label: rail ? 'Perlebar sidebar' : 'Ciutkan sidebar', icon: rail ? PanelLeftOpen : PanelLeftClose, onSelect: () => { toggleRail(); closePalette(); } },
-    { key: 'act-theme', label: `Ganti tema (sekarang: ${modeLabel(themeMode)})`, icon: isDarkNow ? Sun : Moon, onSelect: () => { cycleTheme(); closePalette(); } },
   ];
   const q = paletteQuery.trim().toLowerCase();
   const filteredActions = q
@@ -717,20 +678,14 @@ const AdminPortal = ({
   // ── Content router ─────────────────────────────────────────────────────────
   const renderContent = () => {
     // Role-based workspace routing (branch redesign): peran ber-workspace tetap
-    // mendapat dashboard khusus di tab dashboard. Tema mengikuti isDarkNow;
-    // gelap/terang di workspace melompat langsung ke mode sengaja (bukan siklus).
+    // mendapat dashboard khusus di tab dashboard. Tema workspace mengikuti
+    // tema shell (terang tetap — design.md §4).
     const ws = getAdminWorkspace(userRole);
     if (activeTab === 'dashboard' && ws) {
       const dashProps = {
         userRole,
         currentUser,
         onLogout,
-        darkMode: isDarkNow,
-        onToggleDark: () => {
-          const next: AdminThemeMode = isDarkNow ? 'light' : 'dark';
-          try { localStorage.setItem(ADMIN_THEME_KEY, next); } catch { /* storage blocked */ }
-          setThemeMode(next);
-        },
       };
       switch (ws) {
         case 'command':     return <CommandDashboard {...dashProps} />;
@@ -795,7 +750,6 @@ const AdminPortal = ({
   const headerBg = 'sp-glass-strong border-ds-border shadow-ds-sm transition-[background-color,border-color,box-shadow] duration-300';
   const inputBg  = 'bg-ds-card2 border-ds-border text-ds-ink placeholder-ds-ink3';
 
-  const themeLabel = modeLabel(themeMode);
   const sectionTabs = activeSection && activeSectionChildren.length > 1 ? (
     <div
       role="tablist"
@@ -1049,16 +1003,6 @@ const AdminPortal = ({
                 </>
               )}
             </div>
-            <button
-              type="button"
-              onClick={cycleTheme}
-              title={`Tema: ${themeLabel} (klik untuk ganti)`}
-              aria-label={`Ganti tema admin. Sekarang ${themeLabel}.`}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-2xs font-bold whitespace-nowrap shrink-0 transition-colors ${'bg-ds-card2 border-ds-border text-ds-ink3 hover:border-ds-green/50'}`}
-            >
-              {themeMode === 'auto' ? <Clock size={14} /> : isDarkNow ? <Moon size={14} /> : <Sun size={14} />}
-              <span className="hidden xl:inline">{themeLabel}</span>
-            </button>
             <button
               type="button"
               onClick={() => setShortcutsOpen(true)}

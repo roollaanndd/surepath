@@ -9,13 +9,11 @@ interface Props {
   userRole: string;
   currentUser: any;
   onLogout: () => void;
-  darkMode: boolean;
-  onToggleDark: () => void;
 }
 
 const formatIDR = (n: number) => `Rp ${Math.round(n).toLocaleString('id-ID')}`;
 
-export const MarketingDashboard: React.FC<Props> = ({ userRole, currentUser, onLogout, darkMode, onToggleDark }) => {
+export const MarketingDashboard: React.FC<Props> = ({ userRole, currentUser, onLogout }) => {
   const [team, setTeam] = useState<any[]>([]);
   const [b2b, setB2b] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,8 +44,6 @@ export const MarketingDashboard: React.FC<Props> = ({ userRole, currentUser, onL
       workspace="marketing"
       userRole={userRole}
       userName={currentUser?.name}
-      darkMode={darkMode}
-      onToggleDark={onToggleDark}
       onLogout={onLogout}
       actions={
         <button onClick={load} className="flex h-9 items-center gap-1.5 rounded-full border border-ds-border px-3 text-xs font-bold text-ds-ink3 transition-all hover:text-ds-ink">

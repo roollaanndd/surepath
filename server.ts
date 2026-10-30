@@ -20,11 +20,18 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 const PRODUCTION_CSP = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://esm.sh https://www.googletagmanager.com https://prod.spline.design",
+  // FIX audit 2026-10-28 (P2-3): dropped https://esm.sh and https://prod.spline.design
+  // — neither index.html nor any bundle references them, so they were dead
+  // allowance that only widened the XSS surface. https://news.google.com stays
+  // allowed because the public-site footer mounts the Google "Preferred
+  // Sources" publisher widget (index.html + SiteLayout.tsx). 'unsafe-inline'/
+  // 'unsafe-eval' stay until inline scripts (index.html boot snippets, GA gtag)
+  // move behind a nonce — removing them breaks the app outright.
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://news.google.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
   "img-src 'self' data: blob: https:",
-  "connect-src 'self' https://openrouter.ai https://*.supabase.co wss://*.supabase.co https://esm.sh https://prod.spline.design https://www.google-analytics.com https://region1.google-analytics.com",
+  "connect-src 'self' https://openrouter.ai https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://region1.google-analytics.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -400,6 +407,40 @@ function hashText(text: string): string {
   return crypto.createHash('sha256').update(text).digest('hex').slice(0, 16);
 }
 
+// ─── Admin gate for internal /api/* endpoints (FIX audit 2026-10-28, P1-B) ──
+// /api/ai-audit-log, /api/ai-cache-stats, /api/ai-admin/*, /api/aistudio-test
+// previously had NO authentication while the server binds 0.0.0.0 — anyone on
+// the network could read internal AI telemetry, trigger a business action
+// (ai-admin/run), or burn paid Gemini tokens (aistudio-test). The public
+// client only ever calls /api/ai-gateway (rate-limited), so all other /api
+// routes can require a shared secret without breaking the app.
+//
+// Fail-closed: if SERVER_ADMIN_TOKEN is not configured, admin endpoints stay
+// disabled (503). The token never leaves the operator's environment.
+const SERVER_ADMIN_TOKEN = process.env.SERVER_ADMIN_TOKEN ?? '';
+
+function timingSafeMatch(a: string, b: string): boolean {
+  const ha = crypto.createHash('sha256').update(a).digest();
+  const hb = crypto.createHash('sha256').update(b).digest();
+  return crypto.timingSafeEqual(ha, hb);
+}
+
+function requireAdminSecret(req: any, res: any): boolean {
+  if (!SERVER_ADMIN_TOKEN) {
+    res.status(503).json({ error: 'Admin endpoints disabled: configure SERVER_ADMIN_TOKEN.' });
+    return false;
+  }
+  const auth = typeof req.headers.authorization === 'string' ? req.headers.authorization : '';
+  const provided = auth.startsWith('Bearer ')
+    ? auth.slice(7).trim()
+    : String(req.headers['x-admin-key'] ?? '');
+  if (!provided || !timingSafeMatch(provided, SERVER_ADMIN_TOKEN)) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return false;
+  }
+  return true;
+}
+
 // ─── AI Admin Engine Interval Handle ─────────────────────────────────────────
 let adminInterval: NodeJS.Timeout | null = null;
 
@@ -418,6 +459,18 @@ async function startServer() {
   await initAI();
 
   app.post('/api/aistudio-test', async (req, res) => {
+    if (!requireAdminSecret(req, res)) return;
+
+    // Rate limit: this endpoint calls a paid Gemini API on the operator's key.
+    try {
+      const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
+      if (!checkRateLimit(clientIp, 10)) {
+        return res.status(429).json({ error: 'Rate limit exceeded. Coba lagi dalam 1 menit.' });
+      }
+    } catch {
+      return res.status(429).json({ error: 'Rate limit exceeded.' });
+    }
+
     try {
       const { prompt } = req.body;
       if (!prompt) {
@@ -626,8 +679,9 @@ async function startServer() {
     }
   });
 
-  // ─── AI Audit Log Endpoint (admin only — for monitoring) ──────────────────
+  // ─── AI Audit Log Endpoint (admin only — gated, audit 2026-10-28 P1-B) ─────
   app.get("/api/ai-audit-log", (req, res) => {
+    if (!requireAdminSecret(req, res)) return;
     const limit = parseInt(req.query.limit as string) || 50;
     const recent = aiAuditLog.slice(-limit).reverse();
     res.json({
@@ -644,8 +698,9 @@ async function startServer() {
     });
   });
 
-  // ─── AI Cache Stats Endpoint (monitoring) ─────────────────────────────────
+  // ─── AI Cache Stats Endpoint (monitoring — gated, audit 2026-10-28 P1-B) ──
   app.get("/api/ai-cache-stats", (req, res) => {
+    if (!requireAdminSecret(req, res)) return;
     const entries = Array.from(responseCache.entries())
       .map(([key, val]) => ({
         key: key.slice(0, 20) + '...',
@@ -657,8 +712,9 @@ async function startServer() {
     res.json({ data: entries, totalCached: responseCache.size });
   });
 
-  // ─── AI Admin Engine — Manual trigger + status ────────────────────────────
+  // ─── AI Admin Engine — Manual trigger + status (gated, audit P1-B) ────────
   app.post("/api/ai-admin/run", async (req, res) => {
+    if (!requireAdminSecret(req, res)) return;
     try {
       console.log('[API] AI Admin manual tick triggered');
       const results = await runAIAdminTick();
@@ -675,6 +731,7 @@ async function startServer() {
   });
 
   app.get("/api/ai-admin/status", (req, res) => {
+    if (!requireAdminSecret(req, res)) return;
     res.json({
       running: adminInterval !== null,
       intervalMinutes: 5,
@@ -685,7 +742,14 @@ async function startServer() {
   });
 
   // Payment Gateway Proxy (Simulated Midtrans/Stripe)
+  // P3 (audit 2026-10-28): this endpoint hands out fake payment tokens
+  // (`mok_…`). It must never answer in production unless an operator
+  // explicitly re-enables the simulator for staging.
   app.post("/api/payments/create", async (req, res) => {
+    if (isProduction && process.env.PAYMENT_SIMULATION_ENABLED !== 'true') {
+      console.warn('[payments] simulated payment endpoint blocked in production');
+      return res.status(404).json({ error: 'Not found' });
+    }
     try {
       const { amount, policyType, userId, email } = req.body;
 
@@ -709,10 +773,14 @@ async function startServer() {
     }
   });
 
-  // Webhook for Server-to-Server callbacks
+  // Create a real payment webhook sink so misconfigured Xendit accounts can't
+  // silently "succeed" against a dead endpoint. The real Xendit callback URL is
+  // the Supabase edge function (/functions/v1/xendit-webhook); this stub only
+  // answers 404 with a corrective message.
   app.post("/api/payments/webhook", (req, res) => {
-     const signatureKey = req.headers['x-callback-token'];
-     res.status(200).json({ received: true });
+    res.status(404).json({
+      error: 'Not the Xendit callback. Point the Xendit dashboard at the xendit-webhook edge function.',
+    });
   });
 
   // Vite middleware for development

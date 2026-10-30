@@ -6,6 +6,30 @@ import { findClientIdByEmail } from './clientLink.ts';
 // json() helper — returns ActionResult (main index.ts converts to Response)
 const json = (body: unknown, status = 200): ActionResult => ({ status, body });
 
+// Audit v2.7.14 (P1-A): FILTER INJECTION GUARD untuk nilai yang diinterpolasi
+// mentah ke string filter `.or()` PostgREST. Filter `.or()` diparse oleh
+// PostgREST, tidak di-bind sebagai parameter — jadi koma/titik/kurung di dalam
+// nilai akan MENULIS ULANG predikat (mis. "ALL,base_commission_rate.gt.0.5"
+// menambah kondisi liar dan, karena gateway berjalan dengan service_role
+// melewati RLS, bisa mengambil baris mana pun). Pola kelas bug yang sama sudah
+// ditutup di FIX v2.6.18 (claims.ts / users.ts / mitraAccounts.ts).
+//
+// Satu implementasi teruji: primitive strip ada di `_shared/sanitize.ts`
+// (regresi: services/__tests__/postgrestSanitize.test.ts). Wrapper di sini
+// menambahkan kebijakan lebih ketat untuk coverage_type — payload yang PERLU
+// disanitasi berarti payload kotor dan DITOLAK (caller membalas 400), bukan
+// diam-diam dipaksa jadi nilai lain.
+import { sanitizeFilterValue } from '../_shared/sanitize.ts';
+
+const SAFE_OR_VALUE_RE = /^[\p{L}\p{N}_-]+$/u;
+export const sanitizeOrValue = (raw: unknown, maxLen = 30): string => {
+  const s = String(raw ?? '').trim();
+  // Charset aman: huruf, angka, underscore, tanda hubung. Tanpa titik/koma/
+  // kurung, satu nilai selamanya hanya satu atom predikat — tidak bisa
+  // menyusun term tambahan atau mengosongkan value eq.
+  return SAFE_OR_VALUE_RE.test(s) ? sanitizeFilterValue(s, maxLen) : '';
+};
+
 export async function handleOrdersAction(action: string, ctx: GatewayContext): Promise<ActionResult | null> {
   const { db, params, caller, sendTelegram, logActivity, checkRateLimit, RESEND_KEY } = ctx;
 
@@ -319,6 +343,16 @@ export async function handleOrdersAction(action: string, ctx: GatewayContext): P
           return json({ error: 'client_name, product_code, product_name, coverage_type, status required' }, 400);
         }
 
+        // Audit v2.7.14 (P1-A): coverage_type dibersihkan SEBELUM dipakai di
+        // mana pun — tiga lookup sp_insurer_products menginterpolasikannya ke
+        // string .or(), insertRow menyimpannya. Payload kotor ditolak 400.
+        const coverageType = sanitizeOrValue(p.coverage_type);
+        if (!coverageType) {
+          return json({ error: 'coverage_type tidak valid.' }, 400);
+        }
+        // Predikat coverage: nilai eksak dulu, bila tidak ada baris generik 'ALL'.
+        const orCoverage = `vehicle_coverage.eq.${coverageType},vehicle_coverage.eq.ALL`;
+
         // Server-side validation: core premium fields must be positive numbers.
         const POSITIVE_NUM = ['base_premium', 'total_premium'];
         for (const k of POSITIVE_NUM) {
@@ -351,9 +385,9 @@ export async function handleOrdersAction(action: string, ctx: GatewayContext): P
             .eq('insurer_id', p.insurer_id)
             .eq('product_type', p.vehicle_type)
             .eq('is_active', true)
-            .or(`vehicle_coverage.eq.${p.coverage_type},vehicle_coverage.eq.ALL`);
+            .or(orCoverage);
           // Prefer the exact coverage-type match over a generic "ALL" row.
-          const matchingProduct = (matchingProducts ?? []).find((r: any) => r.vehicle_coverage === p.coverage_type)
+          const matchingProduct = (matchingProducts ?? []).find((r: any) => r.vehicle_coverage === coverageType)
             ?? (matchingProducts ?? [])[0];
           const maxAge = matchingProduct?.max_vehicle_age_years;
           if (maxAge && vehicleAge > maxAge) {
@@ -394,7 +428,7 @@ export async function handleOrdersAction(action: string, ctx: GatewayContext): P
           client_ktp:        p.client_ktp        ? String(p.client_ktp).slice(0, 50)      : null,
           product_code:      String(p.product_code ?? '').slice(0, 50),
           product_name:      String(p.product_name ?? '').slice(0, 200),
-          coverage_type:     String(p.coverage_type ?? '').slice(0, 30),
+          coverage_type:     coverageType,
           vehicle_type:      p.vehicle_type      ? String(p.vehicle_type).slice(0, 30)    : null,
           vehicle_details:   p.vehicle_details   ? p.vehicle_details                       : null,
           sum_insured:       Number(p.sum_insured ?? 0),
@@ -425,7 +459,7 @@ export async function handleOrdersAction(action: string, ctx: GatewayContext): P
             .eq('insurer_id', String(p.insurer_id))
             .eq('product_type', p.vehicle_type ?? 'CAR')
             .eq('is_active', true)
-            .or(`vehicle_coverage.eq.${p.coverage_type},vehicle_coverage.eq.ALL`)
+            .or(orCoverage)
             .maybeSingle();
           if (insProd) {
             serverCommissionRate = Number(insProd.base_commission_rate ?? 0.10);
@@ -506,7 +540,7 @@ export async function handleOrdersAction(action: string, ctx: GatewayContext): P
               .eq('insurer_id', p.insurer_id)
               .eq('product_type', p.vehicle_type ?? 'CAR')
               .eq('is_active', true)
-              .or(`vehicle_coverage.eq.${p.coverage_type},vehicle_coverage.eq.ALL`)
+              .or(orCoverage)
               .maybeSingle();
             if (insurerProduct?.max_discount_rate != null) {
               insurerMaxDiscount = Number(insurerProduct.max_discount_rate);

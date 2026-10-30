@@ -1,6 +1,6 @@
 // orders.ts — 10 actions
 // Auto-generated from data-gateway/index.ts split
-// Deploy-path diagnostic marker (v2.7.16 r2): run with annotation capture.
+// Deploy-path diagnostic marker (v2.7.16 r3): runs after token rotation.
 import type { GatewayContext, ActionResult } from './types.ts';
 import { findClientIdByEmail } from './clientLink.ts';
 

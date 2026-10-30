@@ -111,7 +111,7 @@ Role truths enforced server-side (do not replicate client-side):
 
 Shared platform behaviors (cross-surface):
 - Supabase Auth + RLS (deny-all baseline) via `data-gateway` (service_role,
-  114 actions at last count) with dispatcher-level **trust gate** defined for 6
+  114 actions at last count) with dispatcher-level **trust gate** LIVE for 6
   write actions; `ensure_profile` backstop rejects anonymous/role-less
   profiles (`ROLE_REQUIRED`).
 - PWA install (single `pwaInstall` service), service worker (precache +
@@ -176,9 +176,22 @@ Shared platform behaviors (cross-surface):
 - All authorization is server-side at the gateway/RLS boundary. **Never** trust
   client role/owner IDs; write flows re-verify ownership
   (`caller.ownerIds`; claims/orders both re-check).
-- Trust gate (defined, activation depends on edge deploy health): 403 +
+- Trust gate (LIVE since the v2.7.16 data-gateway deploy, 2026-10-30 — the
+  dispatcher enforces it unconditionally, no flag; grandfathering keeps all
+  accounts created before 2026-09-12 unblocked): 403 +
   `code:'VERIFICATION_REQUIRED'` for the six write actions on untrusted
-  accounts; admin bypasses; grandfathering keeps legacy accounts free.
+  accounts — `create_policy_order`, `submit_claim`,
+  `agent_request_withdrawal`, `redeem_coins`, `apply_referral`,
+  `accept_agreement`; admin roles bypass. Domain check is already
+  enforcing today (tier 0 for garbage domains even if `verified:true`).
+  The `email_confirmed_at` signal only *becomes meaningful* once the owner
+  disables Supabase Auth email auto-confirm (Dashboard → Authentication →
+  Providers → Email) — deliberately an owner-side step because it changes
+  the signup flow. Client readiness verified: both signup paths
+  (`components/AuthGate.tsx`, `components/agent/AgentOnboarding.tsx`)
+  handle the no-session case with an explicit CHECK_EMAIL state, resend
+  support, explicit `emailRedirectTo`, and profile creation from signup
+  metadata via `ensure_profile` on first login.
 - Rate limits: ai-proxy 200 req/h; OTP 3/10min per phone + IP limits;
   gateway `checkRateLimit` for sensitive actions.
 - Withdrawals and disbursement are FINANCE_ROLES-only; OPERATOR read/service
@@ -263,11 +276,13 @@ P0 = security/money-correctness/deploy-integrity (edge functions actually
 deployed when touched). P1 = blocked core journeys + verifiable owner
 complaints. P2 = experience polish with verified findings (e.g. audit
 v2.7.14 items). P3 = nice-to-have.
-Current queue (as of v2.7.14 + open working tree): finish P1 security batch
-(`.or()` filter-injection guard — partially implemented; `server.ts` admin
-gate; `camera=(self)` verified fixed in working tree) → trust-gate activation
-once edge deploy pipeline is green → admin light-first visual migration
-(`design-proposals/2026-10-admin-agent`) → design debt (see `design.md` §15).
+Current queue (updated 2026-10-30, v2.7.16 deployed): P1 security batch DONE
+(`.or()` filter-injection guard shipped & deployed; `server.ts` admin gate
+shipped; `camera=(self)` shipped and verified live in production headers) →
+trust gate live & deployed; remaining sub-step is the OWNER-side toggle
+(disable Supabase Auth email auto-confirm, see §8) → admin light-first
+visual migration (`design-proposals/2026-10-admin-agent`, design.md §4) →
+design debt (see `design.md` §15).
 
 ## 15. Acceptance criteria (release DoD)
 

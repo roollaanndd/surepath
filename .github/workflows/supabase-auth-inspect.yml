@@ -35,8 +35,20 @@ jobs:
           ext_email=$(jq -r '.external_email_enabled // "unset"' /tmp/auth.json)
           has_smtp=$(jq -r 'to_entries | map(select(.value == true)) | map(.key | select(test("confirm|external_.*_enabled|signup", "i"))) | join(",")' /tmp/auth.json)
           konfkeys=$(jq -r 'keys | map(select(test("confirm|signup", "i"))) | join(",")' /tmp/auth.json)
-          echo "::notice::mailer_autoconfirm=${autoconfirm} (true = pendaftar langsung masuk TANPA klik email — harusnya false)"
+          echo "::notice::mailer_autoconfirm=${autoconfirm} (api: unset = default; lihat bukti perilaku di bawah)"
           echo "::notice::disable_signup=${disable}"
           echo "::notice::external_email_enabled=${ext_email}"
           echo "::notice::custom_smtp_configured=${has_smtp}"
           echo "::notice::confirm-or-signup-related-keys=${konfkeys}"
+          # ── Perilaku nyata (agregat, TANPA PII): berapa akun baru yang
+          #    terkonfirmasi <5 detik = auto-confirm masih menyala.
+          q='select to_jsonb(x) from (select count(*)::int as total_users, count(*) filter (where created_at > now() - interval '"'"'30 days'"'"')::int as created_30d, count(*) filter (where created_at > now() - interval '"'"'30 days'"'"' and email_confirmed_at is not null and extract(epoch from (email_confirmed_at - created_at)) < 5)::int as sub5s_30d, count(*) filter (where created_at > now() - interval '"'"'30 days'"'"' and email_confirmed_at is not null)::int as confirmed_30d) x;'
+          code2=$(curl -sS -o /tmp/q.json -w '%{http_code}' -X POST \
+            "https://api.supabase.com/v1/projects/${PROJECT_REF}/database/query" \
+            -H "Authorization: Bearer ${TOK}" -H 'Content-Type: application/json' \
+            -d "{\"query\": $(jq -Rs . <<<"$q")}")
+          if [ "$code2" = "200" ]; then
+            echo "::notice::users-aggregate=$(jq -c '.[0]' /tmp/q.json)"
+          else
+            echo "::notice::users-aggregate=POST query failed HTTP ${code2} (scope database mungkin tidak ada — tidak menghalangi)"
+          fi

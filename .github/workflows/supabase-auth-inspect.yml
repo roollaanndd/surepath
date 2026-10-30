@@ -53,3 +53,34 @@ jobs:
             echo "::notice::users-aggregate=POST query failed HTTP ${code2}"
             echo "::notice::users-aggregate-body=$(jq -c '{message,error,error_code?}' /tmp/q.json 2>/dev/null | head -c 300)"
           fi
+
+      - name: List edge secret NAMES (names only — values never printed)
+        # Evidence for the email audit: which email/OTP/cron secrets actually
+        # exist in the edge runtime. NAMES are not secrets and are safe to
+        # print; VALUES are fetched into a temp file but never echoed.
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          set -euo pipefail
+          TOK="${SUPABASE_ACCESS_TOKEN//[[:space:]]/}"
+          code=$(curl -sS -o /tmp/edge-secrets.json -w '%{http_code}' \
+            "https://api.supabase.com/v1/projects/${PROJECT_REF}/secrets" \
+            -H "Authorization: Bearer ${TOK}")
+          if [ "$code" != "200" ]; then
+            echo "::error::GET /secrets failed: HTTP ${code}"
+            jq -c '{message}' /tmp/edge-secrets.json 2>/dev/null || true
+            exit 1
+          fi
+          names=$(jq -r 'if type == "array" then .[].name else .secrets[].name end' /tmp/edge-secrets.json | sort)
+          count=$(printf '%s\n' "$names" | grep -c . || true)
+          echo "::notice::total_edge_secrets=${count}"
+          echo "::notice::edge_secret_names_only=$(printf '%s,' $names | sed 's/,$//')"
+          # Targeted flags for the email/OTP chain (no values).
+          for want in RESEND_API_KEY ADMIN_DIGEST_EMAIL FONNTE_TOKEN TELEGRAM_BOT_TOKEN TELEGRAM_ADMIN_CHAT_ID CRON_SECRET XENDIT_SECRET_KEY SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY; do
+            if printf '%s\n' "$names" | grep -qx "$want"; then
+              echo "::notice::secret ${want} = TERSEDIA (value tidak dicetak)"
+            else
+              echo "::notice::secret ${want} = TIDAK ADA"
+            fi
+          done

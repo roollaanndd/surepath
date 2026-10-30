@@ -33,8 +33,10 @@ jobs:
           autoconfirm=$(jq -r '.mailer_autoconfirm // "unset"' /tmp/auth.json)
           disable=$(jq -r '.disable_signup // "unset"' /tmp/auth.json)
           ext_email=$(jq -r '.external_email_enabled // "unset"' /tmp/auth.json)
-          has_smtp=$(jq -r 'has("smtp_host") and (.smtp_host // "" | length > 0)' /tmp/auth.json)
+          has_smtp=$(jq -r 'to_entries | map(select(.value == true)) | map(.key | select(test("confirm|external_.*_enabled|signup", "i"))) | join(",")' /tmp/auth.json)
+          konfkeys=$(jq -r 'keys | map(select(test("confirm|signup", "i"))) | join(",")' /tmp/auth.json)
           echo "::notice::mailer_autoconfirm=${autoconfirm} (true = pendaftar langsung masuk TANPA klik email — harusnya false)"
           echo "::notice::disable_signup=${disable}"
           echo "::notice::external_email_enabled=${ext_email}"
           echo "::notice::custom_smtp_configured=${has_smtp}"
+          echo "::notice::confirm-or-signup-related-keys=${konfkeys}"

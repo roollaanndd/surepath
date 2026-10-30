@@ -1,6 +1,6 @@
 // orders.ts — 10 actions
 // Auto-generated from data-gateway/index.ts split
-// Deploy-path diagnostic marker (v2.7.16 r5): runs after secret update.
+// Deploy-path diagnostic marker (v2.7.16 r6): runs after second secret update.
 import type { GatewayContext, ActionResult } from './types.ts';
 import { findClientIdByEmail } from './clientLink.ts';
 

@@ -198,6 +198,12 @@ Jujur: kode browser TIDAK bisa disembunyikan. Obfuscation menaikkan biaya, tidak
 Gerbang ada di data-gateway yang **belum pernah ter-deploy**. Baru berlaku setelah integrasi GitHub Supabase dinyalakan.
 **✅ TIDAK LAGI RELEVAN (2026-10-30):** Deploy Edge Functions hijau (run success setelah token rotation) → gerbang trust LIVE di produksi sejak deploy v2.7.16 `data-gateway`.
 
+## Inventaris secret edge (2026-10-30) — bukti, bukan asumsi
+`supabase-auth-inspect.yml` step baru membaca `GET /v1/projects/{ref}/secrets` dan mencetak **nama saja** (nilai tidak pernah di-echo). Hasil run 41007730837 (commit `b238126`): 9 secret ada — `CRON_SECRET, GEMINI_API_KEY, SUPABASE_ANON_KEY, SUPABASE_DB_URL, SUPABASE_JWKS, SUPABASE_PUBLISHABLE_KEYS, SUPABASE_SECRET_KEYS, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_URL`.
+**Tidak ada:** `RESEND_API_KEY`, `ADMIN_DIGEST_EMAIL`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ADMIN_CHAT_ID`, `FONNTE_TOKEN`, `XENDIT_SECRET_KEY`.
+Precision penting: RESEND dibaca **hanya dari env edge** (4 jalur: `daily-report`, `insurer-reminder-cron`, `send-insurer-email`, `data-gateway` orders) tanpa fallback DB → email send definitif belum bisa jalan; FONNTE/XENDIT/OPENROUTER punya fallback `get_app_secret` (tabel `app_secrets`) → absen di edge ≠ mati.
+**Penghubung siap:** `.github/workflows/sync-email-secrets.yml` (dispatch-only) — owner taruh `RESEND_API_KEY` (+ `ADMIN_DIGEST_EMAIL`) sebagai GitHub secret, jalankan workflow → POST batch ke edge. Opsi `include_daily_report_test=true` me-rotate `CRON_SECRET` + invoke `daily-report` di tempat (⚠️ membatalkan header Authorization yang tersimpan di jadwal cron Dashboard).
+
 ## v2.5.5 — Kode sumber server terpublikasi lewat sourcemap (2026-09-11)
 ### Cacatnya
 `npm run build` menulis `esbuild server.ts --sourcemap --outfile=dist/server.cjs` — **dist/ adalah folder publik Vercel**. Sourcemap dibuat dengan `sourcesContent`, jadi **kode TS asli** `server.ts` (AI gateway + lapisan validasi PII-leak) dan `services/aiAdminEngine.ts` bisa diunduh utuh lewat `/server.cjs.map`. `server.ts` menurut CLAUDE.md hanya untuk dev lokal — tidak pernah punya urusan di folder publik.

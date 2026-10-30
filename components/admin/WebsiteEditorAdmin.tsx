@@ -33,8 +33,8 @@ const BG_TYPES: { value: SpWebsiteConfig['bg_type']; label: string; desc: string
   { value: 'none',          label: 'None',          desc: 'Transparan / tanpa bg' },
 ];
 
-const inputCls = 'bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-emerald-500/50 w-full text-white placeholder-gray-600 transition-colors';
-const labelCls = 'text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-1.5 block';
+const inputCls = 'bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-emerald-500/50 w-full text-ds-ink placeholder-gray-600 transition-colors';
+const labelCls = 'text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-1.5 block';
 
 const defaultSection = (key: SectionKey): SpWebsiteConfig => ({
   section_key: key,
@@ -158,7 +158,7 @@ const WebsiteEditorAdmin: React.FC = () => {
     <div className="flex gap-6 h-full min-h-[70vh]">
       {/* ── Left: section list ─────────────────────────────────────────── */}
       <aside className="w-56 flex-shrink-0 space-y-1.5">
-        <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-4 flex items-center gap-2">
+        <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-4 flex items-center gap-2">
           <Layers size={12} /> Sections
         </p>
         {SECTIONS.map(s => (
@@ -167,15 +167,15 @@ const WebsiteEditorAdmin: React.FC = () => {
             onClick={() => setActiveKey(s.key)}
             className={`w-full text-left px-4 py-3.5 rounded-2xl transition-all duration-200 group ${
               activeKey === s.key
-                ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400'
-                : 'bg-ds-card2 border border-ds-border text-ds-ink3 hover:text-white hover:border-white/15'
+                ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400'
+                : 'bg-ds-card2 border border-ds-border text-ds-ink3 hover:text-ds-ink hover:border-white/15'
             }`}
           >
             <div className="flex items-center justify-between">
               <span className="text-xs font-black uppercase tracking-wide">{s.label}</span>
-              <ChevronRight size={12} className={activeKey === s.key ? 'text-emerald-400' : 'text-ds-ink2 group-hover:text-ds-ink3'} />
+              <ChevronRight size={12} className={activeKey === s.key ? 'text-emerald-700 dark:text-emerald-400' : 'text-ds-ink2 group-hover:text-ds-ink3'} />
             </div>
-            <p className="text-[10px] text-ds-ink2 mt-0.5 leading-tight">{s.desc}</p>
+            <p className="text-2xs text-ds-ink2 mt-0.5 leading-tight">{s.desc}</p>
           </button>
         ))}
       </aside>
@@ -189,17 +189,17 @@ const WebsiteEditorAdmin: React.FC = () => {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center">
-              <Monitor size={18} className="text-emerald-400" />
+              <Monitor size={18} className="text-emerald-700 dark:text-emerald-400" />
             </div>
             <div>
-              <h3 className="text-sm font-black uppercase tracking-widest text-white">
+              <h3 className="text-sm font-black uppercase tracking-widest text-ds-ink">
                 {SECTIONS.find(s => s.key === activeKey)?.label}
               </h3>
               {savedAt && (
-                <p className="text-[10px] text-ds-ink2">Terakhir disimpan: {savedAt}</p>
+                <p className="text-2xs text-ds-ink2">Terakhir disimpan: {savedAt}</p>
               )}
               {loading && (
-                <p className="text-[10px] text-ds-green flex items-center gap-1"><Loader2 size={10} className="animate-spin" /> Memuat...</p>
+                <p className="text-2xs text-ds-green flex items-center gap-1"><Loader2 size={10} className="animate-spin" /> Memuat...</p>
               )}
             </div>
           </div>
@@ -209,8 +209,8 @@ const WebsiteEditorAdmin: React.FC = () => {
             onClick={() => set({ is_visible: !form.is_visible })}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-xs font-black uppercase tracking-widest transition-all ${
               form.is_visible
-                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                : 'bg-rose-500/10 border-rose-500/30 text-rose-400'
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400'
+                : 'bg-rose-500/10 border-rose-500/30 text-rose-700 dark:text-rose-300'
             }`}
           >
             {form.is_visible ? <Eye size={14} /> : <EyeOff size={14} />}
@@ -226,7 +226,7 @@ const WebsiteEditorAdmin: React.FC = () => {
               onClick={() => setActiveTab(tab)}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all border ${
                 activeTab === tab
-                  ? 'bg-white/[0.08] border-white/15 text-white'
+                  ? 'bg-white/[0.08] border-white/15 text-ds-ink'
                   : 'bg-transparent border-ds-border text-ds-ink3 hover:text-ds-ink2'
               }`}
             >
@@ -240,8 +240,8 @@ const WebsiteEditorAdmin: React.FC = () => {
           {activeTab === 'content' && activeKey === 'splash' && (
             <>
               <div className="flex items-center gap-3 p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl">
-                <Sparkles size={14} className="text-emerald-400 flex-shrink-0" />
-                <p className="text-[10px] text-emerald-300/80 leading-relaxed">
+                <Sparkles size={14} className="text-emerald-700 dark:text-emerald-400 flex-shrink-0" />
+                <p className="text-2xs text-emerald-300/80 leading-relaxed">
                   Layar loading pertama saat app dibuka. Perubahan berlaku setelah halaman di-refresh.
                 </p>
               </div>
@@ -254,14 +254,14 @@ const WebsiteEditorAdmin: React.FC = () => {
                   type="button"
                   onClick={() => logoInputRef.current?.click()}
                   disabled={logoUploading}
-                  className="flex items-center gap-2 w-full px-4 py-3 bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 text-emerald-400 rounded-xl text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50 mb-3"
+                  className="flex items-center gap-2 w-full px-4 py-3 bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 rounded-xl text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50 mb-3"
                 >
                   {logoUploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
                   {logoUploading ? 'Mengupload...' : 'Upload Logo dari Perangkat'}
                 </button>
                 <div className="flex items-center gap-2 mb-3">
                   <div className="flex-1 h-px bg-ds-card2" />
-                  <span className="text-[10px] text-ds-ink2 font-bold uppercase tracking-widest">atau URL</span>
+                  <span className="text-2xs text-ds-ink2 font-bold uppercase tracking-widest">atau URL</span>
                   <div className="flex-1 h-px bg-ds-card2" />
                 </div>
                 <input
@@ -404,7 +404,7 @@ const WebsiteEditorAdmin: React.FC = () => {
                       />
                       <div>
                         <p className="text-xs font-black uppercase tracking-wide">{bt.label}</p>
-                        <p className="text-[10px] text-ds-ink2 mt-0.5">{bt.desc}</p>
+                        <p className="text-2xs text-ds-ink2 mt-0.5">{bt.desc}</p>
                       </div>
                     </label>
                   ))}
@@ -426,14 +426,14 @@ const WebsiteEditorAdmin: React.FC = () => {
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={uploading}
-                        className="flex items-center gap-2 w-full px-4 py-3 bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 text-emerald-400 rounded-xl text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                        className="flex items-center gap-2 w-full px-4 py-3 bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 rounded-xl text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50"
                       >
                         {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
                         {uploading ? 'Mengupload...' : 'Upload Gambar dari Perangkat'}
                       </button>
                       <div className="flex items-center gap-2">
                         <div className="flex-1 h-px bg-ds-card2" />
-                        <span className="text-[10px] text-ds-ink2 font-bold uppercase tracking-widest">atau URL</span>
+                        <span className="text-2xs text-ds-ink2 font-bold uppercase tracking-widest">atau URL</span>
                         <div className="flex-1 h-px bg-ds-card2" />
                       </div>
                       <input
@@ -448,7 +448,7 @@ const WebsiteEditorAdmin: React.FC = () => {
                           style={{ backgroundImage: `url(${form.bg_value})` }}
                         >
                           <div className="absolute inset-0 bg-black/20 flex items-end p-2">
-                            <span className="text-[9px] text-white/60 font-bold uppercase tracking-widest">Preview</span>
+                            <span className="text-2xs text-ds-ink3 font-bold uppercase tracking-widest">Preview</span>
                           </div>
                         </div>
                       )}
@@ -472,7 +472,7 @@ const WebsiteEditorAdmin: React.FC = () => {
           )}
         </div>
 
-        {saveError && <p role="alert" className="mb-3 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-xs font-semibold text-rose-300">{saveError}</p>}
+        {saveError && <p role="alert" className="mb-3 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-xs font-semibold text-rose-700 dark:text-rose-200">{saveError}</p>}
         {/* Action buttons */}
         <div className="flex items-center gap-3 mt-5">
           <button
@@ -485,19 +485,19 @@ const WebsiteEditorAdmin: React.FC = () => {
           </button>
           <button
             onClick={handleReset}
-            className="flex items-center gap-2 px-5 py-3 bg-white/[0.04] border border-ds-border hover:bg-ds-card2 text-ds-ink3 hover:text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all"
+            className="flex items-center gap-2 px-5 py-3 bg-white/[0.04] border border-ds-border hover:bg-ds-card2 text-ds-ink3 hover:text-ds-ink rounded-xl font-black text-xs uppercase tracking-widest transition-all"
           >
             <RotateCcw size={14} /> Reset ke Default
           </button>
           <div className="flex-1" />
           <div className="flex items-center gap-2 px-4 py-2 bg-ds-card2 border border-ds-border rounded-xl">
             <Layout size={12} className="text-ds-green" />
-            <span className="text-[10px] text-ds-green font-bold uppercase tracking-widest">Live · Tersimpan di Supabase</span>
+            <span className="text-2xs text-ds-green font-bold uppercase tracking-widest">Live · Tersimpan di Supabase</span>
             <Image size={12} className="text-ds-green" />
           </div>
         </div>
 
-        <p className="text-[10px] text-ds-ink2 mt-3 leading-relaxed">
+        <p className="text-2xs text-ds-ink2 mt-3 leading-relaxed">
           Perubahan disimpan ke Supabase dan langsung aktif di website setelah pengunjung refresh. Kosongkan field untuk kembali ke konten default.
         </p>
         </>

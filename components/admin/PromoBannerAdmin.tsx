@@ -4,8 +4,8 @@ import {
   SpWebsiteConfig, fetchWebsiteSection, upsertWebsiteSection, uploadSectionImage,
 } from '../../services/supabaseService';
 
-const inputCls = 'bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-emerald-500/50 w-full text-white placeholder-gray-600 transition-colors';
-const labelCls = 'text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-1.5 block';
+const inputCls = 'bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-emerald-500/50 w-full text-ds-ink placeholder-gray-600 transition-colors';
+const labelCls = 'text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-1.5 block';
 
 const PromoBannerAdmin: React.FC = () => {
   const [form, setForm] = useState<Partial<SpWebsiteConfig>>({
@@ -105,19 +105,19 @@ const PromoBannerAdmin: React.FC = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center">
-            <Megaphone size={18} className="text-emerald-400" />
+            <Megaphone size={18} className="text-emerald-700 dark:text-emerald-400" />
           </div>
           <div>
-            <h3 className="text-sm font-black uppercase tracking-widest text-white">Promo Banner</h3>
-            <p className="text-[10px] text-ds-ink2">Banner pengumuman di atas halaman</p>
+            <h3 className="text-sm font-black uppercase tracking-widest text-ds-ink">Promo Banner</h3>
+            <p className="text-2xs text-ds-ink2">Banner pengumuman di atas halaman</p>
           </div>
         </div>
         <button
           onClick={() => set({ is_visible: !form.is_visible })}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-xs font-black uppercase tracking-widest transition-all ${
             form.is_visible
-              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-              : 'bg-rose-500/10 border-rose-500/30 text-rose-400'
+              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400'
+              : 'bg-rose-500/10 border-rose-500/30 text-rose-700 dark:text-rose-300'
           }`}
         >
           {form.is_visible ? <Eye size={14} /> : <EyeOff size={14} />}
@@ -165,7 +165,7 @@ const PromoBannerAdmin: React.FC = () => {
                   />
                   <button
                     onClick={handleRemoveImage}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-black uppercase tracking-widest hover:bg-rose-500/20 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-300 text-xs font-black uppercase tracking-widest hover:bg-rose-500/20 transition-colors"
                   >
                     <X size={12} /> Remove image
                   </button>
@@ -192,7 +192,7 @@ const PromoBannerAdmin: React.FC = () => {
                   />
                 </label>
                 {!imageUrl && (
-                  <span className="text-[10px] text-ds-ink2">Belum ada gambar</span>
+                  <span className="text-2xs text-ds-ink2">Belum ada gambar</span>
                 )}
               </div>
             </div>
@@ -222,7 +222,7 @@ const PromoBannerAdmin: React.FC = () => {
                         )}
                       </div>
                       <div className="flex-shrink-0 w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-                        <span className="text-[10px] font-black">✕</span>
+                        <span className="text-2xs font-black">✕</span>
                       </div>
                     </div>
                   </div>
@@ -238,7 +238,7 @@ const PromoBannerAdmin: React.FC = () => {
                         )}
                       </div>
                       <div className="flex-shrink-0 w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-                        <span className="text-[10px] font-black">✕</span>
+                        <span className="text-2xs font-black">✕</span>
                       </div>
                     </div>
                   </div>
@@ -254,7 +254,7 @@ const PromoBannerAdmin: React.FC = () => {
         </div>
       )}
 
-      {saveError && <p role="alert" className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-xs font-semibold text-rose-300">{saveError}</p>}
+      {saveError && <p role="alert" className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-xs font-semibold text-rose-700 dark:text-rose-200">{saveError}</p>}
       <div className="flex items-center gap-3">
         <button
           onClick={handleSave}

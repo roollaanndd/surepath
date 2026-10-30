@@ -90,6 +90,28 @@ Aturan: tak ada badge/header/empty state baru per view; semua status dari `lib/s
 
 Urutan ini karena admin sumber konfigurasi; agent mengonsumsi setelah kontrak status stabil.
 
+### Status S1 — selesai di v2.7.15 (2026-10-28)
+
+Terukur, bukan ditaksir: sapuan `getComputedStyle` di Chromium headless atas 11
+bagian admin × 2 tema, plus 390px.
+
+| Kriteria | Hasil |
+|---|---|
+| Menu ≤6 grup & ≤18 item | 6 grup / 17 section (sudah di main sebelum sprint ini) |
+| `text-white` pada surface terang = 0 | 0 — ditambah 33 `hover:text-white` yang juga tak terbaca |
+| Lantai tipografi | 494 → 0 kelas sub-11px; satu pengecualian `text-badge` (8.8px) |
+| Kontras | 0 kegagalan AA, 11 bagian × 2 tema, juga di 390px |
+| Mode gelap | hidup kembali: 99 aturan `!important` theme-agnostic dipagari ke `:root:not(.dark)` |
+| 8 komponen bersama | `AdminKpiCard` (satu pemilik, 7 dashboard), `AdminPageHeader`, `AdminStatusBadge`, `AdminEmptyState`, `AdminErrorBanner`, `AdminSectionCard` dipakai; `DataTable`/`FilterBar` dan `DetailDrawer` belum diekstrak — masuk S2 bersama antrean |
+| Bottom bar admin <1024px | ada, 4 tujuan + Menu, difilter per izin role |
+| PageHeader + 1 aksi tiap view | Kelola User, Penarikan Dana Mitra, Antrean Klaim; sisa view menyusul di S2 |
+
+Dikunci oleh `services/__tests__/adminDesignFloor.test.ts`.
+
+**Belum dikerjakan dari S1:** pemindahan `adminUI` → `shared/ds` (penggantian
+nama lintas portal, bukan perbaikan yang terlihat pengguna), dan skor a11y
+Lighthouse ≥95 — belum diukur di sesi ini.
+
 ## 6. Perlu keputusan (to-be-confirmed)
 
 - **Lapisan warna & tipe:** `sp-*` (DS) vs `ds-*` (admin). Usul: `ds-*` kanonik, `sp-*` alias — perlu persetujuan design owner.

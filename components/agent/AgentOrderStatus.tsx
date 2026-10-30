@@ -9,6 +9,7 @@ import {
   type SpPolicyOrder, type SpPayment,
 } from '../../services/supabaseService';
 import { createXenditInvoice } from '../../services/paymentService';
+import { resolveDocumentUrl } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { SecureDocLink } from '../shared/SecureDoc';
 import { AgentArtKeyframes, AgentHero, SpotOrders, AgentEmpty } from './AgentArt';
@@ -40,6 +41,18 @@ const OrderSheet: React.FC<{
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
   const meta = STATUS_META[order.status];
   const v    = order.vehicle_details ?? {};
+
+  // Foto kendaraan kini diarsipkan pada bucket privat order-documents
+  // (audit 28 Okt 2026) — URL kanoniknya harus ditandatangani lewat gateway
+  // sebelum bisa dirender (pemilik order diizinkan).
+  const [vehicleImgSrc, setVehicleImgSrc] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    resolveDocumentUrl(order.vehicle_image_url).then(u => {
+      if (!cancelled) setVehicleImgSrc(u);
+    });
+    return () => { cancelled = true; };
+  }, [order.vehicle_image_url]);
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col" onClick={onClose}>
@@ -79,9 +92,9 @@ const OrderSheet: React.FC<{
           ))}
         </div>
 
-        {order.vehicle_image_url && (
+        {vehicleImgSrc && (
           <img
-            src={order.vehicle_image_url}
+            src={vehicleImgSrc}
             alt="Vehicle"
             className="rounded-2xl w-full object-cover max-h-40 border border-slate-100 dark:border-white/10 mb-4"
           />

@@ -53,7 +53,7 @@ export const CommandDashboard: React.FC<Props> = ({ userRole, currentUser, onLog
         <div className="relative overflow-hidden rounded-[1.75rem] bg-[radial-gradient(circle_at_top,_#0B1120,_#020617)] p-6 text-white">
           <div className="absolute -top-20 -right-20 h-72 w-72 rounded-full bg-emerald-400/10 blur-3xl" />
           <div className="relative">
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-300">Master Admin • Command Center</p>
+            <p className="text-2xs font-black uppercase tracking-[0.3em] text-emerald-300">Master Admin • Command Center</p>
             <h2 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">Pengawasan platform secara menyeluruh</h2>
             <p className="mt-2 max-w-2xl text-sm text-white/70">Satu tempat untuk melihat kesehatan bisnis, risiko, persetujuan kritikal, audit, dan konfigurasi sistem.</p>
           </div>
@@ -70,7 +70,7 @@ export const CommandDashboard: React.FC<Props> = ({ userRole, currentUser, onLog
           <div className="xl:col-span-2 rounded-3xl border border-ds-border bg-ds-card shadow-ds-sm">
             <div className="flex items-center justify-between border-b border-ds-border px-6 py-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-ds-ink3">Funnel Pesanan</p>
+                <p className="text-2xs font-black uppercase tracking-[0.22em] text-ds-ink3">Funnel Pesanan</p>
                 <h3 className="text-lg font-black tracking-tight">Status Real-time</h3>
               </div>
             </div>
@@ -85,7 +85,7 @@ export const CommandDashboard: React.FC<Props> = ({ userRole, currentUser, onLog
           </div>
           <div className="rounded-3xl border border-ds-border bg-ds-card shadow-ds-sm">
             <div className="border-b border-ds-border px-6 py-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-ds-ink3">Keamanan & Kontrol</p>
+              <p className="text-2xs font-black uppercase tracking-[0.22em] text-ds-ink3">Keamanan & Kontrol</p>
               <h3 className="text-lg font-black tracking-tight">Aksi Kritis</h3>
             </div>
             <div className="grid gap-2 p-4">

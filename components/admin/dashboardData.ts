@@ -61,7 +61,18 @@ export interface DashboardModel {
 }
 
 const CLOSED_STATUSES = new Set(['CANCELLED', 'REJECTED']);
-const MONTH_LABEL = new Intl.DateTimeFormat('id-ID', { month: 'short' });
+const MONTH_LABEL = new Intl.DateTimeFormat('id-ID', { month: 'short', timeZone: 'UTC' });
+
+// Kalender bisnis SurePath mengikuti WIB (UTC+7). Indonesia tidak menerapkan
+// DST, sehingga offset tetap +7 sepanjang tahun. Komponen tanggal dihitung
+// eksplisit terhadap WIB agar hasilnya sama di mesin apa pun (CI UTC,
+// browser admin di zona waktu mana pun) — bukan mengikuti timezone host.
+const WIB_OFFSET_MS = 7 * 60 * 60 * 1000;
+
+/** Instan waktu yang digeser ke WIB; baca komponennya dengan getter UTC. */
+function wibView(t: number): Date {
+  return new Date(t + WIB_OFFSET_MS);
+}
 
 function parseDate(value?: string | null): number | null {
   if (!value) return null;
@@ -109,9 +120,10 @@ export function groupProducts(orders: readonly SpPolicyOrder[]): ProductSlice[] 
 export function monthlySeries(orders: readonly SpPolicyOrder[], now: Date): MonthSlice[] {
   const buckets: MonthSlice[] = [];
   const index = new Map<string, MonthSlice>();
+  const nowW = wibView(now.getTime());
   for (let i = 5; i >= 0; i -= 1) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const d = new Date(Date.UTC(nowW.getUTCFullYear(), nowW.getUTCMonth() - i, 1));
+    const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
     const slice: MonthSlice = {
       key,
       label: MONTH_LABEL.format(d).replace('.', ''),
@@ -125,8 +137,8 @@ export function monthlySeries(orders: readonly SpPolicyOrder[], now: Date): Mont
     if (CLOSED_STATUSES.has(order.status)) continue;
     const t = parseDate(order.created_at);
     if (t === null) continue;
-    const d = new Date(t);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const d = wibView(t);
+    const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
     const slice = index.get(key);
     if (!slice) continue;
     slice.premium += Number(order.total_premium) || 0;
@@ -138,13 +150,14 @@ export function monthlySeries(orders: readonly SpPolicyOrder[], now: Date): Mont
 /** Polis aktif yang berakhir pada bulan berjalan. */
 export function renewalDays(orders: readonly SpPolicyOrder[], now: Date): RenewalDay[] {
   const counts = new Map<number, number>();
+  const nowW = wibView(now.getTime());
   for (const order of orders) {
     if (order.status !== 'ISSUED') continue;
     const t = parseDate(order.end_date);
     if (t === null) continue;
-    const d = new Date(t);
-    if (d.getFullYear() !== now.getFullYear() || d.getMonth() !== now.getMonth()) continue;
-    counts.set(d.getDate(), (counts.get(d.getDate()) ?? 0) + 1);
+    const d = wibView(t);
+    if (d.getUTCFullYear() !== nowW.getUTCFullYear() || d.getUTCMonth() !== nowW.getUTCMonth()) continue;
+    counts.set(d.getUTCDate(), (counts.get(d.getUTCDate()) ?? 0) + 1);
   }
   return [...counts.entries()]
     .map(([day, count]) => ({ day, count }))

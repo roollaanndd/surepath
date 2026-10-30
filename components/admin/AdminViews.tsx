@@ -28,7 +28,10 @@ import {
   getAdminPayments,
 } from '../../services/supabaseService';
 import { useToast } from '../ui';
-import { AdminEmptyState, AdminErrorBanner } from './adminUI';
+import { AdminEmptyState, AdminErrorBanner, AdminPageHeader, AdminStatusBadge } from './adminUI';
+import { CLAIM_STATUS_META } from '../../lib/statusMeta';
+import { PERMISSION_MENU_IDS, defaultPermissionsFor, SP_ROLE_PERMISSIONS_KEY } from './navigation';
+import { ADMIN_THEME_KEY, readThemeSchedule, storeThemeSchedule, themeLabel as adminThemeLabel, type AdminThemeMode } from './themeMode';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { UserRole } from '../../types';
 import { useTierDefinitions, getTierByCode } from '../../hooks/useTierDefinitions';
@@ -56,8 +59,8 @@ const UserDetailModal: React.FC<{ userId: string; onClose: () => void }> = ({ us
 
   const Field: React.FC<{ label: string; value?: string | number | null }> = ({ label, value }) => (
     <div className="space-y-0.5">
-      <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-ds-ink3">{label}</p>
-      <p className="text-xs font-bold text-white break-all">{value || <span className="text-ds-ink2">—</span>}</p>
+      <p className="text-2xs font-black uppercase tracking-[0.25em] text-ds-ink3">{label}</p>
+      <p className="text-xs font-bold text-ds-ink break-all">{value || <span className="text-ds-ink2">—</span>}</p>
     </div>
   );
 
@@ -70,8 +73,8 @@ const UserDetailModal: React.FC<{ userId: string; onClose: () => void }> = ({ us
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-ds-border">
-          <h2 className="font-black text-sm uppercase tracking-widest text-white">Detail Pengguna</h2>
-          <button onClick={onClose} className="p-2 rounded-xl bg-ds-card2 text-ds-ink3 hover:text-white hover:bg-ds-card2 transition-all">
+          <h2 className="font-black text-sm uppercase tracking-widest text-ds-ink">Detail Pengguna</h2>
+          <button onClick={onClose} className="p-2 rounded-xl bg-ds-card2 text-ds-ink3 hover:text-ds-ink hover:bg-ds-card2 transition-all">
             <X size={16} />
           </button>
         </div>
@@ -88,7 +91,7 @@ const UserDetailModal: React.FC<{ userId: string; onClose: () => void }> = ({ us
             <div className="grid grid-cols-2 gap-4">
               {/* Profile photo */}
               <div className="space-y-2">
-                <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-ds-ink3">Foto Profil</p>
+                <p className="text-2xs font-black uppercase tracking-[0.25em] text-ds-ink3">Foto Profil</p>
                 {user.profile_photo_url && !imgError['profile'] ? (
                   <img
                     src={user.profile_photo_url}
@@ -106,7 +109,7 @@ const UserDetailModal: React.FC<{ userId: string; onClose: () => void }> = ({ us
               </div>
               {/* KTP document */}
               <div className="space-y-2">
-                <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-ds-ink3">Dokumen KTP</p>
+                <p className="text-2xs font-black uppercase tracking-[0.25em] text-ds-ink3">Dokumen KTP</p>
                 {user.ktp_document_url ? (
                   <SecureDocLink url={user.ktp_document_url} className="block w-full">
                     <SecureDocImage
@@ -157,15 +160,15 @@ const UserDetailModal: React.FC<{ userId: string; onClose: () => void }> = ({ us
 // ── Claim photo-fraud detail modal ───────────────────────────────────────────
 
 const CLAIM_FRAUD_VERDICT_META: Record<string, { label: string; color: string; Icon: any }> = {
-  CLEAN:           { label: 'Foto Bersih — Tidak Ada Indikasi Fraud', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', Icon: ShieldCheck },
-  REVIEW_REQUIRED: { label: 'Perlu Tinjauan Manual',                  color: 'bg-amber-500/10 text-amber-400 border-amber-500/20',       Icon: AlertCircle },
-  REJECTED:        { label: 'Risiko Fraud Tinggi',                    color: 'bg-rose-500/10 text-rose-400 border-rose-500/20',          Icon: ShieldAlert },
+  CLEAN:           { label: 'Foto Bersih — Tidak Ada Indikasi Fraud', color: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20', Icon: ShieldCheck },
+  REVIEW_REQUIRED: { label: 'Perlu Tinjauan Manual',                  color: 'bg-amber-500/10 text-amber-800 dark:text-amber-400 border-amber-500/20',       Icon: AlertCircle },
+  REJECTED:        { label: 'Risiko Fraud Tinggi',                    color: 'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/20',          Icon: ShieldAlert },
 };
 
 const PHOTO_VERDICT_BADGE: Record<string, string> = {
-  CLEAN:     'bg-emerald-500/10 text-emerald-400',
-  FLAGGED:   'bg-amber-500/10 text-amber-400',
-  HIGH_RISK: 'bg-rose-500/10 text-rose-400',
+  CLEAN:     'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+  FLAGGED:   'bg-amber-500/10 text-amber-800 dark:text-amber-400',
+  HIGH_RISK: 'bg-rose-500/10 text-rose-700 dark:text-rose-300',
 };
 
 const ClaimDetailModal: React.FC<{ claim: SpClaim; claims: SpClaim[]; onClose: () => void; onSelectClaim: (c: SpClaim) => void }> = ({ claim, claims, onClose, onSelectClaim }) => {
@@ -182,10 +185,10 @@ const ClaimDetailModal: React.FC<{ claim: SpClaim; claims: SpClaim[]; onClose: (
       >
         <div className="flex items-center justify-between px-6 py-5 border-b border-ds-border">
           <div>
-            <h2 className="font-black text-sm uppercase tracking-widest text-white">{claim.claim_number ?? claim.id.slice(0, 8)}</h2>
-            <p className="text-[0.6rem] font-bold text-ds-ink3 mt-0.5">{claim.client_name ?? '—'} · {claim.product_type ?? '—'}</p>
+            <h2 className="font-black text-sm uppercase tracking-widest text-ds-ink">{claim.claim_number ?? claim.id.slice(0, 8)}</h2>
+            <p className="text-2xs font-bold text-ds-ink3 mt-0.5">{claim.client_name ?? '—'} · {claim.product_type ?? '—'}</p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-xl bg-ds-card2 text-ds-ink3 hover:text-white hover:bg-ds-card2 transition-all">
+          <button onClick={onClose} className="p-2 rounded-xl bg-ds-card2 text-ds-ink3 hover:text-ds-ink hover:bg-ds-card2 transition-all">
             <X size={16} />
           </button>
         </div>
@@ -196,7 +199,7 @@ const ClaimDetailModal: React.FC<{ claim: SpClaim; claims: SpClaim[]; onClose: (
               <verdictMeta.Icon size={26} className="shrink-0" />
               <div className="flex-1">
                 <p className="text-xs font-black uppercase tracking-widest">{verdictMeta.label}</p>
-                <p className="text-[0.6rem] font-bold opacity-70 mt-0.5">
+                <p className="text-2xs font-bold opacity-70 mt-0.5">
                   Skor fraud: {claim.ai_fraud_score ?? '—'}/100
                   {claim.ai_analyzed_at ? ` · Dianalisa ${new Date(claim.ai_analyzed_at).toLocaleString('id-ID')}` : ''}
                 </p>
@@ -206,7 +209,7 @@ const ClaimDetailModal: React.FC<{ claim: SpClaim; claims: SpClaim[]; onClose: (
 
           {photos.length > 0 && (
             <div className="space-y-2">
-              <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-ds-ink3">Foto ({photos.length})</p>
+              <p className="text-2xs font-black uppercase tracking-[0.25em] text-ds-ink3">Foto ({photos.length})</p>
               <div className="grid grid-cols-3 gap-3">
                 {photos.map((url: string, i: number) => (
                   <a key={i} href={url} target="_blank" rel="noreferrer">
@@ -219,7 +222,7 @@ const ClaimDetailModal: React.FC<{ claim: SpClaim; claims: SpClaim[]; onClose: (
 
           {reports.length > 0 && (
             <div className="space-y-2">
-              <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-ds-ink3">Laporan Forensik Per Foto</p>
+              <p className="text-2xs font-black uppercase tracking-[0.25em] text-ds-ink3">Laporan Forensik Per Foto</p>
               <div className="space-y-3">
                 {reports.map((r: any, i: number) => {
                   const badge = PHOTO_VERDICT_BADGE[r.verdict] ?? PHOTO_VERDICT_BADGE.CLEAN;
@@ -227,19 +230,19 @@ const ClaimDetailModal: React.FC<{ claim: SpClaim; claims: SpClaim[]; onClose: (
                   return (
                     <div key={i} className="p-4 bg-ds-card2 border border-ds-border rounded-2xl space-y-2">
                       <div className="flex items-center justify-between">
-                        <p className="text-[0.65rem] font-black uppercase text-white">Foto {r.photoIndex + 1}</p>
-                        <span className={`px-2 py-0.5 rounded text-[0.45rem] font-black uppercase ${badge}`}>{r.verdict}</span>
+                        <p className="text-2xs font-black uppercase text-ds-ink">Foto {r.photoIndex + 1}</p>
+                        <span className={`px-2 py-0.5 rounded text-2xs font-black uppercase ${badge}`}>{r.verdict}</span>
                       </div>
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[0.55rem] text-ds-ink3 font-bold">
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-2xs text-ds-ink3 font-bold">
                         <span>Skor Keaslian: {r.ai?.authenticityScore ?? '—'}/100</span>
                         <span>Plat Terlihat: {r.ai?.plateVisible ? 'Ya' : 'Tidak'}</span>
                         <span>Foto Layar: {r.ai?.isScreenPhoto ? 'Ya' : 'Tidak'}</span>
                         <span>Foto Stok: {r.ai?.isStockOrDownloaded ? 'Ya' : 'Tidak'}</span>
                         <span>Metadata EXIF: {r.exif?.hasExif ? 'Ada' : 'Tidak ada'}</span>
-                        {r.exif?.editingSoftware && <span className="text-rose-400">Software Editing: {r.exif.editingSoftware}</span>}
+                        {r.exif?.editingSoftware && <span className="text-rose-700 dark:text-rose-300">Software Editing: {r.exif.editingSoftware}</span>}
                       </div>
                       {r.duplicate?.isDuplicate && (
-                        <div className="p-2 bg-rose-500/10 rounded-xl text-[0.55rem] font-bold text-rose-400 flex items-center justify-between gap-2">
+                        <div className="p-2 bg-rose-500/10 rounded-xl text-2xs font-bold text-rose-700 dark:text-rose-300 flex items-center justify-between gap-2">
                           <span>Mirip {r.duplicate.similarity}% dengan foto {r.duplicate.matchedSourceType === 'SURVEY' ? 'survei' : 'klaim'} lain{matched ? ` (${matched.claim_number ?? matched.id.slice(0, 8)})` : ''}</span>
                           {matched && (
                             <button onClick={() => onSelectClaim(matched)} className="px-2 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 shrink-0">Lihat</button>
@@ -249,7 +252,7 @@ const ClaimDetailModal: React.FC<{ claim: SpClaim; claims: SpClaim[]; onClose: (
                       {r.flagReasons?.length > 0 && (
                         <ul className="space-y-0.5">
                           {r.flagReasons.map((reason: string, ri: number) => (
-                            <li key={ri} className="text-[0.55rem] text-amber-400">• {reason}</li>
+                            <li key={ri} className="text-2xs text-amber-800 dark:text-amber-400">• {reason}</li>
                           ))}
                         </ul>
                       )}
@@ -262,16 +265,16 @@ const ClaimDetailModal: React.FC<{ claim: SpClaim; claims: SpClaim[]; onClose: (
 
           <div className="grid grid-cols-2 gap-x-6 gap-y-4 pt-4 border-t border-ds-border">
             <div className="space-y-0.5">
-              <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-ds-ink3">Status</p>
-              <p className="text-xs font-bold text-white">{STATUS_LABEL[claim.status] ?? claim.status}</p>
+              <p className="text-2xs font-black uppercase tracking-[0.25em] text-ds-ink3">Status</p>
+              <p className="text-xs font-bold text-ds-ink">{STATUS_LABEL[claim.status] ?? claim.status}</p>
             </div>
             <div className="space-y-0.5">
-              <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-ds-ink3">Estimasi</p>
-              <p className="text-xs font-bold text-white">{claim.amount_estimated ? formatIDR(claim.amount_estimated) : '—'}</p>
+              <p className="text-2xs font-black uppercase tracking-[0.25em] text-ds-ink3">Estimasi</p>
+              <p className="text-xs font-bold text-ds-ink">{claim.amount_estimated ? formatIDR(claim.amount_estimated) : '—'}</p>
             </div>
             <div className="space-y-0.5 col-span-2">
-              <p className="text-[0.48rem] font-black uppercase tracking-[0.25em] text-ds-ink3">Kronologi</p>
-              <p className="text-xs font-bold text-white leading-relaxed">{claim.chronology || '—'}</p>
+              <p className="text-2xs font-black uppercase tracking-[0.25em] text-ds-ink3">Kronologi</p>
+              <p className="text-xs font-bold text-ds-ink leading-relaxed">{claim.chronology || '—'}</p>
             </div>
           </div>
         </div>
@@ -283,14 +286,14 @@ const ClaimDetailModal: React.FC<{ claim: SpClaim; claims: SpClaim[]; onClose: (
 export const Badge = ({ children, color = "primary" }: { children?: React.ReactNode, color?: string }) => {
   const styles: any = {
     primary: "bg-emerald-500/10 text-ds-green border-emerald-500/20",
-    blue: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-    rose: "bg-rose-500/10 text-rose-500 border-rose-500/20",
-    yellow: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+    blue: "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20",
+    rose: "bg-rose-500/10 text-rose-700 dark:text-rose-200 border-rose-500/20",
+    yellow: "bg-yellow-500/10 text-yellow-800 dark:text-yellow-300 border-yellow-500/20",
     emerald: "bg-emerald-500/10 text-ds-green border-emerald-500/20",
-    indigo: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20",
+    indigo: "bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-500/20",
   };
   return (
-    <span className={`px-2.5 py-1 rounded-lg text-[0.5rem] font-black uppercase tracking-widest border ${styles[color] || styles.primary}`}>
+    <span className={`px-2.5 py-1 rounded-lg text-2xs font-black uppercase tracking-widest border ${styles[color] || styles.primary}`}>
       {children}
     </span>
   );
@@ -303,13 +306,13 @@ const StatCard = ({ label, value, trend, icon: Icon, color }: any) => (
         <Icon size={24} />
       </div>
       {trend && (
-        <div className={`flex items-center gap-1 text-[0.65rem] font-black ${trend.startsWith('+') ? 'text-ds-green' : 'text-rose-500'}`}>
+        <div className={`flex items-center gap-1 text-2xs font-black ${trend.startsWith('+') ? 'text-ds-green' : 'text-rose-700 dark:text-rose-200'}`}>
           {trend} <ArrowUpRight size={14} className={trend.startsWith('-') ? 'rotate-90' : ''} />
         </div>
       )}
     </div>
     <p className="text-3xl font-black tracking-tighter leading-none mb-2">{value}</p>
-    <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest">{label}</p>
+    <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-widest">{label}</p>
   </Card>
 );
 
@@ -413,7 +416,7 @@ export const PartnerDirectorySection: React.FC = () => {
         <div className="overflow-x-auto no-scrollbar">
           <table className="w-full text-left whitespace-nowrap">
             <thead>
-              <tr className="border-b border-ds-border text-[0.55rem] font-black uppercase text-ds-ink3 tracking-[0.2em]">
+              <tr className="border-b border-ds-border text-2xs font-black uppercase text-ds-ink3 tracking-[0.2em]">
                 <th className="py-3.5 pl-5">Partner</th>
                 <th className="py-3.5">Role</th>
                 <th className="py-3.5">No. HP</th>
@@ -432,16 +435,16 @@ export const PartnerDirectorySection: React.FC = () => {
                       </div>
                       <div className="min-w-0">
                         <p className="text-xs font-black text-ds-ink truncate max-w-[160px]">{u.name ?? '—'}</p>
-                        <p className="text-[0.55rem] text-ds-ink3 truncate max-w-[160px]">{u.email}</p>
+                        <p className="text-2xs text-ds-ink3 truncate max-w-[160px]">{u.email}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="py-3 text-[0.6rem] font-bold uppercase tracking-wide text-ds-ink2">{u.role?.replace('_', ' ') ?? '—'}</td>
-                  <td className="py-3 font-mono text-[0.6rem] text-ds-ink3">{u.phone || '—'}</td>
+                  <td className="py-3 text-2xs font-bold uppercase tracking-wide text-ds-ink2">{u.role?.replace('_', ' ') ?? '—'}</td>
+                  <td className="py-3 font-mono text-2xs text-ds-ink3">{u.phone || '—'}</td>
                   <td className="py-3 font-black text-ds-green">{formatIDR(u.totalSales || 0)}</td>
                   <td className="py-3 font-black text-ds-amber">{formatIDR(u.totalCommission || 0)}</td>
                   <td className="py-3 text-right pr-5">
-                    <span className={`px-2 py-0.5 rounded-full text-[0.5rem] font-black uppercase tracking-widest border ${
+                    <span className={`px-2 py-0.5 rounded-full text-2xs font-black uppercase tracking-widest border ${
                       u.totalSales > 0
                         ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                         : 'bg-gray-100 text-gray-500 border-gray-200'
@@ -499,7 +502,7 @@ export const SecurityView = () => {
     <div className="space-y-8 animate-fade-in relative">
        {loadError && (
          <div role="alert" className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 flex flex-wrap items-center justify-between gap-3">
-           <p className="text-sm text-red-600">Data keamanan gagal dimuat: {loadError}</p>
+           <p className="text-sm text-red-700 dark:text-red-300">Data keamanan gagal dimuat: {loadError}</p>
            <button type="button" onClick={() => void load()} disabled={loading} className="rounded-xl border border-ds-border px-3 py-2 text-xs font-bold disabled:opacity-50">
              {loading ? 'Memuat…' : 'Coba lagi'}
            </button>
@@ -520,7 +523,7 @@ export const SecurityView = () => {
             label="Sesi Aktif (5 mnt)"
             value={loading ? '…' : (secStats?.activeSessionsCount ?? 0).toString()}
             icon={Cpu}
-            color="bg-blue-500/10 text-blue-500"
+            color="bg-blue-500/10 text-blue-700 dark:text-blue-300"
           />
        </div>
 
@@ -531,7 +534,7 @@ export const SecurityView = () => {
                    <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-ds-green"><Terminal size={20}/></div>
                    <div>
                       <h3 className="font-black uppercase tracking-widest text-sm">Aktivitas Sesi Per Jam (24j)</h3>
-                      <p className="text-[0.5rem] font-bold text-ds-ink3 uppercase tracking-[0.2em] mt-1">Berdasarkan data sp_user_sessions nyata</p>
+                      <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-[0.2em] mt-1">Berdasarkan data sp_user_sessions nyata</p>
                    </div>
                 </div>
              </div>
@@ -559,16 +562,16 @@ export const SecurityView = () => {
                 }
              </div>
              <div className="flex justify-between mt-2 px-2">
-               <span className="text-[0.45rem] text-ds-ink2">00:00</span>
-               <span className="text-[0.45rem] text-ds-ink2">12:00</span>
-               <span className="text-[0.45rem] text-ds-ink2">23:00</span>
+               <span className="text-2xs text-ds-ink2">00:00</span>
+               <span className="text-2xs text-ds-ink2">12:00</span>
+               <span className="text-2xs text-ds-ink2">23:00</span>
              </div>
           </Card>
 
           <Card>
              <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
-                   <div className="w-10 h-10 bg-rose-500/10 rounded-xl flex items-center justify-center text-rose-500"><ShieldX size={20}/></div>
+                   <div className="w-10 h-10 bg-rose-500/10 rounded-xl flex items-center justify-center text-rose-700 dark:text-rose-200"><ShieldX size={20}/></div>
                    <h3 className="font-black uppercase tracking-widest text-sm">Blokir Login</h3>
                 </div>
                 <Badge color="rose">Real Data</Badge>
@@ -582,9 +585,9 @@ export const SecurityView = () => {
                      <div className="space-y-1 overflow-hidden">
                        <div className="flex items-center gap-2">
                          <Badge color="rose">RATE LIMIT</Badge>
-                         <span className="text-[0.6rem] font-mono text-ds-ink3 truncate">{entry.email}</span>
+                         <span className="text-2xs font-mono text-ds-ink3 truncate">{entry.email}</span>
                        </div>
-                       <p className="text-[0.5rem] font-bold text-ds-ink3 uppercase tracking-widest">
+                       <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-widest">
                          {entry.attempts} percobaan · {entry.until > Date.now() ? `Diblokir ${Math.ceil((entry.until - Date.now()) / 60000)} mnt` : 'Kadaluarsa'}
                        </p>
                      </div>
@@ -598,7 +601,7 @@ export const SecurityView = () => {
                <div className="space-y-3">
                  <p className="text-xs text-ds-ink3 py-4 text-center">Tidak ada blokir aktif</p>
                  {secStats?.lastLoginAt && (
-                   <p className="text-[0.5rem] text-ds-ink2 text-center uppercase tracking-widest">
+                   <p className="text-2xs text-ds-ink2 text-center uppercase tracking-widest">
                      Login terakhir: {new Date(secStats.lastLoginAt).toLocaleString('id-ID')}
                    </p>
                  )}
@@ -618,7 +621,7 @@ const BackupView: React.FC = () => {
   const lastTs = getLastBackupTime();
   const now = Date.now();
   const ageH = lastTs ? (now - lastTs.getTime()) / 3_600_000 : Infinity;
-  const pillColor = ageH < 24 ? 'bg-emerald-500/15 text-emerald-400' : ageH < 48 ? 'bg-amber-500/15 text-amber-400' : 'bg-rose-500/15 text-rose-400';
+  const pillColor = ageH < 24 ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400' : ageH < 48 ? 'bg-amber-500/15 text-amber-800 dark:text-amber-400' : 'bg-rose-500/15 text-rose-700 dark:text-rose-300';
   const pillLabel = lastTs ? (ageH < 24 ? 'Up to date' : ageH < 48 ? 'Stale' : 'Outdated') : 'Never';
 
   const load = async () => {
@@ -651,22 +654,22 @@ const BackupView: React.FC = () => {
       {/* Header row */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center flex-shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
             <Shield size={20} />
           </div>
           <div>
-            <p className="font-black uppercase text-sm text-white">Backup Data</p>
-            <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest">Auto-backup status</p>
+            <p className="font-black uppercase text-sm text-ds-ink">Backup Data</p>
+            <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-widest">Auto-backup status</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <span className={`px-3 py-1 rounded-full text-[0.6rem] font-black uppercase tracking-widest ${pillColor}`}>
+          <span className={`px-3 py-1 rounded-full text-2xs font-black uppercase tracking-widest ${pillColor}`}>
             {pillLabel}
           </span>
           <button
             onClick={handleRunBackup}
             disabled={running}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[0.65rem] font-black uppercase tracking-widest transition-all bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500 hover:text-white disabled:opacity-50"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-2xs font-black uppercase tracking-widest transition-all bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500 hover:text-white disabled:opacity-50"
           >
             <RefreshCw size={13} className={running ? 'animate-spin' : ''} />
             {running ? 'Running…' : 'Run Backup Now'}
@@ -676,12 +679,12 @@ const BackupView: React.FC = () => {
 
       {/* Table */}
       {backups.length === 0 ? (
-        <p className="text-center text-[0.65rem] text-ds-ink2 font-bold py-6 uppercase tracking-widest">No backups found.</p>
+        <p className="text-center text-2xs text-ds-ink2 font-bold py-6 uppercase tracking-widest">No backups found.</p>
       ) : (
         <div className="overflow-x-auto no-scrollbar">
           <table className="w-full text-left whitespace-nowrap min-w-[580px]">
             <thead>
-              <tr className="border-b border-ds-border text-[0.55rem] font-black uppercase text-ds-ink3 tracking-[0.2em]">
+              <tr className="border-b border-ds-border text-2xs font-black uppercase text-ds-ink3 tracking-[0.2em]">
                 <th className="py-3 pr-4">Date / Time</th>
                 <th className="py-3 pr-4">Type</th>
                 <th className="py-3 pr-4">Tables</th>
@@ -693,15 +696,15 @@ const BackupView: React.FC = () => {
             <tbody>
               {backups.map(b => (
                 <tr key={b.id} className="border-b border-ds-border hover:bg-ds-card2 transition-colors text-xs">
-                  <td className="py-3 pr-4 font-mono text-ds-ink2 text-[0.65rem]">{new Date(b.created_at).toLocaleString('id-ID')}</td>
+                  <td className="py-3 pr-4 font-mono text-ds-ink2 text-2xs">{new Date(b.created_at).toLocaleString('id-ID')}</td>
                   <td className="py-3 pr-4">
-                    <span className={`px-2 py-0.5 rounded-full text-[0.5rem] font-black uppercase tracking-widest ${b.backup_type === 'AUTO' ? 'bg-blue-500/10 text-blue-400' : 'bg-emerald-500/10 text-emerald-400'}`}>
+                    <span className={`px-2 py-0.5 rounded-full text-2xs font-black uppercase tracking-widest ${b.backup_type === 'AUTO' ? 'bg-blue-500/10 text-blue-700 dark:text-blue-400' : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'}`}>
                       {b.backup_type}
                     </span>
                   </td>
-                  <td className="py-3 pr-4 text-ds-ink3 font-mono text-[0.65rem]">{b.tables_list?.length ?? 0}</td>
-                  <td className="py-3 pr-4 text-ds-ink3 font-mono text-[0.65rem]">{(b.backup_size_bytes / 1024).toFixed(1)}</td>
-                  <td className="py-3 pr-4 text-ds-ink3 font-mono text-[0.65rem]">{b.checksum.slice(0, 8)}</td>
+                  <td className="py-3 pr-4 text-ds-ink3 font-mono text-2xs">{b.tables_list?.length ?? 0}</td>
+                  <td className="py-3 pr-4 text-ds-ink3 font-mono text-2xs">{((b.backup_size_bytes ?? 0) / 1024).toFixed(1)}</td>
+                  <td className="py-3 pr-4 text-ds-ink3 font-mono text-2xs">{b.checksum ? b.checksum.slice(0, 8) : '—'}</td>
                   <td className="py-3 text-right">
                     <button
                       onClick={() => handleDownload(b.id)}
@@ -721,7 +724,12 @@ const BackupView: React.FC = () => {
   );
 };
 
-// ── Role Permissions View (Task 1) ───────────────────────────────────────────
+// ── Role Permissions View (Task 1) ───────────────────────────────────────
+// Matriks izin DITURUNKAN dari ADMIN_MENU_ITEMS (navigation.ts) — sumber yang
+// sama dengan sidebar. Versi lama mendefinisikan daftar manual yang basi:
+// memuat 4 menu yang sudah dihapus (reports/users/transactions/inventory) dan
+// kehilangan 11 menu nyata, sehingga centang tidak berefek dan klik "Simpan"
+// diam-diam mencabut akses menu yang tidak terdaftar di matriks.
 
 const CONFIGURABLE_ROLES = [
   UserRole.ADMIN,
@@ -731,40 +739,11 @@ const CONFIGURABLE_ROLES = [
   UserRole.FINANCE_DIRECTOR,
 ] as const;
 
-const MENU_IDS = [
-  { id: 'dashboard',         label: 'Dashboard' },
-  { id: 'reports',           label: 'Laporan' },
-  { id: 'analytics',         label: 'Analytics' },
-  { id: 'users',             label: 'Pengguna' },
-  { id: 'user_mgmt',         label: 'Kelola Akun' },
-  { id: 'transactions',      label: 'Transaksi' },
-  { id: 'payments',          label: 'Pembayaran' },
-  { id: 'withdrawals',       label: 'Penarikan' },
-  { id: 'policy_orders',     label: 'Pesanan Polis' },
-  { id: 'approvals',         label: 'Antrean Polis' },
-  { id: 'claims_admin',      label: 'Antrean Klaim' },
-  { id: 'inventory',         label: 'Data Polis' },
-  { id: 'endorsements',      label: 'Endorsement' },
-  { id: 'agents',            label: 'Manajemen Mitra' },
-  { id: 'commission_ledger', label: 'Komisi' },
-  { id: 'b2b',               label: 'B2B' },
-  { id: 'product_config',    label: 'Produk' },
-  { id: 'tier_promo',        label: 'Tier & Promo' },
-  { id: 'insurers',          label: 'Asuransi' },
-  { id: 'vehicle_pricelist', label: 'Kendaraan DB' },
-  { id: 'website_editor',    label: 'Editor Website' },
-  { id: 'financial',         label: 'Keuangan' },
-];
+const MENU_IDS = PERMISSION_MENU_IDS;
 
-const DEFAULT_PERMISSIONS: Record<string, string[]> = {
-  ADMIN: ['dashboard','reports','analytics','users','user_mgmt','transactions','payments','withdrawals','policy_orders','approvals','claims_admin','inventory','endorsements','agents','commission_ledger','b2b','product_config','tier_promo','insurers','vehicle_pricelist','website_editor'],
-  FINANCE: ['dashboard','reports','analytics','transactions','payments','withdrawals','commission_ledger','financial'],
-  INSURANCE_ADMIN: ['dashboard','approvals','policy_orders','claims_admin','endorsements','insurers'],
-  FINANCE_MANAGER: ['dashboard','withdrawals','commission_ledger','tier_promo'],
-  FINANCE_DIRECTOR: ['dashboard','withdrawals','financial'],
-};
-
-const SP_ROLE_PERMISSIONS_KEY = 'SP_ROLE_PERMISSIONS';
+const DEFAULT_PERMISSIONS: Record<string, string[]> = Object.fromEntries(
+  CONFIGURABLE_ROLES.map(role => [role, defaultPermissionsFor(role)]),
+);
 
 function loadPermissions(): Record<string, string[]> {
   try {
@@ -799,6 +778,8 @@ export const RolePermissionsView: React.FC<{ currentUserRole: string }> = ({ cur
 
   const handleSave = () => {
     localStorage.setItem(SP_ROLE_PERMISSIONS_KEY, JSON.stringify(perms));
+    // Sidebar shell membaca ulang izin secara live — tanpa reload.
+    window.dispatchEvent(new Event('sp-admin-perms-changed'));
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };
@@ -814,18 +795,18 @@ export const RolePermissionsView: React.FC<{ currentUserRole: string }> = ({ cur
       <div className="flex items-center justify-between">
         <div>
           <h3 className="font-black uppercase tracking-widest text-sm">Konfigurasi Akses Menu Per Role</h3>
-          <p className="text-[0.55rem] font-bold text-ds-ink3 uppercase tracking-widest mt-1">Centang menu yang boleh diakses oleh setiap role</p>
+          <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-widest mt-1">Centang menu yang boleh diakses oleh setiap role</p>
         </div>
         <div className="flex gap-3">
           <button
             onClick={handleReset}
-            className="px-5 py-2.5 bg-ds-card2 border border-ds-border text-ds-ink3 rounded-2xl font-black uppercase text-[0.6rem] tracking-widest hover:bg-ds-card2 transition-all"
+            className="px-5 py-2.5 bg-ds-card2 border border-ds-border text-ds-ink3 rounded-2xl font-black uppercase text-2xs tracking-widest hover:bg-ds-card2 transition-all"
           >
             Reset Default
           </button>
           <button
             onClick={handleSave}
-            className={`px-6 py-2.5 rounded-2xl font-black uppercase text-[0.6rem] tracking-widest transition-all ${saved ? 'bg-emerald-500 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'}`}
+            className={`px-6 py-2.5 rounded-2xl font-black uppercase text-2xs tracking-widest transition-all ${saved ? 'bg-emerald-500 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'}`}
           >
             {saved ? 'Tersimpan!' : 'Simpan'}
           </button>
@@ -835,7 +816,7 @@ export const RolePermissionsView: React.FC<{ currentUserRole: string }> = ({ cur
       <div className="overflow-x-auto rounded-2xl border border-ds-border">
         <table className="w-full text-left whitespace-nowrap min-w-[900px]">
           <thead>
-            <tr className="border-b border-ds-border text-[0.5rem] font-black uppercase text-ds-ink3 tracking-[0.2em]">
+            <tr className="border-b border-ds-border text-2xs font-black uppercase text-ds-ink3 tracking-[0.2em]">
               <th className="py-3 pl-5 pr-4 sticky left-0 bg-ds-card">Menu</th>
               {CONFIGURABLE_ROLES.map(role => (
                 <th key={role} className="py-3 px-3 text-center">
@@ -847,7 +828,7 @@ export const RolePermissionsView: React.FC<{ currentUserRole: string }> = ({ cur
           <tbody>
             {MENU_IDS.map(menu => (
               <tr key={menu.id} className="border-b border-ds-border hover:bg-ds-card2 transition-colors">
-                <td className="py-2.5 pl-5 pr-4 text-[0.65rem] font-bold text-ds-ink2 sticky left-0 bg-ds-card">
+                <td className="py-2.5 pl-5 pr-4 text-2xs font-bold text-ds-ink2 sticky left-0 bg-ds-card">
                   {menu.label}
                 </td>
                 {CONFIGURABLE_ROLES.map(role => {
@@ -879,6 +860,33 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
   const [customProducts, setCustomProducts] = useState<CustomProduct[]>([]);
   const [newProduct, setNewProduct] = useState({ name: '', type: 'INSURANCE', basePremium: 100000, rate: 0.05, description: '' });
 
+  // Preferensi tampilan admin — tersimpan lokal per browser, langsung
+  // berlaku di shell tanpa reload lewat event 'sp-admin-theme-changed'.
+  const initialSchedule = readThemeSchedule();
+  const [themePref, setThemePref] = useState<AdminThemeMode>(() => {
+    try {
+      const saved = localStorage.getItem(ADMIN_THEME_KEY);
+      return saved === 'light' || saved === 'dark' ? saved : 'auto';
+    } catch { return 'auto'; }
+  });
+  const [schedStart, setSchedStart] = useState<number>(initialSchedule.start);
+  const [schedEnd, setSchedEnd] = useState<number>(initialSchedule.end);
+
+  const applyThemePref = (mode: AdminThemeMode) => {
+    setThemePref(mode);
+    try { localStorage.setItem(ADMIN_THEME_KEY, mode); } catch { /* storage blocked */ }
+    window.dispatchEvent(new Event('sp-admin-theme-changed'));
+  };
+  const applySchedule = (nextStart: number, nextEnd: number) => {
+    storeThemeSchedule({ start: nextStart, end: nextEnd });
+    window.dispatchEvent(new Event('sp-admin-theme-changed'));
+  };
+  const clampHour = (v: string): number => {
+    const n = Math.floor(Number(v));
+    if (!Number.isFinite(n)) return 0;
+    return Math.min(23, Math.max(0, n));
+  };
+
   useEffect(() => {
     db.customProducts.toArray().then(setCustomProducts).catch(e => {
       console.error('customProducts load error:', e);
@@ -904,7 +912,9 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
   };
 
   const toggleProduct = (id: string) => {
-    setProducts(products.map((p: any) => p.id === id ? { ...p, active: !p.active } : p));
+    // Guard: products prop bisa belum terisi — jangan crash di klik pertama.
+    const list = Array.isArray(products) ? products : [];
+    setProducts(list.map((p: any) => p.id === id ? { ...p, active: !p.active } : p));
   };
 
   const toggleCustomProduct = async (product: CustomProduct) => {
@@ -967,10 +977,10 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
               <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-ds-card2 text-ds-ink3`}><Upload size={24}/></div>
               <div>
                 <p className="font-black uppercase text-sm">Logo Perusahaan</p>
-                <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest">Update Logo Platform (Maks 2MB)</p>
+                <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-widest">Update Logo Platform (Maks 2MB)</p>
               </div>
             </div>
-            <label className="cursor-pointer px-8 py-3 rounded-2xl text-[0.65rem] font-black uppercase tracking-widest transition-all bg-ds-card2 hover:bg-white/20 text-white">
+            <label className="cursor-pointer px-8 py-3 rounded-2xl text-2xs font-black uppercase tracking-widest transition-all bg-ds-card2 hover:bg-ds-border/40 text-ds-ink">
               Pilih File
               <input type="file" accept="image/png, image/jpeg, image/svg+xml" className="hidden" onChange={handleLogoUpload} />
             </label>
@@ -979,13 +989,70 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
           <BackupView />
        </div>
 
+       {/* Preferensi tampilan — tema + jadwal gelap otomatis, live-apply. */}
+       <div className="grid gap-4 mt-8">
+          <h3 className="font-black uppercase tracking-widest text-xs text-ds-ink3 mb-2">Preferensi Tampilan</h3>
+          <Card className="p-6 space-y-5">
+            <div>
+              <p className="font-black uppercase text-sm">Mode Tema CMS</p>
+              <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-widest mt-1">
+                Sekarang: {adminThemeLabel(themePref)} — perubahan langsung berlaku tanpa reload.
+              </p>
+              <div className="flex gap-2 mt-3">
+                {(['auto', 'light', 'dark'] as const).map(m => (
+                  <button
+                    key={m}
+                    onClick={() => applyThemePref(m)}
+                    className={`px-5 py-2.5 rounded-2xl text-2xs font-black uppercase tracking-widest transition-all border ${
+                      themePref === m
+                        ? 'bg-emerald-500 text-white border-emerald-500 shadow-emerald-500/20 shadow-lg'
+                        : 'bg-ds-card2 text-ds-ink3 border-ds-border hover:border-emerald-500/50'
+                    }`}
+                  >
+                    {m === 'auto' ? 'Otomatis' : m === 'light' ? 'Terang' : 'Gelap'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="font-black uppercase text-sm">Jadwal Gelap Otomatis</p>
+              <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-widest mt-1">
+                Aktif saat mode Otomatis — CMS gelap di luar jam kerja.
+              </p>
+              <div className="flex flex-wrap items-center gap-3 mt-3">
+                <input
+                  type="number" min={0} max={23}
+                  value={schedStart}
+                  onChange={e => { const v = clampHour(e.target.value); setSchedStart(v); applySchedule(v, schedEnd); }}
+                  className="w-20 bg-ds-card2 border border-ds-border rounded-xl px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-emerald-500 transition-all"
+                  aria-label="Jam mulai gelap"
+                />
+                <span className="text-xs font-bold text-ds-ink3">sampai</span>
+                <input
+                  type="number" min={0} max={23}
+                  value={schedEnd}
+                  onChange={e => { const v = clampHour(e.target.value); setSchedEnd(v); applySchedule(schedStart, v); }}
+                  className="w-20 bg-ds-card2 border border-ds-border rounded-xl px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-emerald-500 transition-all"
+                  aria-label="Jam kembali terang"
+                />
+                <span className="text-xs font-bold text-ds-ink3">jam lokal perangkat</span>
+              </div>
+              {schedStart === schedEnd && (
+                <p className="text-xs font-bold text-amber-800 dark:text-amber-300 mt-2">
+                  Jam mulai dan selesai tidak boleh sama — jadwal sementara memakai default 18–6.
+                </p>
+              )}
+            </div>
+          </Card>
+       </div>
+
        <div className="grid gap-4 mt-8">
           {/* Dua katalog produk sempat hidup berdampingan: IndexedDB lokal di
               sini dan sp_product_configs di Katalog > Produk. Yang lokal tidak
               pernah dilihat agen, jadi admin bisa mengira sudah menambah produk
               padahal hanya di browsernya sendiri. */}
           <div className="mb-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3">
-            <p className="text-xs font-bold text-amber-600">
+            <p className="text-xs font-bold text-amber-800 dark:text-amber-300">
               Katalog ini hanya tersimpan di browser ini dan tidak dipakai agen.
               Katalog yang berlaku di semua portal ada di Katalog &amp; Harga → Produk.
             </p>
@@ -996,12 +1063,12 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
               <input 
                 type="text" 
                 placeholder="Nama Produk (Cth: Asuransi Gempa)" 
-                className="w-full bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-all font-mono"
+                className="w-full bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm text-ds-ink focus:outline-none focus:border-emerald-500 transition-all font-mono"
                 value={newProduct.name}
                 onChange={e => setNewProduct({...newProduct, name: e.target.value})}
               />
               <select 
-                className="w-full bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-all font-mono [&>option]:bg-ds-card"
+                className="w-full bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm text-ds-ink focus:outline-none focus:border-emerald-500 transition-all font-mono [&>option]:bg-ds-card"
                 value={newProduct.type}
                 onChange={e => setNewProduct({...newProduct, type: e.target.value})}
               >
@@ -1013,7 +1080,7 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
                  <input 
                    type="number" 
                    placeholder="Basic Premium" 
-                   className="w-full bg-ds-card2 border border-ds-border rounded-xl pl-12 pr-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-all font-mono"
+                   className="w-full bg-ds-card2 border border-ds-border rounded-xl pl-12 pr-4 py-3 text-sm text-ds-ink focus:outline-none focus:border-emerald-500 transition-all font-mono"
                    value={newProduct.basePremium}
                    onChange={e => setNewProduct({...newProduct, basePremium: Number(e.target.value)})}
                  />
@@ -1024,7 +1091,7 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
                    type="number" 
                    step="0.01"
                    placeholder="Multiplier Rate (e.g. 0.05)" 
-                   className="w-full bg-ds-card2 border border-ds-border rounded-xl pl-20 pr-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-all font-mono"
+                   className="w-full bg-ds-card2 border border-ds-border rounded-xl pl-20 pr-4 py-3 text-sm text-ds-ink focus:outline-none focus:border-emerald-500 transition-all font-mono"
                    value={newProduct.rate}
                    onChange={e => setNewProduct({...newProduct, rate: Number(e.target.value)})}
                  />
@@ -1032,7 +1099,7 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
               <input 
                 type="text" 
                 placeholder="Deskripsi Singkat" 
-                className="w-full md:col-span-2 bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-all font-mono"
+                className="w-full md:col-span-2 bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm text-ds-ink focus:outline-none focus:border-emerald-500 transition-all font-mono"
                 value={newProduct.description}
                 onChange={e => setNewProduct({...newProduct, description: e.target.value})}
               />
@@ -1040,7 +1107,7 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
             <div className="mt-4 flex justify-end">
                <button 
                  onClick={handleAddCustomProduct}
-                 className="flex items-center gap-2 px-8 py-3 rounded-2xl text-[0.65rem] font-black uppercase tracking-widest transition-all bg-emerald-500 text-white shadow-emerald-500/20 shadow-xl hover:bg-emerald-600 active:scale-95"
+                 className="flex items-center gap-2 px-8 py-3 rounded-2xl text-2xs font-black uppercase tracking-widest transition-all bg-emerald-500 text-white shadow-emerald-500/20 shadow-xl hover:bg-emerald-600 active:scale-95"
                >
                  <Plus size={16}/> SIMPAN PRODUK
                </button>
@@ -1057,12 +1124,12 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-emerald-500/10 text-ds-green`}><FileText size={24}/></div>
                   <div>
                     <p className="font-black uppercase text-sm">{p.name}</p>
-                    <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest">Rate: {(p.rate || 0) * 100}% | Premium {formatIDR(p.basePremium)}</p>
+                    <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-widest">Rate: {(p.rate || 0) * 100}% | Premium {formatIDR(p.basePremium)}</p>
                   </div>
                 </div>
                 <button 
                   onClick={() => toggleCustomProduct(p)}
-                  className={`px-8 py-3 rounded-2xl text-[0.65rem] font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 ${p.isActive ? 'bg-rose-500 text-white shadow-rose-500/20' : 'bg-emerald-500 text-white shadow-emerald-500/20'}`}
+                  className={`px-8 py-3 rounded-2xl text-2xs font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 ${p.isActive ? 'bg-rose-500 text-white shadow-rose-500/20' : 'bg-emerald-500 text-white shadow-emerald-500/20'}`}
                 >
                   {p.isActive ? 'Nonaktifkan' : 'Aktifkan'}
                 </button>
@@ -1079,12 +1146,12 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-ds-card2 ${p.color}`}><p.icon size={24}/></div>
                 <div>
                   <p className="font-black uppercase text-sm">{p.label}</p>
-                  <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest">{p.active ? 'Modul Aktif' : 'Modul Dinonaktifkan'}</p>
+                  <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-widest">{p.active ? 'Modul Aktif' : 'Modul Dinonaktifkan'}</p>
                 </div>
               </div>
               <button
                 onClick={() => toggleProduct(p.id)}
-                className={`px-8 py-3 rounded-2xl text-[0.65rem] font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 ${p.active ? 'bg-rose-500 text-white shadow-rose-500/20' : 'bg-emerald-500 text-white shadow-emerald-500/20'}`}
+                className={`px-8 py-3 rounded-2xl text-2xs font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 ${p.active ? 'bg-rose-500 text-white shadow-rose-500/20' : 'bg-emerald-500 text-white shadow-emerald-500/20'}`}
               >
                 {p.active ? 'Shut Down' : 'Initialize'}
               </button>
@@ -1184,14 +1251,14 @@ const BulkImportModal: React.FC<BulkImportModalProps> = ({ onClose }) => {
             Impor Mitra dari CSV/Excel
           </h3>
           {!importing && (
-            <button onClick={onClose} className="text-ds-ink3 hover:text-white transition-colors">
+            <button onClick={onClose} className="text-ds-ink3 hover:text-ds-ink transition-colors">
               <X size={18} />
             </button>
           )}
         </div>
 
         {/* Instructions */}
-        <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest mb-4">
+        <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-widest mb-4">
           Format kolom: name, email, phone, upline_code (opsional)
         </p>
 
@@ -1199,7 +1266,7 @@ const BulkImportModal: React.FC<BulkImportModalProps> = ({ onClose }) => {
         {!done && (
           <>
             <textarea
-              className="w-full bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-xs font-mono text-white focus:outline-none focus:border-blue-500 transition-all resize-none mb-3"
+              className="w-full bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-xs font-mono text-ds-ink focus:outline-none focus:border-blue-500 transition-all resize-none mb-3"
               rows={6}
               placeholder={"Budi Santoso,budi@email.com,08123456789,SP-AGT-0001\nSiti Rahma,siti@email.com,08234567890,"}
               value={csvText}
@@ -1209,7 +1276,7 @@ const BulkImportModal: React.FC<BulkImportModalProps> = ({ onClose }) => {
             <button
               onClick={handleParse}
               disabled={!csvText.trim() || importing}
-              className="px-5 py-2.5 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-ds-card2 text-ds-ink2 hover:bg-white/20 hover:text-white transition-all disabled:opacity-40 mb-5"
+              className="px-5 py-2.5 rounded-xl text-2xs font-black uppercase tracking-widest bg-ds-card2 text-ds-ink2 hover:bg-ds-border/40 hover:text-ds-ink transition-all disabled:opacity-40 mb-5"
             >
               Parse CSV
             </button>
@@ -1219,13 +1286,13 @@ const BulkImportModal: React.FC<BulkImportModalProps> = ({ onClose }) => {
         {/* Preview table */}
         {rows.length > 0 && (
           <div className="space-y-4">
-            <p className="text-[0.55rem] font-black uppercase tracking-widest text-ds-ink3">
+            <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3">
               Preview — {rows.length} baris
             </p>
             <div className="overflow-x-auto rounded-xl border border-ds-border">
-              <table className="w-full text-[0.6rem]">
+              <table className="w-full text-2xs">
                 <thead>
-                  <tr className="text-[0.5rem] font-black uppercase tracking-widest text-ds-ink3 border-b border-ds-border">
+                  <tr className="text-2xs font-black uppercase tracking-widest text-ds-ink3 border-b border-ds-border">
                     <th className="py-2.5 px-3 text-left">Nama</th>
                     <th className="py-2.5 px-3 text-left">Email</th>
                     <th className="py-2.5 px-3 text-left">Phone</th>
@@ -1236,15 +1303,15 @@ const BulkImportModal: React.FC<BulkImportModalProps> = ({ onClose }) => {
                 <tbody className="divide-y divide-white/[0.04]">
                   {rows.map((row, i) => (
                     <tr key={i} className="hover:bg-ds-card2">
-                      <td className="py-2 px-3 text-white font-bold">{row.name || <span className="text-rose-400">—</span>}</td>
-                      <td className="py-2 px-3 text-ds-ink3 font-mono">{row.email || <span className="text-rose-400">—</span>}</td>
-                      <td className="py-2 px-3 text-ds-ink3 font-mono">{row.phone || <span className="text-rose-400">—</span>}</td>
+                      <td className="py-2 px-3 text-ds-ink font-bold">{row.name || <span className="text-rose-700 dark:text-rose-300">—</span>}</td>
+                      <td className="py-2 px-3 text-ds-ink3 font-mono">{row.email || <span className="text-rose-700 dark:text-rose-300">—</span>}</td>
+                      <td className="py-2 px-3 text-ds-ink3 font-mono">{row.phone || <span className="text-rose-700 dark:text-rose-300">—</span>}</td>
                       <td className="py-2 px-3 text-ds-ink3">{row.upline_code || '—'}</td>
                       <td className="py-2 px-3 text-center">
                         {row.status === 'pending' && <span className="text-ds-ink3">—</span>}
-                        {row.status === 'success' && <span className="text-emerald-400 font-black">OK</span>}
+                        {row.status === 'success' && <span className="text-emerald-700 dark:text-emerald-400 font-black">OK</span>}
                         {row.status === 'error' && (
-                          <span className="text-rose-400 font-black" title={row.error}>ERR</span>
+                          <span className="text-rose-700 dark:text-rose-300 font-black" title={row.error}>ERR</span>
                         )}
                       </td>
                     </tr>
@@ -1255,7 +1322,7 @@ const BulkImportModal: React.FC<BulkImportModalProps> = ({ onClose }) => {
 
             {/* Progress */}
             {progress && (
-              <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest">
+              <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-widest">
                 {progress.done}/{progress.total} diproses
                 {done && ` — ${successCount} berhasil, ${errorCount} gagal`}
               </p>
@@ -1267,7 +1334,7 @@ const BulkImportModal: React.FC<BulkImportModalProps> = ({ onClose }) => {
                 <button
                   onClick={handleImport}
                   disabled={importing}
-                  className="flex items-center gap-2 px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-2xl font-black uppercase text-[0.6rem] tracking-widest shadow-xl transition-all active:scale-95 disabled:opacity-50"
+                  className="flex items-center gap-2 px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-2xl font-black uppercase text-2xs tracking-widest shadow-xl transition-all active:scale-95 disabled:opacity-50"
                 >
                   {importing ? (
                     <RefreshCw size={14} className="animate-spin" />
@@ -1279,7 +1346,7 @@ const BulkImportModal: React.FC<BulkImportModalProps> = ({ onClose }) => {
               ) : (
                 <button
                   onClick={onClose}
-                  className="flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black uppercase text-[0.6rem] tracking-widest shadow-xl transition-all active:scale-95"
+                  className="flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black uppercase text-2xs tracking-widest shadow-xl transition-all active:scale-95"
                 >
                   <CheckCircle size={14} />
                   Selesai — {successCount}/{rows.length} berhasil
@@ -1288,7 +1355,7 @@ const BulkImportModal: React.FC<BulkImportModalProps> = ({ onClose }) => {
               {!importing && !done && (
                 <button
                   onClick={onClose}
-                  className="px-5 py-3 bg-ds-card2 text-ds-ink3 rounded-2xl font-black uppercase text-[0.6rem] tracking-widest hover:bg-ds-card2 transition-all"
+                  className="px-5 py-3 bg-ds-card2 text-ds-ink3 rounded-2xl font-black uppercase text-2xs tracking-widest hover:bg-ds-card2 transition-all"
                 >
                   Batal
                 </button>
@@ -1311,14 +1378,6 @@ const BulkImportModal: React.FC<BulkImportModalProps> = ({ onClose }) => {
 const STATUS_LABEL: Record<string, string> = {
   SUBMITTED: 'Submitted', UNDER_REVIEW: 'Under Review',
   APPROVED: 'Approved', REJECTED: 'Rejected', PAID: 'Dibayarkan', CLOSED: 'Closed',
-};
-const STATUS_COLOR: Record<string, string> = {
-  SUBMITTED: 'bg-amber-500/10 text-amber-600',
-  UNDER_REVIEW: 'bg-blue-500/10 text-blue-600',
-  APPROVED: 'bg-emerald-500/10 text-emerald-600',
-  REJECTED: 'bg-rose-500/10 text-rose-600',
-  PAID: 'bg-emerald-500/10 text-emerald-600',
-  CLOSED: 'bg-ds-card2 text-ds-ink3',
 };
 
 // ── Tambah mitra manual ──────────────────────────────────────────────────────
@@ -1383,7 +1442,7 @@ const AddMitraModal: React.FC<{
   };
 
   const inputCls = 'w-full min-w-0 bg-white dark:bg-ds-card2 border border-slate-200 dark:border-ds-border rounded-xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 transition-all';
-  const labelCls = 'block text-[0.62rem] font-bold text-slate-600 dark:text-ds-ink3 uppercase tracking-wider mb-1.5';
+  const labelCls = 'block text-2xs font-bold text-slate-600 dark:text-ds-ink3 uppercase tracking-wider mb-1.5';
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-5">
@@ -1514,25 +1573,25 @@ const CredentialModal: React.FC<{
           {password ? 'Kata Sandi Sementara' : 'Tautan Setel Ulang'}
         </h3>
         <p className="text-xs font-bold text-ds-ink2">{name}</p>
-        <p className="text-[0.62rem] font-mono text-ds-ink3 mb-5">{email}</p>
+        <p className="text-2xs font-mono text-ds-ink3 mb-5">{email}</p>
 
         <div className="p-4 bg-ds-card2 border border-ds-border rounded-2xl">
-          <p className="font-mono text-sm text-white break-all select-all">{value}</p>
+          <p className="font-mono text-sm text-ds-ink break-all select-all">{value}</p>
         </div>
         <button
           onClick={copy}
-          className="mt-3 w-full flex items-center justify-center gap-2 py-3 bg-amber-500/10 text-amber-400 rounded-2xl font-black uppercase text-[0.6rem] tracking-widest hover:bg-amber-500 hover:text-white transition-all"
+          className="mt-3 w-full flex items-center justify-center gap-2 py-3 bg-amber-500/10 text-amber-800 dark:text-amber-400 rounded-2xl font-black uppercase text-2xs tracking-widest hover:bg-amber-500 hover:text-white transition-all"
         >
           <Copy size={13} /> {copied ? 'Tersalin' : 'Salin'}
         </button>
 
         <div className="mt-5 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl">
-          <p className="text-[0.62rem] text-rose-300 font-semibold leading-relaxed">{note}</p>
+          <p className="text-2xs text-rose-700 dark:text-rose-200 font-semibold leading-relaxed">{note}</p>
         </div>
 
         <button
           onClick={onClose}
-          className="mt-5 w-full py-3 bg-ds-card2 text-ds-ink2 rounded-2xl font-black uppercase text-[0.6rem] tracking-widest hover:text-white transition-all"
+          className="mt-5 w-full py-3 bg-ds-card2 text-ds-ink2 rounded-2xl font-black uppercase text-2xs tracking-widest hover:text-ds-ink transition-all"
         >
           Sudah Dicatat, Tutup
         </button>
@@ -1684,7 +1743,7 @@ export const AgentManagementView = () => {
     if (!cfg || cfg.is_default) return null;
     return (
       <span
-        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.55rem] font-black uppercase tracking-widest"
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-2xs font-black uppercase tracking-widest"
         style={{ background: cfg.color + '22', color: cfg.color, border: `1px solid ${cfg.color}44` }}
       >
         {cfg.emoji} {cfg.name}
@@ -1720,15 +1779,15 @@ export const AgentManagementView = () => {
                 <p className="font-black text-sm truncate">{a.name}</p>
                 <TierBadge tier={agentTier} />
               </div>
-              <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest truncate">{a.email}</p>
-              <p className="text-[0.6rem] font-bold text-ds-green uppercase tracking-widest">{a.agent_code ?? '-'} · <span className="text-ds-green/70">Lihat detail →</span></p>
+              <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-widest truncate">{a.email}</p>
+              <p className="text-2xs font-bold text-ds-green uppercase tracking-widest">{a.agent_code ?? '-'} · <span className="text-ds-green/70">Lihat detail →</span></p>
               {(a as any).agreement_no ? (
-                <p className="mt-1 text-[0.62rem] font-semibold text-ds-ink2">
+                <p className="mt-1 text-2xs font-semibold text-ds-ink2">
                   <span className="text-ds-ink3">No. Perjanjian:</span> <span className="font-mono text-ds-green">{(a as any).agreement_no}</span>
                   {(a as any).agreement_accepted_at && <span className="ml-2 text-ds-ink3">{new Date((a as any).agreement_accepted_at).toLocaleDateString('id-ID')}</span>}
                 </p>
               ) : (
-                <p className="mt-1 text-[0.58rem] text-ds-ink3">Perjanjian belum tercatat</p>
+                <p className="mt-1 text-2xs text-ds-ink3">Perjanjian belum tercatat</p>
               )}
             </div>
           </button>
@@ -1737,19 +1796,19 @@ export const AgentManagementView = () => {
           {canAssignTier && (
             <div className="flex items-center gap-1.5 flex-shrink-0">
               {pendingTierRequests.has(a.id) && (
-                <span className="px-2 py-1 rounded-lg text-[0.55rem] font-black uppercase tracking-widest bg-amber-500/10 text-amber-400">
+                <span className="px-2 py-1 rounded-lg text-2xs font-black uppercase tracking-widest bg-amber-500/10 text-amber-800 dark:text-amber-400">
                   {pendingTierRequests.get(a.id)
                     ? `→ ${pendingTierRequests.get(a.id)} menunggu persetujuan`
                     : 'Menunggu Persetujuan'}
                 </span>
               )}
               {isSavingTier ? (
-                <span className="text-[0.6rem] text-ds-ink3">…</span>
+                <span className="text-2xs text-ds-ink3">…</span>
               ) : (
                 <select
                   value={agentTier ?? ''}
                   onChange={e => e.target.value && handleTierChange(a.id, e.target.value)}
-                  className="bg-ds-card2 border border-ds-border rounded-xl px-2 py-1.5 text-[0.6rem] font-black uppercase tracking-widest text-ds-ink2 focus:outline-none"
+                  className="bg-ds-card2 border border-ds-border rounded-xl px-2 py-1.5 text-2xs font-black uppercase tracking-widest text-ds-ink2 focus:outline-none"
                 >
                   {tiers.map(tier => (
                     <option key={tier.code} value={tier.code}>{tier.emoji ? `${tier.emoji} ` : ''}{tier.name}</option>
@@ -1776,18 +1835,18 @@ export const AgentManagementView = () => {
                   step="0.01" min="0" max="1"
                   value={editRate[a.id]}
                   onChange={e => setEditRate(prev => ({ ...prev, [a.id]: e.target.value }))}
-                  className="w-24 bg-ds-card2 border border-ds-border rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-500"
+                  className="w-24 bg-ds-card2 border border-ds-border rounded-xl px-3 py-2 text-xs text-ds-ink font-mono focus:outline-none focus:border-emerald-500"
                 />
                 <button
                   disabled={saving === a.id}
                   onClick={() => handleRateUpdate(a.id)}
-                  className="px-3 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-emerald-500 text-white"
+                  className="px-3 py-2 rounded-xl text-2xs font-black uppercase tracking-widest bg-emerald-500 text-white"
                 >
                   {saving === a.id ? '…' : 'Save'}
                 </button>
                 <button
                   onClick={() => setEditRate(prev => { const n = { ...prev }; delete n[a.id]; return n; })}
-                  className="px-3 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-ds-card2 text-ds-ink3"
+                  className="px-3 py-2 rounded-xl text-2xs font-black uppercase tracking-widest bg-ds-card2 text-ds-ink3"
                 >
                   ✕
                 </button>
@@ -1795,7 +1854,7 @@ export const AgentManagementView = () => {
             ) : (
               <button
                 onClick={() => setEditRate(prev => ({ ...prev, [a.id]: String(rate) }))}
-                className="px-3 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-ds-card2 text-ds-ink3 hover:text-white hover:bg-ds-card2 transition-colors"
+                className="px-3 py-2 rounded-xl text-2xs font-black uppercase tracking-widest bg-ds-card2 text-ds-ink3 hover:text-ds-ink hover:bg-ds-card2 transition-colors"
               >
                 Rate: {(rate * 100).toFixed(0)}%
               </button>
@@ -1809,7 +1868,7 @@ export const AgentManagementView = () => {
                 onClick={() => handleSendReset(a)}
                 disabled={pwBusy === a.id + '_reset'}
                 title="Kirim email setel ulang kata sandi ke mitra"
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-ds-card2 text-ds-ink2 hover:text-white transition-colors disabled:opacity-40"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-2xs font-black uppercase tracking-widest bg-ds-card2 text-ds-ink2 hover:text-ds-ink transition-colors disabled:opacity-40"
               >
                 <MailCheck size={12} />
                 {pwBusy === a.id + '_reset' ? '…' : 'Reset'}
@@ -1819,7 +1878,7 @@ export const AgentManagementView = () => {
                   onClick={() => handleTempPassword(a)}
                   disabled={pwBusy === a.id + '_temp'}
                   title="Setel kata sandi sementara — ditampilkan sekali, wajib diganti mitra saat login"
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white transition-colors disabled:opacity-40"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-2xs font-black uppercase tracking-widest bg-amber-500/10 text-amber-800 dark:text-amber-400 hover:bg-amber-500 hover:text-white transition-colors disabled:opacity-40"
                 >
                   <KeyRound size={12} />
                   {pwBusy === a.id + '_temp' ? '…' : 'Sandi'}
@@ -1832,9 +1891,9 @@ export const AgentManagementView = () => {
           <button
             disabled={saving === a.id}
             onClick={() => handleVerify(a.id, !verified)}
-            className={`px-6 py-2.5 rounded-2xl text-[0.65rem] font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 flex-shrink-0 ${
+            className={`px-6 py-2.5 rounded-2xl text-2xs font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 flex-shrink-0 ${
               verified
-                ? 'bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white'
+                ? 'bg-rose-500/10 text-rose-700 dark:text-rose-300 hover:bg-rose-500 hover:text-white'
                 : 'bg-emerald-500 text-white shadow-emerald-500/20 hover:bg-emerald-600'
             }`}
           >
@@ -1847,7 +1906,7 @@ export const AgentManagementView = () => {
 
   const tierCounts = tiers
     .filter(tier => !tier.is_default)
-    .map(tier => ({ label: tier.name, value: agents.filter(a => a.tier === tier.code).length, color: 'text-amber-400' }));
+    .map(tier => ({ label: tier.name, value: agents.filter(a => a.tier === tier.code).length, color: 'text-amber-800 dark:text-amber-400' }));
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -1870,7 +1929,7 @@ export const AgentManagementView = () => {
       <div className="flex justify-end gap-3">
         <button
           onClick={() => setShowBulkImport(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-500 hover:text-white transition-all"
+          className="flex items-center gap-2 px-4 py-2 bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-500 hover:text-white transition-all"
         >
           <Upload size={14} />
           Bulk Import
@@ -1889,21 +1948,21 @@ export const AgentManagementView = () => {
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
-          { label: 'Total Mitra',  value: agents.length, color: 'text-white' },
-          { label: 'Aktif',        value: active.length, color: 'text-emerald-400' },
-          { label: 'Pending',      value: pending.length, color: 'text-amber-400' },
+          { label: 'Total Mitra',  value: agents.length, color: 'text-ds-ink' },
+          { label: 'Aktif',        value: active.length, color: 'text-emerald-700 dark:text-emerald-400' },
+          { label: 'Pending',      value: pending.length, color: 'text-amber-800 dark:text-amber-400' },
           ...tierCounts,
         ].map(({ label, value, color }) => (
           <Card key={label} className="py-5 text-center">
             <p className={`text-2xl font-black ${color}`}>{value}</p>
-            <p className="text-[0.55rem] font-bold text-ds-ink3 uppercase tracking-widest mt-1">{label}</p>
+            <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-widest mt-1">{label}</p>
           </Card>
         ))}
       </div>
 
       {pending.length > 0 && (
         <div>
-          <h3 className="font-black uppercase tracking-widest text-xs text-amber-400 mb-4 flex items-center gap-2">
+          <h3 className="font-black uppercase tracking-widest text-xs text-amber-800 dark:text-amber-400 mb-4 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse inline-block" />
             Pending Approval ({pending.length})
           </h3>
@@ -1998,7 +2057,7 @@ export const ClaimsAdminView = () => {
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-full text-[0.6rem] font-black uppercase tracking-widest transition-all ${
+            className={`px-4 py-2 rounded-full text-2xs font-black uppercase tracking-widest transition-all ${
               filter === f ? 'bg-emerald-500 text-white' : 'bg-ds-card2 text-ds-ink3 hover:bg-ds-card2'
             }`}
           >
@@ -2009,8 +2068,8 @@ export const ClaimsAdminView = () => {
         {needsReviewCount > 0 && (
           <button
             onClick={() => setFilter('NEEDS_REVIEW')}
-            className={`px-4 py-2 rounded-full text-[0.6rem] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 ${
-              filter === 'NEEDS_REVIEW' ? 'bg-rose-500 text-white' : 'bg-rose-500/10 text-rose-400 hover:bg-rose-500/20'
+            className={`px-4 py-2 rounded-full text-2xs font-black uppercase tracking-widest transition-all flex items-center gap-1.5 ${
+              filter === 'NEEDS_REVIEW' ? 'bg-rose-500 text-white' : 'bg-rose-500/10 text-rose-700 dark:text-rose-300 hover:bg-rose-500/20'
             }`}
           >
             <ShieldAlert size={12} /> Needs Review ({needsReviewCount})
@@ -2035,16 +2094,14 @@ export const ClaimsAdminView = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <p className="font-black text-sm">{claim.client_name ?? '—'}</p>
-                    <span className={`px-2 py-0.5 rounded-full text-[0.5rem] font-black uppercase tracking-widest ${STATUS_COLOR[claim.status] ?? 'bg-ds-card2 text-ds-ink3'}`}>
-                      {STATUS_LABEL[claim.status] ?? claim.status}
-                    </span>
+                    <AdminStatusBadge status={claim.status} map={CLAIM_STATUS_META} size="xs" />
                     {fraudMeta && (
-                      <span className={`px-2 py-0.5 rounded-full text-[0.5rem] font-black uppercase tracking-widest border flex items-center gap-1 ${fraudMeta.color}`}>
+                      <span className={`px-2 py-0.5 rounded-full text-2xs font-black uppercase tracking-widest border flex items-center gap-1 ${fraudMeta.color}`}>
                         <fraudMeta.Icon size={10} /> {(claim as any).ai_fraud_score}/100
                       </span>
                     )}
                   </div>
-                  <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest">
+                  <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-widest">
                     {claim.claim_number ?? '-'} · {claim.product_type ?? '-'} · {claim.date ?? '-'}
                   </p>
                   {claim.location && (
@@ -2060,7 +2117,7 @@ export const ClaimsAdminView = () => {
                     <button
                       disabled={busyId === claim.id}
                       onClick={() => handleStatus(claim.id, 'UNDER_REVIEW')}
-                      className="px-4 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-blue-500/10 text-blue-600 hover:bg-blue-500 hover:text-white transition-colors disabled:opacity-40"
+                      className="px-4 py-2 rounded-xl text-2xs font-black uppercase tracking-widest bg-blue-500/10 text-blue-700 dark:text-blue-300 hover:bg-blue-500 hover:text-white transition-colors disabled:opacity-40"
                     >
                       {busyId === claim.id ? '…' : 'Review'}
                     </button>
@@ -2070,14 +2127,14 @@ export const ClaimsAdminView = () => {
                       <button
                         disabled={busyId === claim.id}
                         onClick={() => handleStatus(claim.id, 'APPROVED')}
-                        className="px-4 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-emerald-500 text-white hover:bg-emerald-600 transition-colors disabled:opacity-40"
+                        className="px-4 py-2 rounded-xl text-2xs font-black uppercase tracking-widest bg-emerald-500 text-white hover:bg-emerald-600 transition-colors disabled:opacity-40"
                       >
                         {busyId === claim.id ? '…' : 'Approve'}
                       </button>
                       <button
                         disabled={busyId === claim.id}
                         onClick={() => handleStatus(claim.id, 'REJECTED')}
-                        className="px-4 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-rose-500/10 text-rose-600 hover:bg-rose-500 hover:text-white transition-colors disabled:opacity-40"
+                        className="px-4 py-2 rounded-xl text-2xs font-black uppercase tracking-widest bg-rose-500/10 text-rose-700 dark:text-rose-200 hover:bg-rose-500 hover:text-white transition-colors disabled:opacity-40"
                       >
                         {busyId === claim.id ? '…' : 'Reject'}
                       </button>
@@ -2089,7 +2146,7 @@ export const ClaimsAdminView = () => {
                     <button
                       disabled={busyId === claim.id}
                       onClick={() => handleStatus(claim.id, 'PAID')}
-                      className="px-4 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-600 border border-emerald-500/30 hover:bg-emerald-500 hover:text-white transition-colors disabled:opacity-40"
+                      className="px-4 py-2 rounded-xl text-2xs font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500 hover:text-white transition-colors disabled:opacity-40"
                     >
                       {busyId === claim.id ? '…' : 'Tandai Dibayar'}
                     </button>
@@ -2246,7 +2303,7 @@ export const UserManagementView = () => {
     <div className="space-y-6 animate-fade-in">
       {selectedUserId && <UserDetailModal userId={selectedUserId} onClose={() => setSelectedUserId(null)} />}
       {loadError && (
-        <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-xs text-rose-400 font-bold">{loadError}</div>
+        <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-xs text-rose-700 dark:text-rose-300 font-bold">{loadError}</div>
       )}
       {/* Tab switcher — Kelola Akun (canonical CRUD) vs Partner Aktif (the
           merged GWP/commission leaderboard from the removed "Pengguna" menu) */}
@@ -2258,7 +2315,7 @@ export const UserManagementView = () => {
           <button
             key={t.id}
             onClick={() => setDirTab(t.id)}
-            className={`px-4 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${
+            className={`px-4 py-2 rounded-xl text-2xs font-black uppercase tracking-widest transition-all ${
               dirTab === t.id ? 'bg-emerald-500 text-white shadow-md' : 'text-ds-ink3 hover:text-ds-ink'
             }`}
           >
@@ -2267,26 +2324,26 @@ export const UserManagementView = () => {
         ))}
       </div>
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h2 className="text-3xl font-black uppercase tracking-tighter">Kelola <span className="text-ds-green">User</span></h2>
-          <p className="text-[0.6rem] font-bold text-ds-ink3 uppercase tracking-widest mt-1">{users.length} User Terdaftar</p>
-        </div>
-        <div className="flex gap-3">
-          <button
-            onClick={load}
-            className="flex items-center gap-2 px-4 py-3 bg-ds-card2 border border-ds-border text-ds-ink3 hover:text-white hover:bg-ds-card2 rounded-2xl font-black uppercase text-[0.6rem] tracking-widest transition-all active:scale-95"
-          >
-            <RefreshCw size={14} /> Refresh
-          </button>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black uppercase text-[0.6rem] tracking-widest shadow-xl transition-all active:scale-95"
-          >
-            <UserPlus size={16} /> Tambah Admin
-          </button>
-        </div>
-      </div>
+      <AdminPageHeader
+        title={<>Kelola <span className="text-ds-green">User</span></>}
+        subtitle={`${users.length} user terdaftar`}
+        actions={
+          <>
+            <button
+              onClick={load}
+              className="flex items-center gap-2 px-4 py-3 bg-ds-card2 border border-ds-border text-ds-ink3 hover:text-ds-ink rounded-2xl font-black uppercase text-2xs tracking-widest transition-all active:scale-95"
+            >
+              <RefreshCw size={14} /> Refresh
+            </button>
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black uppercase text-2xs tracking-widest shadow-xl transition-all active:scale-95"
+            >
+              <UserPlus size={16} /> Tambah Admin
+            </button>
+          </>
+        }
+      />
 
       {/* Tab body: canonical account CRUD, or the merged partner leaderboard */}
       {dirTab === 'accounts' ? (
@@ -2300,7 +2357,7 @@ export const UserManagementView = () => {
             placeholder="Cari nama atau email..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 bg-ds-card2 border border-ds-border rounded-xl text-xs text-white font-mono focus:outline-none focus:border-emerald-500 transition-all"
+            className="w-full pl-9 pr-4 py-2.5 bg-ds-card2 border border-ds-border rounded-xl text-xs text-ds-ink font-mono focus:outline-none focus:border-emerald-500 transition-all"
           />
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -2308,7 +2365,7 @@ export const UserManagementView = () => {
             <button
               key={rf}
               onClick={() => setRoleFilter(rf)}
-              className={`px-3 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${
+              className={`px-3 py-2 rounded-xl text-2xs font-black uppercase tracking-widest transition-all ${
                 roleFilter === rf ? 'bg-emerald-500 text-white' : 'bg-ds-card2 text-ds-ink3 hover:bg-ds-card2'
               }`}
             >
@@ -2323,7 +2380,7 @@ export const UserManagementView = () => {
         <div className="overflow-x-auto no-scrollbar">
           <table className="w-full text-left whitespace-nowrap min-w-[800px]">
             <thead>
-              <tr className="border-b border-ds-border text-[0.55rem] font-black uppercase text-ds-ink3 tracking-[0.2em]">
+              <tr className="border-b border-ds-border text-2xs font-black uppercase text-ds-ink3 tracking-[0.2em]">
                 <th className="py-4 pl-6">Nama</th>
                 <th className="py-4">Email</th>
                 <th className="py-4">Role</th>
@@ -2348,22 +2405,22 @@ export const UserManagementView = () => {
                         onClick={() => setSelectedUserId(u.id)}
                         className="flex items-center gap-3 hover:opacity-80 transition-opacity text-left"
                       >
-                        <div className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-black text-xs flex-shrink-0 overflow-hidden">
+                        <div className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-black text-xs flex-shrink-0 overflow-hidden">
                           {(u as any).profile_photo_url ? (
                             <img loading="lazy" src={(u as any).profile_photo_url} alt={u.name} className="w-full h-full object-cover" />
                           ) : (u.name?.[0] ?? '?').toUpperCase()}
                         </div>
-                        <span className="font-bold text-white truncate max-w-[140px]">{u.name}</span>
+                        <span className="font-bold text-ds-ink truncate max-w-[140px]">{u.name}</span>
                       </button>
                     </td>
-                    <td className="py-3.5 font-mono text-[0.65rem] text-ds-ink3">{u.email}</td>
+                    <td className="py-3.5 font-mono text-2xs text-ds-ink3">{u.email}</td>
                     <td className="py-3.5">
                       {isEditingRole ? (
                         <div className="flex items-center gap-2">
                           <select
                             defaultValue={u.role}
                             onChange={e => handleRoleChange(u, e.target.value as UserRole)}
-                            className="bg-ds-card border border-ds-border rounded-lg px-2 py-1.5 text-[0.6rem] font-black uppercase text-white focus:outline-none focus:border-emerald-500 [&>option]:bg-ds-card"
+                            className="bg-ds-card border border-ds-border rounded-lg px-2 py-1.5 text-2xs font-black uppercase text-ds-ink focus:outline-none focus:border-emerald-500 [&>option]:bg-ds-card"
                             autoFocus
                             onBlur={() => setEditRoleId(null)}
                           >
@@ -2392,7 +2449,7 @@ export const UserManagementView = () => {
                           {['CUSTOMER', 'AGENT', 'OPERATOR', 'ADMIN'].map(app => {
                             const checked = userAllowedApps.includes(app);
                             return (
-                              <label key={app} className="flex items-center gap-1 text-[0.55rem] font-bold uppercase cursor-pointer bg-ds-card2 px-1.5 py-0.5 rounded">
+                              <label key={app} className="flex items-center gap-1 text-2xs font-bold uppercase cursor-pointer bg-ds-card2 px-1.5 py-0.5 rounded">
                                 <input
                                   type="checkbox"
                                   defaultChecked={checked}
@@ -2405,7 +2462,7 @@ export const UserManagementView = () => {
                           })}
                           <button
                             onClick={() => setEditAppsId(null)}
-                            className="text-[0.55rem] font-black text-emerald-400 hover:text-emerald-300 ml-1"
+                            className="text-2xs font-black text-emerald-700 dark:text-emerald-400 hover:text-emerald-300 ml-1"
                           >Done</button>
                         </div>
                       ) : (
@@ -2415,10 +2472,10 @@ export const UserManagementView = () => {
                           title="Edit Apps Access"
                         >
                           {userAllowedApps.length === 0 ? (
-                            <span className="text-[0.6rem] text-ds-ink3 italic">— none —</span>
+                            <span className="text-2xs text-ds-ink3 italic">— none —</span>
                           ) : (
                             userAllowedApps.map(app => (
-                              <span key={app} className="text-[0.5rem] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400">
+                              <span key={app} className="text-2xs font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
                                 {app}
                               </span>
                             ))
@@ -2430,17 +2487,17 @@ export const UserManagementView = () => {
                     <td className="py-3.5">
                       <Badge color={isActive ? 'emerald' : 'rose'}>{isActive ? 'Aktif' : 'Nonaktif'}</Badge>
                     </td>
-                    <td className="py-3.5 text-[0.6rem] text-ds-ink3 font-mono">
+                    <td className="py-3.5 text-2xs text-ds-ink3 font-mono">
                       {u.memberSince ? new Date(u.memberSince).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
                     </td>
                     <td className="py-3.5 text-center">
                       {(u as any).tc_accepted ? (
                         <div className="flex flex-col items-center gap-0.5">
-                          <span className="text-emerald-400 font-black text-[0.6rem]">
+                          <span className="text-emerald-700 dark:text-emerald-400 font-black text-2xs">
                             ✓ {(u as any).tc_accepted_at ? new Date((u as any).tc_accepted_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: '2-digit' }) : 'Diterima'}
                           </span>
                           {(u as any).tnc_ref_number && (
-                            <span className="text-[0.5rem] font-mono text-ds-ink3" title={(u as any).tnc_ref_number}>
+                            <span className="text-2xs font-mono text-ds-ink3" title={(u as any).tnc_ref_number}>
                               {(u as any).tnc_ref_number}
                             </span>
                           )}
@@ -2452,10 +2509,10 @@ export const UserManagementView = () => {
                     <td className="py-3.5 text-right pr-6">
                       <button
                         onClick={() => handleToggleActive(u)}
-                        className={`px-3 py-1.5 rounded-xl text-[0.55rem] font-black uppercase tracking-widest transition-all ${
+                        className={`px-3 py-1.5 rounded-xl text-2xs font-black uppercase tracking-widest transition-all ${
                           isActive
-                            ? 'bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white'
-                            : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white'
+                            ? 'bg-rose-500/10 text-rose-700 dark:text-rose-300 hover:bg-rose-500 hover:text-white'
+                            : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500 hover:text-white'
                         }`}
                       >
                         {isActive ? 'Nonaktifkan' : 'Aktifkan'}
@@ -2467,7 +2524,7 @@ export const UserManagementView = () => {
             </tbody>
           </table>
           {filtered.length > 100 && (
-            <p className="text-center text-[0.6rem] text-ds-ink3 font-bold uppercase tracking-widest py-4">
+            <p className="text-center text-2xs text-ds-ink3 font-bold uppercase tracking-widest py-4">
               Menampilkan 100 dari {filtered.length} user. Gunakan filter/pencarian.
             </p>
           )}
@@ -2494,31 +2551,31 @@ export const UserManagementView = () => {
             )}
             <div className="space-y-4">
               <div>
-                <label className="block text-[0.55rem] font-black text-ds-ink3 uppercase tracking-widest mb-1.5">Nama Lengkap</label>
+                <label className="block text-2xs font-black text-ds-ink3 uppercase tracking-widest mb-1.5">Nama Lengkap</label>
                 <input
                   type="text"
                   value={newUser.name}
                   onChange={e => setNewUser({ ...newUser, name: e.target.value })}
                   placeholder="Cth: Budi Santoso"
-                  className="w-full bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm text-white font-mono focus:outline-none focus:border-emerald-500 transition-all"
+                  className="w-full bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm text-ds-ink font-mono focus:outline-none focus:border-emerald-500 transition-all"
                 />
               </div>
               <div>
-                <label className="block text-[0.55rem] font-black text-ds-ink3 uppercase tracking-widest mb-1.5">Email</label>
+                <label className="block text-2xs font-black text-ds-ink3 uppercase tracking-widest mb-1.5">Email</label>
                 <input
                   type="email"
                   value={newUser.email}
                   onChange={e => setNewUser({ ...newUser, email: e.target.value })}
                   placeholder="admin@surepath.id"
-                  className="w-full bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm text-white font-mono focus:outline-none focus:border-emerald-500 transition-all"
+                  className="w-full bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm text-ds-ink font-mono focus:outline-none focus:border-emerald-500 transition-all"
                 />
               </div>
               <div>
-                <label className="block text-[0.55rem] font-black text-ds-ink3 uppercase tracking-widest mb-1.5">Role</label>
+                <label className="block text-2xs font-black text-ds-ink3 uppercase tracking-widest mb-1.5">Role</label>
                 <select
                   value={newUser.role}
                   onChange={e => setNewUser({ ...newUser, role: e.target.value as UserRole })}
-                  className="w-full bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm text-white font-mono focus:outline-none focus:border-emerald-500 transition-all [&>option]:bg-ds-card"
+                  className="w-full bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm text-ds-ink font-mono focus:outline-none focus:border-emerald-500 transition-all [&>option]:bg-ds-card"
                 >
                   {Object.values(UserRole).map(r => (
                     <option key={r} value={r}>{r.replace('_', ' ')}</option>
@@ -2529,14 +2586,14 @@ export const UserManagementView = () => {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => { setShowAddModal(false); setAddError(null); }}
-                className="flex-1 py-3 bg-ds-card2 text-ds-ink3 rounded-2xl font-black uppercase text-[0.6rem] tracking-widest hover:bg-ds-card2 transition-all"
+                className="flex-1 py-3 bg-ds-card2 text-ds-ink3 rounded-2xl font-black uppercase text-2xs tracking-widest hover:bg-ds-card2 transition-all"
               >
                 Batal
               </button>
               <button
                 onClick={handleAddUser}
                 disabled={addLoading}
-                className="flex-1 py-3 bg-emerald-500 text-white rounded-2xl font-black uppercase text-[0.6rem] tracking-widest hover:bg-emerald-600 shadow-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 py-3 bg-emerald-500 text-white rounded-2xl font-black uppercase text-2xs tracking-widest hover:bg-emerald-600 shadow-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {addLoading ? 'Mengirim...' : 'Kirim Undangan'}
               </button>
@@ -2582,9 +2639,9 @@ export const PaymentsAdminView = () => {
     const countExpired = payments.filter(p => p.status === 'EXPIRED').length;
 
     const statusColor = (s: string) => ({
-        PAID:    'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-        PENDING: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-        EXPIRED: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+        PAID:    'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
+        PENDING: 'bg-amber-500/10 text-amber-800 dark:text-amber-400 border-amber-500/20',
+        EXPIRED: 'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/20',
     }[s] ?? 'bg-slate-500/10 text-ds-ink3 border-slate-500/20');
 
     const fmtDate = (iso?: string) => iso ? new Date(iso).toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'2-digit' }) : '-';
@@ -2595,36 +2652,36 @@ export const PaymentsAdminView = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-2xl font-black uppercase tracking-tighter">Pembayaran <span className="text-ds-green">Xendit</span></h2>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3 mt-1">Semua transaksi invoice dari gateway Xendit</p>
+                    <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3 mt-1">Semua transaksi invoice dari gateway Xendit</p>
                 </div>
-                <button onClick={loadPayments} className="flex items-center gap-2 px-4 py-2.5 bg-ds-card2 border border-ds-border rounded-2xl text-[9px] font-black uppercase tracking-widest text-ds-ink3 hover:text-white transition-colors">
+                <button onClick={loadPayments} className="flex items-center gap-2 px-4 py-2.5 bg-ds-card2 border border-ds-border rounded-2xl text-2xs font-black uppercase tracking-widest text-ds-ink3 hover:text-ds-ink transition-colors">
                     <RefreshCw size={13} /> Refresh
                 </button>
             </div>
 
             {loadError && (
                 <div className="flex items-center justify-between gap-3 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3">
-                    <p className="text-xs font-bold text-rose-400">Pembayaran gagal dimuat: {loadError}</p>
-                    <button onClick={loadPayments} className="text-2xs font-black uppercase tracking-widest text-rose-300 hover:text-white">Coba lagi</button>
+                    <p className="text-xs font-bold text-rose-700 dark:text-rose-300">Pembayaran gagal dimuat: {loadError}</p>
+                    <button onClick={loadPayments} className="text-2xs font-black uppercase tracking-widest text-rose-700 dark:text-rose-200 hover:text-ds-ink">Coba lagi</button>
                 </div>
             )}
 
             {/* KPI Cards */}
             <div className="grid grid-cols-3 gap-4">
                 <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-[2rem] p-6 space-y-2">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-ds-green">Total Terbayar</p>
+                    <p className="text-2xs font-black uppercase tracking-widest text-ds-green">Total Terbayar</p>
                     <p className="text-2xl font-black">{formatIDR(totalPaid)}</p>
-                    <p className="text-[9px] text-ds-ink3">{payments.filter(p => p.status === 'PAID').length} transaksi PAID</p>
+                    <p className="text-2xs text-ds-ink3">{payments.filter(p => p.status === 'PAID').length} transaksi PAID</p>
                 </div>
                 <div className="bg-amber-500/10 border border-amber-500/20 rounded-[2rem] p-6 space-y-2">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-ds-amber">Invoice Pending</p>
+                    <p className="text-2xs font-black uppercase tracking-widest text-ds-amber">Invoice Pending</p>
                     <p className="text-2xl font-black">{formatIDR(totalPending)}</p>
-                    <p className="text-[9px] text-ds-ink3">{payments.filter(p => p.status === 'PENDING').length} invoice aktif</p>
+                    <p className="text-2xs text-ds-ink3">{payments.filter(p => p.status === 'PENDING').length} invoice aktif</p>
                 </div>
                 <div className="bg-rose-500/10 border border-rose-500/20 rounded-[2rem] p-6 space-y-2">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-rose-500">Kadaluarsa</p>
+                    <p className="text-2xs font-black uppercase tracking-widest text-rose-700 dark:text-rose-200">Kadaluarsa</p>
                     <p className="text-2xl font-black">{countExpired}</p>
-                    <p className="text-[9px] text-ds-ink3">invoice expired</p>
+                    <p className="text-2xs text-ds-ink3">invoice expired</p>
                 </div>
             </div>
 
@@ -2634,8 +2691,8 @@ export const PaymentsAdminView = () => {
                     <button
                         key={f}
                         onClick={() => setFilter(f)}
-                        className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${
-                            filter === f ? 'bg-emerald-500 text-white shadow-md' : 'bg-ds-card2 text-ds-ink3 hover:text-white border border-ds-border'
+                        className={`px-4 py-2 rounded-full text-2xs font-black uppercase tracking-widest transition-all ${
+                            filter === f ? 'bg-emerald-500 text-white shadow-md' : 'bg-ds-card2 text-ds-ink3 hover:text-ds-ink border border-ds-border'
                         }`}
                     >
                         {f === 'ALL' ? `Semua (${payments.length})` : `${f} (${payments.filter(p => p.status === f).length})`}
@@ -2653,7 +2710,7 @@ export const PaymentsAdminView = () => {
                     <div className="overflow-x-auto">
                         <table className="w-full text-xs min-w-[900px]">
                             <thead>
-                                <tr className="text-ds-ink3 text-[9px] font-black uppercase tracking-widest border-b border-ds-border">
+                                <tr className="text-ds-ink3 text-2xs font-black uppercase tracking-widest border-b border-ds-border">
                                     <th className="px-6 py-4 text-left">Tanggal</th>
                                     <th className="px-4 py-4 text-left">Order #</th>
                                     <th className="px-4 py-4 text-left">Klien</th>
@@ -2674,25 +2731,25 @@ export const PaymentsAdminView = () => {
                                     </tr>
                                 ) : filtered.map(p => (
                                     <tr key={p.id} className="border-b border-ds-border hover:bg-ds-card2 transition-colors">
-                                        <td className="px-6 py-3 text-ds-ink3 whitespace-nowrap text-[10px]">{fmtDate(p.created_at)}</td>
-                                        <td className="px-4 py-3 font-mono text-emerald-400 whitespace-nowrap text-[10px]">{p.order_number ?? p.external_id?.slice(0, 14) ?? '—'}</td>
-                                        <td className="px-4 py-3 font-semibold text-white whitespace-nowrap">{p.client_name ?? '—'}</td>
+                                        <td className="px-6 py-3 text-ds-ink3 whitespace-nowrap text-2xs">{fmtDate(p.created_at)}</td>
+                                        <td className="px-4 py-3 font-mono text-emerald-700 dark:text-emerald-400 whitespace-nowrap text-2xs">{p.order_number ?? p.external_id?.slice(0, 14) ?? '—'}</td>
+                                        <td className="px-4 py-3 font-semibold text-ds-ink whitespace-nowrap">{p.client_name ?? '—'}</td>
                                         <td className="px-4 py-3 text-ds-ink3 whitespace-nowrap">{p.product_name ?? '—'}</td>
-                                        <td className="px-4 py-3 text-right font-mono text-white whitespace-nowrap">{formatIDR(p.paid_amount ?? p.amount ?? 0)}</td>
+                                        <td className="px-4 py-3 text-right font-mono text-ds-ink whitespace-nowrap">{formatIDR(p.paid_amount ?? p.amount ?? 0)}</td>
                                         <td className="px-4 py-3 text-center">
-                                            <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${statusColor(p.status)}`}>
+                                            <span className={`px-2.5 py-1 rounded-lg text-2xs font-black uppercase tracking-widest border ${statusColor(p.status)}`}>
                                                 {p.status}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 text-ds-ink3 whitespace-nowrap text-[10px]">{p.payment_method ?? p.payment_channel ?? '—'}</td>
-                                        <td className="px-4 py-3 text-ds-ink3 whitespace-nowrap text-[10px]">{fmtDate(p.paid_at)}</td>
+                                        <td className="px-4 py-3 text-ds-ink3 whitespace-nowrap text-2xs">{p.payment_method ?? p.payment_channel ?? '—'}</td>
+                                        <td className="px-4 py-3 text-ds-ink3 whitespace-nowrap text-2xs">{fmtDate(p.paid_at)}</td>
                                         <td className="px-6 py-3">
                                             {p.invoice_url && p.status === 'PENDING' ? (
                                                 <a
                                                     href={p.invoice_url}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="text-[9px] font-black text-amber-400 hover:text-amber-300 uppercase tracking-widest flex items-center gap-1"
+                                                    className="text-2xs font-black text-amber-800 dark:text-amber-400 hover:text-amber-300 uppercase tracking-widest flex items-center gap-1"
                                                 >
                                                     <Globe size={10} /> Buka
                                                 </a>
@@ -2831,13 +2888,13 @@ export const WithdrawalsAdminView: React.FC = () => {
   const statusBadge = (status: string) => {
     const map: Record<string, { cls: string; label: string }> = {
       PENDING_L1:  { cls: 'bg-amber-500/10 text-ds-amber border-amber-500/20',  label: 'Menunggu L1' },
-      PENDING_L2:  { cls: 'bg-orange-500/10 text-orange-500 border-orange-500/20', label: 'Menunggu L2' },
-      PENDING_L3:  { cls: 'bg-red-500/10 text-red-400 border-red-500/20',        label: 'Menunggu L3' },
-      APPROVED:    { cls: 'bg-blue-500/10 text-blue-400 border-blue-500/20',      label: 'Disetujui' },
-      PROCESSING:  { cls: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20', label: 'Diproses' },
-      DISBURSED:   { cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', label: 'Cair' },
-      FAILED:      { cls: 'bg-red-500/10 text-red-400 border-red-500/20',         label: 'Gagal' },
-      REJECTED:    { cls: 'bg-red-500/10 text-red-400 border-red-500/20',         label: 'Ditolak' },
+      PENDING_L2:  { cls: 'bg-orange-500/10 text-orange-800 dark:text-orange-300 border-orange-500/20', label: 'Menunggu L2' },
+      PENDING_L3:  { cls: 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20',        label: 'Menunggu L3' },
+      APPROVED:    { cls: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20',      label: 'Disetujui' },
+      PROCESSING:  { cls: 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/20', label: 'Diproses' },
+      DISBURSED:   { cls: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20', label: 'Cair' },
+      FAILED:      { cls: 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20',         label: 'Gagal' },
+      REJECTED:    { cls: 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20',         label: 'Ditolak' },
       CANCELLED:   { cls: 'bg-gray-500/10 text-ds-ink3 border-gray-500/20',      label: 'Dibatalkan' },
     };
     return map[status] ?? { cls: 'bg-gray-500/10 text-ds-ink3', label: status };
@@ -2849,31 +2906,34 @@ export const WithdrawalsAdminView: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-black uppercase tracking-tight">Penarikan Dana Mitra</h2>
-        <button onClick={load} className="p-2 rounded-xl bg-ds-card2 hover:bg-ds-card2 transition-all active:scale-95">
-          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-        </button>
-      </div>
+      <AdminPageHeader
+        title="Penarikan Dana Mitra"
+        subtitle="Persetujuan berjenjang L1 / L2 / L3"
+        actions={
+          <button onClick={load} aria-label="Muat ulang penarikan" className="p-2.5 rounded-xl bg-ds-card2 border border-ds-border text-ds-ink3 hover:text-ds-ink transition-all active:scale-95">
+            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+          </button>
+        }
+      />
 
       {loadError && (
         <div className="flex items-center justify-between gap-3 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3">
-          <p className="text-xs font-bold text-rose-400">Penarikan gagal dimuat: {loadError}</p>
-          <button onClick={load} className="text-2xs font-black uppercase tracking-widest text-rose-300 hover:text-white">Coba lagi</button>
+          <p className="text-xs font-bold text-rose-700 dark:text-rose-300">Penarikan gagal dimuat: {loadError}</p>
+          <button onClick={load} className="text-2xs font-black uppercase tracking-widest text-rose-700 dark:text-rose-200 hover:text-ds-ink">Coba lagi</button>
         </div>
       )}
 
       {/* KPIs */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: 'Antrian Pending', value: countPending.toString(), sub: IDR(totalPending), color: 'text-amber-400' },
-          { label: 'Total Dicairkan', value: IDR(totalDisbursed), sub: `${withdrawals.filter(w => w.status === 'DISBURSED').length} transaksi`, color: 'text-emerald-400' },
-          { label: 'Total Permintaan', value: withdrawals.length.toString(), sub: 'Semua waktu', color: 'text-blue-400' },
+          { label: 'Antrian Pending', value: countPending.toString(), sub: IDR(totalPending), color: 'text-amber-800 dark:text-amber-400' },
+          { label: 'Total Dicairkan', value: IDR(totalDisbursed), sub: `${withdrawals.filter(w => w.status === 'DISBURSED').length} transaksi`, color: 'text-emerald-700 dark:text-emerald-400' },
+          { label: 'Total Permintaan', value: withdrawals.length.toString(), sub: 'Semua waktu', color: 'text-blue-700 dark:text-blue-400' },
         ].map(k => (
           <div key={k.label} className="bg-ds-card2 border border-ds-border rounded-2xl p-4 space-y-1">
-            <p className="text-[0.5rem] font-black uppercase tracking-widest text-ds-ink3">{k.label}</p>
+            <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3">{k.label}</p>
             <p className={`text-lg font-black ${k.color}`}>{k.value}</p>
-            <p className="text-[0.5rem] text-ds-ink2">{k.sub}</p>
+            <p className="text-2xs text-ds-ink2">{k.sub}</p>
           </div>
         ))}
       </div>
@@ -2884,7 +2944,7 @@ export const WithdrawalsAdminView: React.FC = () => {
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-full text-[0.55rem] font-black uppercase tracking-widest transition-all ${filter === f ? 'bg-emerald-500 text-white' : 'bg-ds-card2 text-ds-ink3 hover:bg-ds-card2'}`}
+            className={`px-4 py-2 rounded-full text-2xs font-black uppercase tracking-widest transition-all ${filter === f ? 'bg-emerald-500 text-white' : 'bg-ds-card2 text-ds-ink3 hover:bg-ds-card2'}`}
           >
             {f === 'ALL' ? 'Semua' : f === 'PENDING' ? 'Pending' : f === 'APPROVED' ? 'Disetujui' : f === 'DISBURSED' ? 'Cair' : 'Ditolak'}
           </button>
@@ -2902,42 +2962,42 @@ export const WithdrawalsAdminView: React.FC = () => {
             <div key={wd.id} className="bg-ds-card2 border border-ds-border rounded-2xl p-5 space-y-4">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-black text-white">{wd.agent_name ?? 'Mitra Tidak Dikenal'}</p>
-                  <p className="text-[0.5rem] text-ds-ink3">{wd.agent_email}</p>
-                  <p className="text-[0.5rem] text-ds-ink3 mt-0.5">{wd.bank_code} · {wd.account_number} · {wd.account_holder_name}</p>
+                  <p className="text-sm font-black text-ds-ink">{wd.agent_name ?? 'Mitra Tidak Dikenal'}</p>
+                  <p className="text-2xs text-ds-ink3">{wd.agent_email}</p>
+                  <p className="text-2xs text-ds-ink3 mt-0.5">{wd.bank_code} · {wd.account_number} · {wd.account_holder_name}</p>
                 </div>
-                <span className={`text-[0.45rem] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border whitespace-nowrap ${cls}`}>{label}</span>
+                <span className={`text-2xs font-black uppercase tracking-widest px-2.5 py-1 rounded-full border whitespace-nowrap ${cls}`}>{label}</span>
               </div>
               <div className="grid grid-cols-3 gap-3 bg-ds-card2 rounded-xl p-3">
                 <div>
-                  <p className="text-[0.45rem] text-ds-ink3 uppercase tracking-widest">Diminta</p>
-                  <p className="text-xs font-black text-white">{IDR(wd.amount)}</p>
+                  <p className="text-2xs text-ds-ink3 uppercase tracking-widest">Diminta</p>
+                  <p className="text-xs font-black text-ds-ink">{IDR(wd.amount)}</p>
                 </div>
                 <div>
-                  <p className="text-[0.45rem] text-ds-ink3 uppercase tracking-widest">Biaya Xendit</p>
-                  <p className="text-xs font-black text-amber-400">-{IDR(wd.xendit_fee)}</p>
+                  <p className="text-2xs text-ds-ink3 uppercase tracking-widest">Biaya Xendit</p>
+                  <p className="text-xs font-black text-amber-800 dark:text-amber-400">-{IDR(wd.xendit_fee)}</p>
                 </div>
                 <div>
-                  <p className="text-[0.45rem] text-ds-ink3 uppercase tracking-widest">Diterima Mitra</p>
-                  <p className="text-xs font-black text-emerald-400">{IDR(wd.net_amount)}</p>
+                  <p className="text-2xs text-ds-ink3 uppercase tracking-widest">Diterima Mitra</p>
+                  <p className="text-xs font-black text-emerald-700 dark:text-emerald-400">{IDR(wd.net_amount)}</p>
                 </div>
               </div>
               {wd.scheduled_disburse_at && wd.status !== 'DISBURSED' && (
-                <p className="text-[0.5rem] text-amber-400 bg-amber-500/10 rounded-xl px-3 py-2 flex items-center gap-2">
+                <p className="text-2xs text-amber-800 dark:text-amber-400 bg-amber-500/10 rounded-xl px-3 py-2 flex items-center gap-2">
                   <Clock size={10} />
                   Pencairan dijadwalkan: {new Date(wd.scheduled_disburse_at).toLocaleString('id-ID')} (24 jam delay karena &gt; Rp 25 juta)
                 </p>
               )}
               {wd.amount >= 25_000_000 && (
-                <p className="text-[0.5rem] text-red-400 bg-red-500/10 rounded-xl px-3 py-2 flex items-center gap-2">
+                <p className="text-2xs text-red-700 dark:text-red-400 bg-red-500/10 rounded-xl px-3 py-2 flex items-center gap-2">
                   <AlertCircle size={10} />
                   Di atas Rp 25 juta — memerlukan 3 level persetujuan
                 </p>
               )}
               {wd.rejection_reason && (
-                <p className="text-[0.5rem] text-red-400">Alasan ditolak: {wd.rejection_reason}</p>
+                <p className="text-2xs text-red-700 dark:text-red-400">Alasan ditolak: {wd.rejection_reason}</p>
               )}
-              <div className="text-[0.45rem] text-ds-ink2">
+              <div className="text-2xs text-ds-ink2">
                 {wd.l1_approved_at && <span>L1: {new Date(wd.l1_approved_at).toLocaleDateString('id-ID')} · </span>}
                 {wd.l2_approved_at && <span>L2: {new Date(wd.l2_approved_at).toLocaleDateString('id-ID')} · </span>}
                 {wd.l3_approved_at && <span>L3: {new Date(wd.l3_approved_at).toLocaleDateString('id-ID')} · </span>}
@@ -2949,7 +3009,7 @@ export const WithdrawalsAdminView: React.FC = () => {
                   <button
                     onClick={() => handleApprove(wd)}
                     disabled={busy}
-                    className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl text-[0.55rem] font-black uppercase tracking-widest hover:bg-emerald-500/20 transition-all active:scale-95 disabled:opacity-40"
+                    className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 rounded-xl text-2xs font-black uppercase tracking-widest hover:bg-emerald-500/20 transition-all active:scale-95 disabled:opacity-40"
                   >
                     {busy ? <RefreshCw size={12} className="animate-spin" /> : <Check size={12} />}
                     Setujui
@@ -2959,7 +3019,7 @@ export const WithdrawalsAdminView: React.FC = () => {
                   <button
                     onClick={() => handleDisburse(wd.id)}
                     disabled={busy}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-xl text-[0.55rem] font-black uppercase tracking-widest hover:bg-blue-500/20 transition-all active:scale-95 disabled:opacity-40"
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-500/10 border border-blue-500/20 text-blue-700 dark:text-blue-400 rounded-xl text-2xs font-black uppercase tracking-widest hover:bg-blue-500/20 transition-all active:scale-95 disabled:opacity-40"
                   >
                     {busy ? <RefreshCw size={12} className="animate-spin" /> : <Send size={12} />}
                     Cairkan via Xendit
@@ -2969,7 +3029,7 @@ export const WithdrawalsAdminView: React.FC = () => {
                   <button
                     onClick={() => setRejectModal({ id: wd.id, agentName: wd.agent_name ?? 'Mitra' })}
                     disabled={busy}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-[0.55rem] font-black uppercase tracking-widest hover:bg-red-500/20 transition-all active:scale-95 disabled:opacity-40"
+                    className="flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/20 text-red-700 dark:text-red-400 rounded-xl text-2xs font-black uppercase tracking-widest hover:bg-red-500/20 transition-all active:scale-95 disabled:opacity-40"
                   >
                     <X size={12} />
                     Tolak
@@ -2999,7 +3059,7 @@ export const WithdrawalsAdminView: React.FC = () => {
               <button
                 onClick={handleReject}
                 disabled={!rejectReason.trim() || actionLoading === rejectModal.id}
-                className="flex-1 py-3 rounded-xl bg-red-500/20 border border-red-500/30 text-red-400 font-black text-xs uppercase tracking-widest disabled:opacity-40"
+                className="flex-1 py-3 rounded-xl bg-red-500/20 border border-red-500/30 text-red-700 dark:text-red-400 font-black text-xs uppercase tracking-widest disabled:opacity-40"
               >
                 Tolak &amp; Kembalikan Dana
               </button>

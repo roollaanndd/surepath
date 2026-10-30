@@ -181,7 +181,7 @@ const TierConfigTab: React.FC = () => {
     <div className="space-y-6">
       {/* Info banner */}
       <div className="bg-ds-card2 border border-ds-border rounded-2xl p-4 text-[11px] text-ds-ink3 space-y-1">
-        <p className="text-white font-bold text-xs mb-2">Cara Kerja Tier</p>
+        <p className="text-ds-ink font-bold text-xs mb-2">Cara Kerja Tier</p>
         <p>• <b>Override</b> = % dari <b>komisi</b> downline (bukan dari premi). <b>Bonus Koin</b> = koin tambahan per penjualan.</p>
         <p>• Threshold (jumlah polis / total premi) dipakai untuk evaluasi otomatis tier agen.</p>
         <p>• Tier dengan "Butuh Persetujuan" tidak langsung aktif — masuk antrean di tab Persetujuan Tier.</p>
@@ -191,21 +191,21 @@ const TierConfigTab: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={startCreate}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[0.65rem] font-black uppercase tracking-widest bg-emerald-500 text-white hover:bg-emerald-600 transition-all"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-2xs font-black uppercase tracking-widest bg-emerald-500 text-white hover:bg-emerald-600 transition-all"
           >
             <Plus size={12} /> Tier Baru
           </button>
           <button
             onClick={handleEvaluateAll}
             disabled={evaluating}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[0.65rem] font-black uppercase tracking-widest bg-ds-card2 text-ds-ink2 hover:bg-ds-card2 transition-all disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-2xs font-black uppercase tracking-widest bg-ds-card2 text-ds-ink2 hover:bg-ds-card2 transition-all disabled:opacity-50"
           >
             <Sparkles size={12} /> {evaluating ? 'Mengevaluasi…' : 'Evaluasi Semua Agen'}
           </button>
         </div>
       )}
       {evalSummary && (
-        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-3 py-2 text-[11px] text-emerald-300">{evalSummary}</div>
+        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-3 py-2 text-[11px] text-emerald-700 dark:text-emerald-300">{evalSummary}</div>
       )}
 
       {tiers.map((tier, idx) => {
@@ -221,12 +221,12 @@ const TierConfigTab: React.FC = () => {
                 {tier.emoji && <span className="text-xl flex-shrink-0">{tier.emoji}</span>}
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <p className="font-black text-sm text-white truncate">{tier.name}</p>
-                    {tier.is_default && <span className="text-[8px] font-black uppercase tracking-widest text-ds-ink3 bg-ds-card2 px-1.5 py-0.5 rounded">Default</span>}
-                    {tier.requires_approval && <span className="text-[8px] font-black uppercase tracking-widest text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">Butuh Persetujuan</span>}
-                    {!tier.is_active && <span className="text-[8px] font-black uppercase tracking-widest text-rose-400 bg-rose-500/10 px-1.5 py-0.5 rounded">Nonaktif</span>}
+                    <p className="font-black text-sm text-ds-ink truncate">{tier.name}</p>
+                    {tier.is_default && <span className="text-2xs font-black uppercase tracking-widest text-ds-ink3 bg-ds-card2 px-1.5 py-0.5 rounded">Default</span>}
+                    {tier.requires_approval && <span className="text-2xs font-black uppercase tracking-widest text-amber-800 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">Butuh Persetujuan</span>}
+                    {!tier.is_active && <span className="text-2xs font-black uppercase tracking-widest text-rose-700 dark:text-rose-300 bg-rose-500/10 px-1.5 py-0.5 rounded">Nonaktif</span>}
                   </div>
-                  <p className="text-[10px] text-ds-ink3 font-mono">{tier.code} · {tier.min_policies_count ? `≥${tier.min_policies_count} polis` : ''} {tier.min_premium_amount ? `· ≥Rp${(tier.min_premium_amount / 1_000_000).toFixed(0)}jt` : ''}</p>
+                  <p className="text-2xs text-ds-ink3 font-mono">{tier.code} · {tier.min_policies_count ? `≥${tier.min_policies_count} polis` : ''} {tier.min_premium_amount ? `· ≥Rp${(tier.min_premium_amount / 1_000_000).toFixed(0)}jt` : ''}</p>
                 </div>
               </div>
               {canManage && (
@@ -235,12 +235,12 @@ const TierConfigTab: React.FC = () => {
                   <button onClick={() => handleReorder(idx, 1)} disabled={idx === tiers.length - 1} className="w-6 h-6 rounded-lg bg-ds-card2 text-ds-ink3 disabled:opacity-20 flex items-center justify-center"><ChevronDown size={12} /></button>
                   <button
                     onClick={() => isEditing ? cancelEdit() : startEdit(tier)}
-                    className="px-2.5 py-1.5 rounded-xl text-[0.58rem] font-black uppercase tracking-widest bg-ds-card2 text-ds-ink2 hover:bg-ds-card2 transition-all"
+                    className="px-2.5 py-1.5 rounded-xl text-2xs font-black uppercase tracking-widest bg-ds-card2 text-ds-ink2 hover:bg-ds-card2 transition-all"
                   >
                     {isEditing ? 'Tutup' : 'Edit'}
                   </button>
                   {!tier.is_default && (
-                    <button onClick={() => handleDelete(tier.code)} className="w-7 h-7 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-all">
+                    <button onClick={() => handleDelete(tier.code)} className="w-7 h-7 rounded-lg bg-rose-500/10 text-rose-700 dark:text-rose-300 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-all">
                       <Trash2 size={12} />
                     </button>
                   )}
@@ -256,7 +256,7 @@ const TierConfigTab: React.FC = () => {
               ].map(({ label, value }) => (
                 <div key={label} className="rounded-xl p-2.5 text-center" style={{ background: tier.color + '14', border: `1px solid ${tier.color}22` }}>
                   <p className="font-black text-sm" style={{ color: tier.color }}>{pct(value)}</p>
-                  <p className="text-[0.55rem] font-bold opacity-50 mt-0.5 uppercase tracking-widest text-ds-ink2">{label}</p>
+                  <p className="text-2xs font-bold opacity-50 mt-0.5 uppercase tracking-widest text-ds-ink2">{label}</p>
                 </div>
               ))}
             </div>
@@ -284,7 +284,7 @@ const TierConfigTab: React.FC = () => {
 
       {creating && draft && (
         <div className="rounded-[1.5rem] p-5 space-y-4 border border-ds-border bg-ds-card2">
-          <p className="font-black text-sm text-white">Tier Baru</p>
+          <p className="font-black text-sm text-ds-ink">Tier Baru</p>
           <TierEditForm
             draft={draft}
             locked={false}
@@ -323,28 +323,28 @@ const TierEditForm: React.FC<{
   <div className="space-y-4 pt-2 border-t border-ds-border">
     <div className="grid grid-cols-2 gap-3">
       <div>
-        <label className="block text-[9px] font-black uppercase tracking-widest text-ds-ink3 mb-1">Kode</label>
+        <label className="block text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-1">Kode</label>
         <input
           type="text" placeholder="GOLD" disabled={locked}
           value={draft.code ?? ''}
           onChange={e => onField('code', e.target.value.toUpperCase())}
-          className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-500/40 disabled:opacity-40"
+          className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-ds-ink font-mono focus:outline-none focus:border-emerald-500/40 disabled:opacity-40"
         />
       </div>
       <div>
-        <label className="block text-[9px] font-black uppercase tracking-widest text-ds-ink3 mb-1">Nama Tampilan</label>
+        <label className="block text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-1">Nama Tampilan</label>
         <input
           type="text" placeholder="Mitra Gold"
           value={draft.name ?? ''}
           onChange={e => onField('name', e.target.value)}
-          className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500/40"
+          className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-ds-ink focus:outline-none focus:border-emerald-500/40"
         />
       </div>
     </div>
 
     <div className="grid grid-cols-2 gap-3">
       <div>
-        <label className="block text-[9px] font-black uppercase tracking-widest text-ds-ink3 mb-1">Warna</label>
+        <label className="block text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-1">Warna</label>
         <input
           type="color"
           value={draft.color ?? '#6b7280'}
@@ -353,33 +353,33 @@ const TierEditForm: React.FC<{
         />
       </div>
       <div>
-        <label className="block text-[9px] font-black uppercase tracking-widest text-ds-ink3 mb-1">Emoji</label>
+        <label className="block text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-1">Emoji</label>
         <input
           type="text" placeholder="🏆" maxLength={4}
           value={draft.emoji ?? ''}
           onChange={e => onField('emoji', e.target.value)}
-          className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500/40"
+          className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-ds-ink focus:outline-none focus:border-emerald-500/40"
         />
       </div>
     </div>
 
     <div className="grid grid-cols-2 gap-3">
       <div>
-        <label className="block text-[9px] font-black uppercase tracking-widest text-ds-ink3 mb-1">Min. Jumlah Polis</label>
+        <label className="block text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-1">Min. Jumlah Polis</label>
         <input
           type="number" min={0} placeholder="Tanpa syarat"
           value={draft.min_policies_count ?? ''}
           onChange={e => onField('min_policies_count', e.target.value === '' ? null : Number(e.target.value))}
-          className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-500/40"
+          className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-ds-ink font-mono focus:outline-none focus:border-emerald-500/40"
         />
       </div>
       <div>
-        <label className="block text-[9px] font-black uppercase tracking-widest text-ds-ink3 mb-1">Min. Total Premi (IDR)</label>
+        <label className="block text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-1">Min. Total Premi (IDR)</label>
         <input
           type="number" min={0} step={1000000} placeholder="Tanpa syarat"
           value={draft.min_premium_amount ?? ''}
           onChange={e => onField('min_premium_amount', e.target.value === '' ? null : Number(e.target.value))}
-          className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-500/40"
+          className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-ds-ink font-mono focus:outline-none focus:border-emerald-500/40"
         />
       </div>
     </div>
@@ -391,15 +391,15 @@ const TierEditForm: React.FC<{
         { label: 'Override L2', field: 'l2_override_rate' as const, max: 5 },
       ].map(({ label, field, max }) => (
         <div key={field}>
-          <label className="block text-[9px] font-black uppercase tracking-widest text-ds-ink3 mb-1.5">{label}</label>
+          <label className="block text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-1.5">{label}</label>
           <div className="flex items-center gap-1">
             <input
               type="number" min={0} max={max} step={0.5}
               value={(((draft[field] as number) ?? 0) * 100).toFixed(1)}
               onChange={e => onRate(field, e.target.value)}
-              className="w-full bg-black/30 border border-ds-border rounded-xl px-2 py-2 text-xs text-white font-mono focus:outline-none"
+              className="w-full bg-black/30 border border-ds-border rounded-xl px-2 py-2 text-xs text-ds-ink font-mono focus:outline-none"
             />
-            <span className="text-[10px] text-ds-ink3 flex-shrink-0">%</span>
+            <span className="text-2xs text-ds-ink3 flex-shrink-0">%</span>
           </div>
         </div>
       ))}
@@ -408,24 +408,24 @@ const TierEditForm: React.FC<{
     {/* Benefits — generic key/value bag for future perks */}
     <div>
       <div className="flex items-center justify-between mb-1.5">
-        <label className="block text-[9px] font-black uppercase tracking-widest text-ds-ink3">Benefit Tambahan</label>
-        <button onClick={onAddBenefit} className="text-[9px] font-black uppercase tracking-widest text-emerald-400 flex items-center gap-1"><Plus size={10} /> Tambah</button>
+        <label className="block text-2xs font-black uppercase tracking-widest text-ds-ink3">Benefit Tambahan</label>
+        <button onClick={onAddBenefit} className="text-2xs font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-400 flex items-center gap-1"><Plus size={10} /> Tambah</button>
       </div>
       <div className="space-y-1.5">
-        {draft.benefitsList.length === 0 && <p className="text-[10px] text-ds-ink3">Belum ada benefit tambahan (mis. kuota lead, prioritas cair dana).</p>}
+        {draft.benefitsList.length === 0 && <p className="text-2xs text-ds-ink3">Belum ada benefit tambahan (mis. kuota lead, prioritas cair dana).</p>}
         {draft.benefitsList.map((b, i) => (
           <div key={i} className="flex items-center gap-1.5">
             <input
               type="text" placeholder="nama_benefit"
               value={b.key}
               onChange={e => onSetBenefit(i, 'key', e.target.value)}
-              className="flex-1 bg-black/30 border border-ds-border rounded-lg px-2 py-1.5 text-[11px] text-white font-mono focus:outline-none"
+              className="flex-1 bg-black/30 border border-ds-border rounded-lg px-2 py-1.5 text-[11px] text-ds-ink font-mono focus:outline-none"
             />
             <input
               type="text" placeholder="nilai"
               value={b.value}
               onChange={e => onSetBenefit(i, 'value', e.target.value)}
-              className="flex-1 bg-black/30 border border-ds-border rounded-lg px-2 py-1.5 text-[11px] text-white focus:outline-none"
+              className="flex-1 bg-black/30 border border-ds-border rounded-lg px-2 py-1.5 text-[11px] text-ds-ink focus:outline-none"
             />
             <button onClick={() => onRemoveBenefit(i)} className="w-6 h-6 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center flex-shrink-0"><X size={11} /></button>
           </div>
@@ -437,7 +437,7 @@ const TierEditForm: React.FC<{
     <div>
       <label className="flex items-center gap-2 mb-2 cursor-pointer">
         <input type="checkbox" checked={!!draft.requires_approval} onChange={e => onField('requires_approval', e.target.checked)} className="accent-emerald-500" />
-        <span className="text-[10px] font-black uppercase tracking-widest text-ds-ink2">Butuh Persetujuan Level Atas</span>
+        <span className="text-2xs font-black uppercase tracking-widest text-ds-ink2">Butuh Persetujuan Level Atas</span>
       </label>
       {draft.requires_approval && (
         <div className="flex flex-wrap gap-1.5">
@@ -445,7 +445,7 @@ const TierEditForm: React.FC<{
             <button
               key={r}
               onClick={() => onToggleApprovalRole(r)}
-              className="px-2.5 py-1 rounded-lg text-[0.58rem] font-black uppercase tracking-widest transition-all"
+              className="px-2.5 py-1 rounded-lg text-2xs font-black uppercase tracking-widest transition-all"
               style={{
                 background: (draft.approval_roles ?? []).includes(r) ? '#00C16A' : 'rgba(255,255,255,0.05)',
                 color: (draft.approval_roles ?? []).includes(r) ? '#000' : 'rgba(255,255,255,0.4)',
@@ -459,12 +459,12 @@ const TierEditForm: React.FC<{
     </div>
 
     {onMakeDefault && !draft.is_default && (
-      <button onClick={onMakeDefault} className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 hover:text-white transition-all">
+      <button onClick={onMakeDefault} className="text-2xs font-black uppercase tracking-widest text-ds-ink3 hover:text-ds-ink transition-all">
         Jadikan Tier Default (agen baru)
       </button>
     )}
 
-    {error && <p className="text-[10px] text-rose-400">{error}</p>}
+    {error && <p className="text-2xs text-rose-700 dark:text-rose-300">{error}</p>}
 
     <div className="flex gap-2">
       <button
@@ -537,7 +537,7 @@ const TierRequestsTab: React.FC = () => {
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-3 py-1.5 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${
+            className={`px-3 py-1.5 rounded-xl text-2xs font-black uppercase tracking-widest transition-all ${
               filter === f ? 'bg-emerald-500 text-white' : 'bg-ds-card2 text-ds-ink3'
             }`}
           >
@@ -558,20 +558,20 @@ const TierRequestsTab: React.FC = () => {
             <div key={r.id} className="border border-ds-border rounded-2xl px-4 py-3 bg-ds-card2">
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-sm font-black text-white truncate">{r.sp_users?.name ?? r.agent_id}</p>
-                  <p className="text-[10px] text-ds-ink3">
-                    {r.current_tier_code ?? '—'} → <span className="text-emerald-400 font-bold">{r.requested_tier_code}</span>
+                  <p className="text-sm font-black text-ds-ink truncate">{r.sp_users?.name ?? r.agent_id}</p>
+                  <p className="text-2xs text-ds-ink3">
+                    {r.current_tier_code ?? '—'} → <span className="text-emerald-700 dark:text-emerald-400 font-bold">{r.requested_tier_code}</span>
                     {' · '}{r.source === 'AUTO_ELIGIBLE' ? 'Evaluasi otomatis' : 'Diajukan manual'}
                   </p>
-                  {r.reason && <p className="text-[10px] text-ds-ink3 mt-0.5">"{r.reason}"</p>}
-                  <p className="text-[9px] text-ds-ink2 mt-0.5">{new Date(r.requested_at).toLocaleString('id-ID')}</p>
+                  {r.reason && <p className="text-2xs text-ds-ink3 mt-0.5">"{r.reason}"</p>}
+                  <p className="text-2xs text-ds-ink2 mt-0.5">{new Date(r.requested_at).toLocaleString('id-ID')}</p>
                 </div>
                 {r.status === 'PENDING' && (
                   <div className="flex items-center gap-1.5 flex-shrink-0">
                     <button
                       onClick={() => handleApprove(r.id)}
                       disabled={acting === r.id}
-                      className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white flex items-center justify-center transition-all disabled:opacity-50"
+                      className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500 hover:text-white flex items-center justify-center transition-all disabled:opacity-50"
                       title="Setujui"
                     >
                       <ThumbsUp size={13} />
@@ -579,7 +579,7 @@ const TierRequestsTab: React.FC = () => {
                     <button
                       onClick={() => handleReject(r.id)}
                       disabled={acting === r.id}
-                      className="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-all disabled:opacity-50"
+                      className="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-700 dark:text-rose-300 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-all disabled:opacity-50"
                       title="Tolak"
                     >
                       <ThumbsDown size={13} />
@@ -670,12 +670,12 @@ const PromoCodesTab: React.FC = () => {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs font-black text-white">Kode Promo Nasabah</p>
-          <p className="text-[10px] text-ds-ink3">{active.length} aktif · {expired.length} nonaktif/kadaluarsa</p>
+          <p className="text-xs font-black text-ds-ink">Kode Promo Nasabah</p>
+          <p className="text-2xs text-ds-ink3">{active.length} aktif · {expired.length} nonaktif/kadaluarsa</p>
         </div>
         <button
           onClick={() => setShowForm(f => !f)}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[0.65rem] font-black uppercase tracking-widest bg-emerald-500 text-white hover:bg-emerald-600 transition-all"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-2xs font-black uppercase tracking-widest bg-emerald-500 text-white hover:bg-emerald-600 transition-all"
         >
           {showForm ? <X size={12} /> : <Plus size={12} />}
           {showForm ? 'Batal' : 'Buat Kode'}
@@ -685,24 +685,24 @@ const PromoCodesTab: React.FC = () => {
       {/* Create form */}
       {showForm && (
         <div className="bg-ds-card2 border border-ds-border rounded-2xl p-5 space-y-4">
-          <p className="text-xs font-black text-white">Kode Promo Baru</p>
+          <p className="text-xs font-black text-ds-ink">Kode Promo Baru</p>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[9px] font-black uppercase tracking-widest text-ds-ink3 mb-1">Kode</label>
+              <label className="block text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-1">Kode</label>
               <input
                 type="text" placeholder="PROMO10"
                 value={form.code}
                 onChange={e => setForm(p => ({ ...p, code: e.target.value.toUpperCase() }))}
-                className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-500/40"
+                className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-ds-ink font-mono focus:outline-none focus:border-emerald-500/40"
               />
             </div>
             <div>
-              <label className="block text-[9px] font-black uppercase tracking-widest text-ds-ink3 mb-1">Jenis Diskon</label>
+              <label className="block text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-1">Jenis Diskon</label>
               <select
                 value={form.discount_type}
                 onChange={e => setForm(p => ({ ...p, discount_type: e.target.value as 'PERCENT' | 'FLAT' }))}
-                className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500/40"
+                className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-ds-ink focus:outline-none focus:border-emerald-500/40"
               >
                 <option value="PERCENT">Persen (%)</option>
                 <option value="FLAT">Nominal (IDR)</option>
@@ -712,54 +712,54 @@ const PromoCodesTab: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[9px] font-black uppercase tracking-widest text-ds-ink3 mb-1">
+              <label className="block text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-1">
                 Nilai {form.discount_type === 'PERCENT' ? '(%)' : '(IDR)'}
               </label>
               <input
                 type="number" min={0}
                 value={form.discount_value}
                 onChange={e => setForm(p => ({ ...p, discount_value: parseFloat(e.target.value) }))}
-                className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-500/40"
+                className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-ds-ink font-mono focus:outline-none focus:border-emerald-500/40"
               />
             </div>
             <div>
-              <label className="block text-[9px] font-black uppercase tracking-widest text-ds-ink3 mb-1">Kuota</label>
+              <label className="block text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-1">Kuota</label>
               <input
                 type="number" min={1}
                 value={form.usage_limit}
                 onChange={e => setForm(p => ({ ...p, usage_limit: parseInt(e.target.value) }))}
-                className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-500/40"
+                className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-ds-ink font-mono focus:outline-none focus:border-emerald-500/40"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[9px] font-black uppercase tracking-widest text-ds-ink3 mb-1">Mulai</label>
+              <label className="block text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-1">Mulai</label>
               <input
                 type="date" value={form.valid_from}
                 onChange={e => setForm(p => ({ ...p, valid_from: e.target.value }))}
-                className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500/40"
+                className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-ds-ink focus:outline-none focus:border-emerald-500/40"
               />
             </div>
             <div>
-              <label className="block text-[9px] font-black uppercase tracking-widest text-ds-ink3 mb-1">Akhir</label>
+              <label className="block text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-1">Akhir</label>
               <input
                 type="date" value={form.valid_to}
                 onChange={e => setForm(p => ({ ...p, valid_to: e.target.value }))}
-                className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500/40"
+                className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-ds-ink focus:outline-none focus:border-emerald-500/40"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-[9px] font-black uppercase tracking-widest text-ds-ink3 mb-2">Berlaku untuk Produk</label>
+            <label className="block text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-2">Berlaku untuk Produk</label>
             <div className="flex flex-wrap gap-2">
               {PRODUCT_OPTIONS.map(p => (
                 <button
                   key={p}
                   onClick={() => toggleProduct(p)}
-                  className="px-2.5 py-1 rounded-lg text-[0.6rem] font-black uppercase tracking-widest transition-all"
+                  className="px-2.5 py-1 rounded-lg text-2xs font-black uppercase tracking-widest transition-all"
                   style={{
                     background: form.applicable_products.includes(p) ? '#00C16A' : 'rgba(255,255,255,0.05)',
                     color: form.applicable_products.includes(p) ? '#000' : 'rgba(255,255,255,0.4)',
@@ -772,16 +772,16 @@ const PromoCodesTab: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-[9px] font-black uppercase tracking-widest text-ds-ink3 mb-1">Deskripsi (opsional)</label>
+            <label className="block text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-1">Deskripsi (opsional)</label>
             <input
               type="text" placeholder="Promo Lebaran 2026"
               value={form.description}
               onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
-              className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500/40"
+              className="w-full bg-black/30 border border-ds-border rounded-xl px-3 py-2 text-xs text-ds-ink focus:outline-none focus:border-emerald-500/40"
             />
           </div>
 
-          {formError && <p className="text-[10px] text-rose-400">{formError}</p>}
+          {formError && <p className="text-2xs text-rose-400">{formError}</p>}
 
           <button
             onClick={handleCreate}
@@ -818,11 +818,11 @@ const PromoCodesTab: React.FC = () => {
                 <Tag size={14} className="text-ds-green flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-black text-sm text-white font-mono">{c.code}</p>
-                    {isExpired && <span className="text-[8px] font-black uppercase tracking-widest text-rose-400 bg-rose-500/10 px-1.5 py-0.5 rounded">Kadaluarsa</span>}
-                    {!isExpired && c.is_active && <span className="text-[8px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">Aktif</span>}
+                    <p className="font-black text-sm text-ds-ink font-mono">{c.code}</p>
+                    {isExpired && <span className="text-2xs font-black uppercase tracking-widest text-rose-700 dark:text-rose-300 bg-rose-500/10 px-1.5 py-0.5 rounded">Kadaluarsa</span>}
+                    {!isExpired && c.is_active && <span className="text-2xs font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">Aktif</span>}
                   </div>
-                  <p className="text-[10px] text-ds-ink3">
+                  <p className="text-2xs text-ds-ink3">
                     {c.discount_type === 'PERCENT' ? `${c.discount_value}% diskon` : `IDR ${c.discount_value.toLocaleString('id-ID')} diskon`}
                     {' · '}{c.applicable_products.join(', ')}
                     {' · '}{c.used_count}/{c.usage_limit} digunakan
@@ -832,10 +832,10 @@ const PromoCodesTab: React.FC = () => {
                 <button
                   onClick={() => handleToggle(c.id, c.is_active)}
                   disabled={toggling === c.id}
-                  className={`px-3 py-1.5 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${
+                  className={`px-3 py-1.5 rounded-xl text-2xs font-black uppercase tracking-widest transition-all ${
                     c.is_active
-                      ? 'bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white'
-                      : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white'
+                      ? 'bg-rose-500/10 text-rose-700 dark:text-rose-300 hover:bg-rose-500 hover:text-white'
+                      : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500 hover:text-white'
                   }`}
                 >
                   {toggling === c.id ? '…' : c.is_active ? 'Nonaktifkan' : 'Aktifkan'}
@@ -859,7 +859,7 @@ const TierPromoConfigAdmin: React.FC = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h2 className="font-black text-white text-lg">Konfigurasi Tier &amp; Promo</h2>
+        <h2 className="font-black text-ds-ink text-lg">Konfigurasi Tier &amp; Promo</h2>
         <p className="text-ds-ink3 text-xs mt-0.5">Atur tier mitra, persetujuan tier, dan kode promo nasabah</p>
       </div>
 
@@ -873,7 +873,7 @@ const TierPromoConfigAdmin: React.FC = () => {
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`flex-1 py-2.5 rounded-xl text-[0.65rem] font-black uppercase tracking-widest transition-all ${
+            className={`flex-1 py-2.5 rounded-xl text-2xs font-black uppercase tracking-widest transition-all ${
               tab === t.id ? 'bg-emerald-500 text-white' : 'text-ds-ink3 hover:text-ds-ink2'
             }`}
           >

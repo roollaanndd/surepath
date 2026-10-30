@@ -34,7 +34,7 @@ export const ORDER_STATUS_META: Record<string, StatusMeta> = {
   REJECTED: {
     label: 'Ditolak',
     labelEn: 'Rejected',
-    badgeClass: 'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400',
+    badgeClass: 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300',
   },
   CANCELLED: {
     label: 'Dibatalkan',
@@ -62,7 +62,7 @@ export const CLAIM_STATUS_META: Record<string, StatusMeta> = {
   REJECTED: {
     label: 'Ditolak',
     labelEn: 'Rejected',
-    badgeClass: 'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400',
+    badgeClass: 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300',
   },
   PAID: {
     label: 'Dibayarkan',

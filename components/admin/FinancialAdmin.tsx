@@ -91,9 +91,9 @@ interface KpiCardProps {
 
 const KpiCard: React.FC<KpiCardProps> = ({ label, value, sub }) => (
   <div className="bg-ds-card2 border border-ds-border rounded-[2rem] p-6 flex flex-col gap-3">
-    <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3">{label}</p>
-    <p className="text-3xl font-black text-white leading-none">{value}</p>
-    {sub && <p className="text-[10px] text-ds-ink2 font-semibold">{sub}</p>}
+    <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3">{label}</p>
+    <p className="text-3xl font-black text-ds-ink leading-none">{value}</p>
+    {sub && <p className="text-2xs text-ds-ink2 font-semibold">{sub}</p>}
   </div>
 );
 
@@ -224,7 +224,7 @@ const PeriodicReportSection: React.FC = () => {
               <button
                 key={y}
                 onClick={() => setSelectedYear(y)}
-                className={`px-4 py-2.5 rounded-xl text-[0.6rem] font-black uppercase transition-all ${selectedYear === y ? 'bg-ds-card text-ds-ink shadow-sm border border-ds-border' : 'text-ds-ink3 hover:text-ds-ink'}`}
+                className={`px-4 py-2.5 rounded-xl text-2xs font-black uppercase transition-all ${selectedYear === y ? 'bg-ds-card text-ds-ink shadow-sm border border-ds-border' : 'text-ds-ink3 hover:text-ds-ink'}`}
               >
                 {y}
               </button>
@@ -235,7 +235,7 @@ const PeriodicReportSection: React.FC = () => {
               <button
                 key={v}
                 onClick={() => setViewType(v)}
-                className={`px-4 py-2.5 rounded-xl text-[0.6rem] font-black uppercase transition-all ${viewType === v ? 'bg-emerald-500 text-white shadow-sm' : 'text-ds-ink3 hover:text-ds-ink'}`}
+                className={`px-4 py-2.5 rounded-xl text-2xs font-black uppercase transition-all ${viewType === v ? 'bg-emerald-500 text-white shadow-sm' : 'text-ds-ink3 hover:text-ds-ink'}`}
               >
                 {v === 'daily' ? 'Harian' : v === 'monthly' ? 'Bulanan' : 'Tahunan'}
               </button>
@@ -245,7 +245,7 @@ const PeriodicReportSection: React.FC = () => {
         <button
           onClick={handleExport}
           disabled={aggregatedData.length === 0}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-[0.6rem] tracking-widest transition-all active:scale-95 disabled:opacity-40"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-2xs tracking-widest transition-all active:scale-95 disabled:opacity-40"
         >
           <Download size={14} /> Unduh CSV
         </button>
@@ -257,7 +257,7 @@ const PeriodicReportSection: React.FC = () => {
         </div>
       ) : loadError ? (
         <div className="p-8 rounded-2xl border border-rose-500/30 bg-rose-500/5 text-center">
-          <p className="font-bold text-rose-500 mb-2">Laporan periode gagal dimuat</p>
+          <p className="font-bold text-rose-700 dark:text-rose-200 mb-2">Laporan periode gagal dimuat</p>
           <p className="text-xs text-ds-ink3 mb-4">{loadError}</p>
           <button onClick={load} className="px-4 py-2 rounded-xl bg-emerald-500 text-white text-xs font-bold">Coba Lagi</button>
         </div>
@@ -288,7 +288,7 @@ const PeriodicReportSection: React.FC = () => {
                       <td className="py-3 pl-5 uppercase text-ds-ink font-black">{row.period}</td>
                       <td className="py-3 text-ds-green font-mono">{convert(row.gwp)}</td>
                       <td className="py-3 text-ds-blue font-mono">{convert(row.commissions)}</td>
-                      <td className="py-3 pr-5 text-rose-500 font-mono text-right">{convert(row.claims)}</td>
+                      <td className="py-3 pr-5 text-rose-700 dark:text-rose-200 font-mono text-right">{convert(row.claims)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -303,7 +303,7 @@ const PeriodicReportSection: React.FC = () => {
             </div>
             <div className="rounded-2xl border bg-ds-card border-ds-border shadow-ds-sm p-5">
               <p className="text-2xs font-black text-ds-ink3 uppercase tracking-widest mb-1">Rasio (Klaim + Komisi) / GWP</p>
-              <p className={`text-2xl font-black ${Number(claimCommissionRatio) > 100 ? 'text-rose-500' : 'text-ds-green'}`}>~{claimCommissionRatio}%</p>
+              <p className={`text-2xl font-black ${Number(claimCommissionRatio) > 100 ? 'text-rose-700 dark:text-rose-200' : 'text-ds-green'}`}>~{claimCommissionRatio}%</p>
               <p className="mt-2 text-2xs text-ds-ink3 leading-relaxed">
                 Hanya memakai beban yang benar-benar tercatat di platform (klaim dibayar + komisi). Biaya operasional/promo tidak dimasukkan karena tidak memiliki sumber data.
               </p>
@@ -402,7 +402,7 @@ const FinancialAdmin: React.FC = () => {
           <h2 className="text-2xl font-black uppercase tracking-tighter">
             Keuangan <span className="text-ds-green">&amp; Laporan</span>
           </h2>
-          <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3 mt-1">
+          <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3 mt-1">
             Data real-time dari Supabase
           </p>
         </div>
@@ -414,7 +414,7 @@ const FinancialAdmin: React.FC = () => {
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`px-4 py-2.5 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${
+              className={`px-4 py-2.5 rounded-xl text-2xs font-black uppercase tracking-widest transition-all ${
                 tab === t.id
                   ? 'bg-emerald-500 text-white shadow-lg'
                   : 'text-ds-ink3 hover:text-ds-ink'
@@ -436,7 +436,7 @@ const FinancialAdmin: React.FC = () => {
           <button
             key={r}
             onClick={() => setRange(r)}
-            className={`px-4 py-2.5 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all ${
+            className={`px-4 py-2.5 rounded-xl text-2xs font-black uppercase tracking-widest transition-all ${
               range === r
                 ? 'bg-emerald-500 text-white shadow-lg'
                 : 'text-ds-ink3 hover:text-ds-ink'
@@ -453,7 +453,7 @@ const FinancialAdmin: React.FC = () => {
         </div>
       ) : loadError ? (
         <div className="p-8 rounded-2xl border border-rose-500/30 bg-rose-500/5 text-center">
-          <p className="font-bold text-rose-400 mb-2">Laporan keuangan gagal dimuat</p>
+          <p className="font-bold text-rose-700 dark:text-rose-300 mb-2">Laporan keuangan gagal dimuat</p>
           <p className="text-xs text-ds-ink3 mb-4">{loadError}</p>
           <button onClick={() => setRetryKey(v => v + 1)} className="px-4 py-2 rounded-xl bg-emerald-500 text-white text-xs font-bold">Coba Lagi</button>
         </div>
@@ -487,16 +487,16 @@ const FinancialAdmin: React.FC = () => {
           <div className="bg-ds-card2 border border-ds-border rounded-[2rem] overflow-hidden">
             <div className="px-6 py-5 border-b border-ds-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3">
+                <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3">
                   Order Terbaru — Status ISSUED
                 </p>
-                <p className="text-[10px] text-ds-ink3 mt-1">Maksimal 50 order terbaru untuk periode yang dipilih</p>
+                <p className="text-2xs text-ds-ink3 mt-1">Maksimal 50 order terbaru untuk periode yang dipilih</p>
               </div>
               <button
                 type="button"
                 onClick={() => exportOrdersCSV(orders)}
                 disabled={orders.length === 0}
-                className="px-4 py-2 rounded-xl border border-ds-border text-xs font-bold text-emerald-400 hover:bg-emerald-500/10 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-4 py-2 rounded-xl border border-ds-border text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Ekspor CSV ({orders.length})
               </button>
@@ -504,7 +504,7 @@ const FinancialAdmin: React.FC = () => {
             <div className="overflow-x-auto">
               <table className="w-full text-xs min-w-[720px]">
                 <thead>
-                  <tr className="text-ds-ink3 text-[9px] font-black uppercase tracking-widest border-b border-ds-border">
+                  <tr className="text-ds-ink3 text-2xs font-black uppercase tracking-widest border-b border-ds-border">
                     <th className="px-6 py-3 text-left">Order#</th>
                     <th className="px-4 py-3 text-left">Klien</th>
                     <th className="px-4 py-3 text-left">Produk</th>
@@ -529,25 +529,25 @@ const FinancialAdmin: React.FC = () => {
                         key={order.id}
                         className="border-b border-ds-border hover:bg-ds-card2 transition-colors"
                       >
-                        <td className="px-6 py-3 font-mono text-emerald-400 whitespace-nowrap">
+                        <td className="px-6 py-3 font-mono text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
                           {order.order_number ?? order.id.slice(0, 8)}
                         </td>
-                        <td className="px-4 py-3 font-semibold text-white whitespace-nowrap">
+                        <td className="px-4 py-3 font-semibold text-ds-ink whitespace-nowrap">
                           {order.client_name}
                         </td>
                         <td className="px-4 py-3 text-ds-ink3 whitespace-nowrap">
                           {order.product_name}
                         </td>
-                        <td className="px-4 py-3 text-right font-mono text-white whitespace-nowrap">
+                        <td className="px-4 py-3 text-right font-mono text-ds-ink whitespace-nowrap">
                           {formatIDR(order.total_premium ?? 0)}
                         </td>
-                        <td className="px-4 py-3 text-right font-mono text-rose-400 whitespace-nowrap">
+                        <td className="px-4 py-3 text-right font-mono text-rose-700 dark:text-rose-300 whitespace-nowrap">
                           {order.discount_amount ? formatIDR(order.discount_amount) : '—'}
                         </td>
-                        <td className="px-4 py-3 text-right font-mono text-emerald-400 whitespace-nowrap">
+                        <td className="px-4 py-3 text-right font-mono text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
                           {order.net_premium ? formatIDR(order.net_premium) : '—'}
                         </td>
-                        <td className="px-4 py-3 text-right font-mono text-amber-400 whitespace-nowrap">
+                        <td className="px-4 py-3 text-right font-mono text-amber-800 dark:text-amber-400 whitespace-nowrap">
                           {order.commission_amount ? formatIDR(order.commission_amount) : '—'}
                         </td>
                         <td className="px-4 py-3 text-right text-ds-ink3 whitespace-nowrap">

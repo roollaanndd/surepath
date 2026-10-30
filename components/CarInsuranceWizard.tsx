@@ -16,6 +16,7 @@ import {
 } from '../services/ojkRates';
 import { lookupPlate } from '../services/plateCodes';
 import { createXenditInvoice } from '../services/paymentService';
+import { attachOrderDocuments } from '../services/orderDocuments';
 
 // Import Steps
 import StepVehicle from './car-wizard/StepVehicle';
@@ -147,6 +148,34 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
   });
 
   const [photoValidation, setPhotoValidation] = useState<Record<string, { status: 'LOADING' | 'VALID' | 'INVALID'; msg?: string }>>({});
+
+  // Arsip dokumen (audit 28 Okt 2026): STNK + foto survey + laporan audit foto
+  // diunggah ke bucket privat order-documents setelah order dibuat. Catatan
+  // kegagalan parsial ditampilkan lembut di layar sukses — order tetap sah.
+  const [docArchiveNote, setDocArchiveNote] = useState<string | null>(null);
+
+  const archiveOrderDocuments = async (num: string) => {
+    try {
+      const res = await attachOrderDocuments({
+        orderNumber: num,
+        clientName: kycData.name,
+        productName: `Asuransi Kendaraan ${coverage.type === InsuranceType.COMPREHENSIVE ? 'Komprehensif' : 'TLO'} - ${selectedProduct?.insurer_name ?? 'Insurer'}`,
+        vehicle: {
+          make: vehicle.brand, model: vehicle.model, year: vehicle.year,
+          plate: vehicle.plate, color: vehicle.color,
+        },
+        stnkDataUrl: survey.stnk,
+        stnkResult: stnkResult,
+        surveyPhotos: survey.photos,
+        survey: survey,
+      });
+      if (res.failed.length > 0) {
+        setDocArchiveNote(`Sebagian dokumen gagal diarsipkan (${res.failed.join(', ')}). Tim kami akan menghubungimu bila diperlukan.`);
+      }
+    } catch (e) {
+      console.warn('[CarInsuranceWizard] arsip dokumen gagal:', e);
+    }
+  };
 
   const vehicleAgeYears = useMemo(
     () => Math.max(0, new Date().getFullYear() - vehicle.year),
@@ -385,9 +414,13 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
         end_date: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
       });
       if (!order) throw new Error('Gagal membuat order di server');
-      setOrderNumber(order.order_number ?? order.id);
+      const num = order.order_number ?? order.id;
+      setOrderNumber(num);
       setInvoiceUrl(null);
       setIsPendingApproval(true);
+      // Arsip dokumen pengajuan (STNK + foto survey + laporan audit) —
+      // setelah order sah tersimpan; kegagalan tidak menghentikan alur.
+      await archiveOrderDocuments(num);
       localStorage.removeItem('SUREPATH_CAR_WIZARD_PROGRESS');
       setIsSuccess(true);
     } catch (e) {
@@ -526,6 +559,11 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
 
       setInvoiceUrl(link);
       setInvoiceFailed(failed);
+
+      // Arsip dokumen pengajuan (STNK + foto survey + laporan audit) —
+      // berjalan setelah invoice agar window.open tetap dalam gesture pengguna.
+      await archiveOrderDocuments(order.order_number ?? order.id);
+
       localStorage.removeItem('SUREPATH_CAR_WIZARD_PROGRESS');
       setIsSuccess(true);
       // No confetti over a purchase nobody was billed for.
@@ -612,6 +650,25 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
                        gagal dibuat. <span className="font-bold">Polis kamu belum aktif sampai premi dibayar.</span>{' '}
                        Buka menu Polis untuk mencoba membayar lagi, atau hubungi tim SurePath dengan menyebut nomor pesanan di atas.
                     </p>
+                 </div>
+              )}
+              {!docArchiveNote && (
+                 <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-100 text-left">
+                    <p className="text-xs font-black uppercase tracking-widest text-emerald-700 mb-1">
+                       Dokumen Tersimpan
+                    </p>
+                    <p className="text-[0.7rem] text-emerald-800/80 leading-relaxed">
+                       Foto STNK, foto survey, dan laporan hasil audit foto sudah terarsip pada dokumen pesanan{' '}
+                       <span className="font-bold font-mono">{orderNumber}</span> dan dapat ditelusuri tim kami.
+                    </p>
+                 </div>
+              )}
+              {docArchiveNote && (
+                 <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-left space-y-2">
+                    <p className="text-xs font-black uppercase tracking-widest text-amber-700 flex items-center gap-2">
+                       <AlertTriangle size={14}/> Arsip dokumen parsial
+                    </p>
+                    <p className="text-[0.7rem] text-amber-800 leading-relaxed">{docArchiveNote}</p>
                  </div>
               )}
               {invoiceUrl && (

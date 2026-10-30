@@ -64,7 +64,7 @@ export const FinanceDashboard: React.FC<Props> = ({ userRole, currentUser, onLog
           <div className="absolute -top-16 -right-16 h-64 w-64 rounded-full bg-emerald-400/10 blur-3xl" />
           <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-300">Finance Workspace</p>
+              <p className="text-2xs font-black uppercase tracking-[0.3em] text-emerald-300">Finance Workspace</p>
               <h2 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">Kontrol arus kas & komisi</h2>
               <p className="mt-2 max-w-xl text-sm text-white/70">Fokus pada penarikan tertunda, komisi agen, pembayaran masuk, dan rekonsiliasi yang butuh persetujuan.</p>
             </div>
@@ -86,7 +86,7 @@ export const FinanceDashboard: React.FC<Props> = ({ userRole, currentUser, onLog
           <div className="xl:col-span-2 rounded-3xl border border-ds-border bg-ds-card shadow-ds-sm">
             <div className="flex items-center justify-between border-b border-ds-border px-6 py-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-ds-ink3">Antrian Penarikan</p>
+                <p className="text-2xs font-black uppercase tracking-[0.22em] text-ds-ink3">Antrian Penarikan</p>
                 <h3 className="text-lg font-black tracking-tight">Prioritas Hari Ini</h3>
               </div>
               <button className="text-xs font-bold text-ds-green">Lihat semua</button>
@@ -108,7 +108,7 @@ export const FinanceDashboard: React.FC<Props> = ({ userRole, currentUser, onLog
                   <div className="flex items-center gap-4">
                     <div className="text-right">
                       <p className="text-sm font-black tabular-nums">{formatIDR(w.amount)}</p>
-                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-ds-ink3">{w.status}</p>
+                      <p className="text-2xs font-bold uppercase tracking-[0.18em] text-ds-ink3">{w.status}</p>
                     </div>
                     <div className="flex gap-2">
                       <button className="rounded-full border border-ds-border px-3 py-1 text-xs font-bold">Tolak</button>
@@ -121,7 +121,7 @@ export const FinanceDashboard: React.FC<Props> = ({ userRole, currentUser, onLog
           </div>
           <div className="rounded-3xl border border-ds-border bg-ds-card shadow-ds-sm">
             <div className="border-b border-ds-border px-6 py-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-ds-ink3">Aksi Cepat</p>
+              <p className="text-2xs font-black uppercase tracking-[0.22em] text-ds-ink3">Aksi Cepat</p>
               <h3 className="text-lg font-black tracking-tight">Finance Tools</h3>
             </div>
             <div className="grid gap-2 p-4">

@@ -19,11 +19,12 @@ import {
   MOTO_BRANDS, getModelsForMotoBrand, getMarketValueForMoto,
 } from '../../services/vehicleDatabase';
 import {
-  createPolicyOrder, uploadVehicleImage, addNotification, getProductConfig,
+  createPolicyOrder, addNotification, getProductConfig,
   getAvailableInsurerProducts, addClient,
   type SpClient, type SpProductConfig, type SpInsurerProduct,
 } from '../../services/supabaseService';
 import { createXenditInvoice } from '../../services/paymentService';
+import { attachOrderDocuments } from '../../services/orderDocuments';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { InsurerLogo, INSURER_BRANDS } from '../shared/InsurerLogos';
 
@@ -612,14 +613,11 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
         const coinReward = Math.floor(breakdown.total * coinRate / 1000);
 
         // Upload front photo as main vehicle image
-        let vehicleImageUrl: string | undefined;
-        const frontFile = photoFiles['front'] ?? Object.values(photoFiles)[0];
-        if (frontFile) {
-          const uploadedUrl = await uploadVehicleImage(frontFile, `tmp-${Date.now()}`);
-          vehicleImageUrl = uploadedUrl ?? undefined;
-        }
-
-        // Merge AI report into vehicle_details for admin notes
+        // FIX 2026-10-28 (audit dokumen): upload foto ke folder `tmp-{timestamp}`
+        // dihapus — URL-nya selalu ditolak gateway (bukan whitelist) sehingga
+        // vehicle_image_url tak pernah terisi dan foto jadi orphan. Foto kini
+        // diarsipkan setelah order dibuat memakai nomor order asli (lihat
+        // attachOrderDocuments di bawah) lengkap dengan laporan audit.
         const vehicleDetailsWithAI = {
           ...vehicleDetails,
           ...(aiResult ? {
@@ -639,7 +637,6 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
           product_name: productName,
           vehicle_type: vehicleType === 'CAR' ? 'CAR' : 'MOTORCYCLE',
           vehicle_details: vehicleDetailsWithAI,
-          vehicle_image_url: vehicleImageUrl,
           ai_score: aiResult?.score,
           ai_verdict: aiResult?.auditVerdict,
           ai_findings: aiResult?.detailedIssues,
@@ -672,6 +669,31 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
         const num = order.order_number ?? order.id;
         setOrderId(order.id);
         setOrderNumber(num);
+
+        // Arsip dokumen pengajuan (audit 28 Okt 2026): semua foto survey
+        // (bukan hanya foto depan) + laporan hasil audit foto tersimpan pada
+        // bucket privat order-documents dan terdaftar di sp_documents agar
+        // admin & asuransi dapat menelusuri/mengunduhnya. Kegagalan arsip
+        // tidak menggagalkan order — tercatat di console untuk diagnosis.
+        try {
+          const res = await attachOrderDocuments({
+            orderNumber: num,
+            clientName: clientName,
+            productName: productName,
+            vehicle: {
+              make: vehicleDetails.make, model: vehicleDetails.model,
+              year: vehicleDetails.year, plate: vehicleDetails.plate,
+              color: vehicleDetails.color,
+            },
+            photoFiles: photoFiles,
+            aiResult: aiResult ?? undefined,
+          });
+          if (res.failed.length > 0) {
+            console.warn(`[wizard] ${res.failed.length} dokumen gagal diarsipkan:`, res.failed);
+          }
+        } catch (archErr) {
+          console.warn('[wizard] arsip dokumen gagal:', archErr);
+        }
 
         // NOTE: review link ke insurer dikirim oleh operator saat approve
         // (admin_send_insurer_review_link) — bukan dari sini. Panggilan

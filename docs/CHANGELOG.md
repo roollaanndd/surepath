@@ -1,5 +1,42 @@
 # SurePath — Changelog
 
+## v2.7.15 — 2026-10-28
+
+**Admin CMS dirapikan sesuai `docs/UI_REDESIGN_2026-10.md` (Sprint S1).**
+Permintaan pemilik: perbaiki UI dashboard admin agar sesuai spesifikasi yang
+sudah tertulis, dan tidak mengerjakan hal lain.
+
+- **Lantai tipografi 11px ditegakkan.** 494 kelas `text-[10px]`/`[9px]`/`[8px]`
+  dan padanan rem di 33 berkas `components/admin/` menjadi `text-2xs`. Satu
+  pengecualian yang memang didokumentasikan tetap: `text-badge` (8.8px), angka
+  di dalam titik hitung berukuran tetap.
+- **Teks putih di permukaan terang diperbaiki.** Admin CMS dibangun gelap lalu
+  dikonversi ke terang; `text-white` yang tertinggal di atas `bg-ds-card`
+  (#FFFFFF) dan `bg-ds-card2` (#F3FAF6) membuat judul dan isian drawer klaim,
+  drawer pengguna, hampir semua input, dan tombol "Keluar" di sidebar tidak
+  terbaca sama sekali. Termasuk 33 `hover:text-white` yang membuat tombol
+  menghilang saat kursor di atasnya.
+- **Mode gelap admin hidup kembali.** 99 aturan `!important` di
+  `portal-modernization.css` ditulis tanpa memandang tema (dua di antaranya
+  mengunci `color-scheme: light`), sehingga tombol tema tidak mengubah apa pun.
+  Semua aturan tersebut kini dipagari ke `:root:not(.dark)`, dengan padanan
+  gelap untuk sidebar dan tinta samar.
+- **Kontras WCAG AA.** Tinta samar dinaikkan (`#70877c`→`#5A7064`,
+  `#748398`→`#5C6B7A`, dll.), chip rose gelap dinaikkan ke `rose-300`. Hasil
+  sapuan terukur: **0 kegagalan kontras di 11 bagian × 2 tema**, juga di 390px.
+- **Komponen bersama dipakai.** `workspaces/shared/KpiCard` kini adaptor tipis
+  di atas `adminUI.AdminKpiCard`, jadi tujuh dashboard role memakai satu kartu
+  KPI, bukan dua yang saling menyimpang. `AdminPageHeader` dipakai di Kelola
+  User dan Penarikan Dana Mitra; `AdminStatusBadge` + `CLAIM_STATUS_META`
+  menggantikan palet chip lokal di Antrean Klaim (pola acuan spesifikasi).
+- **Bar navigasi bawah di <1024px.** Sebelumnya satu-satunya jalan berpindah di
+  layar kecil adalah drawer di balik ikon hamburger. Kini empat tujuan tersibuk
+  (Ringkasan, Review, Polis, Klaim) plus pintu ke menu lengkap duduk permanen,
+  difilter per izin role.
+- **Tes regresi** `services/__tests__/adminDesignFloor.test.ts` mengunci kedua
+  lantai (sub-11px, dan putih di permukaan terang) beserta satu pemilik kartu
+  KPI. Dikalibrasi dengan cacat yang sengaja ditanam.
+
 ## v2.7.14 — 2026-10-28
 
 **Integrasi PR #241 ke main terbaru** (permintaan pemilik: "should be good

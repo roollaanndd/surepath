@@ -19,19 +19,19 @@ import { useToast } from '../ui';
 import { filterLabel } from './filterLabels';
 
 const STATUS_META: Record<SpPolicyOrder['status'], { label: string; color: string; Icon: any }> = {
-  SUBMITTED:    { label: 'Submitted',    color: 'bg-amber-500/10 text-amber-400',   Icon: Clock },
-  UNDER_REVIEW: { label: 'Under Review', color: 'bg-blue-500/10 text-blue-400',     Icon: Eye },
-  APPROVED:     { label: 'Approved',     color: 'bg-emerald-500/10 text-emerald-400', Icon: CheckCircle },
+  SUBMITTED:    { label: 'Submitted',    color: 'bg-amber-500/10 text-amber-800 dark:text-amber-400',   Icon: Clock },
+  UNDER_REVIEW: { label: 'Under Review', color: 'bg-blue-500/10 text-blue-700 dark:text-blue-400',     Icon: Eye },
+  APPROVED:     { label: 'Approved',     color: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400', Icon: CheckCircle },
   ISSUED:       { label: 'Issued',       color: 'bg-emerald-500/10 text-ds-green', Icon: FileText },
-  REJECTED:     { label: 'Rejected',     color: 'bg-rose-500/10 text-rose-400',     Icon: XCircle },
+  REJECTED:     { label: 'Rejected',     color: 'bg-rose-500/10 text-rose-700 dark:text-rose-300',     Icon: XCircle },
   CANCELLED:    { label: 'Cancelled',    color: 'bg-slate-500/10 text-ds-ink3',   Icon: XCircle },
 };
 
 const AI_SCORE_COLOR = (score?: number) => {
   if (!score) return 'text-ds-ink3';
-  if (score >= 80) return 'text-emerald-400';
-  if (score >= 60) return 'text-amber-400';
-  return 'text-rose-400';
+  if (score >= 80) return 'text-emerald-700 dark:text-emerald-400';
+  if (score >= 60) return 'text-amber-800 dark:text-amber-400';
+  return 'text-rose-700 dark:text-rose-300';
 };
 
 // ── Order Detail Modal ───────────────────────────────────────────────────────
@@ -216,24 +216,24 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
         <div className="flex items-center justify-between p-6 border-b border-ds-border">
           <div>
             <h3 className="font-black text-lg tracking-tight">{order.order_number ?? '—'}</h3>
-            <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest mt-0.5">
+            <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-widest mt-0.5">
               {order.product_name}
             </p>
           </div>
           <div className="flex items-center gap-3">
             {(() => { const m = STATUS_META[order.status]; return (
-              <span className={`flex items-center gap-1 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full ${m.color}`}>
+              <span className={`flex items-center gap-1 text-2xs font-black uppercase tracking-widest px-3 py-1.5 rounded-full ${m.color}`}>
                 <m.Icon size={10} /> {m.label}
               </span>
             ); })()}
-            <button onClick={onClose} className="w-8 h-8 rounded-full bg-ds-card2 flex items-center justify-center text-ds-ink3 hover:text-white">✕</button>
+            <button onClick={onClose} className="w-8 h-8 rounded-full bg-ds-card2 flex items-center justify-center text-ds-ink3 hover:text-ds-ink">✕</button>
           </div>
         </div>
 
         <div className="p-6 space-y-5">
           {/* Client info */}
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-3">Informasi Klien</p>
+            <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-3">Informasi Klien</p>
             <div className="grid grid-cols-2 gap-3">
               {[
                 ['Nama', order.client_name],
@@ -241,7 +241,7 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
                 ['KTP', order.client_ktp ?? '-'],
               ].map(([k, v]) => (
                 <div key={k} className="bg-ds-card2 rounded-2xl p-3">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3">{k}</p>
+                  <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3">{k}</p>
                   <p className="text-sm font-bold mt-0.5">{v}</p>
                 </div>
               ))}
@@ -250,7 +250,7 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
 
           {/* Vehicle details */}
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-3">Detail Kendaraan</p>
+            <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-3">Detail Kendaraan</p>
             <div className="grid grid-cols-2 gap-3">
               {[
                 ['Jenis', order.vehicle_type === 'MOTORCYCLE' ? 'Roda 2 (Motor)' : 'Roda 4 (Mobil)'],
@@ -264,7 +264,7 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
                 ['Provinsi / Zona', `${v.province ?? '-'} (Zona ${order.zone})`],
               ].map(([k, val]) => (
                 <div key={k} className="bg-ds-card2 rounded-2xl p-3">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3">{k}</p>
+                  <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3">{k}</p>
                   <p className="text-sm font-bold mt-0.5 break-all">{val}</p>
                 </div>
               ))}
@@ -275,7 +275,7 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
           <div className="grid grid-cols-2 gap-4">
             {order.vehicle_image_url && (
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-2">Foto Kendaraan</p>
+                <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-2">Foto Kendaraan</p>
                 <img
                   src={order.vehicle_image_url}
                   alt="Vehicle"
@@ -284,19 +284,19 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
               </div>
             )}
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-2">Skor AI Survey</p>
+              <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-2">Skor AI Survey</p>
               <div className="bg-ds-card2 rounded-2xl p-4 text-center">
                 <p className={`text-4xl font-black ${AI_SCORE_COLOR(order.ai_score)}`}>
                   {order.ai_score ?? '—'}
                 </p>
-                <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3 mt-1">
+                <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3 mt-1">
                   {order.ai_verdict ?? '-'}
                 </p>
               </div>
               {Array.isArray(order.ai_findings) && order.ai_findings.length > 0 && (
                 <div className="mt-2 space-y-1">
                   {(order.ai_findings as any[]).slice(0, 3).map((f: any, i: number) => (
-                    <p key={i} className="text-[10px] text-ds-ink3 truncate">• {f.description ?? f}</p>
+                    <p key={i} className="text-2xs text-ds-ink3 truncate">• {f.description ?? f}</p>
                   ))}
                 </div>
               )}
@@ -305,7 +305,7 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
 
           {/* Premium breakdown */}
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-3">Rincian Premi</p>
+            <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-3">Rincian Premi</p>
             <div className="bg-ds-card2 rounded-2xl p-4 space-y-2">
               {[
                 ['Jenis Pertanggungan', order.coverage_type],
@@ -335,16 +335,16 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
               payment.status === 'PENDING' ? 'bg-amber-500/10 border border-amber-500/20' :
               'bg-slate-500/10 border border-slate-500/20'
             }`}>
-              <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-2">Status Pembayaran</p>
+              <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-2">Status Pembayaran</p>
               {payment.status === 'PAID' ? (
                 <div className="space-y-1">
-                  <p className="text-sm font-black text-emerald-400">✓ Premi Telah Dibayar</p>
-                  <p className="text-[10px] text-ds-ink3">{formatIDR(payment.paid_amount ?? payment.amount)} · {payment.payment_method ?? payment.payment_channel ?? '—'} · {payment.paid_at ? new Date(payment.paid_at).toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : ''}</p>
+                  <p className="text-sm font-black text-emerald-700 dark:text-emerald-400">✓ Premi Telah Dibayar</p>
+                  <p className="text-2xs text-ds-ink3">{formatIDR(payment.paid_amount ?? payment.amount)} · {payment.payment_method ?? payment.payment_channel ?? '—'} · {payment.paid_at ? new Date(payment.paid_at).toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : ''}</p>
                 </div>
               ) : payment.status === 'PENDING' && payment.invoice_url ? (
                 <div className="space-y-2">
-                  <p className="text-xs text-amber-400 font-semibold">Invoice aktif — menunggu pembayaran</p>
-                  <a href={payment.invoice_url} target="_blank" rel="noopener noreferrer" className="text-[9px] font-black text-amber-400 hover:text-amber-300 uppercase tracking-widest flex items-center gap-1">
+                  <p className="text-xs text-amber-800 dark:text-amber-400 font-semibold">Invoice aktif — menunggu pembayaran</p>
+                  <a href={payment.invoice_url} target="_blank" rel="noopener noreferrer" className="text-2xs font-black text-amber-800 dark:text-amber-400 hover:text-amber-300 uppercase tracking-widest flex items-center gap-1">
                     <Link size={10} /> Buka Invoice Xendit
                   </a>
                 </div>
@@ -357,7 +357,7 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
           {/* Reviewer notes */}
           {(order.status === 'SUBMITTED' || order.status === 'UNDER_REVIEW') && (
             <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 block mb-2">
+              <label className="text-2xs font-black uppercase tracking-widest text-ds-ink3 block mb-2">
                 Catatan Reviewer
               </label>
               <textarea
@@ -365,15 +365,15 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
                 onChange={e => setNotes(e.target.value)}
                 rows={3}
                 placeholder="Catatan persetujuan atau alasan penolakan…"
-                className="w-full bg-ds-card2 border border-ds-border rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 resize-none"
+                className="w-full bg-ds-card2 border border-ds-border rounded-2xl px-4 py-3 text-sm text-ds-ink focus:outline-none focus:border-emerald-500 resize-none"
               />
             </div>
           )}
 
           {order.reviewer_notes && (
             <div className="p-4 bg-blue-500/10 rounded-2xl">
-              <p className="text-[10px] font-black uppercase tracking-widest text-blue-400 mb-1">Catatan Admin</p>
-              <p className="text-sm text-blue-300">{order.reviewer_notes}</p>
+              <p className="text-2xs font-black uppercase tracking-widest text-blue-700 dark:text-blue-400 mb-1">Catatan Admin</p>
+              <p className="text-sm text-blue-700 dark:text-blue-300">{order.reviewer_notes}</p>
             </div>
           )}
 
@@ -381,7 +381,7 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
           {order.policy_document_url && (
             <SecureDocLink
               url={order.policy_document_url}
-              className="flex items-center gap-2 px-4 py-3 bg-emerald-500/10 text-emerald-400 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-emerald-500/20 transition-colors"
+              className="flex items-center gap-2 px-4 py-3 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-emerald-500/20 transition-colors"
             >
               <Download size={14} />
               Download Polis ({order.policy_number ?? '—'})
@@ -392,8 +392,8 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
           {insurerMsg && (
             <div className={`p-4 rounded-2xl border text-sm font-bold ${
               insurerMsg.isError
-                ? 'bg-rose-500/10 border-rose-500/20 text-rose-400'
-                : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                ? 'bg-rose-500/10 border-rose-500/20 text-rose-700 dark:text-rose-300'
+                : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400'
             }`}>
               {insurerMsg.text}
             </div>
@@ -404,7 +404,7 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
             <button
               disabled={downloadingSlip}
               onClick={handleDownloadSlip}
-              className="flex items-center gap-1.5 px-4 py-3 rounded-2xl text-xs font-black uppercase tracking-widest bg-sky-500/10 text-sky-400 hover:bg-sky-500/20 transition-colors"
+              className="flex items-center gap-1.5 px-4 py-3 rounded-2xl text-xs font-black uppercase tracking-widest bg-sky-500/10 text-sky-700 dark:text-sky-400 hover:bg-sky-500/20 transition-colors"
             >
               <Download size={12} />
               {downloadingSlip ? 'Menyiapkan…' : 'Quotation Slip'}
@@ -417,7 +417,7 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
                 className={`flex items-center gap-1.5 px-4 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-colors ${
                   linkCopied
                     ? 'bg-emerald-500 text-white'
-                    : 'bg-violet-500/10 text-violet-400 hover:bg-violet-500/20'
+                    : 'bg-violet-500/10 text-violet-700 dark:text-violet-400 hover:bg-violet-500/20'
                 }`}
               >
                 <Link size={12} />
@@ -428,7 +428,7 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
               <button
                 disabled={saving}
                 onClick={handleReview}
-                className="flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-widest bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-colors"
+                className="flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-widest bg-blue-500/10 text-blue-700 dark:text-blue-400 hover:bg-blue-500 hover:text-white transition-colors"
               >
                 {saving ? '…' : 'Mulai Review'}
               </button>
@@ -445,7 +445,7 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
                 <button
                   disabled={saving}
                   onClick={handleReject}
-                  className="flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-widest bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white transition-colors"
+                  className="flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-widest bg-rose-500/10 text-rose-700 dark:text-rose-300 hover:bg-rose-500 hover:text-white transition-colors"
                 >
                   {saving ? '…' : 'Tolak'}
                 </button>
@@ -550,10 +550,10 @@ const PolicyOrdersAdmin: React.FC<{ initialPending?: boolean }> = ({ initialPend
             <div className="relative">
               <Bell size={14} className="text-ds-ink3" />
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-rose-500 rounded-full text-[7px] font-black text-white flex items-center justify-center">{unreadCount}</span>
+                <span style={{ color: '#FFFFFF' }} className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-rose-600 rounded-full text-2xs font-black flex items-center justify-center">{unreadCount}</span>
               )}
             </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-ds-ink3">
+            <span className="text-2xs font-black uppercase tracking-widest text-ds-ink3">
               Notifikasi Admin ({unreadCount} baru)
             </span>
             <ChevronDown size={12} className={`text-ds-ink3 transition-transform ${showNotifs ? 'rotate-180' : ''}`} />
@@ -567,13 +567,13 @@ const PolicyOrdersAdmin: React.FC<{ initialPending?: boolean }> = ({ initialPend
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-black text-white">{notif.title}</p>
-                      <p className="text-[10px] text-ds-ink3 mt-0.5">{notif.body}</p>
+                      <p className="text-xs font-black text-ds-ink">{notif.title}</p>
+                      <p className="text-2xs text-ds-ink3 mt-0.5">{notif.body}</p>
                       {notif.review_url && (
                         <div className="flex gap-2 mt-2">
                           <button
                             onClick={() => navigator.clipboard.writeText(notif.review_url!).catch(() => {})}
-                            className="text-[9px] font-black uppercase tracking-widest bg-violet-500/20 text-violet-400 hover:bg-violet-500/30 px-2.5 py-1 rounded-full"
+                            className="text-2xs font-black uppercase tracking-widest bg-violet-500/20 text-violet-700 dark:text-violet-400 hover:bg-violet-500/30 px-2.5 py-1 rounded-full"
                           >
                             Salin Link
                           </button>
@@ -581,7 +581,7 @@ const PolicyOrdersAdmin: React.FC<{ initialPending?: boolean }> = ({ initialPend
                             href={`https://wa.me/?text=${encodeURIComponent(`Tinjauan polis:\n${notif.review_url}`)}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-[9px] font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 px-2.5 py-1 rounded-full"
+                            className="text-2xs font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/30 px-2.5 py-1 rounded-full"
                           >
                             WhatsApp
                           </a>
@@ -591,7 +591,7 @@ const PolicyOrdersAdmin: React.FC<{ initialPending?: boolean }> = ({ initialPend
                     {!notif.read && (
                       <button
                         onClick={() => { markAdminNotificationRead(notif.id); setAdminNotifs(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n)); }}
-                        className="text-[9px] text-ds-ink3 hover:text-white flex-shrink-0"
+                        className="text-2xs text-ds-ink3 hover:text-ds-ink flex-shrink-0"
                       >
                         Tandai dibaca
                       </button>
@@ -615,8 +615,8 @@ const PolicyOrdersAdmin: React.FC<{ initialPending?: boolean }> = ({ initialPend
                 filter === f ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-ds-border bg-ds-card2 hover:border-ds-border'
               }`}
             >
-              <p className={`text-2xl font-black ${counts[f] > 0 && f === 'SUBMITTED' ? 'text-amber-400' : 'text-white'}`}>{counts[f]}</p>
-              <p className="text-[9px] font-black uppercase tracking-widest text-ds-ink3 mt-1">{filterLabel(f)}</p>
+              <p className={`text-2xl font-black ${counts[f] > 0 && f === 'SUBMITTED' ? 'text-amber-800 dark:text-amber-400' : 'text-ds-ink'}`}>{counts[f]}</p>
+              <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3 mt-1">{filterLabel(f)}</p>
             </div>
           );
         })}
@@ -630,7 +630,7 @@ const PolicyOrdersAdmin: React.FC<{ initialPending?: boolean }> = ({ initialPend
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Cari order, klien, KTP, plat, produk…"
-            className="w-full pl-10 pr-4 py-2.5 bg-ds-card2 border border-ds-border rounded-2xl text-sm text-white focus:outline-none focus:border-emerald-500"
+            className="w-full pl-10 pr-4 py-2.5 bg-ds-card2 border border-ds-border rounded-2xl text-sm text-ds-ink focus:outline-none focus:border-emerald-500"
           />
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -638,7 +638,7 @@ const PolicyOrdersAdmin: React.FC<{ initialPending?: boolean }> = ({ initialPend
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-3 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
+              className={`px-3 py-2 rounded-full text-2xs font-black uppercase tracking-widest transition-all ${
                 filter === f ? 'bg-emerald-500 text-white' : 'bg-ds-card2 text-ds-ink3 hover:bg-ds-card2'
               }`}
             >
@@ -647,7 +647,7 @@ const PolicyOrdersAdmin: React.FC<{ initialPending?: boolean }> = ({ initialPend
             </button>
           ))}
         </div>
-        <button onClick={load} className="w-9 h-9 rounded-full bg-ds-card2 flex items-center justify-center text-ds-ink3 hover:text-white">
+        <button onClick={load} className="w-9 h-9 rounded-full bg-ds-card2 flex items-center justify-center text-ds-ink3 hover:text-ds-ink">
           <RefreshCw size={14} />
         </button>
       </div>
@@ -668,7 +668,7 @@ const PolicyOrdersAdmin: React.FC<{ initialPending?: boolean }> = ({ initialPend
               <div
                 key={order.id}
                 onClick={() => setSelected(order)}
-                className="p-5 bg-ds-card2 border border-ds-border rounded-[2rem] cursor-pointer hover:border-ds-border hover:bg-white/[0.04] transition-all"
+                className="p-5 bg-ds-card2 border border-ds-border rounded-[2rem] cursor-pointer hover:border-ds-border hover:bg-ds-border/40 transition-all"
               >
                 <div className="flex items-start gap-4">
                   <div className="w-11 h-11 rounded-2xl bg-ds-card2 flex items-center justify-center flex-shrink-0">
@@ -678,31 +678,31 @@ const PolicyOrdersAdmin: React.FC<{ initialPending?: boolean }> = ({ initialPend
                     <div className="flex items-start justify-between gap-3 mb-1">
                       <div>
                         <p className="font-black text-sm">{order.client_name}</p>
-                        <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest">
+                        <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-widest">
                           {order.order_number} · {order.product_name}
                         </p>
                       </div>
-                      <span className={`flex-shrink-0 flex items-center gap-1 text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${m.color}`}>
+                      <span className={`flex-shrink-0 flex items-center gap-1 text-2xs font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${m.color}`}>
                         <m.Icon size={9} /> {m.label}
                       </span>
                     </div>
                     <div className="flex items-center gap-3 flex-wrap">
-                      <span className="text-[10px] font-bold text-ds-green">{formatIDR(order.total_premium)}/tahun</span>
+                      <span className="text-2xs font-bold text-ds-green">{formatIDR(order.total_premium)}/tahun</span>
                       {order.ai_score !== undefined && order.ai_score !== null && (
-                        <span className={`text-[9px] font-black uppercase tracking-widest ${AI_SCORE_COLOR(order.ai_score)}`}>
+                        <span className={`text-2xs font-black uppercase tracking-widest ${AI_SCORE_COLOR(order.ai_score)}`}>
                           AI Score: {order.ai_score}
                         </span>
                       )}
                       {(() => {
                         const pmt = payments[order.id];
-                        if (pmt?.status === 'PAID') return <span className="text-[9px] font-black text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">✓ Lunas</span>;
-                        if (pmt?.status === 'PENDING') return <span className="text-[9px] font-black text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full">Invoice Aktif</span>;
+                        if (pmt?.status === 'PAID') return <span className="text-2xs font-black text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">✓ Lunas</span>;
+                        if (pmt?.status === 'PENDING') return <span className="text-2xs font-black text-amber-800 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full">Invoice Aktif</span>;
                         return null;
                       })()}
-                      <span className="text-[9px] text-ds-ink3">
+                      <span className="text-2xs text-ds-ink3">
                         {order.created_at ? new Date(order.created_at).toLocaleDateString('id-ID') : ''}
                       </span>
-                      <span className="text-[9px] font-bold text-ds-ink3">Zona {order.zone} · {order.coverage_type}</span>
+                      <span className="text-2xs font-bold text-ds-ink3">Zona {order.zone} · {order.coverage_type}</span>
                     </div>
                   </div>
                   <ChevronDown size={14} className="text-ds-ink3 flex-shrink-0 -rotate-90 mt-1" />

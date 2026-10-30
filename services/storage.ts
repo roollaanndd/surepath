@@ -1,5 +1,6 @@
 // Storage uploads: vehicle images, policy documents, insurer logos, website
-// assets, agent avatars/KTP, B2B documents, and signed-URL resolution for
+// assets, agent avatars/KTP, B2B documents, order submission documents
+// (STNK / survey photos / audit reports), and signed-URL resolution for
 // private buckets.
 
 import { supabase, callGateway } from './db';
@@ -43,24 +44,89 @@ export async function uploadPolicyDocument(file: File, orderNumber: string): Pro
     .from('policy-documents')
     .upload(path, file, { upsert: true, contentType: 'application/pdf' });
   if (error) { console.error('uploadPolicyDocument:', error); return null; }
-  const { data } = supabase.storage.from('policy-documents').getPublicUrl(path);
+  const { data } = await supabase.storage.from('policy-documents').getPublicUrl(path);
   return data.publicUrl;
 }
 
-// policy-documents and agent-docs are private buckets — the *_url fields
-// still hold the old-style public URL string, so this swaps it for a
-// short-lived signed URL at view time (RLS still scopes who may sign one).
+// ─── Order submission documents (private bucket `order-documents`) ──────────
+// Audit 28 Okt 2026: STNK, foto survey, dan laporan audit foto kini diarsipkan
+// per order. Bucket ini privat — unduhan memakai signed URL yang diterbitkan
+// data-gateway setelah validasi kepemilikan (lihat resolveDocumentUrl).
+
+export interface UploadedOrderDoc {
+  path: string;
+  size: number;
+  mime: string;
+}
+
+/** URL kanonik objek privat (diselesaikan menjadi signed URL saat dilihat). */
+export function orderDocCanonicalUrl(path: string): string {
+  const base = import.meta.env.VITE_SUPABASE_URL ?? '';
+  return `${base}/storage/v1/object/order-documents/${path}`;
+}
+
+export async function uploadOrderDocumentObject(
+  blob: Blob,
+  orderNumber: string,
+  fileName: string,
+): Promise<UploadedOrderDoc | null> {
+  const path = `${orderNumber}/${fileName}`;
+  const { error } = await supabase.storage
+    .from('order-documents')
+    .upload(path, blob, { upsert: true, contentType: blob.type || 'application/octet-stream' });
+  if (error) { console.error('uploadOrderDocumentObject:', error); return null; }
+  return { path, size: blob.size, mime: blob.type || 'application/octet-stream' };
+}
+
+/** Arsipkan PDF perjanjian mitra ke bucket privat agent-docs. */
+export async function uploadAgentAgreementPdfBlob(
+  blob: Blob,
+  agentId: string,
+  agreementNo: string,
+): Promise<{ path: string; size: number } | null> {
+  const safeNo = agreementNo.replace(/[^A-Za-z0-9_-]/g, '_');
+  const path = `${agentId}/agreement-${safeNo}.pdf`;
+  const { error } = await supabase.storage
+    .from('agent-docs')
+    .upload(path, blob, { upsert: true, contentType: 'application/pdf' });
+  if (error) { console.error('uploadAgentAgreementPdfBlob:', error); return null; }
+  return { path, size: blob.size };
+}
+
+// policy-documents dan agent-docs privat dengan policy klien masing-masing
+// (admin/owner boleh menandatangani dari browser). order-documents justru
+// TANPA policy SELECT klien — signed URL-nya diterbitkan data-gateway
+// (documents_signed_url) setelah pemeriksaan kepemilikan order server-side.
 const SIGNED_URL_BUCKETS = new Set(['policy-documents', 'agent-docs']);
+const GATEWAY_SIGNED_BUCKETS = new Set(['order-documents']);
 
 export async function resolveDocumentUrl(rawUrl: string | null | undefined, expiresIn = 300): Promise<string | null> {
   if (!rawUrl) return null;
-  const match = rawUrl.match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)$/);
+  // Cocokkan URL objek publik maupun privat: /object/{bucket}/... dan
+  // /object/public/{bucket}/...
+  const match = rawUrl.match(/\/storage\/v1\/object\/(?:public\/)?([^/]+)\/(.+)$/);
   if (!match) return rawUrl;
   const [, bucket, encodedPath] = match;
+  const isPrivate = !rawUrl.includes('/storage/v1/object/public/');
+  if (isPrivate && GATEWAY_SIGNED_BUCKETS.has(bucket)) {
+    // Unduhan order-documents hanya lewat gateway (validasi kepemilikan).
+    const path = decodeURIComponent(encodedPath).split('?')[0];
+    const { data, error } = await callGateway('documents_signed_url', {
+      bucket,
+      path,
+      expires_in: expiresIn,
+    });
+    const signedUrl = (data as any)?.signed_url as string | undefined;
+    if (error || !signedUrl) {
+      console.warn('resolveDocumentUrl(gateway):', error ?? 'no signed_url');
+      return null;
+    }
+    return signedUrl;
+  }
   if (!SIGNED_URL_BUCKETS.has(bucket)) return rawUrl;
   const { data, error } = await supabase.storage
     .from(bucket)
-    .createSignedUrl(decodeURIComponent(encodedPath), expiresIn);
+    .createSignedUrl(decodeURIComponent(encodedPath).split('?')[0], expiresIn);
   if (error) { console.error('resolveDocumentUrl:', error); return null; }
   return data.signedUrl;
 }

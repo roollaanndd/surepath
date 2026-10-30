@@ -1,8 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { ShieldCheck, FileText, Loader2, Download, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, FileText, Loader2, Download, AlertCircle, CheckCircle2, Archive } from 'lucide-react';
 import { Language } from '../../types';
-import { acceptAgreement, SpAgentAgreement } from '../../services/supabaseService';
-import { generateAgreementPDF } from '../../services/agreementPdf';
+import { acceptAgreement, attachAgreementPdf, SpAgentAgreement } from '../../services/supabaseService';
+import { generateAgreementPDF, buildAgreementPdfBlob } from '../../services/agreementPdf';
+import { uploadAgentAgreementPdfBlob } from '../../services/supabaseService';
 import { AGREEMENT_META, AGREEMENT_CLAUSES } from './agreementContent';
 
 interface Props {
@@ -22,6 +23,7 @@ const AgentAgreementGate: React.FC<Props> = ({ agent, lang, onAccepted }) => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<SpAgentAgreement | null>(null);
+  const [archived, setArchived] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const ktpValid = /^[0-9]{16}$/.test(ktp);
@@ -74,6 +76,38 @@ const AgentAgreementGate: React.FC<Props> = ({ agent, lang, onAccepted }) => {
       return;
     }
     setDone(rec);
+
+    // Arsip PDF perjanjian (audit 28 Okt 2026): sebelumnya PDF hanya dibuat
+    // ulang di browser dan tidak pernah tersimpan server-side. Kini hasil PDF
+    // diunggah ke bucket privat agent-docs dan path-nya didaftarkan pada baris
+    // e-consent (pdf_bucket/pdf_path) + registry sp_documents, sehingga admin
+    // memiliki salinan auditable. Kegagalan arsip tidak membatalkan persetujuan
+    // — admin masih bisa membangun ulang PDF dari data e-consent.
+    (async () => {
+      try {
+        const blob = await buildAgreementPdfBlob({
+          agreementNo: rec.agreement_no,
+          docVersion: rec.doc_version,
+          fullName: rec.full_name,
+          ktpNumber: rec.ktp_number,
+          acceptedAt: rec.accepted_at,
+          agentEmail: agent?.email,
+          agentPhone: agent?.phone,
+        });
+        const agentId = agent?.id ?? rec.agent_id;
+        const uploaded = await uploadAgentAgreementPdfBlob(blob, agentId, rec.agreement_no);
+        if (!uploaded) { console.warn('[agreement] arsip PDF gagal diunggah'); return; }
+        const base = import.meta.env.VITE_SUPABASE_URL ?? '';
+        await attachAgreementPdf(rec.id, {
+          bucket: 'agent-docs',
+          path: uploaded.path,
+          url: `${base}/storage/v1/object/agent-docs/${uploaded.path}`,
+        });
+        setArchived(true);
+      } catch (e) {
+        console.warn('[agreement] arsip PDF gagal:', e);
+      }
+    })();
   };
 
   const handleDownload = async () => {
@@ -101,7 +135,12 @@ const AgentAgreementGate: React.FC<Props> = ({ agent, lang, onAccepted }) => {
         <p className="text-sm text-slate-500 max-w-xs mb-1">
           {t('Your acceptance has been securely recorded.', 'Persetujuan Anda telah tersimpan dengan aman.')}
         </p>
-        <p className="text-xs font-mono font-bold text-emerald-700 mb-8">{done.agreement_no}</p>
+        <p className="text-xs font-mono font-bold text-emerald-700 mb-3">{done.agreement_no}</p>
+        <p className="text-[0.65rem] font-bold uppercase tracking-widest text-slate-400 mb-8 flex items-center justify-center gap-1.5">
+          {archived
+            ? (<><Archive size={12} className="text-emerald-600" /> {t('PDF archived for audit', 'PDF terarsip untuk audit')}</>)
+            : (<><Archive size={12} /> {t('Archiving PDF…', 'Mengarsipkan PDF…')}</>)}
+        </p>
         <div className="w-full max-w-xs space-y-2.5">
           <button onClick={handleDownload}
             className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-emerald-700 bg-emerald-500/10 border border-emerald-500/25 active:scale-[0.98] transition-transform">

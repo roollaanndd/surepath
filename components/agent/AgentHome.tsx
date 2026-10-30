@@ -111,13 +111,13 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
       key={target + label}
       type="button"
       onClick={() => onNavigate(target)}
-      className="flex flex-col items-center gap-1.5 rounded-2xl py-1.5 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+      className="flex flex-col items-center gap-2 rounded-2xl bg-white/90 py-3 px-1 shadow-[0_4px_14px_-4px_rgba(0,59,47,0.30)] group cursor-pointer active:scale-95 transition-transform duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
       aria-label={label}
     >
-      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/95 shadow-[0_6px_16px_-6px_rgba(0,59,47,0.55)] transition-transform duration-200 group-active:scale-95 motion-reduce:transition-none" style={{ color: palette.chip }}>
+      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-ds-green-tint transition-transform duration-200 group-hover:scale-105 motion-reduce:transition-none" style={{ color: palette.chip }}>
         {icon}
       </span>
-      <span className="text-2xs font-bold leading-tight text-white/95">{label}</span>
+      <span className="text-2xs font-bold leading-tight text-ds-ink text-center">{label}</span>
     </button>
   );
 
@@ -233,7 +233,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
             {gridTile({ label: t('Claims', 'Klaim'), tint: greenTint, onAction: () => onNavigate('claims'), TintIcon: <ManagedPortalIcon id="claims" size={23} imageClassName="w-[23px] h-[23px] object-contain group-hover:scale-105 transition-transform duration-200" fallback={<IcClaims size={23} className="text-ds-green" />} /> })}
             {gridTile({ label: t('Renewals', 'Renewals'), tint: greenTint, onAction: () => onNavigate('renewals'), TintIcon: <IcRenewal size={23} className="text-ds-green" /> })}
             {gridTile({ label: t('Network', 'Network'), tint: greenTint, onAction: () => onNavigate('network'), TintIcon: <IcNetwork size={23} className="text-ds-green" /> })}
-            {gridTile({ label: 'Leader\u00ADboard', tint: greenTint, onAction: () => onNavigate('leaderboard'), TintIcon: <IcRank size={23} className="text-ds-green" /> })}
+            {gridTile({ label: 'Leader­board', tint: greenTint, onAction: () => onNavigate('leaderboard'), TintIcon: <IcRank size={23} className="text-ds-green" /> })}
             {gridTile({ label: t('Endorsements', 'Endorsemen'), tint: greenTint, onAction: () => onNavigate('endorsements'), TintIcon: <IcEndorse size={23} className="text-ds-green" /> })}
           </div>
         </motion.section>

@@ -85,6 +85,36 @@ export async function fetchMyProfileForLogin(
   return { transientError: true, lastError };
 }
 
+// ─── Tingkat kepercayaan akun (gerbang verifikasi) ───────────────────────────
+//
+// Aturannya hidup di satu tempat di server (`supabase/functions/_shared/trust.ts`)
+// dan `get_my_profile` mengembalikan hasilnya, jadi klien TIDAK menyalin aturan
+// tier — termasuk masa tenggang akun lama, yang kalau disalin salah akan
+// mengunci mitra lama dari fitur yang sebenarnya masih boleh mereka pakai.
+//
+// 0 = belum tepercaya · 1 = email wajar, menunggu verifikasi · 2 = terverifikasi penuh.
+export type AccountTrustTier = 0 | 1 | 2;
+
+export interface AccountTrust {
+  tier: AccountTrustTier;
+  /** Alasan dari server, dalam Bahasa Indonesia. */
+  reasons: string[];
+}
+
+/**
+ * Tier kepercayaan caller. `null` berarti belum bisa dipastikan (jaringan,
+ * atau gateway belum di-deploy dengan field ini) — pemanggil harus memilih
+ * sikap terbuka, karena server tetap penjaga sebenarnya untuk setiap aksi
+ * berisiko. Mengunci UI atas dugaan hanya menghukum pengguna yang sah.
+ */
+export async function getMyAccountTrust(): Promise<AccountTrust | null> {
+  const { data, error } = await callGateway('get_my_profile');
+  if (error || !data) return null;
+  const tier = (data as any).trust_tier;
+  if (tier !== 0 && tier !== 1 && tier !== 2) return null;
+  return { tier, reasons: Array.isArray((data as any).trust_reasons) ? (data as any).trust_reasons : [] };
+}
+
 export async function getUserByEmail(_email: string): Promise<SpUser | null> {
   // Same as above — always fetches the current authenticated user's own profile.
   const { data, error } = await callGateway('get_my_profile');

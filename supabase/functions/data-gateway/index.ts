@@ -56,7 +56,7 @@ const ADMIN_ROLES = ['MASTER_ADMIN', 'ADMIN', 'FINANCE', 'FINANCE_MANAGER', 'FIN
 // which gave them full financial access via admin_create_commission.
 const FINANCE_ROLES = ['MASTER_ADMIN', 'ADMIN', 'FINANCE', 'FINANCE_MANAGER', 'FINANCE_DIRECTOR'];
 
-interface Caller { authId: string; email: string; spUser: Record<string, any> | null; role: string | null; isAdmin: boolean; isFinanceAdmin: boolean; userMetadata: Record<string, any> | null; ownerId: string; ownerIds: string[]; }
+interface Caller { authId: string; email: string; spUser: Record<string, any> | null; role: string | null; isAdmin: boolean; isFinanceAdmin: boolean; userMetadata: Record<string, any> | null; ownerId: string; ownerIds: string[]; emailConfirmedAt: string | null; }
 
 const PUBLIC_ACTIONS = new Set(['get_insurer_review', 'submit_insurer_decision', 'get_insurer_dashboard', 'insurer_submit_decision_authed', 'insurer_list_payments', 'insurer_upload_policy', 'get_public_quotation', 'confirm_public_quotation']);
 
@@ -161,7 +161,7 @@ Deno.serve(async (req) => {
         const ipAllowed = await checkRateLimit(`ip:${clientIp}`, 60);
         if (!ipAllowed) return json({ error: 'Rate limit exceeded. Coba lagi dalam 1 jam.' }, 429);
       }
-      caller = { authId: '', email: '', spUser: null, role: null, isAdmin: false, isFinanceAdmin: false, userMetadata: null, ownerId: '', ownerIds: [] };
+      caller = { authId: '', email: '', spUser: null, role: null, isAdmin: false, isFinanceAdmin: false, userMetadata: null, ownerId: '', ownerIds: [], emailConfirmedAt: null };
     } else {
       const authHeader = req.headers.get('authorization') ?? '';
       const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
@@ -196,7 +196,7 @@ Deno.serve(async (req) => {
       // reads that must also match legacy rows keyed by auth id.
       const ownerId = spUser?.id ?? authId;
       const ownerIds = [...new Set([ownerId, authId].filter(Boolean))];
-      caller = { authId, email, spUser: spUser ?? null, role: spUser?.role ?? null, isAdmin: ADMIN_ROLES.includes(spUser?.role ?? ''), isFinanceAdmin: FINANCE_ROLES.includes(spUser?.role ?? ''), userMetadata, ownerId, ownerIds };
+      caller = { authId, email, spUser: spUser ?? null, role: spUser?.role ?? null, isAdmin: ADMIN_ROLES.includes(spUser?.role ?? ''), isFinanceAdmin: FINANCE_ROLES.includes(spUser?.role ?? ''), userMetadata, ownerId, ownerIds, emailConfirmedAt };
     }
 
     // ── Gerbang kepercayaan akun (v2.5.6) ─────────────────────────────────

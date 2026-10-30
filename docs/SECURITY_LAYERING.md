@@ -99,14 +99,25 @@ Tiga tingkat, diturunkan dari data yang sudah ada — **tanpa perubahan skema**:
 
 Dari **103 action**, hanya yang menciptakan catatan mengikat, menggerakkan uang, atau rawan penyalahgunaan akun massal:
 
-| Action | Alasan |
-|---|---|
-| `create_policy_order` | menerbitkan order polis sungguhan |
-| `submit_claim` | mengajukan klaim |
-| `agent_request_withdrawal` | uang keluar |
-| `redeem_coins` | menukar imbalan jadi nilai |
-| `apply_referral` | jalur penyalahgunaan akun massal |
-| `accept_agreement` | tanda tangan elektronik perjanjian keagenan |
+| Action | Tier minimum | Alasan |
+|---|---|---|
+| `create_policy_order` | 2 — terverifikasi | menerbitkan order polis sungguhan |
+| `submit_claim` | 2 — terverifikasi | mengajukan klaim |
+| `agent_request_withdrawal` | 2 — terverifikasi | uang keluar |
+| `redeem_coins` | 2 — terverifikasi | menukar imbalan jadi nilai |
+| `apply_referral` | 2 — terverifikasi | jalur penyalahgunaan akun massal |
+| `accept_agreement` | **1 — email wajar** | tanda tangan elektronik perjanjian keagenan |
+
+**Kenapa `accept_agreement` hanya tier 1 (sejak v2.7.18).** Pada tier 2 ia
+membuat pendaftaran mitra buntu total: gerbang perjanjian memblokir seluruh
+aplikasi, sementara AGENT baru mencapai tier 2 lewat `verified = true` yang
+disetel operator **sesudah** pendaftaran. Mitra baru menekan setuju dan ditolak
+"belum diverifikasi", tanpa jalan keluar. Tanda tangan adalah prasyarat
+verifikasi, bukan hak sesudahnya. Tier 1 tetap menahan domain email sampah dan
+email yang belum dikonfirmasi (keduanya tier 0), dan setiap aksi yang
+menggerakkan uang atau menerbitkan polis tetap di tier 2 — mitra yang menunggu
+verifikasi masuk aplikasi dengan dua permukaan itu terkunci di UI juga
+(`components/agent/AgentVerificationPending.tsx`).
 
 **Semua sisanya tetap terbuka:** baca polis/klaim/profil/notifikasi, simulasi premi, penawaran draf, Pathy, daftar klien. Pengguna baru harus tetap bisa mencoba produk sebelum diverifikasi — menggerbang terlalu banyak sama buruknya dengan tidak menggerbang.
 
@@ -119,6 +130,10 @@ Akun yang dibuat sebelum `ENFORCEMENT_FROM` (12 Sep 2026) **dibebaskan sepenuhny
 Gerbang duduk di dispatcher `data-gateway`, tepat setelah identitas caller terbentuk dan sebelum dispatch — satu titik untuk 103 action, bukan 103 penjaga yang bisa lupa dipasang. Peran admin selalu lolos karena sudah melewati pemeriksaan peran yang lebih ketat di modulnya.
 
 Penolakan mengembalikan **HTTP 403** dengan `code: 'VERIFICATION_REQUIRED'` supaya klien bisa menampilkan ajakan verifikasi yang tepat, bukan sekadar pesan gagal.
+
+`get_my_profile` ikut mengembalikan `trust_tier`, `trust_grandfathered` dan
+`trust_reasons` hasil `deriveTier` yang sama, supaya klien dapat mengunci
+tampilan tanpa menyalin aturan tier (termasuk masa tenggang akun lama).
 
 ---
 

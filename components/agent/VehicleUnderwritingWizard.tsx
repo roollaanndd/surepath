@@ -2,12 +2,13 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Car, Bike, Search, User, ChevronRight, Upload, CheckCircle,
   AlertTriangle, XCircle, ArrowLeft, Loader2, FileText,
-  Mail, Package, Smartphone, ScanLine,
+  Mail, Package, Smartphone,
 } from 'lucide-react';
 import SearchableSelect from '../car-wizard/SearchableSelect';
 import { Language } from '../../types';
 import { analyzeVehicleSurvey, validateVehiclePhoto, SurveyAnalysisResult } from '../../services/geminiService';
 import { extractStnkOcr, type StnkOcrResult } from '../../services/stnkOcr';
+import { StnkCaptureCard, StnkOcrNotice } from '../shared/StnkScanCard';
 import { lookupPlate } from '../../services/plateCodes';
 import {
   calcPremium, getZone, getVehicleCategory, PROVINCES,
@@ -370,7 +371,8 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
   // validation result so the agent knows what to double-check.
   const [stnkScanning, setStnkScanning] = useState(false);
   const [stnkOcrResult, setStnkOcrResult] = useState<StnkOcrResult | null>(null);
-  const stnkFileRef = useRef<HTMLInputElement>(null);
+  // Target gulir untuk tautan "Isi Data Kendaraan Manual" di kartu pindai.
+  const stnkFieldsRef = useRef<HTMLDivElement>(null);
 
   const handleStnkScan = useCallback(async (file: File) => {
     setStnkScanning(true);
@@ -943,70 +945,20 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
       <div className="flex flex-col gap-6">
         <h2 className="text-2xl font-black text-slate-800 dark:text-white">Detail Kendaraan</h2>
 
-        {/* AI STNK OCR — auto-fills every field below from a photographed STNK.
-            Same service the customer wizard uses; runs server-side via the
-            stnk-ocr edge function with a fallback to Gemini Vision. */}
-        <input
-          ref={stnkFileRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) handleStnkScan(f);
-            e.target.value = ''; // allow re-uploading the same file
+        {/* Pintu masuk OCR STNK — tampilan yang sama dengan portal Nasabah,
+            lewat shared/StnkScanCard (satu pemilik untuk kedua portal).
+            Layanannya tetap stnk-ocr edge function dengan fallback Gemini. */}
+        <StnkCaptureCard
+          onPick={handleStnkScan}
+          scanning={stnkScanning}
+          secondaryAction={stnkOcrResult || stnkScanning ? undefined : {
+            label: 'Atau Isi Data Kendaraan Manual',
+            onClick: () => stnkFieldsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
           }}
         />
-        <button
-          type="button"
-          onClick={() => stnkFileRef.current?.click()}
-          disabled={stnkScanning}
-          className="flex items-center justify-center gap-2 w-full p-4 rounded-2xl border-2 border-dashed border-emerald-400/50 bg-emerald-50 dark:bg-emerald-900/10 text-emerald-700 dark:text-emerald-300 font-bold text-sm hover:bg-emerald-100 dark:hover:bg-emerald-900/20 transition disabled:opacity-50"
-        >
-          {stnkScanning ? (
-            <><Loader2 className="w-4 h-4 animate-spin" /> Membaca STNK dengan AI…</>
-          ) : (
-            <><ScanLine className="w-4 h-4" /> Pindai STNK dengan AI</>
-          )}
-        </button>
+        <StnkOcrNotice result={stnkOcrResult} />
 
-        {/* OCR result summary + per-field validation warnings */}
-        {stnkOcrResult && stnkOcrResult.status !== 'UNCLEAR' && stnkOcrResult.status !== 'ERROR' && (
-          <div className={`p-3 rounded-2xl border text-xs flex items-start gap-2 ${
-            stnkOcrResult.ok
-              ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-900/40 text-emerald-800 dark:text-emerald-200'
-              : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-900/40 text-amber-800 dark:text-amber-200'
-          }`}>
-            <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" />
-            <div className="flex flex-col gap-1">
-              <p className="font-black uppercase tracking-widest text-[0.6rem]">
-                {stnkOcrResult.ok ? 'STNK Terbaca Lengkap' : 'STNK Terbaca Sebagian'} · {(stnkOcrResult.confidence * 100).toFixed(0)}% confidence
-              </p>
-              {!stnkOcrResult.ok && (
-                <ul className="text-[0.55rem] font-bold list-disc list-inside opacity-90">
-                  {!stnkOcrResult.validation.plate && <li>Format plat tidak standar</li>}
-                  {!stnkOcrResult.validation.vin && <li>Nomor Rangka (VIN) perlu verifikasi manual</li>}
-                  {!stnkOcrResult.validation.year && <li>Tahun tidak terdeteksi</li>}
-                  {!stnkOcrResult.validation.brand && <li>Merk tidak cocok dengan database</li>}
-                  {!stnkOcrResult.validation.model && <li>Model tidak cocok dengan database</li>}
-                </ul>
-              )}
-              {stnkOcrResult.notes && (
-                <p className="text-[0.5rem] italic opacity-70">Catatan AI: {stnkOcrResult.notes}</p>
-              )}
-            </div>
-          </div>
-        )}
-        {stnkOcrResult && (stnkOcrResult.status === 'UNCLEAR' || stnkOcrResult.status === 'ERROR') && (
-          <div className="p-3 rounded-2xl border border-rose-200 dark:border-rose-900/40 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300 text-xs flex items-start gap-2">
-            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
-            <div>
-              <p className="font-black uppercase tracking-widest text-[0.6rem]">STNK tidak terbaca</p>
-              <p className="text-[0.55rem] opacity-90">Foto mungkin buram atau terpotong. Isi data secara manual di bawah ini.</p>
-            </div>
-          </div>
-        )}
-
+        <div ref={stnkFieldsRef}>
         <SectionCard>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Make */}
@@ -1179,6 +1131,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
             </div>
           </div>
         </SectionCard>
+        </div>
         <PrimaryBtn onClick={() => setStep(4)} disabled={!canProceedStep3}>
           Lanjutkan <ChevronRight className="inline w-4 h-4 ml-1" />
         </PrimaryBtn>

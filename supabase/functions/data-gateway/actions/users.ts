@@ -1,7 +1,7 @@
 // users.ts — 10 actions
 // Auto-generated from data-gateway/index.ts split
 import type { GatewayContext, ActionResult } from './types.ts';
-import { isUntrustedEmail } from '../../_shared/trust.ts';
+import { isUntrustedEmail, deriveTier } from '../../_shared/trust.ts';
 import { linkOrdersToNewCustomer } from './clientLink.ts';
 
 // json() helper — returns ActionResult (main index.ts converts to Response)
@@ -16,7 +16,22 @@ export async function handleUsersAction(action: string, ctx: GatewayContext): Pr
   switch (action) {
     case 'get_my_profile': {
         if (!caller.spUser) return json({ error: 'No SurePath profile linked to this account' }, 404);
-        return json({ data: caller.spUser });
+        // Tier kepercayaan ikut dikembalikan supaya klien tidak perlu menyalin
+        // aturan gerbang (termasuk masa tenggang akun lama) untuk memutuskan
+        // fitur mana yang dikunci. Satu sumber kebenaran: _shared/trust.ts.
+        const verdict = deriveTier({
+          email: caller.email,
+          emailConfirmedAt: caller.emailConfirmedAt,
+          spUser: caller.spUser,
+        });
+        return json({
+          data: {
+            ...caller.spUser,
+            trust_tier: verdict.tier,
+            trust_grandfathered: verdict.grandfathered,
+            trust_reasons: verdict.alasan,
+          },
+        });
       }
 
     case 'accept_agreement': {

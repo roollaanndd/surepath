@@ -29,7 +29,7 @@ Origin yang diizinkan:
 | Action | Fungsi |
 |---|---|
 | `ensure_profile` | Ambil profil sendiri; buat dari identitas JWT + metadata jika belum ada (role hanya CUSTOMER/AGENT; agent mulai unverified) |
-| `get_my_profile` | Profil sendiri (404 jika belum ada) |
+| `get_my_profile` | Profil sendiri + `trust_tier`/`trust_grandfathered`/`trust_reasons` (404 jika belum ada) |
 | `get_user_profile` | Profil by id (self, atau admin untuk siapa pun) |
 | `update_my_profile` | Update field aman (name, phone, address, foto, KTP doc) |
 | `list_my_clients` | Klien milik agent sendiri |

@@ -153,7 +153,23 @@ export const ACTION_MIN_TIER: Record<string, TrustTier> = {
   agent_request_withdrawal: TIER_VERIFIED, // uang keluar
   redeem_coins:            TIER_VERIFIED,  // menukar imbalan jadi nilai
   apply_referral:          TIER_VERIFIED,  // jalur penyalahgunaan akun massal
-  accept_agreement:        TIER_VERIFIED,  // tanda tangan elektronik perjanjian keagenan
+
+  // `accept_agreement` DULU TIER_VERIFIED, dan itu membuat pendaftaran mitra
+  // mati total (dilaporkan 30 Okt 2026). Urutannya melingkar:
+  //
+  //   AgentPortal memblokir seluruh aplikasi sampai perjanjian ditandatangani
+  //     → accept_agreement menuntut TIER_VERIFIED
+  //       → untuk AGENT, TIER_VERIFIED HANYA didapat dari `verified = true`
+  //         → `verified` disetel operator SETELAH mitra mendaftar lengkap
+  //
+  // Jadi mitra baru membaca perjanjian, menekan setuju, dan menerima
+  // "Agen belum diverifikasi operator" — tanpa jalan keluar, karena gerbang
+  // perjanjian adalah layar penuh. Menandatangani perjanjian adalah SYARAT
+  // verifikasi, bukan hak setelah verifikasi, jadi tier yang benar adalah
+  // TIER_EMAIL_OK: domain sampah dan email yang belum dikonfirmasi tetap
+  // tertahan (keduanya tier 0), sementara mitra sungguhan bisa masuk dan
+  // menunggu persetujuan dengan fitur transaksi tetap terkunci di bawah.
+  accept_agreement:        TIER_EMAIL_OK,  // tanda tangan elektronik — prasyarat verifikasi
 };
 
 export function requiredTier(action: string): TrustTier {

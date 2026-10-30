@@ -144,6 +144,26 @@ jobs:
           FUNCTIONS: ${{ steps.resolve.outputs.functions }}
         run: |
           set -euo pipefail
+          # Fail fast with an actionable message when the access token is
+          # invalid/revoked instead of a bare 401 deep inside the deploy loop
+          # (exact failure seen 2026-10-25 → 2026-10-30: "unexpected list
+          # functions status 401: Invalid access token").
+          if ! list_out=$(supabase functions list --project-ref "$PROJECT_REF" 2>&1); then
+            echo "--- functions list check ($(date -u +%H:%M:%SZ)) ---"
+            printf '%s\n' "$list_out"
+            printf '%s\n' "$list_out" | while IFS= read -r line; do
+              printf '::error::%s\n' "$(printf '%s' "$line" | sed 's/%/%25/g; s/\r/%0D/g; s/\n/%0A/g')"
+            done
+            printf '::error::SUPABASE_ACCESS_TOKEN is invalid or revoked. Generate a new token at https://supabase.com/dashboard/account/tokens and update the SUPABASE_ACCESS_TOKEN repository secret (Settings → Secrets and variables → Actions), then re-run this workflow.%0A'
+            {
+              echo "### ❌ SUPABASE_ACCESS_TOKEN invalid or revoked"
+              echo
+              echo '```'
+              echo "$list_out"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
           for fn in $FUNCTIONS; do
             echo "Deploying $fn to $PROJECT_REF ..."
             # No --no-verify-jwt special-casing here any more: supabase/config.toml
@@ -166,14 +186,14 @@ jobs:
               printf '%s\n' "$out" | while IFS= read -r line; do
                 printf '::error::%s\n' "$(printf '%s' "$line" | sed 's/%/%25/g; s/\r/%0D/g; s/\n/%0A/g')"
               done
-              {
-                echo "### ❌ supabase functions deploy \`$fn\`"
-                echo
-                echo '```'
-                echo "$out"
-                echo '```'
-              } >> "$GITHUB_STEP_SUMMARY"
-              exit 1
+            {
+              echo "### ❌ supabase functions deploy \`$fn\`"
+              echo
+              echo '```'
+              echo "$out"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
             fi
           done
           echo "Done."

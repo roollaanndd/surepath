@@ -184,11 +184,12 @@ Shared platform behaviors (cross-surface):
   accounts — `create_policy_order`, `submit_claim`,
   `agent_request_withdrawal`, `redeem_coins`, `apply_referral`,
   `accept_agreement`; admin roles bypass. Domain check is already
-  enforcing today (tier 0 for garbage domains even if `verified:true`).
-  The `email_confirmed_at` signal only *becomes meaningful* once the owner
-  disables Supabase Auth email auto-confirm (Dashboard → Authentication →
-  Providers → Email) — deliberately an owner-side step because it changes
-  the signup flow. Client readiness verified: both signup paths
+  enforcing today (tier 0 for garbage domains even if `verified:true`) AND
+  the `email_confirmed_at` signal is already meaningful: live Management-API
+  read on 2026-10-30 shows `mailer_autoconfirm=false` (auto-confirm email is
+  OFF in production — the "owner toggle" recorded as pending earlier is
+  verified done; new email signups go through CHECK_EMAIL).
+  Client readiness verified: both signup paths
   (`components/AuthGate.tsx`, `components/agent/AgentOnboarding.tsx`)
   handle the no-session case with an explicit CHECK_EMAIL state, resend
   support, explicit `emailRedirectTo`, and profile creation from signup
@@ -277,14 +278,16 @@ P0 = security/money-correctness/deploy-integrity (edge functions actually
 deployed when touched). P1 = blocked core journeys + verifiable owner
 complaints. P2 = experience polish with verified findings (e.g. audit
 v2.7.14 items). P3 = nice-to-have.
-Current queue (updated 2026-10-30, v2.7.16 deployed): P1 security batch DONE
+Current queue (updated 2026-10-30, v2.7.17 deployed): P1 security batch DONE
 (`.or()` filter-injection guard shipped & deployed; `server.ts` admin gate
 shipped; `camera=(self)` shipped and verified live in production headers) →
-trust gate live & deployed; remaining sub-step is the OWNER-side toggle
-(disable Supabase Auth email auto-confirm, see §8) → admin light-first THEME
+trust gate FULLY LIVE (auto-confirm verified OFF via Management API read;
+no owner dashboard step remains for it) → admin light-first THEME
 migration DONE v2.7.17 (light-only shell, dark twins removed, anti-drift
 guard tests); remaining admin work is the pixel-level converge pass against
-`admin-a.html` → design debt (see `design.md` §15).
+`admin-a.html` → email send-path prerequisites live only in the OWNER's
+accounts (Resend API key + domain verify, ADMIN_DIGEST_EMAIL value, Fonnte
+decision) → design debt (see `design.md` §15).
 
 ## 15. Acceptance criteria (release DoD)
 

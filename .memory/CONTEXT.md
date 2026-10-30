@@ -192,9 +192,11 @@ Jujur: kode browser TIDAK bisa disembunyikan. Obfuscation menaikkan biaya, tidak
 ⚠️ **Aset asli yang terekspos bukan kode React, tapi `services/vehicleDatabase.ts` (2.572 baris / 352 KB harga kendaraan)** + tabel OJK — ikut bundle produksi, tinggal ambil arraynya. Rekomendasi pindah ke server (bonus: bundle −350 KB) **sengaja TIDAK dikerjakan** (mengubah jalur data wizard beli) — keputusan owner.
 ### Butuh tangan owner
 1. **Matikan auto-confirm** Supabase → Auth → Providers → Email (satu-satunya cara stop email karangan di sumbernya; tidak diubah sendiri karena mengubah alur daftar).
+   **✅ TERVERIFIKASI 2026-10-30:** Management API (`GET /v1/projects/{ref}/config/auth`) menunjukkan `mailer_autoconfirm=false` — sinyal `email_confirmed_at` trust gate kini bermakna penuh; tidak ada langkah dashboard tersisa untuk item ini. Kunci custom SMTP juga belum di-set (`custom_smtp_configured=false`) → email konfirmasi Auth memakai SMTP bawaan Supabase (batasan rate ringan).
 2. Pastikan repo GitHub privat.
 ### ⚠️ BELUM AKTIF
 Gerbang ada di data-gateway yang **belum pernah ter-deploy**. Baru berlaku setelah integrasi GitHub Supabase dinyalakan.
+**✅ TIDAK LAGI RELEVAN (2026-10-30):** Deploy Edge Functions hijau (run success setelah token rotation) → gerbang trust LIVE di produksi sejak deploy v2.7.16 `data-gateway`.
 
 ## v2.5.5 — Kode sumber server terpublikasi lewat sourcemap (2026-09-11)
 ### Cacatnya

@@ -1,6 +1,6 @@
 // orders.ts — 10 actions
 // Auto-generated from data-gateway/index.ts split
-// Deploy-path diagnostic marker (v2.7.16 r3): runs after token rotation.
+// Deploy-path diagnostic marker (v2.7.16 r4): runs after token-trim hardening.
 import type { GatewayContext, ActionResult } from './types.ts';
 import { findClientIdByEmail } from './clientLink.ts';
 

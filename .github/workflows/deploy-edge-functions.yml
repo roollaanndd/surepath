@@ -144,6 +144,12 @@ jobs:
           FUNCTIONS: ${{ steps.resolve.outputs.functions }}
         run: |
           set -euo pipefail
+          # Trim any whitespace/newline artifacts a manual paste may have left
+          # in (or around) the secret — a trailing newline turns a valid PAT
+          # into "Invalid access token" (seen 2026-10-30).
+          SUPABASE_ACCESS_TOKEN="${SUPABASE_ACCESS_TOKEN//[$'\t\r\n ']/}"
+          export SUPABASE_ACCESS_TOKEN
+          export PROJECT_REF
           # Fail fast with an actionable message when the access token is
           # invalid/revoked instead of a bare 401 deep inside the deploy loop
           # (exact failure seen 2026-10-25 → 2026-10-30: "unexpected list
@@ -154,7 +160,7 @@ jobs:
             printf '%s\n' "$list_out" | while IFS= read -r line; do
               printf '::error::%s\n' "$(printf '%s' "$line" | sed 's/%/%25/g; s/\r/%0D/g; s/\n/%0A/g')"
             done
-            printf '::error::SUPABASE_ACCESS_TOKEN is invalid or revoked. Generate a new token at https://supabase.com/dashboard/account/tokens and update the SUPABASE_ACCESS_TOKEN repository secret (Settings → Secrets and variables → Actions), then re-run this workflow.%0A'
+            printf '::error::SUPABASE_ACCESS_TOKEN is invalid or revoked. Generate a new token at https://supabase.com/dashboard/account/tokens and update the SUPABASE_ACCESS_TOKEN repository secret (Settings → Secrets and variables → Actions), then re-run this workflow.'
             {
               echo "### ❌ SUPABASE_ACCESS_TOKEN invalid or revoked"
               echo

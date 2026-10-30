@@ -1,5 +1,14 @@
 # SurePath — Changelog
 
+## v2.7.19 — 2026-10-30
+
+### Wave 1 perbaikan UI/UX portal Mitra
+
+- **A1** Kartu pintasan hero (Quotation, Klaim, Network, Renewals) kini berlatar putih dengan teks `ds-ink` — tidak lagi tenggelam di atas gradien gelap.
+- **A2** Tombol "TARIK DANA" di kartu hero Dompet diubah ke `bg-white text-ds-green` agar kontras terhadap latar hijau gelap.
+- **A3** Padding bawah konten utama AgentPortal dinaikkan ke `pb-48` (12rem) sehingga FAB Pathy dan bar nav tidak lagi menutupi konten.
+- **A5** Logo "SurePath" diberi `whitespace-nowrap` — tidak lagi terpotong menjadi "SUREPAT / H" di lebar 390 px.
+
 ## v2.7.18 — 2026-10-30
 
 ### Pendaftaran mitra tidak lagi buntu di gerbang perjanjian (dilaporkan pemilik)

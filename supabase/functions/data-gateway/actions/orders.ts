@@ -1,5 +1,7 @@
 // orders.ts — 10 actions
 // Auto-generated from data-gateway/index.ts split
+// Deploy-path diagnostic marker (v2.7.16): comment-only change to trigger the
+// Deploy Edge Functions run against the hardened deploy step (summary capture).
 import type { GatewayContext, ActionResult } from './types.ts';
 import { findClientIdByEmail } from './clientLink.ts';
 

@@ -150,6 +150,24 @@ jobs:
             # declares verify_jwt per function, and the CLI reads it. Keeping the
             # list in two places meant a function could be deployed with the wrong
             # auth posture depending on which path deployed it.
-            supabase functions deploy "$fn" --project-ref "$PROJECT_REF"
+            # Capture the CLI output on failure into the run summary: job LOGS
+            # are admin-only and the run summary is not, so the real CLI error
+            # (bundle/npm/auth) stays visible to every maintainer instead of
+            # hiding behind an opaque "exit code 1" (v2.7.16).
+            if out=$(supabase functions deploy "$fn" --project-ref "$PROJECT_REF" 2>&1); then
+              printf '%s\n' "$out"
+            else
+              echo "--- CLI output ($(date -u +%H:%M:%SZ)) ---"
+              printf '%s\n' "$out"
+              echo "::error::supabase functions deploy $fn failed — CLI output captured in the run summary."
+              {
+                echo "### ❌ supabase functions deploy \`$fn\`"
+                echo
+                echo '```'
+                echo "$out"
+                echo '```'
+              } >> "$GITHUB_STEP_SUMMARY"
+              exit 1
+            fi
           done
           echo "Done."

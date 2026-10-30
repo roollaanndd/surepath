@@ -10,6 +10,8 @@
 | Dokumen | Kapan dibaca |
 |---|---|
 | `../AGENTS.md` | Aturan kerja, guardrail, siklus rilis — WAJIB untuk semua kontributor |
+| [`../product.md`](../product.md) | **Guideline produk di root** — visi, pengguna, peran, journey, ruang lingkup, acceptance criteria, aturan anti-rekayasa (anti-invention) |
+| [`../design.md`](../design.md) | **Guideline desain di root** — sistem visual diapprove (admin light-first), token ds-*/sp-* riil, a11y/Responsif, checklist QA desain, register utang desain |
 | [PLAYBOOK.md](PLAYBOOK.md) | Workflow operasional + mini-plan per bagian (rilis, tema, portal, edge, testing, deploy) |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Bentuk sistem secara umum |
 | [TECHNICAL_SPEC.md](TECHNICAL_SPEC.md) | Spesifikasi teknis rinci |

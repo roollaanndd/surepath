@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arah A · Agent App SurePath — Mockup Proposal</title>
+<style>
+  :root{
+    --forest:#064E3B; --emerald:#059669; --bright:#10B981; --mint:#ECFDF5;
+    --orange:#F97316; --pale-orange:#FFF7ED;
+    --ink:#102A23; --ink-2:#496255; --ink-3:#6B857A;
+    --line:#DDEAE4; --line-2:#EAF3EF; --canvas:#F7FBF9; --card:#FFFFFF;
+    --r-lg:24px; --r-md:18px; --r-sm:12px;
+    --shadow-1:0 1px 2px rgba(6,78,59,.05), 0 6px 20px rgba(6,78,59,.07);
+  }
+  *{box-sizing:border-box;margin:0}
+  html,body{min-height:100%}
+  body{
+    font-family: ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background:
+      radial-gradient(900px 500px at 85% -10%, rgba(16,185,129,.10), transparent 60%),
+      radial-gradient(700px 420px at -10% 110%, rgba(249,115,22,.06), transparent 55%),
+      var(--canvas);
+    color:var(--ink); font-size:14px; line-height:1.5; font-variant-numeric:tabular-nums;
+    display:grid; place-items:center; padding:40px 24px 60px;
+  }
+  ::selection{ background:rgba(5,150,105,.22) }
+  :focus-visible{ outline:2px solid var(--emerald); outline-offset:2px; border-radius:6px }
+  button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+  .ic{display:block;flex:none}
+  .cap{ text-align:center; margin-top:22px; color:var(--ink-3); font-size:12.5px }
+  .cap b{ color:var(--ink-2) }
+
+  /* ===== Device ===== */
+  .phone{
+    width:390px; height:844px; background:var(--canvas); border-radius:46px; overflow:hidden;
+    box-shadow: 0 0 0 2px #102A2355, 0 0 0 10px #06251C, 0 0 0 12px #3E5A4D, 0 40px 80px rgba(6,42,35,.35);
+    display:flex; flex-direction:column; position:relative;
+  }
+  .notch{ position:absolute; top:12px; left:50%; transform:translateX(-50%); width:112px; height:26px; border-radius:16px; background:#06251C; z-index:50; display:grid; place-items:center; }
+  .notch i{ width:56px;height:6px;border-radius:6px;background:#12362B }
+  .scr{ flex:1; overflow-y:auto; padding:52px 18px 108px; scrollbar-width:none }
+  .scr::-webkit-scrollbar{display:none}
+  .bar{
+    position:absolute; top:0; left:0; right:0; z-index:40; padding:44px 18px 10px;
+    background:rgba(247,251,249,.86); backdrop-filter:blur(10px); border-bottom:1px solid var(--line-2);
+    display:flex; align-items:center; gap:10px;
+  }
+  .bar .t{ font-weight:700; font-size:15px }
+  .bar .s{ font-size:11px; color:var(--ink-3) }
+  .bar .sp{flex:1}
+  .iconbtn{ width:36px;height:36px;border-radius:12px;border:1px solid var(--line); background:#fff; display:grid;place-items:center; color:var(--ink-2); position:relative }
+  .iconbtn .ping{ position:absolute; top:7px; right:8px; width:7px;height:7px;border-radius:50%;background:var(--orange); box-shadow:0 0 0 2px #fff }
+  .syncm{ display:inline-flex; gap:6px; align-items:center; font-size:10.5px; color:var(--emerald); font-weight:650; background:var(--mint); padding:4px 9px; border-radius:999px; border:1px solid #BFEAD9 }
+
+  /* ===== Nav ===== */
+  .nav{
+    position:absolute; bottom:0; left:0; right:0; z-index:45;
+    background:rgba(255,255,255,.94); backdrop-filter:blur(12px);
+    border-top:1px solid var(--line); padding:10px 10px 22px; display:grid; grid-template-columns:repeat(5,1fr);
+  }
+  .nb{ display:grid; justify-items:center; gap:3px; padding:4px 0; color:var(--ink-3); font-size:10px; font-weight:650; border-radius:14px; position:relative }
+  .nb .ic{ color:currentColor }
+  .nb[aria-current]{ color:var(--forest) }
+  .nb[aria-current]::after{ content:""; width:16px; height:3px; border-radius:3px; background:var(--emerald); position:absolute; bottom:-4px }
+  .fabtab{ display:grid; place-items:center }
+  .fabwrap{ width:54px; height:54px; border-radius:50%; background:var(--emerald); color:#fff; display:grid; place-items:center; margin-top:-26px; box-shadow:0 10px 24px rgba(5,150,105,.35), 0 0 0 5px var(--canvas); }
+  .fabwrap .lb{ font-size:9.5px; font-weight:700; color:var(--forest); margin-top:2px; }
+
+  /* ===== Home ===== */
+  .hi{ display:flex; align-items:center; gap:12px }
+  .ava{ width:44px;height:44px;border-radius:50%; background:linear-gradient(135deg,var(--emerald),var(--bright)); color:#fff; font-weight:800; display:grid; place-items:center; font-size:15px; flex:none; box-shadow:0 6px 16px rgba(5,150,105,.25) }
+  .hi h2{ font-size:17px; font-weight:750; letter-spacing:-.01em }
+  .hi p{ font-size:11.5px; color:var(--ink-3) }
+  .tier{ margin-left:auto; background:#fff; border:1px solid var(--line); border-radius:999px; padding:5px 10px; font-size:11px; font-weight:750; color:var(--forest); display:flex; gap:5px; align-items:center }
+
+  .draft{
+    margin-top:14px; display:flex; gap:10px; align-items:center; padding:11px 12px;
+    background:var(--pale-orange); border:1px solid #FED7AA; border-radius:var(--r-md); font-size:12px; color:#7C2D12;
+  }
+  .draft b{ font-weight:700 }
+  .draft .btnx{ margin-left:auto; background:#fff; border:1px solid #FED7AA; color:#9A3412; font-weight:700; font-size:11.5px; padding:6px 10px; border-radius:10px }
+
+  .cta{
+    margin-top:12px; width:100%; text-align:left; background:linear-gradient(115deg,var(--forest),#0B5D46 60%,#0A6B4E);
+    color:#fff; border-radius:var(--r-lg); padding:16px 18px; display:flex; gap:14px; align-items:center;
+    box-shadow:0 14px 30px rgba(6,78,59,.28); position:relative; overflow:hidden;
+  }
+  .cta::after{ content:""; position:absolute; right:-30px; top:-40px; width:150px; height:150px; border-radius:50%; background:rgba(16,185,129,.18) }
+  .cta .ci{ width:46px;height:46px;border-radius:14px; background:rgba(255,255,255,.14); display:grid; place-items:center; flex:none; z-index:1 }
+  .cta b{ font-size:16.5px; font-weight:760; display:block }
+  .cta span{ font-size:12px; color:#B7E8D4; }
+  .cta .ar{ margin-left:auto; z-index:1 }
+
+  /* ===== Wallet card ===== */
+  .cash{ margin-top:16px; background:#fff; border:1px solid var(--line-2); border-radius:var(--r-lg); padding:16px 16px 14px; box-shadow:var(--shadow-1) }
+  .cash .hd{ display:flex; align-items:center; gap:8px }
+  .cash .hd b{ font-size:13.5px; font-weight:700 }
+  .cash .hd i{ font-style:normal; font-size:10.5px; color:var(--ink-3); font-weight:550 }
+  .cash .hd .syncm{ margin-left:auto }
+  .segs{ display:flex; gap:6px; margin-top:12px; background:#F2F8F5; border-radius:12px; padding:4px }
+  .seg{ flex:1; text-align:center; font-size:11px; font-weight:650; color:var(--ink-3); padding:7px 4px; border-radius:9px }
+  .seg[aria-pressed="true"]{ background:#fff; color:var(--forest); box-shadow:0 2px 8px rgba(6,78,59,.10); font-weight:750 }
+  .big{ font-size:27px; font-weight:780; letter-spacing:-.02em; margin-top:10px; font-variant-numeric:tabular-nums }
+  .bigl{ font-size:11px; color:var(--ink-3); margin-top:2px }
+  .goal{ margin-top:12px }
+  .goal .gl{ display:flex; justify-content:space-between; font-size:11px; color:var(--ink-2); font-weight:600 }
+  .track{ height:7px; border-radius:6px; background:#EAF3EF; margin-top:5px; overflow:hidden }
+  .track i{ display:block; height:100%; width:71%; border-radius:6px; background:linear-gradient(90deg,var(--emerald),var(--lime,#A3E635)); }
+
+  .kpirow{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:12px }
+  .mini{ background:#fff; border:1px solid var(--line-2); border-radius:var(--r-md); padding:10px 12px }
+  .mini b{ font-size:17px; font-weight:760; display:block }
+  .mini span{ font-size:10px; color:var(--ink-3); font-weight:600 }
+
+  .sect{ display:flex; align-items:baseline; margin-top:20px; margin-bottom:8px }
+  .sect h3{ font-size:14.5px; font-weight:750 }
+  .sect i{ font-style:normal; font-size:10.5px; color:var(--ink-3); font-weight:550; margin-left:6px }
+  .sect a{ margin-left:auto; color:var(--emerald); font-weight:650; font-size:11.5px; text-decoration:none }
+
+  .taskc{ background:#fff; border:1px solid var(--line-2); border-radius:var(--r-md); overflow:hidden; box-shadow:var(--shadow-1) }
+  .tk{ display:flex; gap:11px; padding:12px 14px; border-bottom:1px solid var(--line-2); align-items:start; width:100%; text-align:left }
+  .tk:last-child{border-bottom:0}
+  .tk .di{ width:34px;height:34px;border-radius:11px; display:grid;place-items:center; flex:none }
+  .tk.hot .di{ background:var(--pale-orange); color:#9A3412 }
+  .tk.cool .di{ background:var(--mint); color:var(--emerald) }
+  .tk b{ font-size:13px; font-weight:660; display:block }
+  .tk p{ font-size:11.5px; color:var(--ink-3); margin-top:1px }
+  .tk .act{ margin-left:auto; font-size:11px; font-weight:750; color:var(--emerald); white-space:nowrap; padding-top:6px }
+
+  .txl{ background:#fff; border:1px solid var(--line-2); border-radius:var(--r-md); overflow:hidden; box-shadow:var(--shadow-1) }
+  .tx{ display:flex; gap:12px; padding:11px 14px; border-bottom:1px solid var(--line-2); align-items:center }
+  .tx:last-child{border-bottom:0}
+  .tx .di{ width:32px;height:32px;border-radius:50%; background:var(--mint); color:var(--forest); display:grid;place-items:center; flex:none }
+  .tx b{ font-size:12.5px; font-weight:650; display:block }
+  .tx p{ font-size:11px; color:var(--ink-3) }
+  .tx .v{ margin-left:auto; text-align:right; font-weight:760; font-size:13px; flex:none }
+  .tx .v.plus{ color:var(--emerald) }
+  .tx small{ display:block; font-size:10px; color:var(--ink-3); font-weight:550 }
+
+  /* ===== Quote ===== */
+  .steps{ display:flex; gap:6px; margin-top:12px }
+  .steps i{ flex:1; height:4px; border-radius:3px; background:#E3EFE9 }
+  .steps i.on{ background:var(--emerald) }
+  .stepl{ display:flex; justify-content:space-between; margin-top:7px; font-size:11px; color:var(--ink-3); font-weight:600 }
+  .fld{ margin-top:14px }
+  .fld label{ font-size:12px; font-weight:700; display:block; margin-bottom:6px }
+  .fld label small{ color:var(--ink-3); font-weight:500 }
+  .inp{ width:100%; background:#fff; border:1.5px solid var(--line); border-radius:14px; padding:13px 14px; font:inherit; font-size:15px; color:var(--ink) }
+  .inp.focus{ border-color:var(--emerald); box-shadow:0 0 0 3px rgba(5,150,105,.14) }
+  .hit{ display:flex; gap:10px; align-items:center; background:var(--mint); border:1px solid #BFEAD9; padding:10px 12px; border-radius:12px; margin-top:8px; font-size:12px; color:var(--forest) }
+  .hit b{ font-weight:700 }
+  .covs{ display:grid; gap:8px; margin-top:8px }
+  .cov{ display:flex; gap:10px; align-items:center; padding:11px 12px; border:1.5px solid var(--line); border-radius:14px; background:#fff; text-align:left; width:100% }
+  .cov .cb{ width:20px;height:20px;border-radius:6px; border:1.5px solid var(--line); display:grid;place-items:center; color:#fff; flex:none }
+  .cov.on{ border-color:var(--emerald); background:#F4FBF8 }
+  .cov.on .cb{ background:var(--emerald); border-color:var(--emerald) }
+  .cov b{ font-size:13px; font-weight:660; display:block }
+  .cov p{ font-size:11px; color:var(--ink-3) }
+  .cov .pr{ margin-left:auto; font-weight:750; font-size:12.5px; white-space:nowrap }
+  .premt{ position:absolute; left:18px; right:18px; bottom:108px; z-index:42; background:var(--forest); color:#fff; border-radius:18px; padding:12px 16px; display:flex; gap:12px; align-items:center; box-shadow:0 16px 40px rgba(6,42,35,.35) }
+  .premt small{ display:block; font-size:10px; color:#A9D6C0; font-weight:600 }
+  .premt b{ font-size:17.5px; font-weight:780 }
+  .premt .nx{ margin-left:auto; background:var(--emerald); color:#fff; font-weight:750; font-size:12.5px; padding:10px 14px; border-radius:12px; display:flex; gap:6px; align-items:center }
+
+  /* ===== Wallet / Dompet ===== */
+  .bal{ background:linear-gradient(125deg,var(--forest), #0B5D46); border-radius:var(--r-lg); color:#EAFBF3; margin-top:12px; padding:18px 16px 14px; box-shadow:0 16px 34px rgba(6,78,59,.3) }
+  .bal .lb{ font-size:11.5px; color:#A9D6C0; font-weight:650 }
+  .bal .vl{ font-size:30px; font-weight:790; letter-spacing:-.02em; margin-top:4px }
+  .bal .row{ display:flex; gap:14px; margin-top:12px }
+  .bal .b2{ flex:1; background:rgba(255,255,255,.08); border-radius:12px; padding:9px 12px }
+  .bal .b2 small{ display:block; font-size:10px; color:#A9D6C0; font-weight:600 }
+  .bal .b2 b{ font-size:14px; font-weight:750 }
+  .bal .wd{ margin-top:12px; width:100%; background:var(--emerald); color:#fff; font-weight:760; font-size:13.5px; padding:12px; border-radius:14px; text-align:center }
+  .feen{ font-size:10.5px; color:#A9D6C0; margin-top:7px; text-align:center }
+  .wdcard{ margin-top:12px; border:1px solid var(--line-2); border-radius:var(--r-md); background:#fff; padding:13px 14px; box-shadow:var(--shadow-1) }
+  .wdcard .r1{ display:flex; gap:8px; align-items:center; font-size:12px; font-weight:700; color:var(--ink-2) }
+  .pill{ margin-left:auto; font-size:10px; font-weight:800; padding:3px 9px; border-radius:999px; background:var(--pale-orange); color:#9A3412 }
+  .wdcard p{ font-size:11.5px; color:var(--ink-3); margin-top:5px }
+  .track2{ margin-top:9px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:0; position:relative }
+  .track2 .node{ text-align:center; font-size:9.5px; font-weight:650; color:var(--ink-3); }
+  .track2 .node .d{ width:14px;height:14px;border-radius:50%; background:#E3EFE9; margin:0 auto 4px; }
+  .track2 .node.on .d{ background:var(--emerald); box-shadow:0 0 0 3px rgba(5,150,105,.15) }
+
+  h2.sec2{ font-size:14.5px; font-weight:750; margin:20px 0 8px }
+  .empty{ text-align:center; color:var(--ink-3); font-size:12px; padding:22px 12px; background:#fff; border:1px dashed var(--line); border-radius:var(--r-md) }
+</style>
+</head>
+<body>
+  <div class="phone" id="phone">
+    <div class="notch"><i></i></div>
+
+    <!-- ============ BERANDA ============ -->
+    <section class="scr" data-scr="beranda">
+      <div class="bar" style="background:transparent;border:0;backdrop-filter:none">
+        <div class="hi">
+          <div class="ava">RK</div>
+          <div>
+            <h2>Pagi, Rani 👋</h2>
+            <p id="clockline">Bogor · Selasa 28 Okt · 12:04</p>
+          </div>
+        </div>
+        <div class="sp"></div>
+        <button class="iconbtn" aria-label="Notifikasi"><span class="ping"></span><script>document.write(window.SP_DEMO?.icon ? "" : "")</script><script>document.write(window.spIcon("bell",16))</script></button>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:6px;align-items:center">
+        <span class="tier"><script>document.write(window.spIcon("starLine",12))</script> Tier Emerald</span>
+        <span class="syncm"><script>document.write(window.spIcon("sync",11))</script> Produk v12 · berlaku 1 Nov</span>
+      </div>
+
+      <div class="draft">
+        <script>document.write(window.spIcon("doc",18))</script>
+        <span><b>Draf kutipan Xenia 2021</b> · belum terkirim, diedit 11:32</span>
+        <button class="btnx">Lanjutkan</button>
+      </div>
+
+      <button class="cta" id="gobuat">
+        <span class="ci"><script>document.write(window.spIcon("plus",20))</script></span>
+        <span><b>Buat Kutipan Baru</b><span>Motor & mobil · OJK rate resmi · 4 langkah</span></span>
+        <span class="ar"><script>document.write(window.spIcon("arrow",20))</script></span>
+      </button>
+
+      <div class="cash">
+        <div class="hd"><b>Dompet Komisi</b><i>· Commission wallet</i><span class="syncm"><script>document.write(window.spIcon("sync",11))</script> 12:04</span></div>
+        <div class="segs" role="tablist">
+          <button class="seg" aria-pressed="true" data-cash="avail">Tersedia</button>
+          <button class="seg" aria-pressed="false" data-cash="pending">Menunggu</button>
+          <button class="seg" aria-pressed="false" data-cash="mtd">Bulan ini</button>
+        </div>
+        <div class="big" id="cashval">Rp 12.480.500</div>
+        <div class="bigl" id="cashlbl">Siap ditarik · bila ≤10 jt cukup L1</div>
+        <div class="goal">
+          <div class="gl"><span>Target bulan ini</span><span>Rp 21,4 jt / Rp 30 jt</span></div>
+          <div class="track"><i></i></div>
+        </div>
+      </div>
+
+      <div class="kpirow" id="kpis"></div>
+
+      <div class="sect"><h3>Tugas hari ini</h3><i>· 3</i><a href="#">Semua</a></div>
+      <div class="taskc" id="tasks"></div>
+
+      <div class="sect"><h3 style="font-size:14.5px;font-weight:750">Komisi terbaru</h3><i style="font-style:normal;font-size:10.5px;color:var(--ink-3)">· Recent</i><a href="#">Riwayat</a></div>
+      <div class="txl" id="recent"></div>
+    </section>
+
+    <!-- ============ KLIEN (ringkas) ============ -->
+    <section class="scr" data-scr="klien" hidden>
+      <div class="bar">
+        <button class="iconbtn" style="border:0;background:transparent"><script>document.write(window.spIcon("search",17))</script></button>
+        <div class="t">Klien</div><div class="s">86 klien · 12 prospect</div>
+        <div class="sp"></div>
+        <button class="iconbtn" aria-label="Tambah klien"><script>document.write(window.spIcon("plus",17))</script></button>
+      </div>
+      <div id="klienbox"></div>
+    </section>
+
+    <!-- ============ BUAT / QUOTE ============ -->
+    <section class="scr" data-scr="buat" hidden>
+      <div class="bar">
+        <button class="iconbtn" data-back aria-label="Kembali"><script>document.write(window.spIcon("arrow",16,"rot"))</script></button>
+        <div class="t">Langkah 1 dari 4</div><div class="s">Draf tersimpan otomatis</div>
+        <div class="sp"></div>
+        <span class="syncm">Tersimpan 11:32</span>
+      </div>
+      <div class="steps"><i class="on"></i><i></i><i></i><i></i></div>
+      <div class="stepl"><span>1 · Kendaraan</span><span>4 langkah · ≤1 menit/step</span></div>
+
+      <div class="fld">
+        <label>Nomor polisi <small>· typo otomatis dikoreksi</small></label>
+        <input class="inp focus" value="B 1234 CD" aria-label="Nomor polisi">
+      </div>
+      <div class="hit"><script>document.write(window.spIcon("spark",15))</script> <span><b>Honda Brio Satya 1.2 E 2022</b> terdeteksi dari plat · TSI Rp 168.000.000</span></div>
+
+      <div class="sect"><h3 style="font-size:14.5px;font-weight:750">Jaminan</h3><i style="font-style:normal;font-size:10.5px;color:var(--ink-3)">· pilih minimal 1</i></div>
+      <div class="covs" id="covs"></div>
+
+      <!-- premi live -->
+      <div class="premt">
+        <div><small>Estimasi premi tahun 1</small><b>Rp 4.760.000</b></div>
+        <div style="text-align:right;margin-left:auto"><small style="color:#A9D6C0;font-size:10px">Estimasi komisi</small><b style="font-size:13px;color:#B7F1B8">Rp 428.400</b></div>
+        <button class="nx">Klien → <script>document.write(window.spIcon("arrow",14))</script></button>
+      </div>
+      <div style="height:150px"></div>
+    </section>
+
+    <!-- ============ POLIS (ringkas) ============ -->
+    <section class="scr" data-scr="polis" hidden>
+      <div class="bar">
+        <button class="iconbtn" style="border:0;background:transparent"><script>document.write(window.spIcon("search",17))</script></button>
+        <div class="t">Polis</div><div class="s">71 aktif · 3 menunggu</div>
+        <div class="sp"></div>
+      </div>
+      <div id="polisbox"></div>
+    </section>
+
+    <!-- ============ DOMPET ============ -->
+    <section class="scr" data-scr="dompet" hidden>
+      <div class="bar">
+        <button class="iconbtn" style="border:0;background:transparent"><script>document.write(window.spIcon("search",17))</script></button>
+        <div class="t">Dompet</div><div class="s">Penarikan aman · dilindungimulti-level</div>
+        <div class="sp"></div>
+        <button class="iconbtn" aria-label="Bantuan"><script>document.write(window.spIcon("file",16))</script></button>
+      </div>
+
+      <div class="bal">
+        <div class="lb">Saldo tersedia · Available balance</div>
+        <div class="vl">Rp 12.480.500</div>
+        <div class="row">
+          <div class="b2"><small>Menunggu</small><b>Rp 3.120.000</b></div>
+          <div class="b2"><small>Bulan ini</small><b>Rp 21.430.000</b></div>
+        </div>
+        <button class="wd">Tarik ke rekening bank</button>
+        <div class="feen">Biaya penarikan Rp 5.000 (Xendit) · ≤10 jt cukup persetujuan L1</div>
+      </div>
+
+      <div class="wdcard">
+        <div class="r1"><script>document.write(window.spIcon("bank",16))</script> Penarikan Okt 24 · Rp 5.000.000 <span class="pill">Level 2 · menunggu</span></div>
+        <div class="track2">
+          <div class="node on"><div class="d"></div>Diminta</div>
+          <div class="node on"><div class="d"></div>L1 ✓ Fin</div>
+          <div class="node"><div class="d"></div>L2 · Fin Mnjl</div>
+          <div class="node"><div class="d"></div>Cair</div>
+        </div>
+        <p>Dikurangi dari saldo saat diminta · otomatis kembali bila ditolak</p>
+      </div>
+
+      <h2 class="sec2">Riwayat · History</h2>
+      <div class="txl" id="wtx"></div>
+    </section>
+
+    <!-- ============ BOTTOM NAV ============ -->
+    <nav class="nav" aria-label="Navigasi utama">
+      <button class="nb" aria-current="page" data-go="beranda"><script>document.write(window.spIcon("home",21))</script>Beranda</button>
+      <button class="nb" data-go="klien"><script>document.write(window.spIcon("users2",21))</script>Klien</button>
+      <div class="fabtab">
+        <button id="fab" style="text-align:center">
+          <span class="fabwrap"><script>document.write(window.spIcon("plus",24))</script><span class="lb">Buat</span></span>
+        </button>
+      </div>
+      <button class="nb" data-go="polis"><script>document.write(window.spIcon("folder",21))</script>Polis</button>
+      <button class="nb" data-go="dompet"><script>document.write(window.spIcon("wallet",21))</script>Dompet</button>
+    </nav>
+  </div>
+
+  <p class="cap"><b>Arah A — Evolusi brand</b> · 5 tab, 0 rute yatim · klik tab di bawah telepon untuk navigasi · <b> Consul</b> semu data ilustrasi</p>
+
+<script>
+/* icon helper lokal (agar file ini mandiri) */
+window.spIcon = function(name, size = 18, cls = ""){
+  const P = {
+    bell:"M6 9a6 6 0 0112 0c0 5 2 6.5 2 6.5H4S6 14 6 9zM10 19a2 2 0 004 0",
+    starLine:"M12 3.5l2.4 4.9 5.4.8-3.9 3.8.9 5.3-4.8-2.5-4.8 2.5.9-5.3-3.9-3.8 5.4-.8L12 3.5z",
+    sync:"M21 12a9 9 0 01-15.5 6.2L3 16M3 12a9 9 0 0115.5-6.2L21 8M3 16v-3.5H6.5M21 8v3.5h-3.5",
+    doc:"M7 3h7l4 4v14H7a1 1 0 01-1-1V4a1 1 0 011-1zM14 3v4h4",
+    plus:"M12 5v14M5 12h14",
+    arrow:"M5 12h14M13 6l6 6-6 6",
+    spark:"M12 3v3M12 18v3M5.6 5.6l2.2 2.2M16.2 16.2l2.2 2.2M3 12h3M18 12h3M5.6 18.4l2.2-2.2M16.2 7.8l2.2-2.2M12 15a3 3 0 100-6 3 3 0 000 6",
+    car:"M5 16l1.2-5A2 2 0 018.2 9h7.6a2 2 0 012 1.5L19 16M5 16h14v4h-2.5v-1.5h-9V20H5v-4zM8 13h.01M16 13h.01",
+    bike:"M5.5 18a3.5 3.5 0 100-7 3.5 3.5 0 000 7zM18.5 18a3.5 3.5 0 100-7 3.5 3.5 0 000 7zM5.5 14.5L9 8l1.5 1.5L13.5 8l-1-.9M14.5 17.5L13.2 12l-4.4.7M15.5 5.5h3l2 12",
+    users2:"M9 11a3.5 3.5 0 100-7 3.5 3.5 0 000 7zM2.5 20a6.5 6.5 0 0113 0M17 6.5a3 3 0 010 4.6M19.5 20a6 6 0 00-1.5-4",
+    user:"M12 12a4 4 0 100-8 4 4 0 000 8zM5 20a7 7 0 0114 0",
+    home:"M4 11l8-7 8 7v8a1.5 1.5 0 01-1.5 1.5h-13A1.5 1.5 0 014 19v-8zM10 20v-6h4v6",
+    folder:"M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z",
+    wallet:"M3 7a2 2 0 012-2h13a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7zM16 12h.5",
+    coin:"M12 21a9 9 0 100-18 9 9 0 000 18zM9.5 14.5c.6 1 1.4 1.5 2.5 1.5 1.5 0 2.5-.8 2.5-2s-1-1.7-2.5-2-2.3-.8-2.3-1.9S10.6 8 12 8c1 0 1.9.5 2.4 1.4M12 6.5v11",
+    bank:"M3 9.5L12 4l9 5.5M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18M21 9.5v1",
+    search:"M10.5 18a7.5 7.5 0 100-15 7.5 7.5 0 000 15zM21 21l-5.2-5.2",
+    check:"M5 12.5l4.5 4.5L19 7.5",
+    file:"M7 3h7l4 4v14H7a1 1 0 01-1-1V4a1 1 0 011-1zM14 3v4h4",
+    shield:"M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6l7-3z",
+    clock:"M12 21a9 9 0 100-18 9 9 0 000 18zM12 7v5l3 2",
+    flame:"M12 3c1 3-1.5 4-1.5 6A2.8 2.8 0 0013 11c0-2 2-2.5 2-5 2.3 1.5 4 4.4 4 7.5a7 7 0 11-14 0C5 10 7.5 7 12 3z",
+    send:"M22 3L11 14M22 3l-7 18-4-7-7-4 18-7z"
+  };
+  return `<svg class="ic ${cls}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${P[name] || P.home}"/></svg>`;
+};
+</script>
+<script src="shared-data.js"></script>
+<script>
+(function(){
+  const D = window.SP_DEMO;
+  const rp = D.rupiah;
+
+  /* ---- Beranda --- */
+  document.getElementById("kpis").innerHTML = D.agent.kpis.map(k => `<div class="mini"><b>${k.value}</b><span>${k.label} · ${k.en}</span></div>`).join("");
+  document.getElementById("tasks").innerHTML = D.agent.tasks.map(t => `
+    <button class="tk ${t.tone === "hot" ? "hot" : "cool"}">
+      <span class="di">${D.icon(t.tone === "hot" ? "flame" : "shield", 17)}</span>
+      <span style="min-width:0"><b>${t.title}</b><p>${t.sub}</p></span>
+      <span class="act">${t.th || t.m || t.tx}</span>
+    </button>`).join("");
+  document.getElementById("recent").innerHTML = D.agent.recent.map(r => `
+    <div class="tx">
+      <span class="di">${D.icon("coin", 16)}</span>
+      <span><b>${r.ord}</b><p>${r.txt} · ${r.sub}</p></span>
+      <span class="v ${r.v.startsWith("+") ? "plus" : ""}">${r.v}<small>${r.ord.replace("ORD-","")}</small></span>
+    </div>`).join("");
+
+  /* ---- Segments wallet home --- */
+  const cash = { avail: ["Rp 12.480.500", "Siap ditarik · bila ≤10 jt cukup L1"], pending: ["Rp 3.120.000", "Menunggu pembayaran polis & pelunasan"], mtd: ["Rp 21.430.000", "71% dari target Rp 30 jt"] };
+  document.querySelectorAll(".seg").forEach(s => s.addEventListener("click", () => {
+    document.querySelectorAll(".seg").forEach(x => x.setAttribute("aria-pressed", "false"));
+    s.setAttribute("aria-pressed", "true");
+    const c = cash[s.dataset.cash];
+    document.getElementById("cashval").textContent = c[0];
+    document.getElementById("cashlbl").textContent = c[1];
+  }));
+
+  /* ---- Klien mock --- */
+  const clients = [
+    ["Wulandari Putri", "Prospect · choke 2 hari", "Yaris 2023 · premi est Rp 1,9 jt", true],
+    ["Budi Santoso", "Renewal 30 Okt", "Brio Satya · B 3456 XY", true],
+    ["Amir Hakim", "Polis aktif", "Pajero · berlaku s/d Apr 2027", false],
+    ["Sinta Dewi", "Polis aktif", "Beat · berlaku s/d Agu 2027", false],
+    ["Gusti Fenno", "Klaim proses", "Calya · kaca · operator review", false]
+  ];
+  document.getElementById("klienbox").innerHTML =
+    `<div class="fld" style="margin-top:12px"><input class="inp" placeholder="Cari nama / plat / no polis…" aria-label="Cari klien"></div>` +
+    clients.map(([n, s, d, hot]) => `
+      <button class="tk" style="background:#fff;border:1px solid var(--line-2);border-radius:14px;margin-top:8px">
+        <span class="di" style="background:var(--mint);color:var(--forest)">${D.icon("user", 16)}</span>
+        <span style="min-width:0"><b>${n}</b><p>${s} · ${d}</p></span>
+        ${hot ? '<span class="act" style="color:#9A3412">Segera →</span>' : '<span class="act">Detail</span>'}
+      </button>`).join("");
+
+  /* ---- Polis mock --- */
+  document.getElementById("polisbox").innerHTML =
+    `<div style="display:flex;gap:6px;margin-top:12px">
+       <button class="seg" aria-pressed="true" style="border-radius:12px;background:#fff;box-shadow:0 2px 8px rgba(6,78,59,.10);color:var(--forest);font-weight:750">Pesanan</button>
+       <button class="seg" aria-pressed="false" style="border-radius:12px;color:var(--ink-3)">Perpanjangan</button>
+       <button class="seg" aria-pressed="false" style="border-radius:12px;color:var(--ink-3)">Klaim</button>
+       <button class="seg" aria-pressed="false" style="border-radius:12px;color:var(--ink-3)">Perubahan</button>
+     </div>
+     <div class="txl" style="margin-top:12px" id="ordlist"></div>`;
+  const ords = [
+    ["ORD-2510-0701", "Brio · Zurich", "Diterbitkan · policy PDF siap", "12:04", "ok"],
+    ["ORD-2510-0688", "NMAX · Tugu", "Dibayar · menunggu keputusan", "Kmrn", "wait"],
+    ["ORD-2510-0655", "Xpander ·Zurich", "Menunggu pembayaran · 2 hari", "Kmrn", "pay"],
+    ["ORD-2509-0988", "Avanza · Zurich", "Diterbitkan", "30 Sep", "ok"]
+  ];
+  document.getElementById("ordlist").innerHTML = ords.map(([o, veh, st, t, tone]) => `
+    <div class="tx">
+      <span class="di" style="background:${tone === "ok" ? "var(--mint)" : "var(--pale-orange)"};color:${tone === "ok" ? "var(--forest)" : "#9A3412"}">${D.icon("shield", 15)}</span>
+      <span><b>${o} · ${veh}</b><p style="color:${tone === "ok" ? "var(--ink-3)" : "#9A3412"}">${st}</p></span>
+      <span class="v" style="font-size:11px;color:var(--ink-3)">${t}${D.icon("arrow", 14)}</span>
+    </div>`).join("");
+
+  /* ---- Coverage mock --- */
+  const covers = [
+    ["Total loss only (TLO)", "Ganti rugi dkhia 80% harga TSI bila rusak total/hilang", true, "Rp 4.120.000"],
+    ["Comprehensive + banjir & gempa", "SRCC — paling sering diambil bagian kota banjir", true, "+Rp 640.000"],
+    ["Tanggung jawab pihak ketiga (TPL)", "Sudah termasuk paket — wajib OJK untuk mobil", true, "Termasuk"],
+    ["Kecelakaan diri (PA)", "Untuk pengemudi & 1 pemerang", false, "+Rp 145.000"]
+  ];
+  document.getElementById("covs").innerHTML = covers.map(([t, d, on, pr]) => `
+    <button class="cov ${on ? "on" : ""}">
+      <span class="cb">${D.icon("check", 13)}</span>
+      <span style="min-width:0"><b>${t}</b><p>${d}</p></span>
+      <span class="pr">${pr}</span>
+    </button>`).join("");
+
+  /* ---- Dompet tx --- */
+  document.getElementById("wtx").innerHTML = D.agent.walletTx.map(t => `
+    <div class="tx">
+      <span class="di" style="${t.v.startsWith("−") ? "background:var(--pale-orange);color:#9A3412" : ""}">${D.icon(t.v.startsWith("−") ? "send" : "coin", 15)}</span>
+      <span><b>${t.sub.split("·")[0]}</b><p>${t.sub.split("·").slice(1).join(" ·").trim()}</p></span>
+      <span class="v ${t.v.startsWith("+") ? "plus" : ""}" style="font-size:12.5px">${t.v}<small style="color:var(--ink-3);font-weight:500;font-size:10px">${t.t}</small></span>
+    </div>`).join("");
+
+  /* ---- navigasi --- */
+  const scrs = document.querySelectorAll(".scr");
+  const navs = document.querySelectorAll(".nb");
+  function go(name){
+    scrs.forEach(s => s.hidden = s.dataset.scr !== name);
+    navs.forEach(n => {
+      if (n.dataset.go === name) n.setAttribute("aria-current", "page");
+      else n.removeAttribute("aria-current");
+    });
+    document.querySelectorAll("[data-scr]").forEach(s => s.style.display = "");
+  }
+  navs.forEach(n => n.addEventListener("click", () => go(n.dataset.go)));
+  document.getElementById("fab").addEventListener("click", () => go("buat"));
+  document.getElementById("gobuat").addEventListener("click", () => go("buat"));
+})("beranda");
+</script>
+</body>
+</html>

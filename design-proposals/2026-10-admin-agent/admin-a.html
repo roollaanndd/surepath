@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arah A · Admin CMS SurePath — Mockup Proposal</title>
+<style>
+  :root{
+    /* SurePath brand tokens — inherited from existing system */
+    --forest:#064E3B; --emerald:#059669; --bright:#10B981; --mint:#ECFDF5;
+    --orange:#F97316; --pale-orange:#FFF7ED;
+    --ink:#102A23; --ink-2:#496255; --ink-3:#6B857A;
+    --line:#DDEAE4; --line-2:#EAF3EF; --canvas:#F7FBF9; --card:#FFFFFF;
+    --danger:#DC2626; --warn:#B45309;
+    --r-card:20px; --r-ctl:12px;
+    --shadow-1:0 1px 2px rgba(6,78,59,.05), 0 4px 16px rgba(6,78,59,.06);
+    --shadow-2:0 2px 6px rgba(6,78,59,.08), 0 16px 40px rgba(6,78,59,.14);
+    --sidebar:248px;
+  }
+  *{box-sizing:border-box; margin:0}
+  html,body{height:100%}
+  body{
+    font-family: ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--canvas); color: var(--ink);
+    font-size:14px; line-height:1.45;
+    font-variant-numeric: tabular-nums;
+    min-width:1180px; min-height:100vh;
+  }
+  ::selection{ background: rgba(5,150,105,.22); }
+  :focus-visible{ outline:2px solid var(--emerald); outline-offset:2px; border-radius:6px; }
+  button{ font:inherit; color:inherit; background:none; border:0; cursor:pointer; }
+  .ic{ display:block; flex:none; }
+
+  /* ---------------- Shell ---------------- */
+  .app{ display:grid; grid-template-columns: var(--sidebar) 1fr; min-height:100vh; }
+
+  /* Sidebar */
+  .side{
+    background: var(--forest); color:#D6F5E7;
+    display:flex; flex-direction:column; position:sticky; top:0; height:100vh; overflow:hidden auto;
+  }
+  .brand{ display:flex; align-items:center; gap:10px; padding:18px 18px 14px; }
+  .brand .mark{
+    width:36px; height:36px; border-radius:12px; background:var(--emerald); color:#fff;
+    display:grid; place-items:center; box-shadow: inset 0 0 0 1px rgba(255,255,255,.18);
+  }
+  .brand b{ font-size:16px; letter-spacing:.01em; color:#fff; }
+  .brand span{ display:block; font-size:10.5px; color:#8BC7AF; letter-spacing:.02em; }
+  nav{ padding: 4px 12px 18px; }
+  .navgroup{ margin-top:14px; }
+  .navgroup > .gl{
+    font-size:10.5px; font-weight:600; letter-spacing:.09em; text-transform:uppercase;
+    color:#7FB89F; padding:0 10px 6px; display:flex; gap:8px; align-items:baseline;
+  }
+  .navgroup > .gl i{ font-style:normal; font-size:10.5px; color:#4E8268; font-weight:500; text-transform:none; letter-spacing:0; }
+  .navitem{
+    display:flex; align-items:center; gap:10px; width:100%; text-align:left;
+    padding:8px 10px; border-radius:10px; color:#CFEDE0; font-size:13.5px;
+  }
+  .navitem .ic{ color:#8BC7AF; }
+  .navitem:hover{ background:rgba(255,255,255,.06); color:#fff; }
+  .navitem[aria-current]{
+    background:rgba(16,185,129,.16); color:#fff; font-weight:600;
+    box-shadow: inset 0 0 0 1px rgba(16,185,129,.35);
+  }
+  .navitem[aria-current] .ic{ color:var(--bright); }
+  .nbadge{
+    margin-left:auto; min-width:20px; height:20px; padding:0 6px; border-radius:10px;
+    background:var(--orange); color:#fff; font-size:11px; font-weight:700;
+    display:grid; place-items:center;
+  }
+  .navitem[aria-current] .nbadge{ background:var(--orange); }
+  .sidefoot{ margin-top:auto; padding:12px 16px 16px; border-top:1px solid rgba(255,255,255,.09); display:grid; gap:8px; }
+  .sidefoot .u{ display:flex; align-items:center; gap:10px; color:#CFEDE0; }
+  .ava{ width:32px;height:32px;border-radius:50%; background:linear-gradient(135deg,var(--emerald),var(--bright)); color:#fff; display:grid;place-items:center;font-size:12.5px;font-weight:700; }
+  .sidefoot .u small{ color:#8BC7AF; font-size:11px; }
+
+  /* Top bar */
+  .top{
+    display:flex; align-items:center; gap:14px; padding:14px 28px;
+    background:var(--card); border-bottom:1px solid var(--line-2); position:sticky; top:0; z-index:30;
+  }
+  .top h1{ font-size:17px; font-weight:700; margin-right:10px; }
+  .top h1 span{ color:var(--ink-3); font-weight:500; font-size:12px; display:block; margin-top:1px; }
+  .search{
+    display:flex; align-items:center; gap:8px; background:#F2F8F5; border:1px solid var(--line);
+    padding:8px 12px; border-radius:999px; width:340px; color:var(--ink-3); font-size:13px;
+  }
+  .search input{ border:0; background:none; outline:0; width:100%; font:inherit; color:var(--ink); }
+  .sync{
+    display:flex; align-items:center; gap:7px; padding:7px 12px; border-radius:999px;
+    background:var(--mint); color:var(--forest); border:1px solid #BFEAD9; font-size:12.5px; font-weight:600;
+  }
+  .sync .dot{ width:8px;height:8px;border-radius:50%; background:var(--bright); box-shadow:0 0 0 3px rgba(16,185,129,.18); }
+  .sync small{ color:var(--emerald); font-weight:600; }
+  .top .sp{ flex:1 }
+  .iconbtn{
+    width:38px;height:38px;border-radius:11px; display:grid;place-items:center;
+    border:1px solid var(--line); background:var(--card); color:var(--ink-2); position:relative;
+  }
+  .iconbtn:hover{ background:#F4FAF7; }
+  .iconbtn .ping{ position:absolute; top:8px; right:9px; width:8px; height:8px; border-radius:50%; background:var(--orange); box-shadow:0 0 0 2px var(--card); }
+
+  /* Content */
+  main{ padding: 24px 28px 48px; display:grid; gap:20px; }
+  .pagehead{ display:flex; align-items:end; gap:16px; }
+  .crumb{ font-size:12px; color:var(--ink-3); display:flex; gap:6px; align-items:center; }
+  .crumb b{ color:var(--ink); font-weight:600; }
+  .pagehead h2{ font-size:24px; font-weight:750; letter-spacing:-.015em; margin-top:2px; }
+  .pagehead .en{ color:var(--ink-3); font-size:12px; font-weight:500; margin-left:8px; }
+  .pagehead .meta{ margin-left:auto; display:flex; align-items:center; gap:10px; }
+  .stamp{ font-size:12px; color:var(--ink-3); display:flex; gap:6px; align-items:center; }
+  .btn{
+    display:inline-flex; align-items:center; gap:8px; padding:10px 16px; border-radius:12px;
+    font-weight:650; font-size:13.5px; transition: background .15s, transform .15s;
+  }
+  .btn-primary{ background:var(--emerald); color:#fff; box-shadow:0 6px 16px rgba(5,150,105,.25); }
+  .btn-primary:hover{ background:#04865B; }
+  .btn-primary:active{ transform:translateY(1px); }
+  .btn-ghost{ border:1px solid var(--line); color:var(--forest); background:var(--card); }
+  .btn-ghost:hover{ background:#F4FAF7; }
+
+  /* KPI row */
+  .kpis{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+  .kpi{
+    background:var(--card); border:1px solid var(--line-2); border-radius:var(--r-card);
+    padding:16px 18px 14px; box-shadow:var(--shadow-1); position:relative;
+  }
+  .kpi .lb{ font-size:12.5px; font-weight:600; color:var(--ink-2); display:flex; align-items:center; gap:7px; }
+  .kpi .lb i{ font-style:normal; font-size:11px; color:var(--ink-3); font-weight:500; }
+  .kpi .vl{ font-size:26px; font-weight:760; letter-spacing:-.01em; margin-top:6px; }
+  .kpi .ft{ display:flex; align-items:center; gap:8px; margin-top:6px; font-size:12px; }
+  .delta{ padding:2px 7px; border-radius:999px; font-weight:700; font-size:11px; }
+  .delta.up{ background:var(--mint); color:var(--forest); }
+  .delta.down.why{ background:var(--pale-orange); color:#9A3412; }
+  .delta.down{ background:#FEF2F2; color:var(--danger); }
+  .kpi .ft small{ color:var(--ink-3); }
+  .kpi .src{ position:absolute; top:18px; right:16px; font-size:11px; color:var(--ink-3); }
+
+  /* Main grid */
+  .cols{ display:grid; grid-template-columns: 1fr 336px; gap:20px; align-items:start; }
+
+  .panel{
+    background:var(--card); border:1px solid var(--line-2); border-radius:var(--r-card);
+    box-shadow:var(--shadow-1); overflow:hidden;
+  }
+  .ph{ display:flex; align-items:center; gap:12px; padding:16px 20px; border-bottom:1px solid var(--line-2); }
+  .ph h3{ font-size:15.5px; font-weight:720; }
+  .ph .en{ color:var(--ink-3); font-size:12px; font-weight:500; margin-left:6px; font-weight:600; }
+  .ph .count{
+    background:var(--pale-orange); color:#9A3412; font-size:12px; font-weight:700;
+    padding:3px 9px; border-radius:999px;
+  }
+  .ph .r{ margin-left:auto; display:flex; gap:8px; align-items:center; }
+  .linkbtn{ display:inline-flex; gap:6px; align-items:center; font-size:12.5px; font-weight:650; color:var(--emerald); padding:6px 4px; }
+  .linkbtn:hover{ text-decoration:underline; }
+
+  .queue{ list-style:none; }
+  .row{
+    width:100%; display:grid; grid-template-columns: 44px 1.65fr 1fr .8fr .9fr 92px 30px;
+    align-items:center; gap:12px; text-align:left; padding:13px 20px; border-bottom:1px solid var(--line-2);
+    transition:background .12s;
+  }
+  .row:hover{ background:#FBFDFC; }
+  .row:last-child{ border-bottom:0; }
+  .row .who{ min-width:0; }
+  .row .who b{ font-size:13.5px; font-weight:680; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .row .who span{ font-size:12px; color:var(--ink-3); display:flex; gap:6px; align-items:center; }
+  .row .veh b{ font-size:13px; font-weight:640; display:block; }
+  .row .veh span{ font-size:12px; color:var(--ink-3); }
+  .row .agt b{ font-size:13px; font-weight:600; display:block; }
+  .row .agt span{ font-size:12px; color:var(--ink-3); }
+  .row .amt b{ font-size:13.5px; font-weight:700; display:block; }
+  .row .amt span{ font-size:11.5px; color:var(--ink-3); }
+  .wait{ display:flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; }
+  .wait.old{ color:#9A3412; } .wait.mid{ color:#B45309; } .wait.new{ color:var(--ink-2); }
+  .wait .ic{ opacity:.75 }
+  .chip{ font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:999px; white-space:nowrap; }
+  .chip.hot{ background:var(--pale-orange); color:#9A3412; border:1px solid #FED7AA; }
+  .chip.mut{ background:#F2F8F5; color:var(--ink-2); border:1px solid var(--line); }
+  .row .go{ color:var(--ink-3); display:grid; place-items:center; }
+  .row:hover .go{ color:var(--emerald); transform:translateX(2px); transition:.15s; }
+
+  .sidecol{ display:grid; gap:20px; }
+  .taskrow{ display:flex; gap:12px; padding:13px 20px; border-bottom:1px solid var(--line-2); align-items:start; }
+  .taskrow:last-child{ border-bottom:0 }
+  .tag{ font-size:10.5px; font-weight:800; letter-spacing:.05em; padding:3px 8px; border-radius:7px; margin-top:2px; }
+  .tag.warn{ background:var(--pale-orange); color:#9A3412; }
+  .tag.alert{ background:#FEF2F2; color:var(--danger); }
+  .taskrow .tt{ min-width:0 }
+  .taskrow b{ font-size:13.5px; font-weight:650; display:block; }
+  .taskrow p{ font-size:12px; color:var(--ink-3); margin-top:2px; }
+  .taskrow .wit{ margin-left:auto; display:flex; align-items:center; gap:8px; color:var(--ink-3); font-size:12px; }
+
+  .fed{ list-style:none; }
+  .fed li{ display:flex; gap:12px; padding:10px 20px; border-bottom:1px solid var(--line-2); font-size:12.5px; color:var(--ink-2); }
+  .fed li:last-child{ border-bottom:0 }
+  .fed b{ font-weight:600; }
+  .fed .t{ color:var(--ink-3); font-variant-numeric:tabular-nums; flex:none; width:38px; }
+
+  /* Drawer */
+  .scrim{
+    position:fixed; inset:0; background:rgba(6,42,35,.34); backdrop-filter:blur(2px);
+    opacity:0; pointer-events:none; transition:opacity .22s; z-index:60;
+  }
+  .scrim.open{ opacity:1; pointer-events:auto; }
+  .drawer{
+    position:fixed; top:0; right:0; bottom:0; width:480px; max-width:96vw; z-index:70;
+    background:var(--card); box-shadow:var(--shadow-2); border-left:1px solid var(--line);
+    display:flex; flex-direction:column; transform:translateX(102%); transition:transform .28s cubic-bezier(.2,.8,.2,1);
+  }
+  .drawer.open{ transform:none; }
+  .dh{ padding:16px 20px; border-bottom:1px solid var(--line-2); display:flex; gap:12px; align-items:start; }
+  .dh .ref{ font-size:11px; color:var(--ink-3); letter-spacing:.04em; font-weight:700; }
+  .dh h3{ font-size:17px; font-weight:730; margin-top:2px; }
+  .dh p{ font-size:12.5px; color:var(--ink-3); margin-top:3px; }
+  .dh .close{ margin-left:auto; }
+  .dbody{ overflow-y:auto; padding:18px 20px; display:grid; gap:18px; }
+  .facts{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .fact{ background:#F7FBF9; border:1px solid var(--line-2); border-radius:14px; padding:10px 12px; }
+  .fact span{ font-size:11px; color:var(--ink-3); font-weight:600; display:block; }
+  .fact b{ font-size:13px; font-weight:650; margin-top:2px; display:block; }
+  .fact.gr .b{ font-weight:700 }
+  .checks .ct{ font-size:12px; font-weight:750; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-2); margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+  .ck{ display:flex; gap:11px; padding:11px 12px; border:1px solid var(--line); border-radius:14px; background:var(--card); align-items:start; }
+  .ck + .ck{ margin-top:8px; }
+  .ck .st{ width:26px; height:26px; border-radius:50%; display:grid; place-items:center; flex:none; }
+  .ck.ok .st{ background:var(--mint); color:var(--emerald); box-shadow:inset 0 0 0 1px #BFEAD9; }
+  .ck.warn .st{ background:var(--pale-orange); color:#9A3412; box-shadow:inset 0 0 0 1px #FED7AA; }
+  .ck b{ font-size:13px; font-weight:650; display:block; }
+  .ck b small{ color:var(--ink-3); font-weight:500; margin-left:6px; }
+  .ck p{ font-size:12px; color:var(--ink-2); margin-top:1px; }
+  .pdfgoal{
+    display:flex; gap:12px; align-items:center; border:1px dashed #BFEAD9; background:var(--mint);
+    color:var(--forest); border-radius:14px; padding:11px 14px; font-size:12.5px; font-weight:600;
+  }
+  .pdfgoal small{ display:block; color:var(--emerald); font-weight:500; }
+  .pdfgoal .dl{ margin-left:auto; }
+  .brd{ list-style:none; display:grid; gap:7px; }
+  .brd li{ display:flex; justify-content:space-between; font-size:12.5px; color:var(--ink-2); }
+  .brd li.strong{ border-top:1px solid var(--line); padding-top:9px; margin-top:3px; font-size:14px; font-weight:750; color:var(--ink); }
+  .reason label{ font-size:12px; font-weight:700; display:block; margin-bottom:6px; }
+  .reason label small{ color:var(--ink-3); font-weight:500; }
+  .reason textarea{
+    width:100%; min-height:64px; border:1px solid var(--line); border-radius:12px; padding:10px 12px;
+    font:inherit; color:var(--ink); background:#FBFDFC; resize:vertical;
+  }
+  .reason textarea:focus{ outline:2px solid var(--emerald); outline-offset:0; border-color:transparent; }
+  .dfoot{
+    margin-top:auto; border-top:1px solid var(--line-2); padding:14px 20px; background:var(--card);
+    display:grid; grid-template-columns:1fr auto; gap:10px; align-items:center;
+    box-shadow:0 -6px 18px rgba(6,78,59,.05);
+  }
+  .dfoot .note{ font-size:11.5px; color:var(--ink-3); display:flex; gap:6px; align-items:center; }
+  .dfoot .actions{ display:flex; gap:10px; }
+  .btn-dangerous{ background:var(--card); color:#9A3412; border:1px solid #FED7AA; }
+  .btn-dangerous:hover{ background:var(--pale-orange); }
+  .btn[disabled]{ opacity:.45; cursor:not-allowed; box-shadow:none; }
+
+  /* Toast */
+  .toast{
+    position:fixed; left:50%; bottom:26px; transform:translate(-50%, 16px); z-index:90;
+    background:var(--forest); color:#EFFF7B; color:#EAFBF3; padding:11px 18px; border-radius:14px;
+    font-size:13px; font-weight:600; display:flex; gap:9px; align-items:center;
+    box-shadow:var(--shadow-2); opacity:0; pointer-events:none; transition:.25s;
+  }
+  .toast.show{ opacity:1; transform:translate(-50%,0); }
+  .toast .ic{ color:var(--bright) }
+
+  @media (max-width:1360px){
+    .row{ grid-template-columns: 40px 1.5fr 1fr .9fr 1fr 84px 30px; }
+    .kpis{ grid-template-columns:repeat(2,1fr); }
+    .cols{ grid-template-columns:1fr; }
+    body{ min-width:1024px }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ======== Sidebar : 6 grup / 18 item (dari 29) ======== -->
+  <aside class="side">
+    <div class="brand">
+      <div class="mark"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4.5"/></svg></div>
+      <div><b>SurePath</b><span>Admin CMS · v2.8 konsep</span></div>
+    </div>
+    <nav id="nav" aria-label="Navigasi admin"></nav>
+    <div class="sidefoot">
+      <div class="u"><div class="ava">PA</div><div><div style="font-weight:650;font-size:13px">Pak Anton</div><small>Master Admin · SUPER</small></div></div>
+    </div>
+  </aside>
+
+  <!-- ======== Kolom utama ======== -->
+  <div>
+    <header class="top">
+      <h1>SurePath Admin<span>Operasional hari ini</span></h1>
+      <label class="search" id="qwrap">
+        <script>document.write(window.SP_DEMO.icon("search",16))</script>
+        <input id="q" type="search" placeholder="Cari pesanan, klaim, mitra…  /" aria-label="Pencarian">
+      </label>
+      <div class="sync" id="sync" title="Data segar: dashboard auto-refresh 2 menit"><span class="dot"></span> Tersinkron 12:04 <small>· 320ms</small></div>
+      <div class="sp"></div>
+      <button class="iconbtn" aria-label="Notifikasi"><span class="ping"></span><script>document.write(window.SP_DEMO.icon("bell",17))</script></button>
+      <button class="iconbtn" aria-label="Mode gelap"><script>document.write(window.SP_DEMO.icon("eye",17))</script></button>
+      <button class="iconbtn" aria-label="Bantuan Pathy AI"><script>document.write(window.SP_DEMO.icon("spark",17))</script></button>
+    </header>
+
+    <main>
+      <div class="pagehead">
+        <div>
+          <div class="crumb">Hari Ini <span>/</span> <b>Ringkasan</b></div>
+          <h2>Selamat siang, Pak Anton<span class="en">Overview</span></h2>
+        </div>
+        <div class="meta">
+          <span class="stamp"><script>document.write(window.SP_DEMO.icon("sync",14))</script> Diperbarui 12:04 WIB</span>
+          <button class="btn btn-ghost"><script>document.write(window.SP_DEMO.icon("sync",15))</script> Segarkan</button>
+          <button class="btn btn-primary"><script>document.write(window.SP_DEMO.icon("checklist",15))</script> Buka Tugas Saya <span style="background:rgba(255,255,255,.22);padding:1px 7px;border-radius:999px;font-size:11.5px">9</span></button>
+        </div>
+      </div>
+
+      <!-- ======== KPI ringkas ======== -->
+      <section class="kpis" id="kpis" aria-label="Metrik utama"></section>
+
+      <div class="cols">
+        <!-- ======== Antrean keputusan (pusat halaman) ======== -->
+        <section class="panel" aria-label="Perlu keputusan">
+          <div class="ph">
+            <h3>Perlu Keputusan<span class="en">Needs decision</span></h3>
+            <span class="count">9 tugas</span>
+            <div class="r">
+              <a href="#" class="linkbtn">Lihat semua tugas <script>document.write(window.SP_DEMO.icon("arrow",13))</script></a>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;padding:12px 20px;border-bottom:1px solid var(--line-2)">
+            <button class="chip chip hot" style="cursor:pointer">Perlu keputusan · 5</button>
+            <button class="chip chip mut" style="cursor:pointer">Dokumen kurang · 2</button>
+            <button class="chip chip mut" style="cursor:pointer">Verifikasi mitra · 1</button>
+            <button class="chip chip mut" style="cursor:pointer">Penarikan L1 · 4</button>
+          </div>
+          <ul class="queue" id="queue"></ul>
+        </section>
+
+        <!-- ======== Kolom samping ======== -->
+        <aside class="sidecol">
+          <section class="panel">
+            <div class="ph"><h3>Butuh L1 Tindakan<span class="en">Needs action</span></h3></div>
+            <div id="tasks"></div>
+          </section>
+          <section class="panel">
+            <div class="ph"><h3>Aktivitas Terbaru</h3><span class="en" style="font-size:12px;color:var(--ink-3)">Live feed</span></div>
+            <ul class="fed" id="feed"></ul>
+          </section>
+        </aside>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ======== Drawer keputusan ======== -->
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dtitle" hidden>
+  <div class="dh">
+    <div>
+      <div class="ref" id="dref"></div>
+      <h3 id="dtitle"></h3>
+      <p id="dsub"></p>
+    </div>
+    <button class="iconbtn close" id="dclose" aria-label="Tutup"><script>document.write(window.SP_DEMO.icon("x",16))</script></button>
+  </div>
+  <div class="dbody">
+    <section class="facts" id="dfacts"></section>
+
+    <section class="checks">
+      <div class="ct"><script>document.write(window.SP_DEMO.icon("checklist",14))</script> Kelengkapan bukti <span style="font-weight:600;color:var(--ink-3);text-transform:none;letter-spacing:0">· diblokir hingga 3 dari 4 lengkap</span></div>
+      <div id="dchecks"></div>
+    </section>
+
+    <section class="pdfgoal">
+      <script>document.write(window.SP_DEMO.icon("pdf",20))</script>
+      <div id="dpdf"></div>
+      <button class="linkbtn dl">Pratinjau <script>document.write(window.SP_DEMO.icon("arrow",13))</script></button>
+    </section>
+
+    <section>
+      <div class="checks" style="margin-bottom:8px"><div class="ct">Rincian premi</div></div>
+      <ul class="brd" id="dbrd"></ul>
+    </section>
+
+    <section class="reason">
+      <label>Catatan review <small>· wajib bila menolak / meminta perbaikan</small></label>
+      <textarea id="dnote" placeholder="cth: foto kaca depan kurang tajam — minta ulangan dari agen…"></textarea>
+    </section>
+  </div>
+  <div class="dfoot">
+    <div class="note"><script>document.write(window.SP_DEMO.icon("eye",14))</script> Semua keputusan dicatat di jejak audit: Nama · waktu · alasan</div>
+    <div class="actions">
+      <button class="btn btn-dangerous">Minta perbaikan</button>
+      <button class="btn btn-primary" id="dapprove"><script>document.write(window.SP_DEMO.icon("check",15))</script> Setujui &amp; terbitkan</button>
+    </div>
+  </div>
+</aside>
+
+<div class="toast" id="toast"><script>document.write(window.SP_DEMO.icon("check",16))</script><span id="toasty"></span></div>
+
+<script src="shared-data.js"></script>
+<script>
+(function(){
+  const D = window.SP_DEMO;
+
+  /* --- Sidebar dari data menu (6 grup / 18 item) --- */
+  document.getElementById("nav").innerHTML = D.menu.map(g => `
+    <div class="navgroup">
+      <div class="gl" title="${g.en}">${g.group} <i>· ${g.en}</i></div>
+      ${g.items.map(it => `
+        <button class="navitem" ${it.active ? 'aria-current="page"' : ""}>
+          ${D.icon(it.ic,17)} <span>${it.label}</span>
+          ${it.badge ? `<span class="nbadge">${it.badge}</span>` : ""}
+        </button>`).join("")}
+    </div>`).join("");
+
+  /* --- KPI --- */
+  document.getElementById("kpis").innerHTML = D.kpis.map(k => `
+    <div class="kpi">
+      <div class="lb">${k.label} <i>· ${k.en}</i> <span class="src">src: ${k.id}</span></div>
+      <div class="vl">${k.value}</div>
+      <div class="ft">${k.delta ? `<span class="delta ${k.dir}${k.id==='pending'?' why':''}">${k.delta}</span>` : ""}<small>${k.sub}</small></div>
+    </div>`).join("");
+
+  /* --- Antrean --- */
+  document.getElementById("queue").innerHTML = D.queue.map(q => `
+    <li><button class="row" data-open="${q.id}">
+      <span style="color:var(--ink-3)">${D.icon(q.vehicle.includes("Yamaha")||q.vehicle.includes("Vario")||q.vehicle.includes("NMAX")?"bike":"car",22)}</span>
+      <span class="who"><b>${q.id}</b><span>${D.icon("clock",12)} ${q.status}</span></span>
+      <span class="veh"><b>${q.vehicle}</b><span>${q.plate}</span></span>
+      <span class="agt"><b>${q.agent}</b><span>agen</span></span>
+      <span class="amt"><b>${D.rupiah(q.premium)}</b><span>${q.paid}</span></span>
+      <span class="wait ${q.waitLevel}">${D.icon("clock",14)} ${q.wait}</span>
+      <span class="go">${D.icon("arrow",16)}</span>
+    </button></li>`).join("");
+
+  /* --- Tugas samping --- */
+  document.getElementById("tasks").innerHTML = D.sideTasks.map(t => `
+    <div class="taskrow">
+      <span class="tag ${t.tagtone}">${t.tag}</span>
+      <div class="tt"><b>${t.title}</b><p>${t.sub}</p></div>
+      <div class="wit">${D.icon("clock",13)} ${t.wait}</div>
+    </div>`).join("");
+
+  /* --- Feed --- */
+  document.getElementById("feed").innerHTML = D.activity.map(a => `<li><span class="t">${a.t}</span><span>${a.txt}</span></li>`).join("");
+
+  /* --- Drawer --- */
+  const dr = D.drawer;
+  document.getElementById("dfacts").innerHTML = [
+    ["Kendaraan", `${dr.vehicle} · ${dr.plate}`],
+    ["Jaminan", dr.cover],
+    ["Pemesan", dr.issued],
+    ["Agen", dr.agent],
+    ["Pembayaran", dr.paid],
+    ["Dokumen", dr.pdf]
+  ].map(([k,v]) => `<div class="fact"><span>${k}</span><b>${v}</b></div>`).join("");
+
+  document.getElementById("dchecks").innerHTML = dr.checks.map(c => `
+    <div class="ck ${c.state}">
+      <span class="st">${D.icon(c.state === "ok" ? "check" : "alert", 15)}</span>
+      <div><b>${c.label}<small>· ${c.en}</small></b><p>${c.doc} — ${c.note}</p></div>
+    </div>`).join("");
+
+  document.getElementById("dpdf").innerHTML =
+    `<div>${dr.pdf}<small>Kwituansi & proposal PDF · dapat langsung ditinjau di drawer</small></div>`;
+
+  document.getElementById("dbrd").innerHTML = dr.breakdown.map(b =>
+    `<li class="${b.strong ? "strong" : ""}"><span>${b.k}</span><span>${b.v}</span></li>`).join("");
+
+  const scrim = document.getElementById("scrim");
+  const drawer = document.getElementById("drawer");
+  const toast = document.getElementById("toast");
+
+  function openDrawer(id){
+    const q = D.queue.find(x => x.id === id) || D.queue[0];
+    document.getElementById("dref").textContent = q.id + " · REVIEW POLIS";
+    document.getElementById("dtitle").textContent = q.vehicle;
+    document.getElementById("dsub").textContent = `${q.plate} · agen ${q.agent} · ${D.rupiah(q.premium)} dibayar`;
+    drawer.hidden = false;
+    requestAnimationFrame(() => drawer.classList.add("open"));
+    scrim.classList.add("open");
+    document.getElementById("dapprove").disabled = false;
+  }
+  function closeDrawer(){
+    drawer.classList.remove("open");
+    scrim.classList.remove("open");
+  }
+  document.addEventListener("click", e => {
+    const t = e.target.closest("[data-open]");
+    if (t) openDrawer(t.dataset.open);
+    if (e.target.closest("#dclose") || e.target === scrim) closeDrawer();
+    if (e.target.closest("#dapprove")) {
+      closeDrawer();
+      document.getElementById("toasty").textContent = "ORD-2510-0731 disetujui · polis PDF diterbitkan & dikirim ke agen (mock)";
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 3200);
+    }
+  });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeDrawer(); });
+})();
+</script>
+</body>
+</html>

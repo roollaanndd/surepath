@@ -30,16 +30,16 @@ jobs:
             jq -c '{message}' /tmp/auth.json 2>/dev/null || true
             exit 1
           fi
-          autoconfirm=$(jq -r '.mailer_autoconfirm // "unset"' /tmp/auth.json)
-          disable=$(jq -r '.disable_signup // "unset"' /tmp/auth.json)
-          ext_email=$(jq -r '.external_email_enabled // "unset"' /tmp/auth.json)
-          has_smtp=$(jq -r 'to_entries | map(select(.value == true)) | map(.key | select(test("confirm|external_.*_enabled|signup", "i"))) | join(",")' /tmp/auth.json)
-          konfkeys=$(jq -r 'keys | map(select(test("confirm|signup", "i"))) | join(",")' /tmp/auth.json)
-          echo "::notice::mailer_autoconfirm=${autoconfirm} (api: unset = default; lihat bukti perilaku di bawah)"
+          autoconfirm=$(jq -r '.mailer_autoconfirm | tostring' /tmp/auth.json)
+          disable=$(jq -r '.disable_signup | tostring' /tmp/auth.json)
+          allow_unv=$(jq -r '.mailer_allow_unverified_email_sign_ins | tostring' /tmp/auth.json)
+          ext_email=$(jq -r '.external_email_enabled | tostring' /tmp/auth.json)
+          has_smtp=$(jq -r '(.smtp_host // "") | if length > 0 then "true" else "false" end' /tmp/auth.json)
+          echo "::notice::mailer_autoconfirm=${autoconfirm} (strict: false = auto-confirm SUDAH MATI; true = masih menyala)"
           echo "::notice::disable_signup=${disable}"
+          echo "::notice::mailer_allow_unverified_email_sign_ins=${allow_unv}"
           echo "::notice::external_email_enabled=${ext_email}"
           echo "::notice::custom_smtp_configured=${has_smtp}"
-          echo "::notice::confirm-or-signup-related-keys=${konfkeys}"
           # ── Perilaku nyata (agregat, TANPA PII): berapa akun baru yang
           #    terkonfirmasi <5 detik = auto-confirm masih menyala.
           q='select to_jsonb(x) from (select count(*)::int as total_users, count(*) filter (where created_at > now() - interval '"'"'30 days'"'"')::int as created_30d, count(*) filter (where created_at > now() - interval '"'"'30 days'"'"' and email_confirmed_at is not null and extract(epoch from (email_confirmed_at - created_at)) < 5)::int as sub5s_30d, count(*) filter (where created_at > now() - interval '"'"'30 days'"'"' and email_confirmed_at is not null)::int as confirmed_30d) x;'
@@ -50,5 +50,6 @@ jobs:
           if [ "$code2" = "200" ]; then
             echo "::notice::users-aggregate=$(jq -c '.[0]' /tmp/q.json)"
           else
-            echo "::notice::users-aggregate=POST query failed HTTP ${code2} (scope database mungkin tidak ada — tidak menghalangi)"
+            echo "::notice::users-aggregate=POST query failed HTTP ${code2}"
+            echo "::notice::users-aggregate-body=$(jq -c '{message,error,error_code?}' /tmp/q.json 2>/dev/null | head -c 300)"
           fi

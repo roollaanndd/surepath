@@ -1,6 +1,56 @@
 # SurePath — Changelog
 
-## v2.7.15 — 2026-10-28
+## v2.7.16 — 2026-10-30
+
+**Batch keamanan audit 2026-10-28 (P1) + guideline root `product.md`/`design.md`
++ merge main #327–#328.** Direktif pemilik: "ok push merge and deploy"
+
+- **Merge main dulu** (pola rilis ini): document registry (#327: actions
+  `documents.ts` + whitelist `ai_score`/`ai_verdict` di orders + migration
+  `20261028100000_document_registry.sql`) dan enforcement spesifikasi UI Admin
+  (#328: lantai 11px, tema, kontras, komponen bersama). APP_VERSION di main
+  sudah 2.7.15 → rilis ini lompat ke **2.7.16**.
+- **P1-A — filter injection `.or()`:** `p.coverage_type` mentah diinterpolasi
+  ke string filter `.or()` PostgREST di 3 situs `orders.ts` (gateway
+  service_role). Kini disanitasi lewat primitive bersama
+  `supabase/functions/_shared/sanitize.ts` (`sanitizeFilterValue`, satu
+  implementasi teruji) dengan pola repo: payload kotor **ditolak 400**, bukan
+  dipaksa diam-diam. Regression test parameterized:
+  `services/__tests__/postgrestSanitize.test.ts`
+  (anti-injection + enum legit + truncate + null-coercion).
+- **P1-B — admin gate `/api/*`:** lima endpoint internal `server.ts`
+  (`/api/aistudio-test`, `/api/ai-audit-log`, `/api/ai-cache-stats`,
+  `/api/ai-admin/run|status`) kini wajib `SERVER_ADMIN_TOKEN` — **fail-closed**
+  503 bila token tak diset, 401 bila salah (SHA-256 `timingSafeEqual`,
+  `Authorization: Bearer` atau `x-admin-key`); `aistudio-test` (Gemini
+  berbayar) dibatasi 10 req/menit.
+- **P1-C — kamera di Vercel:** `vercel.json` Permissions-Policy
+  `camera=(self)` — paritas dengan `server.ts`; capture kamera tidak lagi
+  terblokir di produksi Vercel.
+- **P2-3 — CSP tightening** (server.ts + vercel.json): allowance mati
+  `esm.sh` / `prod.spline.design` dihapus dari `script-src`/`connect-src`;
+  `news.google.com` tetap (widget Preferred Sources). `'unsafe-inline'`/eval
+  dipertahankan sementara (inline boot + gtag) dengan catatan nonce.
+- **P3 — payments hygienic:** simulator (`/api/payments/create` token `mok_…`)
+  menjawab 404 di produksi kecuali `PAYMENT_SIMULATION_ENABLED=true`; stub
+  `/api/payments/webhook` menjawab 404 korektif (callback Xendit asli =
+  edge function `xendit-webhook`).
+- **Guideline root:** `product.md` + `design.md` ditulis berdasarkan kode riil,
+  terdaftar di `docs/DOCS_INDEX.md`; mockup approved admin/agent light-first ikut
+  di-commit (`design-proposals/2026-10-admin-agent/`). Angka debt register
+  di-scan ulang pasca-merge (356 sub-11px · ~1.130 hex · 19 fixed-width ·
+  59 div-onClick).
+- **Tooling:** `design-proposals/**` di-ignore ESLint (artefak mockup browser,
+  bukan source).
+
+**Checks:** `check:functions` ✓ · tsc 0 · ESLint 0 error / 28 warning
+(baseline) · vitest **446/446** (38 file — naik dari 410 karena suite baru
+#327–#328) · build + PWA ✓ · Android selaras (2.7.16, versionCode 48).
+Catatan lingkungan: run vitest paralel pertama kena storm spawn worker
+(fork timeout Windows/OneDrive) — run ulang serial hijau penuh; bukan
+kegagalan tes.
+
+## v2.7.15 - 2026-10-28
 
 **Admin CMS dirapikan sesuai `docs/UI_REDESIGN_2026-10.md` (Sprint S1).**
 Permintaan pemilik: perbaiki UI dashboard admin agar sesuai spesifikasi yang

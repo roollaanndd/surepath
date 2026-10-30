@@ -169,6 +169,38 @@ This record intentionally distinguishes incremental work from the full target.
 
 Append a new entry after each meaningful implementation/verification milestone.
 
+### 2026-10-30 (v2.7.16) — P1 security batch (audit 2026-10-28) + guideline root + merge main #327–#328
+
+- **Direktif pemilik:** "ok push merge and deploy" (perbaikan P1 sudah
+  di-approve sebelumnya).
+- **Merge dulu:** main maju ke `ef7bcec` (document registry #327) + `b0a6bdb`
+  (enforcement spesifikasi UI Admin #328 — lantai 11px, tema, kontras).
+  Konflik nol; APP_VERSION main = 2.7.15 → bump rilis ke 2.7.16.
+- **P1-A:** guard filter injection `.or()` di
+  `supabase/functions/data-gateway/actions/orders.ts` — `coverage_type`
+  disanitasi via `_shared/sanitize.ts` (`sanitizeOrValue` wrapper memakai
+  `sanitizeFilterValue`; payload kotor ditolak 400); 3 situs interpolasi
+  `orCoverage` aman; regression test
+  `services/__tests__/postgrestSanitize.test.ts`. Cek silang daftar audit:
+  6 situs `.or()` lain sudah bersih sejak FIX v2.6.18, situs pathy punya guard
+  nomor order sendiri.
+- **P1-B:** satu gate `requireAdminSecret` pada 5 endpoint internal `server.ts`
+  — fail-closed 503 tanpa `SERVER_ADMIN_TOKEN`, 401 salah token (SHA-256
+  `timingSafeEqual`), rate limit 10/menit di `aistudio-test`.
+- **P1-C:** `vercel.json` → `camera=(self)` (paritas server.ts; kamera tidak
+  lagi terblokir di produksi Vercel).
+- **CSP / payments:** esm.sh + prod.spline.design dibuang dari CSP;
+  simulator pembayaran di-404-kan di produksi kecuali env guard; stub
+  `/api/payments/webhook` menjawab 404 korektif.
+- **Guideline:** `product.md` (306 baris) + `design.md` root dibuat dari kode
+  riil (validasi artefak + re-scan debt), DIDAFTARKAN di `docs/DOCS_INDEX.md`;
+  mockup `design-proposals/2026-10-admin-agent/` ikut di-commit; eslint.config
+  meng-ignore design-proposals.
+- **Checks:** check:functions ✓; tsc 0; ESLint 0 error / 28 warning (baseline);
+  vitest **446/446** (38 file); build+PWA ✓; Android selaras (2.7.16,
+  versionCode 48). Vitest run paralel pertama gagal spawn worker (flake
+  lingkungan Windows/OneDrive) — run ulang serial hijau.
+
 ### 2026-10-28 (v2.7.13) — merge main (admin redesign #322–#326) + dark-mode collapse fixed
 
 - **Owner report:** night mode "error dan berantakan" — hanya bagian tertentu

@@ -1,5 +1,49 @@
 # SurePath — Changelog
 
+## v2.7.18 — 2026-10-30
+
+### Pendaftaran mitra tidak lagi buntu di gerbang perjanjian (dilaporkan pemilik)
+
+- **Akar masalah.** `accept_agreement` digerbang pada `TIER_VERIFIED`
+  (`supabase/functions/_shared/trust.ts`). Untuk AGENT tier itu HANYA dicapai
+  lewat `verified = true`, yang disetel operator **setelah** mitra mendaftar.
+  Karena `AgentAgreementGate` memblokir seluruh aplikasi sampai perjanjian
+  ditandatangani, mitra baru membaca perjanjian, menekan setuju, lalu ditolak
+  "Agen belum diverifikasi operator" — tanpa jalan keluar. Tanda tangan
+  perjanjian adalah **prasyarat** verifikasi, bukan hak sesudahnya.
+- **Perbaikan.** `accept_agreement` kini `TIER_EMAIL_OK`. Domain email sampah
+  dan email yang belum dikonfirmasi tetap tertahan (keduanya tier 0), dan
+  `create_policy_order`, `submit_claim`, `agent_request_withdrawal`,
+  `redeem_coins`, `apply_referral` tetap `TIER_VERIFIED`. Tiga tes regresi
+  mengunci perilaku ini di `services/__tests__/trust.test.ts`.
+- **Mode "menunggu verifikasi" di portal Mitra** (keputusan pemilik
+  REGISTRATION_VERIFICATION_PLAN §8 no. 4 — dashboard terbatas, transaksi
+  terkunci): pita status di atas isi tab, layar penjelasan untuk tab **Buat**
+  dan **Dompet** (dua permukaan yang aksi intinya memang ditolak server pada
+  tier ini), aksi "+ Buat Penawaran" disembunyikan di tab Polis, dan penanda
+  kunci pada bar navigasi — bentuk, bukan hanya warna, plus sebabnya ikut ke
+  nama aksesibilitasnya. Beranda, Polis, Profil, notifikasi dan Pathy terbuka.
+- **`get_my_profile` mengembalikan `trust_tier`/`trust_reasons`.** Aturan tier
+  tetap hidup di satu tempat di server; klien tidak menyalinnya — menyalin masa
+  tenggang akun lama akan salah mengunci mitra lama. Klien fail-**open**:
+  server tetap penjaga setiap aksi berisiko.
+
+### UI upload STNK portal Mitra disamakan dengan portal Nasabah
+
+- `components/shared/StnkScanCard.tsx` — satu pemilik untuk kedua portal
+  (`StnkCaptureCard` + `StnkOcrNotice`). Portal Mitra sebelumnya memakai tombol
+  garis putus-putus setinggi satu baris hasil salinan-tangan; kini memakai kartu
+  bergradien "Ambil Foto STNK · Proses Cepat dengan AI" yang sama dengan
+  wizard Nasabah, beserta susunan hasil OCR yang sama (berhasil / sebagian
+  dengan daftar field / tidak terbaca).
+- Portal Nasabah (`car-wizard/StepVehicle`) ikut memakai komponen bersama itu,
+  jadi perbaikan berikutnya mendarat di kedua portal sekaligus. Ukuran teks
+  kecilnya dinaikkan ke lantai 11px yang berlaku sejak revamp (sebelumnya
+  0.65rem/0.55rem ≈ 10.4px/8.8px); tombol "Simpan PDF" tetap milik layar Nasabah.
+- Verifikasi: tsc bersih, ESLint 0 error, 447 tes unit lolos, build+prerender+PWA
+  hijau, tangkapan layar 390px terang & gelap untuk pita/layar kunci/kartu STNK
+  (0 simpul <11px pada komponen baru).
+
 ## v2.7.17 — 2026-10-30
 
 ### Admin CMS: light-first theme (design.md §4, owner-approved design-proposals/2026-10-admin-agent)

@@ -1,6 +1,8 @@
 # Rencana: Mekanisme Daftar & Verifikasi Apps Mitra (dan Seluruh Portal)
 
-Status: **Dijawab pemilik 28 Okt 2026 (§8) — implementasi bertahap berikutnya (mulai Tahap 0).**
+Status: **Dijawab pemilik 28 Okt 2026 (§8). Tahap 2 nomor 4 (fungsi terbatas saat
+`verified=false`) SUDAH TERPASANG di v2.7.18, bersama perbaikan kebuntuan yang
+riset ini belum lihat — lihat §11.**
 
 ---
 
@@ -233,3 +235,25 @@ pemilik. Estimasi 10 menit:
 suatu saat Fonnte diganti Meta Cloud API resmi — gantinya hanya isi function
 `send-otp` (mereka memakai `api.fonnte.com/send`); antarmuka ke aplikasi tetap.
 </think><tool_call>shell<arg_key>command</arg_key><arg_value>Get-Content docs\REGISTRATION_VERIFICATION_PLAN.md -Tail 8
+
+---
+
+## 11. Yang berubah di v2.7.18 (30 Okt 2026) — kebuntuan gerbang perjanjian
+
+Riset di atas menduga jalur Daftar "terasa mati" karena deliverabilitas email.
+Setelah gerbang kepercayaan (v2.5.6) benar-benar ditegakkan, muncul kebuntuan
+kedua yang **pasti** dan tidak ada hubungannya dengan email:
+
+- `accept_agreement` digerbang `TIER_VERIFIED`; AGENT hanya mencapai tier itu
+  lewat `verified = true` dari operator; `AgentAgreementGate` memblokir seluruh
+  aplikasi sampai perjanjian ditandatangani. Melingkar, dan layar penuh — jadi
+  mitra baru berhenti di situ.
+
+Diperbaiki: `accept_agreement` turun ke `TIER_EMAIL_OK`, dan portal Mitra kini
+punya mode "menunggu verifikasi" (keputusan §8 nomor 4) — Beranda, Polis,
+Profil, notifikasi dan Pathy terbuka; tab **Buat** dan **Dompet** menampilkan
+layar penjelasan karena aksi intinya (`create_policy_order`,
+`agent_request_withdrawal`) memang ditolak server pada tier ini.
+
+**Tahap 0, 1, 2 (OTP WhatsApp), 3 dan 4 tetap belum dikerjakan** — bukti nomor
+HP belum menjadi syarat, dan `FONNTE_TOKEN` (§10) masih menunggu pemilik.

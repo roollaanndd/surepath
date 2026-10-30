@@ -13,11 +13,13 @@ import {
   getAgentStats,
   getNotifications,
   getMyAgreement,
+  getMyAccountTrust,
   type SpCommission,
   type SpClient,
   type AgentStats,
 } from '../../services/supabaseService';
 import AgentAgreementGate from './AgentAgreementGate';
+import { AgentVerificationBanner, AgentLockedFeature } from './AgentVerificationPending';
 import AgentHome from './AgentHome';
 import AgentCRM from './AgentCRM';
 import AgentQuoteBuilder from './AgentQuoteBuilder';
@@ -51,10 +53,21 @@ const TABS: PortalTab[] = [
   { id: 'profile',    label: 'Profil',  Icon: UserRound },
 ];
 
+// Tab yang aksi intinya ditolak server selama akun belum diverifikasi:
+// "Buat" menerbitkan order (create_policy_order) dan "Dompet" memindahkan uang
+// (agent_request_withdrawal). Lihat AgentVerificationPending.tsx untuk sebabnya.
+const LOCKED_WHILE_PENDING: Record<string, string> = {
+  quotes: 'Buat',
+  commission: 'Dompet',
+  wallet: 'Dompet',
+};
+
 // Polis tab: order tracking + quote builder toggle
 const PolicyAndQuotes: React.FC<{
   agentId: string; agent: any; clients: SpClient[]; lang: Language; onNavigate: (tab: string) => void;
-}> = ({ agentId, agent, clients, lang }) => {
+  /** Akun belum diverifikasi — jalur pembuatan penawaran disembunyikan di sini juga. */
+  pendingVerification?: boolean;
+}> = ({ agentId, agent, clients, lang, pendingVerification = false }) => {
   const [showQuoteBuilder, setShowQuoteBuilder] = React.useState(false);
   if (showQuoteBuilder) {
     return (
@@ -71,7 +84,7 @@ const PolicyAndQuotes: React.FC<{
   return (
     <div className="space-y-4 pb-8">
       <div className="px-5 pt-5">
-        <SectionLabel action={{ label: '+ Buat Penawaran', onClick: () => setShowQuoteBuilder(true) }}>
+        <SectionLabel action={pendingVerification ? undefined : { label: '+ Buat Penawaran', onClick: () => setShowQuoteBuilder(true) }}>
           Polis &amp; Penawaran
         </SectionLabel>
       </div>
@@ -89,6 +102,11 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
   const [showOnboarding, setShowOnboarding] = useState(() => needsOnboarding('AGENT'));
   // Legal agreement gate — null = checking, false = must accept, true = signed
   const [agreementOk, setAgreementOk] = useState<boolean | null>(null);
+  // Akun belum diverifikasi operator → mode terbatas (lihat AgentVerificationPending).
+  // Fail-OPEN dengan sengaja: server tetap penjaga setiap aksi berisiko, jadi
+  // menebak "belum terverifikasi" saat jaringan gagal hanya akan mengunci mitra
+  // sah dari fitur yang sebenarnya boleh mereka pakai.
+  const [pendingVerification, setPendingVerification] = useState(false);
   const [tabKey, setTabKey] = useState(0);
   const [darkMode, setDarkMode] = useDarkMode();
   const [showNotifications, setShowNotifications] = useState(false);
@@ -119,6 +137,16 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
       .then(rec => setAgreementOk(!!rec))
       .catch(() => setAgreementOk(false)); // fail-closed: require explicit acceptance
   }, []);
+
+  // Tier kepercayaan datang dari server (`get_my_profile` → `trust_tier`), jadi
+  // aturan tier — termasuk masa tenggang akun lama — hidup di satu tempat saja.
+  useEffect(() => {
+    let cancelled = false;
+    getMyAccountTrust()
+      .then(trust => { if (!cancelled && trust) setPendingVerification(trust.tier < 2); })
+      .catch(() => {}); // fail-open, lihat catatan pada state di atas
+    return () => { cancelled = true; };
+  }, [agent?.id]);
 
   const loadData = async () => {
     if (!agent?.id) return;
@@ -260,6 +288,16 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
   };
 
   const renderTab = () => {
+    const lockedLabel = pendingVerification ? LOCKED_WHILE_PENDING[activeTab] : undefined;
+    if (lockedLabel) {
+      return (
+        <AgentLockedFeature
+          lang={lang}
+          feature={lockedLabel}
+          onOpenProfile={() => handleTabChange('profile')}
+        />
+      );
+    }
     switch (activeTab) {
       case 'home':
         return (
@@ -281,6 +319,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
             clients={clients}
             lang={lang}
             onNavigate={handleTabChange}
+            pendingVerification={pendingVerification}
           />
         );
       case 'clients':
@@ -407,6 +446,12 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
                 </button>
               </div>
             )}
+            {pendingVerification && (
+              <AgentVerificationBanner
+                lang={lang}
+                onOpenProfile={activeTab === 'profile' ? undefined : () => handleTabChange('profile')}
+              />
+            )}
             <div key={tabKey} data-sp-anim className="sp-page-enter">
               {renderTab()}
             </div>
@@ -414,7 +459,14 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
         )}
       </main>
 
-      <PortalTabBar tabs={TABS} activeId={activeTab} onSelect={handleTabChange} modernIcons />
+      <PortalTabBar
+        tabs={TABS}
+        activeId={activeTab}
+        onSelect={handleTabChange}
+        modernIcons
+        lockedIds={pendingVerification ? Object.keys(LOCKED_WHILE_PENDING) : undefined}
+        lockedHint={t('awaiting verification', 'menunggu verifikasi')}
+      />
 
       {/* Notification drawer */}
       {showNotifications && (

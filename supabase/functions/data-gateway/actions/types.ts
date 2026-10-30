@@ -20,6 +20,10 @@ export interface GatewayContext {
     // Both ids, deduped — for reads that must also match legacy rows written
     // with authId (e.g. sp_claims.user_id, sp_notifications.agent_id).
     ownerIds: string[];
+    // `email_confirmed_at` dari sesi yang sudah diverifikasi. Dipakai gerbang
+    // kepercayaan di index.ts dan dikembalikan apa adanya oleh get_my_profile
+    // sebagai tier, supaya klien tidak menyalin aturan tier (lihat _shared/trust.ts).
+    emailConfirmedAt: string | null;
   };
   sendTelegram: (text: string) => void;
   logActivity: (insurerId: string | null, orderId: string | null, action: string, details?: Record<string, unknown>) => void;

@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { Database, Edit3, ChevronDown, Sparkles, CheckCircle2, UploadCloud, FileDown, Loader2, AlertCircle } from 'lucide-react';
+import { Database, Edit3, ChevronDown, CheckCircle2, FileDown, Loader2 } from 'lucide-react';
 import { VEHICLE_BRANDS, getModelsForBrand, getMarketValueForYear } from '../../services/vehicleDatabase';
 import { extractStnkOcr, type StnkOcrResult } from '../../services/stnkOcr';
 import { compressImageBase64 } from '../../services/geminiService';
 import { ScannerOverlay, formatIDR } from './WizardUI';
+import { StnkCaptureCard, StnkOcrNotice } from '../shared/StnkScanCard';
 import { REGEX } from '../../services/authService';
 
 interface StepVehicleProps {
@@ -162,10 +163,7 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
     }
   };
 
-  const handleStnkAutofill = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const handleStnkAutofill = async (file: File) => {
     const mimeType = file.type;
     setLoading(true);
     setLoadingType('STNK');
@@ -252,107 +250,31 @@ const StepVehicle: React.FC<StepVehicleProps> = ({
       {loading && loadingType === 'STNK' && <ScannerOverlay label="Sedang Membaca STNK..." />}
 
       {!extractedStnk && !showManualForm && (
-        <div className="space-y-6">
-            <div className="text-center space-y-2 mb-8">
-                <h2 className="text-3xl font-black uppercase tracking-tighter">Data <span className="text-emerald-500">Mobil</span></h2>
-                <p className="text-xs text-gray-500 font-medium uppercase tracking-widest px-8">Foto STNK agar data terisi otomatis</p>
-            </div>
-
-            <label className="block w-full p-2 bg-gradient-to-br from-emerald-500 via-teal-500 to-blue-500 rounded-[3rem] cursor-pointer shadow-2xl hover:scale-[1.02] transition-all active:scale-95 group relative overflow-hidden">
-                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-20 transition-opacity"></div>
-                <div className="bg-white dark:bg-black/40 rounded-[2.8rem] py-16 flex flex-col items-center justify-center text-center gap-6 relative z-10 border border-white/20">
-                    <div className="w-24 h-24 bg-emerald-500/10 rounded-2rem flex items-center justify-center text-emerald-500 shadow-inner group-hover:scale-110 transition-transform duration-500">
-                        <UploadCloud size={48} className="animate-bounce" />
-                    </div>
-                    <div>
-                        <h4 className="text-xl font-black uppercase tracking-tight text-gray-900 dark:text-white">Ambil Foto STNK</h4>
-                        <p className="text-[0.65rem] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mt-2 flex items-center justify-center gap-2">
-                           <Sparkles size={12}/> Proses Cepat dengan AI
-                        </p>
-                    </div>
-                </div>
-                <input type="file" accept="image/*" className="hidden" onChange={handleStnkAutofill} />
-            </label>
-
-            <button 
-                onClick={() => setShowManualForm(true)}
-                className="w-full py-4 text-[0.6rem] font-black uppercase text-gray-400 hover:text-emerald-500 transition-all tracking-[0.3em]"
-            >
-                Atau Isi Data Secara Manual
-            </button>
-        </div>
+        <StnkCaptureCard
+          onPick={handleStnkAutofill}
+          scanning={loading && loadingType === 'STNK'}
+          heading={{ title: 'Data Mobil', subtitle: 'Foto STNK agar data terisi otomatis' }}
+          secondaryAction={{ label: 'Atau Isi Data Secara Manual', onClick: () => setShowManualForm(true) }}
+        />
       )}
 
       {(extractedStnk || showManualForm) && (
         <div className="space-y-6 animate-pop-in">
-           {extractedStnk && (
-             <>
-             <div className="flex items-center justify-between p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 shadow-sm animate-pop-in">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-emerald-500 rounded-xl text-white shadow-lg"><CheckCircle2 size={16}/></div>
-                    <div className="flex flex-col">
-                      <span className="text-[0.65rem] font-black text-emerald-800 dark:text-emerald-200 uppercase tracking-widest">
-                        {stnkOcrResult?.status === 'PARTIAL' ? 'STNK Terbaca Sebagian' : 'STNK Berhasil Terverifikasi'}
-                      </span>
-                      {stnkOcrResult && stnkOcrResult.confidence > 0 && (
-                        <span className="text-[0.5rem] font-bold text-emerald-700/70 dark:text-emerald-300/70 uppercase tracking-wider mt-0.5">
-                          AI Confidence {(stnkOcrResult.confidence * 100).toFixed(0)}% · via {stnkOcrResult.source === 'stnk-ocr-edge' ? 'SurePath OCR' : 'fallback'}
-                        </span>
-                      )}
-                    </div>
-                </div>
-                <button
-                  onClick={generateStnkPdf}
-                  disabled={isGeneratingPdf}
-                  className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/10 rounded-xl text-[0.55rem] font-black uppercase tracking-widest text-emerald-600 hover:bg-emerald-50 transition-colors shadow-sm disabled:opacity-50"
-                >
-                  {isGeneratingPdf ? <Loader2 size={12} className="animate-spin"/> : <FileDown size={12}/>}
-                  Simpan PDF
-                </button>
-             </div>
-
-             {/* AI OCR validation warnings — surface any field that failed
-                 regex / database validation so the user knows what to verify. */}
-             {stnkOcrResult && !stnkOcrResult.ok && stnkOcrResult.status !== 'UNCLEAR' && (
-               <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-2xl border border-amber-200 dark:border-amber-900/40 text-amber-800 dark:text-amber-200 space-y-1.5">
-                 <p className="text-[0.6rem] font-black uppercase tracking-widest flex items-center gap-1.5">
-                   <AlertCircle size={11}/> Beberapa field perlu verifikasi
-                 </p>
-                 <ul className="text-[0.55rem] font-bold space-y-0.5 list-disc list-inside opacity-90">
-                   {!stnkOcrResult.validation.plate && <li>Format plat tidak standar</li>}
-                   {!stnkOcrResult.validation.vin && <li>Nomor Rangka (VIN) tidak valid atau tidak terbaca — wajib diisi manual</li>}
-                   {!stnkOcrResult.validation.year && <li>Tahun pembuatan tidak terdeteksi</li>}
-                   {!stnkOcrResult.validation.brand && <li>Merk tidak cocok dengan database</li>}
-                   {!stnkOcrResult.validation.model && <li>Model tidak cocok dengan database</li>}
-                 </ul>
-                 {stnkOcrResult.notes && (
-                   <p className="text-[0.5rem] italic opacity-70 pt-1">Catatan AI: {stnkOcrResult.notes}</p>
-                 )}
-               </div>
-             )}
-             </>
-           )}
-
-           {/* AI could not read the document at all. Previously this branch was
-               silent (console.warn only) and the user was dropped into manual
-               entry with no explanation — the success region above, which holds
-               every other OCR message, is not rendered when extractedStnk is
-               null. Mirrors the KTP scan notice in StepKYC. */}
-           {!extractedStnk && stnkOcrResult && !stnkOcrResult.ok && (
-             <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-2xl border border-amber-200 dark:border-amber-900/40 text-amber-800 dark:text-amber-200 space-y-1.5 animate-pop-in">
-               <p className="text-[0.65rem] font-black uppercase tracking-widest flex items-center gap-1.5">
-                 <AlertCircle size={12}/> STNK Tidak Terbaca
-               </p>
-               <p className="text-[0.55rem] font-bold opacity-90 leading-relaxed">
-                 AI tidak dapat membaca dokumen ini — kemungkinan foto buram, terpotong, atau bukan STNK.
-                 Silakan isi data kendaraan secara manual di bawah, atau unggah ulang dengan foto yang lebih jelas.
-                 Pesanan kamu tetap bisa diproses.
-               </p>
-               {stnkOcrResult.notes && (
-                 <p className="text-[0.5rem] italic opacity-70 pt-1">Catatan AI: {stnkOcrResult.notes}</p>
-               )}
-             </div>
-           )}
+           {/* Hasil OCR — satu susunan untuk portal Nasabah dan Mitra
+               (shared/StnkScanCard). Tombol arsip PDF tetap milik layar ini. */}
+           <StnkOcrNotice
+             result={stnkOcrResult}
+             trailing={extractedStnk ? (
+               <button
+                 onClick={generateStnkPdf}
+                 disabled={isGeneratingPdf}
+                 className="flex shrink-0 items-center gap-2 px-4 py-2 bg-white dark:bg-white/10 rounded-xl text-[11px] font-black uppercase tracking-widest text-emerald-600 hover:bg-emerald-50 transition-colors shadow-sm disabled:opacity-50"
+               >
+                 {isGeneratingPdf ? <Loader2 size={12} className="animate-spin"/> : <FileDown size={12}/>}
+                 Simpan PDF
+               </button>
+             ) : undefined}
+           />
 
            <div className="flex bg-gray-100 dark:bg-white/[0.03] p-1.5 rounded-[2rem] border border-black/5 dark:border-white/5 shadow-inner">
                 <button onClick={() => setEntryMode('DATABASE')} className={`flex-1 py-4 rounded-[1.8rem] text-[0.65rem] font-black uppercase tracking-widest transition-all ${entryMode === 'DATABASE' ? 'bg-white dark:bg-gray-800 shadow-xl text-emerald-500 scale-100' : 'text-gray-400 scale-95'}`}><Database size={16} className="inline mr-2"/> Pilih Merk</button>

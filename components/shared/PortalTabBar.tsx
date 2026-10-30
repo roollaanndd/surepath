@@ -1,4 +1,5 @@
 import React from 'react';
+import { Lock } from 'lucide-react';
 import { PathyNavIcon } from './PathyNavIcon';
 import ManagedPortalIcon, { type SurePathGlyph } from './ManagedPortalIcon';
 
@@ -19,12 +20,21 @@ export interface PortalTabBarProps {
   onSelect: (id: string) => void;
   /** Use crisp Lucide line icons in the customer portal; keep the branded mascot in the agent portal. */
   modernIcons?: boolean;
+  /**
+   * Tab yang fiturnya sedang terkunci — mis. mitra yang belum diverifikasi
+   * operator. Tab tetap bisa ditekan (layarnya menjelaskan sebabnya, yang jauh
+   * lebih berguna daripada tombol mati), tapi diberi satu penanda bentuk, bukan
+   * hanya warna, dan sebabnya ikut ke nama aksesibilitasnya.
+   */
+  lockedIds?: string[];
+  /** Keterangan singkat untuk tab terkunci, mis. "menunggu verifikasi". */
+  lockedHint?: string;
 }
 
 const GREEN_GRADIENT = 'linear-gradient(135deg, #00C16A, #047857)';
 const FOCUS_RING = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green focus-visible:ring-offset-2 focus-visible:ring-offset-ds-card';
 
-const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect, modernIcons = false }) => (
+const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect, modernIcons = false, lockedIds, lockedHint }) => (
   <nav
     aria-label="Navigasi utama"
     className="fixed inset-x-4 z-50 sp-glass-strong sp-bottom-nav rounded-[2rem]"
@@ -36,6 +46,14 @@ const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect, m
     <div className="flex items-end justify-around px-2 pt-2 pb-2">
       {tabs.map(({ id, label, Icon, center, overlay, glyph }) => {
         const active = !overlay && activeId === id;
+        const locked = !!lockedIds?.includes(id);
+        const ariaLabel = locked && lockedHint ? `${label} — ${lockedHint}` : label;
+        const LockBadge = locked ? (
+          <span aria-hidden="true"
+            className="absolute right-0 top-0 flex h-4 w-4 items-center justify-center rounded-full bg-ds-amber text-ds-card">
+            <Lock size={9} strokeWidth={3} />
+          </span>
+        ) : null;
 
         if (center) {
           return (
@@ -43,7 +61,7 @@ const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect, m
               key={id}
               type="button"
               onClick={() => onSelect(id)}
-              aria-label={label}
+              aria-label={ariaLabel}
               aria-current={active ? 'page' : undefined}
               className={`relative -mt-8 flex flex-col items-center gap-1 active:scale-95 transition-transform motion-reduce:transition-none motion-reduce:active:scale-100 ${FOCUS_RING}`}
             >
@@ -61,6 +79,7 @@ const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect, m
               <span className={`text-2xs font-black uppercase tracking-wide leading-none ${active ? 'text-ds-green' : 'text-ds-ink3'}`}>
                 {label}
               </span>
+              {LockBadge}
             </button>
           );
         }
@@ -70,7 +89,7 @@ const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect, m
             key={id}
             type="button"
             onClick={() => onSelect(id)}
-            aria-label={label}
+            aria-label={ariaLabel}
             aria-current={active ? 'page' : undefined}
             className={`relative flex flex-col items-center gap-1 px-1.5 py-1.5 rounded-2xl transition-all duration-300 ease-out active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 min-w-[52px] min-h-[48px] justify-center sp-interactive-surface ${active ? 'bg-ds-green-tint' : ''} ${FOCUS_RING}`}
           >
@@ -93,6 +112,7 @@ const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect, m
             <span className={`text-2xs font-black uppercase tracking-wide leading-none transition-colors ${active ? 'text-ds-green' : 'text-ds-ink3 opacity-80'}`}>
               {label}
             </span>
+            {LockBadge}
           </button>
         );
       })}

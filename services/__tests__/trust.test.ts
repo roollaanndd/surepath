@@ -143,6 +143,32 @@ describe('penurunan tier', () => {
     expect(evaluateTrust('agent_request_withdrawal', s).allowed).toBe(false);
   });
 
+  // Regresi 30 Okt 2026 — kebuntuan pendaftaran mitra. `accept_agreement`
+  // pernah menuntut TIER_VERIFIED, dan karena AGENT hanya mencapai tier itu
+  // lewat `verified = true` dari operator, mitra baru terjebak di gerbang
+  // perjanjian layar penuh: tanda tangan ditolak dengan "belum diverifikasi",
+  // padahal tanda tangan itulah prasyarat verifikasinya.
+  it('AGENT belum diverifikasi TETAP boleh menandatangani perjanjian', () => {
+    const s = subjek({ role: 'AGENT', verified: false });
+    expect(deriveTier(s).tier).toBe(TIER_EMAIL_OK);
+    expect(evaluateTrust('accept_agreement', s).allowed).toBe(true);
+  });
+
+  it('AGENT belum diverifikasi tetap terkunci dari order, klaim dan tarik dana', () => {
+    const s = subjek({ role: 'AGENT', verified: false });
+    for (const aksi of ['create_policy_order', 'submit_claim', 'agent_request_withdrawal']) {
+      expect(evaluateTrust(aksi, s).allowed).toBe(false);
+    }
+  });
+
+  it('perjanjian tetap tertutup untuk domain sampah dan email belum dikonfirmasi', () => {
+    // Gerbang perjanjian dilonggarkan ke tier 1, bukan dibuka: tier 0 tetap tertahan.
+    expect(evaluateTrust('accept_agreement',
+      subjek({ role: 'AGENT', verified: false, email: 'x@example.com' })).allowed).toBe(false);
+    expect(evaluateTrust('accept_agreement',
+      subjek({ role: 'AGENT', verified: false, emailConfirmedAt: null })).allowed).toBe(false);
+  });
+
   it('AGENT yang sudah diverifikasi operator → tier penuh', () => {
     const s = subjek({ role: 'AGENT', verified: true });
     expect(deriveTier(s).tier).toBe(TIER_VERIFIED);

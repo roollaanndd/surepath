@@ -36,7 +36,7 @@ const PortalHeader: React.FC<PortalHeaderProps> = ({
           <SurePathLogo className="w-8 h-8 object-contain" />
         </div>
         <div className="min-w-0">
-          <div className="font-black text-sm tracking-tighter uppercase leading-none text-ds-ink">
+          <div className="font-black text-sm tracking-tighter uppercase leading-none text-ds-ink whitespace-nowrap">
             Sure<span className="text-ds-green">Path</span>
           </div>
           <div className="text-2xs font-bold text-ds-ink3 uppercase tracking-wider leading-none mt-0.5 truncate">

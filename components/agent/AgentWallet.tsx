@@ -51,7 +51,7 @@ interface SavedAccount {
   label?: string;
 }
 
-// ─── T&C Modal ────────────────────────────────────────────────────────────────
+// ─── T&C Modal ──────────────────────────────────────────────────────────────────────────────
 const WithdrawalTnCModal: React.FC<{ amount: number; fee: number; onAccept: () => void; onCancel: () => void }> = ({ amount, fee, onAccept, onCancel }) => {
   const [agreed, setAgreed] = useState(false);
   return (
@@ -459,7 +459,7 @@ const AgentWalletView: React.FC = () => {
           <button
             onClick={() => setShowWithdrawForm(true)}
             disabled={(wallet?.balance ?? 0) < 10000}
-            className="w-full h-12 mt-4 rounded-xl bg-ds-green hover:bg-ds-green-dk text-ds-on-green font-semibold text-sm active:scale-[0.97] transition-all disabled:opacity-40 flex items-center justify-center gap-2 shadow-ds-green"
+            className="w-full h-12 mt-4 rounded-xl bg-white hover:bg-white/90 text-ds-green font-semibold text-sm active:scale-[0.97] transition-all disabled:opacity-40 flex items-center justify-center gap-2 shadow-lg"
           >
             <ArrowUpRight size={18} />
             TARIK DANA

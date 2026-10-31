@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Plus, Pencil, Trash2, RefreshCw, Save, X, Car,
-  ToggleLeft, ToggleRight, Search, Database, Upload,
+  ToggleLeft, ToggleRight, Database, Upload,
 } from 'lucide-react';
 import { supabase } from '../../services/supabaseService';
 import { useConfirmDialog, useToast } from '../ui';
 import { CAR_DATABASE } from '../../constants';
 import PricelistUploadModal from './PricelistUploadModal';
+import { FilterBar } from './shared/FilterBar';
+import { DataTable, type DataTableColumn } from './shared/DataTable';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -58,6 +60,58 @@ const dangerBtn =
 
 const editBtn =
   'bg-ds-card2 border border-ds-border hover:bg-ds-card2 text-ds-ink2 rounded-xl px-3 py-2 font-black text-xs transition-colors';
+
+function vehicleColumns(actions: {
+  handleToggle: (ov: SpVehicleOverride) => void;
+  setEditTarget: (ov: SpVehicleOverride) => void;
+  handleDelete: (id: string) => void;
+}): DataTableColumn<SpVehicleOverride>[] {
+  return [
+    {
+      id: 'vehicle',
+      header: 'Merek / Model',
+      sortAccessor: ov => `${ov.brand} ${ov.model}`,
+      cell: ov => (
+        <>
+          <p className="font-black text-ds-ink">{ov.brand}</p>
+          <p className="text-2xs text-ds-ink3">{ov.model}</p>
+        </>
+      ),
+    },
+    { id: 'year', header: 'Tahun', sortAccessor: ov => ov.ref_year, cell: ov => <span className="text-ds-ink2 font-bold">{ov.ref_year}</span> },
+    {
+      id: 'list_price', header: 'Harga List', align: 'right', sortAccessor: ov => ov.list_price_m,
+      cell: ov => <span className="text-ds-ink2 font-bold">{fmtIDR(ov.list_price_m * 1_000_000)}</span>,
+    },
+    {
+      id: 'market_value', header: 'Nilai Pasar', align: 'right', sortAccessor: ov => ov.market_value_rp,
+      cell: ov => <span className="text-emerald-700 dark:text-emerald-400 font-black">{fmtIDR(ov.market_value_rp)}</span>,
+    },
+    {
+      id: 'discount', header: 'Diskon', align: 'right', sortAccessor: ov => ov.discount_rate,
+      cell: ov => <span className="text-amber-800 dark:text-amber-400 font-black">{pct(ov.discount_rate)}</span>,
+    },
+    {
+      id: 'status', header: 'Status', align: 'center', sortAccessor: ov => (ov.is_active ? 1 : 0),
+      cell: ov => (
+        <button onClick={() => actions.handleToggle(ov)}>
+          <span className={`px-2 py-0.5 rounded-full text-2xs font-black uppercase tracking-widest ${ov.is_active ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'bg-rose-500/10 text-rose-700 dark:text-rose-300'}`}>
+            {ov.is_active ? 'Aktif' : 'Nonaktif'}
+          </span>
+        </button>
+      ),
+    },
+    {
+      id: 'actions', header: 'Aksi', align: 'right',
+      cell: ov => (
+        <div className="flex items-center gap-2 justify-end">
+          <button onClick={() => actions.setEditTarget(ov)} className={editBtn}><Pencil size={10} className="inline mr-1" />Edit</button>
+          <button onClick={() => actions.handleDelete(ov.id)} className={dangerBtn}><Trash2 size={10} className="inline mr-1" />Hapus</button>
+        </div>
+      ),
+    },
+  ];
+}
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
 
@@ -362,17 +416,14 @@ const VehiclePricelistAdmin: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-4 flex-wrap">
-        <div className="relative max-w-sm flex-1">
-          <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-ds-ink3" />
-          <input
-            className="bg-ds-card2 border border-ds-border rounded-xl py-3 pl-10 pr-4 text-sm font-bold outline-none focus:border-emerald-500/50 w-full text-ds-ink"
-            placeholder="Cari merek / model..."
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-          />
-        </div>
-        {versions.length > 0 && (
+      <FilterBar
+        chips={[]}
+        active=""
+        onActiveChange={() => {}}
+        search={query}
+        onSearchChange={setQuery}
+        searchPlaceholder="Cari merek / model..."
+        extra={versions.length > 0 && (
           <select
             className="bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm font-bold text-ds-ink outline-none focus:border-emerald-500/50"
             value={activeVersion}
@@ -382,7 +433,7 @@ const VehiclePricelistAdmin: React.FC = () => {
             {versions.map(v => <option key={v} value={v}>{v}</option>)}
           </select>
         )}
-      </div>
+      />
 
       {/* Table */}
       {loading ? (
@@ -393,50 +444,11 @@ const VehiclePricelistAdmin: React.FC = () => {
           {query || activeVersion ? 'Tidak ada hasil untuk filter ini.' : 'Belum ada data override. Klik "Tambah Override" atau "Sinkronisasi dari Database Bawaan".'}
         </div>
       ) : (
-        <div className="bg-ds-card2 border border-ds-border rounded-[2rem] overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-[11px]">
-              <thead>
-                <tr className="text-2xs font-black uppercase tracking-widest text-ds-ink3 border-b border-ds-border">
-                  <th className="text-left px-6 py-4">Merek / Model</th>
-                  <th className="text-left px-4 py-4">Tahun</th>
-                  <th className="text-right px-4 py-4">Harga List</th>
-                  <th className="text-right px-4 py-4">Nilai Pasar</th>
-                  <th className="text-right px-4 py-4">Diskon</th>
-                  <th className="text-center px-4 py-4">Status</th>
-                  <th className="text-right px-6 py-4">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/[0.03]">
-                {filtered.map(ov => (
-                  <tr key={ov.id} className={`hover:bg-ds-card2 transition-colors ${!ov.is_active ? 'opacity-50' : ''}`}>
-                    <td className="px-6 py-3">
-                      <p className="font-black text-ds-ink">{ov.brand}</p>
-                      <p className="text-2xs text-ds-ink3">{ov.model}</p>
-                    </td>
-                    <td className="px-4 py-3 text-ds-ink2 font-bold">{ov.ref_year}</td>
-                    <td className="px-4 py-3 text-right text-ds-ink2 font-bold">{fmtIDR(ov.list_price_m * 1_000_000)}</td>
-                    <td className="px-4 py-3 text-right text-emerald-700 dark:text-emerald-400 font-black">{fmtIDR(ov.market_value_rp)}</td>
-                    <td className="px-4 py-3 text-right text-amber-800 dark:text-amber-400 font-black">{pct(ov.discount_rate)}</td>
-                    <td className="px-4 py-3 text-center">
-                      <button onClick={() => handleToggle(ov)}>
-                        <span className={`px-2 py-0.5 rounded-full text-2xs font-black uppercase tracking-widest ${ov.is_active ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'bg-rose-500/10 text-rose-700 dark:text-rose-300'}`}>
-                          {ov.is_active ? 'Aktif' : 'Nonaktif'}
-                        </span>
-                      </button>
-                    </td>
-                    <td className="px-6 py-3 text-right">
-                      <div className="flex items-center gap-2 justify-end">
-                        <button onClick={() => setEditTarget(ov)} className={editBtn}><Pencil size={10} className="inline mr-1" />Edit</button>
-                        <button onClick={() => handleDelete(ov.id)} className={dangerBtn}><Trash2 size={10} className="inline mr-1" />Hapus</button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <DataTable<SpVehicleOverride>
+          rows={filtered}
+          rowKey={ov => ov.id}
+          columns={vehicleColumns({ handleToggle, setEditTarget, handleDelete })}
+        />
       )}
 
       <p className="text-2xs text-ds-ink2 font-bold">

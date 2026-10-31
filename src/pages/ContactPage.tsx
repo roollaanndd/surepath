@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { ArrowRight, Mail, MessageSquare, Clock } from 'lucide-react';
+import { ArrowRight, Mail, MessageSquare, Clock, Loader2 } from 'lucide-react';
 import SiteLayout from './site/SiteLayout';
 import { SUREPATH_WHATSAPP } from '../../constants';
+import { submitContactLead } from '../../services/supabaseService';
+import { trackEvent } from '../analytics';
 import { SitePageProps, useT, useSiteTheme, Reveal, SectionLabel, useWebsiteConfig } from './site/siteKit';
 
 const ContactPage: React.FC<SitePageProps> = (props) => {
@@ -14,11 +16,33 @@ const ContactPage: React.FC<SitePageProps> = (props) => {
 
   const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' });
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Formulir ini dulu hanya memanggil `setSent(true)` lalu memberi tahu
+  // pengunjung "Pesan Terkirim! Tim kami akan segera menghubungimu." tanpa
+  // mengirim apa pun ke mana pun — setiap prospek dibuang, dan janjinya palsu.
+  // Sekarang isinya tersimpan lewat data-gateway dan muncul di antrean
+  // operator. Pesan sukses hanya tampil setelah server benar-benar menerima.
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (sending) return;
+    setSending(true);
+    setError(null);
+
+    const failure = await submitContactLead({
+      name: form.name,
+      email: form.email,
+      phone: form.phone,
+      message: form.message,
+      source_path: typeof window !== 'undefined' ? window.location.pathname : '/contact',
+    });
+
+    setSending(false);
+    if (failure) { setError(failure); return; }
+
+    trackEvent('contact_form_submit', { source_path: '/contact' });
     setSent(true);
-    setTimeout(() => setSent(false), 4000);
     setForm({ name: '', email: '', phone: '', message: '' });
   };
 
@@ -27,10 +51,14 @@ const ContactPage: React.FC<SitePageProps> = (props) => {
     { icon: Mail,          color: accent,    label: 'Email',    value: 'halo@myinsurepath.com', href: 'mailto:halo@myinsurepath.com' },
   ];
 
+  // roland memastikan 24/7 yang benar (31 Okt 2026). Blok Senin–Jumat yang
+  // lama bertentangan dengan "24/7 Support Online" di beranda — dua klaim
+  // berbeda di situs yang sama, dan pengunjung yang menghubungi hari Minggu
+  // akan menemukan mana yang salah.
   const HOURS = [
-    { day: t('Senin – Jumat', 'Monday – Friday'), hours: '09:00 – 18:00 WIB' },
-    { day: t('Sabtu', 'Saturday'),                hours: '10:00 – 15:00 WIB' },
-    { day: t('Minggu & Hari Libur', 'Sunday & Holidays'), hours: t('Tutup', 'Closed') },
+    { day: t('Senin – Jumat', 'Monday – Friday'),          hours: '24 ' + t('jam', 'hours') },
+    { day: t('Sabtu & Minggu', 'Saturday & Sunday'),       hours: '24 ' + t('jam', 'hours') },
+    { day: t('Hari Libur Nasional', 'Public Holidays'),    hours: '24 ' + t('jam', 'hours') },
   ];
 
   const inputCls = `w-full px-4 py-3 rounded-xl text-sm outline-none transition-colors border`;
@@ -88,10 +116,18 @@ const ContactPage: React.FC<SitePageProps> = (props) => {
                     <label className="block text-xs font-semibold mb-1.5" style={{ color: textMuted }}>{t('Pesan', 'Message')}</label>
                     <textarea required rows={4} className={inputCls + ' resize-none'} style={inputStyle} placeholder={t('Ceritakan kebutuhan atau pertanyaanmu...', 'Tell us your needs or questions...')} value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} />
                   </div>
-                  <button type="submit"
-                    className="w-full py-3.5 rounded-xl text-sm font-bold text-white transition-all hover:scale-[1.01] active:scale-[0.99]"
-                    style={{ background: accent }}>
-                    {t('Kirim Pesan', 'Send Message')} →
+                  {error && (
+                    <p role="alert" className="text-sm font-semibold rounded-xl px-4 py-3"
+                      style={{ color: '#b91c1c', background: 'rgba(185,28,28,0.08)', border: '1px solid rgba(185,28,28,0.25)' }}>
+                      {error}
+                    </p>
+                  )}
+                  <button type="submit" disabled={sending}
+                    className="w-full py-3.5 rounded-xl text-sm font-bold text-white transition-all hover:scale-[1.01] active:scale-[0.99] disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    style={{ background: accent, opacity: sending ? 0.7 : 1 }}>
+                    {sending
+                      ? <><Loader2 size={15} className="animate-spin" /> {t('Mengirim…', 'Sending…')}</>
+                      : <>{t('Kirim Pesan', 'Send Message')} →</>}
                   </button>
                 </form>
               )}

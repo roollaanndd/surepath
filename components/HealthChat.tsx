@@ -1,11 +1,12 @@
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Loader2, ShieldAlert, ChevronLeft, HeartPulse } from 'lucide-react';
+import { Send, Bot, User, Loader2, ShieldAlert, ChevronLeft } from 'lucide-react';
 import OpenAI from 'openai';
 import { CHAT_MODEL } from '../services/geminiService';
 import { PageTransition } from './car-wizard/WizardUI';
 import { Language } from '../types';
 import { wrapUserContent, UNTRUSTED_INPUT_NOTICE } from '../services/promptSafety';
+import ModuleIcon from './shared/ModuleIcon';
 
 const SUPABASE_URL  = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
@@ -86,7 +87,7 @@ ${UNTRUSTED_INPUT_NOTICE}`,
              </button>
              <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
-                   <HeartPulse size={22}/>
+                   <ModuleIcon id="family_health" size={34}/>
                 </div>
                 <div>
                    <h3 className="text-lg font-black uppercase tracking-tighter leading-none text-slate-800 dark:text-white">Health <span className="text-emerald-500">Bot</span></h3>

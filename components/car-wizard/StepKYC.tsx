@@ -3,6 +3,7 @@ import { ScanFace, ImageIcon, Plus, RefreshCw, ShieldCheck, UserCheck, Cpu, Chec
 import { ScannerOverlay } from './WizardUI';
 import { extractKtpOcr } from '../../services/ktpOcr';
 import { REGEX } from '../../services/authService';
+import ModuleIcon from '../shared/ModuleIcon';
 
 interface StepKYCProps {
   kycData: any;
@@ -147,7 +148,7 @@ const StepKYC: React.FC<StepKYCProps> = ({
         <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000 blur-3xl"></div>
         <div className="relative z-10 flex items-center gap-6">
           <div className="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-2xl shadow-emerald-500/20 animate-float">
-            <UserCheck size={32}/>
+            <ModuleIcon id="clients" size={48}/>
           </div>
           <div>
             <h4 className="text-xl font-black text-white uppercase tracking-tighter">Data Pemilik</h4>

@@ -83,7 +83,7 @@ export const CircularActionGrid: React.FC<CircularActionGridProps> = ({
                 ['--ic-tint' as string]: glyphTint,
               }}
             >
-              <Icon size={28} style={{ color: action.color }} strokeWidth={2} />
+              <Icon size={36} style={{ color: action.color }} strokeWidth={2} />
               {action.badge && action.badge > 0 && (
                 <span
                   className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-ds-red text-white text-badge font-black flex items-center justify-center"

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import '../../src/styles/portal-modernization.css';
 import { Language } from '../../types';
 import { House, FileText, Plus, Wallet, UserRound } from 'lucide-react';
-import { IcBell } from './AgentIcons';
 import PortalHeader from '../shared/PortalHeader';
 import PortalTabBar, { type PortalTab } from '../shared/PortalTabBar';
 import { scrollPortalToTop } from '../shared/scrollReset';
@@ -39,6 +38,7 @@ import { SectionLabel } from '../shared/cards';
 import OnboardingFlow, { needsOnboarding } from '../OnboardingFlow';
 import { useTierDefinitions, getTierByCode } from '../../hooks/useTierDefinitions';
 import { useDarkMode } from '../shared/theme';
+import ModuleIcon from '../shared/ModuleIcon';
 
 interface Props {
   agent: any;
@@ -443,7 +443,6 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
         darkMode={darkMode}
         onToggleDark={() => setDarkMode(!darkMode)}
         onAvatarClick={() => handleTabChange('profile')}
-        BellIcon={IcBell}
         labels={{
           notifications: t('Notifications', 'Notifikasi'),
           theme: t('Toggle theme', 'Ganti tema'),
@@ -525,7 +524,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
           <div className="rounded-2xl border border-ds-border bg-ds-card p-4 shadow-2xl">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 shrink-0 rounded-xl bg-ds-green-tint flex items-center justify-center text-ds-green">
-                <IcBell size={18} />
+                <ModuleIcon id="notifications" size={30} />
               </div>
               <button type="button" className="min-w-0 flex-1 text-left"
                 onClick={() => { setNotificationPopup(null); setShowNotifications(true); }}>

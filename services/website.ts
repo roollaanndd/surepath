@@ -692,3 +692,71 @@ export async function updateB2BQuoteStatus(
   if (error) { console.error('updateB2BQuoteStatus:', error); return false; }
   return true;
 }
+
+// ─── Prospek formulir kontak situs publik ────────────────────────────────────
+//
+// Formulir di `/contact` sebelumnya tidak mengirim apa pun — ia hanya
+// menampilkan "Pesan Terkirim!" lalu membuang isinya. Ketiga fungsi di bawah
+// adalah jalur nyatanya: kiriman publik lewat `callPublicGateway` (pengunjung
+// tidak punya akun), pembacaan dan pembaruan lewat `callGateway` karena
+// keduanya hanya untuk admin/operator.
+
+export interface ContactLead {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  message: string;
+  source_path: string | null;
+  status: 'NEW' | 'CONTACTED' | 'CLOSED';
+  notes: string | null;
+  handled_at: string | null;
+  created_at: string;
+}
+
+export interface ContactLeadInput {
+  name: string;
+  email?: string;
+  phone?: string;
+  message: string;
+  /** Halaman tempat formulir dikirim, supaya operator tahu konteksnya. */
+  source_path?: string;
+}
+
+/**
+ * Mengirim prospek dari situs publik. Mengembalikan pesan galat dari gateway
+ * apa adanya supaya formulir bisa menampilkannya — termasuk 429 saat kena
+ * batas kiriman per IP. `null` berarti berhasil.
+ */
+export async function submitContactLead(input: ContactLeadInput): Promise<string | null> {
+  const { data, error } = await callPublicGateway('submit_contact_lead', {
+    name: input.name,
+    email: input.email ?? '',
+    phone: input.phone ?? '',
+    message: input.message,
+    source_path: input.source_path ?? '',
+  });
+  if (error) return error;
+  if (!data?.ok) return 'Pesan gagal terkirim. Coba lagi sebentar lagi.';
+  return null;
+}
+
+/** Antrean prospek untuk portal operator/admin. */
+export async function listContactLeads(
+  status?: 'NEW' | 'CONTACTED' | 'CLOSED',
+): Promise<ContactLead[]> {
+  const { data, error } = await callGateway('list_contact_leads', status ? { status } : {});
+  if (error) { console.error('listContactLeads:', error); return []; }
+  return (data?.leads ?? []) as ContactLead[];
+}
+
+/** Menandai prospek sudah ditindaklanjuti. */
+export async function updateContactLead(
+  id: string,
+  status: 'NEW' | 'CONTACTED' | 'CLOSED',
+  notes?: string,
+): Promise<boolean> {
+  const { data, error } = await callGateway('update_contact_lead', { id, status, notes });
+  if (error) { console.error('updateContactLead:', error); return false; }
+  return Boolean(data?.ok);
+}

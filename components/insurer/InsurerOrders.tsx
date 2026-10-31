@@ -2,7 +2,7 @@
 // 3 decision buttons (Setujui/Minta Info/Tolak) + policy PDF upload.
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { FileText, Search, CheckCircle2, XCircle, Eye, AlertTriangle, ImageIcon, ExternalLink, Car, User, Phone, ShieldCheck, Sparkles, Upload, CheckCircle, Download } from 'lucide-react';
+import { FileText, Search, CheckCircle2, XCircle, Eye, AlertTriangle, ImageIcon, ExternalLink, Phone, Upload, CheckCircle, Download } from 'lucide-react';
 import { Language } from '../../types';
 import { AgentArtKeyframes, AgentHero, SpotOrders as SpotOrdersArt, AgentEmpty } from '../agent/AgentArt';
 import { UnderlineTabs, SkeletonCard, useToast } from '../ui';
@@ -11,6 +11,7 @@ import { getInsurerDashboard, submitInsurerDecisionAuthed, uploadInsurerPolicy, 
 import { publishAndDownloadQuotation } from '../../services/quotationService';
 import { fromCustomerOrder } from '../../services/quotationSlipAdapter';
 import InsurerAIPanel from '../shared/InsurerAIPanel';
+import ModuleIcon from '../shared/ModuleIcon';
 
 interface Props {
   authToken: string;
@@ -409,14 +410,14 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
                   </div>
 
                   {/* Customer info */}
-                  <Section icon={<User size={14} />} title="Data Nasabah" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
+                  <Section icon={<ModuleIcon id="clients" size={24} />} title="Data Nasabah" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
                     <DetailRow label="Nama" value={selectedOrder.client_name} sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} />
                     <DetailRow label="Telepon" value={selectedOrder.client_phone ?? '-'} icon={<Phone size={11} />} sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} />
                   </Section>
 
                   {/* Vehicle info */}
                   {selectedOrder.vehicle_details && (
-                    <Section icon={<Car size={14} />} title="Data Kendaraan" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
+                    <Section icon={<ModuleIcon id="car_protection" size={24} />} title="Data Kendaraan" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
                       {(() => {
                         const vd = selectedOrder.vehicle_details ?? {};
                         return (
@@ -435,7 +436,7 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
                   )}
 
                   {/* Document viewer */}
-                  <Section icon={<ImageIcon size={14} />} title="Dokumen Upload" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
+                  <Section icon={<ModuleIcon id="documents" size={24} />} title="Dokumen Upload" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
                     {selectedOrder.vehicle_image_url ? (
                       <button
                         onClick={() => setLightboxUrl(selectedOrder.vehicle_image_url)}
@@ -479,7 +480,7 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
                   </Section>
 
                   {/* Dokumen pelengkap: STNK, foto survey, laporan audit (audit 28 Okt 2026) */}
-                  <Section icon={<FileText size={14} />} title="Dokumen Pelengkap Pengajuan" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
+                  <Section icon={<ModuleIcon id="documents" size={24} />} title="Dokumen Pelengkap Pengajuan" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
                     {orderDocsLoading ? (
                       <div className={`p-4 rounded-xl text-center text-xs ${SHEET_INSET} ${SHEET_TEXT_MUTED}`}>
                         Memuat dokumen pengajuan…
@@ -526,7 +527,7 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
                   </Section>
 
                   {/* Coverage & premium */}
-                  <Section icon={<ShieldCheck size={14} />} title="Coverage & Premi" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
+                  <Section icon={<ModuleIcon id="security" size={24} />} title="Coverage & Premi" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
                     <DetailRow label="Coverage Type" value={selectedOrder.coverage_type} sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} />
                     <DetailRow label="Sum Insured" value={fmtIdr(selectedOrder.sum_insured)} sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} />
                     <div className={`flex justify-between gap-3 py-2 mt-1 pt-3 border-t-2 ${SHEET_BORDER}`}>
@@ -553,7 +554,7 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
 
                   {/* Insurer decision (if already decided) */}
                   {selectedOrder.insurer_decision && (
-                    <Section icon={<Sparkles size={14} />} title="Keputusan Anda" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
+                    <Section icon={<ModuleIcon id="ai_admin" size={24} />} title="Keputusan Anda" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
                       <div className={`p-3 rounded-xl mb-2 ${
                         selectedOrder.insurer_decision === 'APPROVED' ? 'bg-emerald-50 dark:bg-emerald-950/30'
                         : selectedOrder.insurer_decision === 'REQUEST_INFO' ? 'bg-amber-50 dark:bg-amber-950/30'
@@ -680,7 +681,7 @@ const Section: React.FC<{
   return (
     <div>
       <div className="flex items-center gap-2 mb-2">
-        <div className="w-6 h-6 rounded-md bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center text-ds-green dark:text-emerald-400">
+        <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center text-ds-green dark:text-emerald-400">
           {icon}
         </div>
         <h4 className={`text-xs font-black uppercase tracking-widest ${sheetText}`}>{title}</h4>

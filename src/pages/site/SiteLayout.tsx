@@ -257,16 +257,16 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang }) => {
                 Sure<span style={{ color: ACCENT }}>Path</span>
               </span>
             </div>
-            <p className="text-sm leading-relaxed max-w-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>
+            <p className="text-sm leading-relaxed max-w-xs" style={{ color: 'rgba(255,255,255,0.85)' }}>
               {t('Platform asuransi digital yang transparan, manusiawi, dan beneran berpihak ke kamu.', 'A transparent, human-centered digital insurance platform built around your real needs.')}
             </p>
-            <p className="text-xs font-light italic" style={{ color: 'rgba(255,255,255,0.2)' }}>"Your Path to Protection."</p>
+            <p className="text-xs font-light italic" style={{ color: 'rgba(255,255,255,0.75)' }}>"Your Path to Protection."</p>
 
             {/* Contact details */}
             <div className="flex flex-col gap-2.5 mt-1">
               {contacts.map((c, i) => {
                 const inner = (
-                  <span className="flex items-center gap-2.5 text-sm transition-colors" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                  <span className="flex items-center gap-2.5 text-sm transition-colors" style={{ color: 'rgba(255,255,255,0.85)' }}>
                     <c.Icon size={14} style={{ color: ACCENT, flexShrink: 0 }} />
                     {c.label}
                   </span>
@@ -279,7 +279,7 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang }) => {
 
             <div className="mt-3 rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
               <p className="text-xs font-semibold text-white mb-1">{t('Ikuti SurePath di Google', 'Follow SurePath on Google')}</p>
-              <p className="text-xs mb-2" style={{ color: 'rgba(255,255,255,0.45)' }}>{t('Pilih SurePath sebagai sumber pilihan agar artikel kami lebih mudah ditemukan di Google.', 'Choose SurePath as a preferred source to find our articles more easily on Google.')}</p>
+              <p className="text-xs mb-2" style={{ color: 'rgba(255,255,255,0.85)' }}>{t('Pilih SurePath sebagai sumber pilihan agar artikel kami lebih mudah ditemukan di Google.', 'Choose SurePath as a preferred source to find our articles more easily on Google.')}</p>
               <button
                 id="sp-preferred-source-btn"
                 type="button"
@@ -309,7 +309,7 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang }) => {
                 <a key={s.key} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label}
                   className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-110"
                   style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <span className="text-2xs font-black uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.3)' }}>{s.key}</span>
+                  <span className="text-2xs font-black uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.75)' }}>{s.key}</span>
                 </a>
               ))}
             </div>
@@ -318,11 +318,11 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang }) => {
           {/* Link columns */}
           {columns.map(col => (
             <div key={col.title}>
-              <p className="text-2xs font-black uppercase tracking-[0.25em] mb-5" style={{ color: 'rgba(255,255,255,0.3)' }}>{col.title}</p>
+              <p className="text-2xs font-black uppercase tracking-[0.25em] mb-5" style={{ color: 'rgba(255,255,255,0.75)' }}>{col.title}</p>
               <ul className="space-y-3">
                 {col.links.map(l => (
                   <li key={l.path}>
-                    <a href={l.path} onClick={e => { e.preventDefault(); navigate(l.path); }} className="text-sm transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>{l.label}</a>
+                    <a href={l.path} onClick={e => { e.preventDefault(); navigate(l.path); }} className="text-sm transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.78)', textDecoration: 'none' }}>{l.label}</a>
                   </li>
                 ))}
               </ul>
@@ -332,7 +332,7 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang }) => {
 
         {/* Regulatory disclosure */}
         <div className="mt-12 rounded-2xl px-5 py-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-          <p className="text-2xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.32)' }}>
+          <p className="text-2xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.80)' }}>
             {t(
               'SurePath adalah platform teknologi yang memasarkan produk asuransi dari perusahaan asuransi berizin dan diawasi oleh Otoritas Jasa Keuangan (OJK). Seluruh produk asuransi diterbitkan oleh perusahaan asuransi mitra sesuai ketentuan yang berlaku. SurePath bukan perusahaan asuransi.',
               'SurePath is a technology platform marketing insurance products from licensed insurers supervised by the Indonesian Financial Services Authority (OJK). All insurance products are issued by partner insurers under applicable regulations. SurePath is not an insurance company.'
@@ -341,18 +341,18 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang }) => {
         </div>
 
         <div className="mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          <p className="text-2xs" style={{ color: 'rgba(255,255,255,0.18)' }}>© {new Date().getFullYear()} PT Ruang Proteksi Indonesia. {t('Seluruh hak dilindungi.', 'All rights reserved.')}</p>
+          <p className="text-2xs" style={{ color: 'rgba(255,255,255,0.65)' }}>© {new Date().getFullYear()} PT Ruang Proteksi Indonesia. {t('Seluruh hak dilindungi.', 'All rights reserved.')}</p>
           <div className="flex items-center gap-6">
             {[
               { label: t('Privasi', 'Privacy'), path: '/privacy' },
               { label: t('Ketentuan', 'Terms'), path: '/terms' },
               { label: t('Cookie', 'Cookie'),   path: '/cookie' },
             ].map(l => (
-              <a key={l.path} href={l.path} onClick={e => { e.preventDefault(); navigate(l.path); }} className="text-2xs transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.18)', textDecoration: 'none' }}>{l.label}</a>
+              <a key={l.path} href={l.path} onClick={e => { e.preventDefault(); navigate(l.path); }} className="text-2xs transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'none' }}>{l.label}</a>
             ))}
             <button onClick={() => navigate('/admin')} aria-label="Admin"
               className="flex items-center gap-1 text-2xs transition-colors hover:text-white"
-              style={{ color: 'rgba(255,255,255,0.18)' }}>
+              style={{ color: 'rgba(255,255,255,0.65)' }}>
               <Lock size={9} /> Admin
             </button>
           </div>

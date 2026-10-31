@@ -5,8 +5,9 @@
 // MANDEK >14 hari: "7 di tahap DOKUMEN" tidak bisa ditindaklanjuti,
 // "3 dari 7 mandek" bisa.
 import React, { useEffect, useState } from 'react';
-import { AlertTriangle, TrendingUp, UserX, Clock, Users } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 import { fetchMarketingSummary, type MarketingSummary, type PipelineStage } from '../../services/supabaseService';
+import ModuleIcon from '../shared/ModuleIcon';
 
 const STAGES: { id: PipelineStage; label: string }[] = [
   { id: 'DAFTAR', label: 'Daftar' },
@@ -15,11 +16,11 @@ const STAGES: { id: PipelineStage; label: string }[] = [
   { id: 'PRODUKTIF', label: 'Produktif' },
 ];
 
-const Kartu: React.FC<{ label: string; nilai: React.ReactNode; sub?: string; Icon: React.ElementType; nada?: 'netral' | 'waspada' }> =
-({ label, nilai, sub, Icon, nada = 'netral' }) => (
+const Kartu: React.FC<{ label: string; nilai: React.ReactNode; sub?: string; iconId: string; nada?: 'netral' | 'waspada' }> =
+({ label, nilai, sub, iconId, nada = 'netral' }) => (
   <div className={`rounded-2xl p-4 border ${nada === 'waspada' ? 'border-amber-400/40 bg-amber-50 dark:bg-amber-950/20' : 'border-ds-line bg-ds-card'}`}>
     <div className="flex items-center gap-2 mb-2">
-      <Icon size={16} className={nada === 'waspada' ? 'text-amber-600' : 'text-ds-ink3'} />
+      <ModuleIcon id={iconId} size={28} />
       <span className="text-[10px] font-black uppercase tracking-widest text-ds-ink3">{label}</span>
     </div>
     <div className="text-2xl font-black text-ds-ink1 leading-none">{nilai}</div>
@@ -49,15 +50,15 @@ const MarketingDashboard: React.FC = () => {
   return (
     <div className="p-4 space-y-5">
       <div className="grid grid-cols-2 gap-3">
-        <Kartu label="Agen saya" nilai={s.total_agen} Icon={Users}
+        <Kartu label="Agen saya" nilai={s.total_agen} iconId="agents"
                sub={`${produktif} dari ${s.total_agen} pernah berproduksi`} />
-        <Kartu label="Belum produksi" nilai={s.belum_pernah_produksi} Icon={UserX}
+        <Kartu label="Belum produksi" nilai={s.belum_pernah_produksi} iconId="approvals"
                nada={s.belum_pernah_produksi > 0 ? 'waspada' : 'netral'}
                sub="direkrut, belum pernah menjual" />
-        <Kartu label="Follow-up telat" nilai={s.follow_up_telat} Icon={Clock}
+        <Kartu label="Follow-up telat" nilai={s.follow_up_telat} iconId="notifications"
                nada={s.follow_up_telat > 0 ? 'waspada' : 'netral'}
                sub="janji yang sudah lewat tanggal" />
-        <Kartu label="Tanpa handler" nilai={s.agen_tanpa_handler} Icon={AlertTriangle}
+        <Kartu label="Tanpa handler" nilai={s.agen_tanpa_handler} iconId="security"
                nada={s.agen_tanpa_handler > 0 ? 'waspada' : 'netral'}
                sub="agen belum ditugaskan" />
       </div>

@@ -1,14 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import {
-  Plus, Pencil, Trash2, RefreshCw, Save, X, Car,
-  ToggleLeft, ToggleRight, Database, Upload,
-} from 'lucide-react';
+import { Plus, Pencil, Trash2, RefreshCw, Save, X, ToggleLeft, ToggleRight, Database, Upload } from 'lucide-react';
 import { supabase } from '../../services/supabaseService';
 import { useConfirmDialog, useToast } from '../ui';
 import { CAR_DATABASE } from '../../constants';
 import PricelistUploadModal from './PricelistUploadModal';
 import { FilterBar } from './shared/FilterBar';
 import { DataTable, type DataTableColumn } from './shared/DataTable';
+import ModuleIcon from '../shared/ModuleIcon';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -440,7 +438,7 @@ const VehiclePricelistAdmin: React.FC = () => {
         <div className="text-center py-16 text-ds-ink3 text-sm font-bold">Memuat data...</div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 text-ds-ink3 text-sm font-bold flex flex-col items-center gap-4">
-          <Car size={40} className="text-ds-ink2" />
+          <ModuleIcon id="vehicle_pricelist" size={56} />
           {query || activeVersion ? 'Tidak ada hasil untuk filter ini.' : 'Belum ada data override. Klik "Tambah Override" atau "Sinkronisasi dari Database Bawaan".'}
         </div>
       ) : (

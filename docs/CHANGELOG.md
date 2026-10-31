@@ -1,6 +1,6 @@
 # SurePath — Changelog
 
-## v2.7.35 — 2026-10-31
+## v2.7.38 — 2026-10-31
 
 ### Beranda Mitra dibangun ulang dalam bahasa super app
 
@@ -57,6 +57,133 @@ Logic bisnis, login, dan jalur uang tidak disentuh: saldo hanya dibaca
 `tsc --noEmit` bersih, ESLint bersih (satu peringatan lama tidak terkait),
 459 unit test lulus, `npm run build` hijau, dan layarnya dilihat sendiri di
 Chromium 390×844 pada mode terang dan gelap.
+## v2.7.37 — 2026-10-31
+
+Agent app: promo banner bergambar di Beranda, transisi onboarding yang lebih halus.
+
+### Beranda Mitra: banner promo bergambar
+- `components/PromoBanner.tsx` yang strip teks saja diganti dengan
+  `components/agent/AgentPromoBanner.tsx` khusus untuk Beranda agent —
+  kartu ber-ilustrasi (gradient hijau + ObQuote/ObWallet/ObGrowth)
+  dengan headline, subcopy, dots, dan tombol tutup.
+- CMS section baru `promo_banner_agent`: admin bisa isi `headline`,
+  `subtitle`, `cta_text`, `bg_value`, dan `extra_json.image_url` +
+  `extra_json.cta_url`. Jika kosong atau `is_visible=false`, komponen
+  menampilkan rotator built-in tiga slide (quote cepat, komisi
+  transparan, tier Elite) agar slot tidak pernah terlihat kosong.
+- Dismiss di-remember per section_id di localStorage; built-in rotator
+  bergilir 7 detik dan dot-nya bisa diklik manual.
+
+### Onboarding mitra: transisi slide yang lebih halus
+- Transisi slide di `components/OnboardingFlow.tsx` yang sebelumnya
+  hanya fade+translate-Y kini sadar arah: maju → masuk dari kanan,
+  mundur → masuk dari kiri, dengan scale subtle pada ilustrasi.
+- Preload gambar slide berikutnya (role non-CUSTOMER) agar transisi
+  tidak frame kosong saat Unsplash lambat.
+- Swipe horizontal di area konten untuk maju/mundur antar slide (≥40px).
+- Dot progress indicator transisi 500ms (sebelumnya 300ms) agar sinkron
+  dengan slide copy.
+- `prefers-reduced-motion` menonaktifkan semua animasi baru.
+
+### Audit flow Pembelian Asuransi Mobil
+- Peta alur dicatat di `docs/CAR_INSURANCE_FLOW_AUDIT_2026-10-31.md`:
+  `AgentQuoteBuilder` → `VehicleUnderwritingWizard` 7 langkah
+  (Jenis → Klien → Detail → Coverage+Insurer → Foto+AI → Diskon+Delivery
+  → Order+Xendit). Draft tersimpan di sessionStorage per-agent.
+- Logika premi OJK sudah benar: `calcOjkPremium` dipanggil dengan
+  rate band berdasarkan harga, zona dari provinsi, dan add-ons (banjir,
+  gempa, huru-hara, TPL, PA driver, PA passenger).
+- Tidak ada perubahan logika dalam rilis ini — hanya pemetaan dan
+  verifikasi.
+
+## v2.7.36 — 2026-10-31
+
+Perbaikan situs publik, paket 1 — audit 31 Okt 2026.
+
+### Prospek dari formulir kontak akhirnya masuk ke antrean
+- `/contact` dulu hanya memanggil `setSent(true)` lalu memberi tahu
+  pengunjung "Pesan Terkirim!" tanpa mengirim apa pun. Setiap prospek
+  dibuang dan janjinya palsu. Kini isinya tersimpan di tabel baru
+  `sp_contact_leads` (RLS deny-all, tulis hanya lewat `data-gateway`
+  dengan rate limit per IP) dan muncul di dasbor operator sebagai
+  kartu "Prospek Masuk" + modal daftar lengkap dengan email/WhatsApp
+  terklik dan transisi NEW → DIPROSES → SELESAI.
+- Aksi gateway baru: `submit_contact_lead` (publik),
+  `list_contact_leads` + `update_contact_lead` (admin/operator).
+- Notifikasi Telegram terkirim untuk tiap prospek baru (email dan
+  WhatsApp belum aktif sebagai tujuan, konfirmasi roland 31 Okt 2026).
+
+### Statistik dan testimoni karangan di `/about` dihapus
+- Hilangkan "12.400+ Nasabah Aktif", "98% Tingkat Kepuasan",
+  "18+ Mitra Insurer", "200+ Kota Jangkauan" dan tiga testimoni
+  bernama (Rafi A., Dewi S., Hendra K.). Angka yang sama pernah
+  dinonaktifkan di beranda justru karena tidak nyata.
+- Diganti dengan daftar enam mitra asuransi yang NYATA, dari
+  `sp_insurers` produksi: Asuransi Sinar Mas, Intra Asia, Jasindo,
+  Sompo Insurance Indonesia, Tugu Insurance, Zurich Asuransi
+  Indonesia. Komponen `<InsurerPartners/>` baru di
+  `src/pages/site/`, sumber kebenaran tunggal di `insurerPartners.ts`.
+- Logo belum ada di sistem (`logo_url` NULL untuk kesepuluh baris),
+  jadi kartu tampil sebagai nama sampai berkas resmi tersedia.
+  Jangan isi dengan logo unduhan sembarangan — perlu izin pemakaian.
+
+### Jam layanan 24/7 di seluruh situs
+- `/contact` dulu menampilkan Sen–Jum 09:00–18:00 sementara beranda
+  menyatakan "24/7 Support Online". Dua klaim di situs yang sama.
+  Semua jam disamakan jadi 24 jam, sesuai arahan roland 31 Okt 2026.
+
+### Kontras footer dan aksen mode terang
+- Semua tulisan footer di atas `#0f172a` lulus WCAG AA. Hak cipta
+  1,74:1 → 8,03:1, pengungkapan OJK 2,88:1 → 10,34:1, 22 tautan
+  footer 3,81:1 → 7,66:1, deskripsi merek 4,46:1 → 13,02:1.
+- `DAY_ACCENT` di `siteKit.tsx` berubah dari `#16a34a` (3,11:1 di
+  latar krem — gagal AA) jadi `#166534` (6,73:1). Hue hijau yang
+  sama; dipakai setiap "Lihat Semua / Pelajari" dan kata beraksen
+  di judul halaman marketing. `ACCENT` untuk hero/dark mode tetap.
+
+### Event konversi GA4
+- `src/analytics.ts` helper `trackEvent()` baru. Dipasang di:
+  CTA utama + sekunder hero, kartu produk, CTA final beranda,
+  CTA kalkulator (signin / detail), tombol WhatsApp melayang
+  (bawa `source_path`), dan submit formulir kontak. GA4 sudah
+  terpasang (`G-CLB9K1RG97`) tapi dulu hanya mengirim `page_view`.
+
+### Dokumen rencana
+- `/mnt/project-files/website-2026-10-31/usulan-upgrade-website.md`
+  memuat semua 23 temuan dengan dampak/usaha/risiko. Paket A, B,
+  C, G, I dari daftar itu dikerjakan di sini.
+## v2.7.35 — 2026-10-31
+
+### Audit ikon: semua ikon modul di app & dashboard memakai set ilustrasi baru
+
+Roland: "icon di app dan dashboard masih beberapa menggunakan icon yg lama".
+Audit menyeluruh di keenam portal (Admin, Customer, Agent, Operator, Insurer,
+B2B) plus portal Marketing dan layar bersama. Website publik (`src/pages`,
+`components/landing`) sengaja tidak disentuh.
+
+- **Satu pintu ikon**: `components/shared/ModuleIcon.tsx` (`<ModuleIcon id>`,
+  `moduleIcon(id)`). Ikon dipilih lewat id Icon Manager, jadi unggahan admin
+  tetap berlaku di mana-mana, lalu seni Brand, lalu set ilustrasi.
+- **Admin**: kartu KPI & empty state (`iconId`), tujuh dashboard workspace,
+  AdminDashboard, CommandDashboard, palet perintah, bottom-nav HP, panel
+  lonceng, jenis notifikasi (`notifMeta`), serta modul Views, Insurer, Ops
+  Console, AI Finance/Admin, Perjanjian Mitra, Polis, Website, Dokumen, OJK,
+  Promo, Tier, Pricelist, B2B, Transkrip Pathy. Definisi ikon lucide lama di
+  `navigation.ts` dihapus (ikon kini diturunkan dari `id` menu).
+- **Aplikasi**: pilihan produk (Mobil/Travel/PA/Barang/Kesehatan) di Beli,
+  Penawaran, Klaim, Komisi; Beranda, Dompet, Jaringan, Papan Peringkat, menu
+  Profil Mitra; aksi cepat & kartu polis Nasabah; antrean dan notifikasi
+  Operator; dashboard, order, profil Insurer; pilihan produk B2B; kartu
+  Marketing; AppSelector, UserProfile, NotificationDrawer, panel AI, wizard
+  (mobil, travel, PA, MPAR, custom, jiwa) dan halaman review.
+- **Lonceng header**: `PortalHeader` kini selalu memakai ikon `notifications`;
+  prop `BellIcon` ditandai usang dan dihapus dari semua pemanggil.
+- Lucide tetap dipakai untuk kontrol/afordans (chevron, X, cari, mata, panah,
+  spinner, status centang/peringatan) — bukan ikon modul.
+- Tes penjaga baru `services/__tests__/moduleIconIds.test.ts`: setiap id yang
+  dipakai `ModuleIcon`/`moduleIcon`/`iconId` harus ada di daftar Icon Manager.
+
+Verifikasi: `tsc --noEmit` bersih, ESLint bersih, vitest 461/461.
 
 ## v2.7.34 — 2026-10-31
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileCheck, Clock, Send, AlertTriangle, RefreshCw } from 'lucide-react';
+import { FileCheck, Send, RefreshCw } from 'lucide-react';
 import WorkspaceShell from '../shared/WorkspaceShell';
 import KpiCard from '../shared/KpiCard';
 
@@ -34,10 +34,10 @@ export const InsurerLiaisonDashboard: React.FC<Props> = ({ userRole, currentUser
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <KpiCard label="Menunggu Review" value="—" sublabel="Butuh tindak lanjut" icon={Clock} accent="#F59E0B" />
-          <KpiCard label="Review Terkirim" value="—" sublabel="Token aktif" icon={Send} accent="#3B82F6" />
-          <KpiCard label="Siap Terbit" value="—" sublabel="Disetujui, menunggu polis" icon={FileCheck} accent="#22C55E" />
-          <KpiCard label="Lewat SLA" value="—" sublabel="Perlu eskalasi" icon={AlertTriangle} accent="#EF4444" />
+          <KpiCard label="Menunggu Review" value="—" sublabel="Butuh tindak lanjut" iconId="approvals" accent="#F59E0B" />
+          <KpiCard label="Review Terkirim" value="—" sublabel="Token aktif" iconId="insurers" accent="#3B82F6" />
+          <KpiCard label="Siap Terbit" value="—" sublabel="Disetujui, menunggu polis" iconId="policy" accent="#22C55E" />
+          <KpiCard label="Lewat SLA" value="—" sublabel="Perlu eskalasi" iconId="security" accent="#EF4444" />
         </div>
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">

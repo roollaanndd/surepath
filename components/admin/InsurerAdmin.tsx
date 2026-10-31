@@ -1,15 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Plus, Pencil, Trash2, ChevronDown, ChevronUp,
-  ToggleLeft, ToggleRight, X, Save, Building2, Package,
-  RefreshCw, Upload, Loader2, KeyRound, Link2, Copy, Check, Ban,
-} from 'lucide-react';
+import { Plus, Pencil, Trash2, ChevronDown, ChevronUp, ToggleLeft, ToggleRight, X, Save, Package, RefreshCw, Upload, Loader2, Copy, Check, Ban } from 'lucide-react';
 import { supabase, uploadInsurerLogo, callGateway } from '../../services/supabaseService';
 import { useConfirmDialog, useToast } from '../ui';
 import {
   CAR_COMP_MIN, CAR_COMP_MAX, CAR_TLO_MIN, CAR_TLO_MAX,
   NON_VEHICLE_RATES,
 } from '../../services/ojkRates';
+import ModuleIcon from '../shared/ModuleIcon';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -232,7 +229,7 @@ const InsurerModal: React.FC<InsurerModalProps> = ({ initial, onSave, onClose })
                 {logoUrl ? (
                   <img loading="lazy" src={logoUrl} alt={form.name} className="w-full h-full object-contain p-1.5" />
                 ) : (
-                  <Building2 size={20} className="text-ds-ink3" />
+                  <ModuleIcon id="insurers" size={30} />
                 )}
               </div>
               <input ref={logoInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml"
@@ -843,7 +840,7 @@ const InsurerCard: React.FC<InsurerCardProps> = ({ insurer, onEdit, onDelete, on
           {insurer.logo_url ? (
             <img loading="lazy" src={insurer.logo_url} alt={insurer.name} className="w-full h-full object-contain p-1" />
           ) : (
-            <Building2 size={18} className="text-emerald-700 dark:text-emerald-400" />
+            <ModuleIcon id="insurers" size={28} />
           )}
         </div>
         <div className="flex-1 min-w-0">
@@ -1000,9 +997,9 @@ const InsurerAdmin: React.FC = () => {
       {/* Tab Navigation */}
       <div className="flex items-center gap-1 border-b border-ds-border">
         {([
-          { id: 'insurers',      label: 'Perusahaan',    icon: Building2 },
-          { id: 'tokens',        label: 'Token Akses',   icon: KeyRound },
-          { id: 'review-links',  label: 'Link Review',   icon: Link2 },
+          { id: 'insurers',      label: 'Perusahaan',    iconId: 'insurers' },
+          { id: 'tokens',        label: 'Token Akses',   iconId: 'security' },
+          { id: 'review-links',  label: 'Link Review',   iconId: 'documents' },
         ] as const).map(tab => {
           const active = activeTab === tab.id;
           return (
@@ -1015,7 +1012,7 @@ const InsurerAdmin: React.FC = () => {
                   : 'border-transparent text-ds-ink3 hover:text-ds-ink2'
               }`}
             >
-              <tab.icon size={13} />
+              <ModuleIcon id={tab.iconId} size={22} />
               {tab.label}
             </button>
           );

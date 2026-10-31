@@ -1,12 +1,15 @@
 // OperatorDashboard.tsx — Beranda tab. Aggregated queue summary + quick stats.
 import React, { useEffect, useState, useCallback } from 'react';
-import { FileText, ShieldAlert, Wallet, UserCheck, Bell, TrendingUp, Clock, Eye } from 'lucide-react';
+import { TrendingUp, Clock, Eye } from 'lucide-react';
 import { Language } from '../../types';
 import { SectionLabel } from '../shared/cards';
 import { SkeletonCard, useToast } from '../ui';
 import { useT } from '../../src/i18n';
 import { getQueueSummary, listPendingAgents, type QueueSummary, type OperatorAgent } from '../../services/operatorService';
+import { listContactLeads } from '../../services/supabaseService';
+import OperatorContactLeads from './OperatorContactLeads';
 import { AgentArtKeyframes, SpotOrders } from '../agent/AgentArt';
+import ModuleIcon from '../shared/ModuleIcon';
 
 interface Props {
   operator: any;
@@ -22,16 +25,20 @@ const OperatorDashboard: React.FC<Props> = ({ operator, lang, onNavigate, refres
   const [summary, setSummary] = useState<QueueSummary | null>(null);
   const [pendingAgents, setPendingAgents] = useState<OperatorAgent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [newLeadCount, setNewLeadCount] = useState(0);
+  const [leadsOpen, setLeadsOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [s, agents] = await Promise.all([
+      const [sum, agents, newLeads] = await Promise.all([
         getQueueSummary(),
         listPendingAgents(),
+        listContactLeads('NEW'),
       ]);
-      setSummary(s);
+      setSummary(sum);
       setPendingAgents(agents);
+      setNewLeadCount(newLeads.length);
     } catch (e: any) {
       console.error('OperatorDashboard load:', e);
       toast.error(`Gagal memuat dashboard: ${e.message}`);
@@ -53,10 +60,10 @@ const OperatorDashboard: React.FC<Props> = ({ operator, lang, onNavigate, refres
   }
 
   const queueCards = [
-    { label: 'Polis Pending',   value: summary?.pendingOrders ?? 0,        icon: FileText,    color: 'text-blue-500',    bg: 'bg-blue-50 dark:bg-blue-950/30',     tab: 'orders' },
-    { label: 'Klaim Pending',   value: summary?.pendingClaims ?? 0,        icon: ShieldAlert, color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-50 dark:bg-orange-950/30',     tab: 'claims' },
-    { label: 'Penarikan Pending', value: summary?.pendingWithdrawals ?? 0, icon: Wallet,      color: 'text-ds-amber',   bg: 'bg-amber-50 dark:bg-amber-950/30',   tab: 'withdrawals' },
-    { label: 'Agen Perlu Verifikasi', value: summary?.pendingAgents ?? 0,  icon: UserCheck,   color: 'text-ds-green', bg: 'bg-emerald-50 dark:bg-emerald-950/30', tab: 'agents' },
+    { label: 'Polis Pending',   value: summary?.pendingOrders ?? 0,        iconId: 'policy_orders',    color: 'text-blue-500',    bg: 'bg-blue-50 dark:bg-blue-950/30',     tab: 'orders' },
+    { label: 'Klaim Pending',   value: summary?.pendingClaims ?? 0,        iconId: 'claims_admin', color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-50 dark:bg-orange-950/30',     tab: 'claims' },
+    { label: 'Penarikan Pending', value: summary?.pendingWithdrawals ?? 0, iconId: 'withdrawals',      color: 'text-ds-amber',   bg: 'bg-amber-50 dark:bg-amber-950/30',   tab: 'withdrawals' },
+    { label: 'Agen Perlu Verifikasi', value: summary?.pendingAgents ?? 0,  iconId: 'agents',   color: 'text-ds-green', bg: 'bg-emerald-50 dark:bg-emerald-950/30', tab: 'agents' },
   ];
 
   return (
@@ -105,12 +112,34 @@ const OperatorDashboard: React.FC<Props> = ({ operator, lang, onNavigate, refres
               onClick={() => onNavigate(c.tab)}
               className={`sp-operator-queue-card text-left p-4 rounded-2xl border border-ds-border bg-white hover:shadow-ds-md active:scale-[0.98] transition-all duration-200 dark:bg-ds-dk-card ${c.bg}`}
             >
-              <c.icon size={20} className={c.color} />
+              <ModuleIcon id={c.iconId} size={36} />
               <p className="text-2xl font-black tracking-tight mt-2 text-ds-ink tabular-nums">{c.value}</p>
               <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-wider mt-0.5 leading-tight">{c.label}</p>
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Prospek dari situs — menggantikan "formulir kontak membuang pesan" */}
+      <div>
+        <SectionLabel>Prospek Masuk</SectionLabel>
+        <button onClick={() => setLeadsOpen(true)}
+          className="w-full p-4 rounded-2xl border border-ds-border bg-white dark:bg-ds-dk-card flex items-center gap-3 text-left active:scale-[0.99] transition-transform">
+          <div className="w-10 h-10 rounded-full bg-ds-green-tint flex items-center justify-center shrink-0">
+            <ModuleIcon id="notifications" size={28} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-ds-ink">
+              {newLeadCount > 0 ? `${newLeadCount} prospek baru menunggu` : 'Tidak ada prospek baru'}
+            </p>
+            <p className="text-xs text-ds-ink3">Dari formulir kontak myinsurepath.com</p>
+          </div>
+          {newLeadCount > 0 && (
+            <span className="shrink-0 text-2xs font-black bg-ds-amber/15 text-ds-amber px-2 py-1 rounded-full tabular-nums">
+              {newLeadCount}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* Quick notif summary */}
@@ -120,7 +149,7 @@ const OperatorDashboard: React.FC<Props> = ({ operator, lang, onNavigate, refres
         </SectionLabel>
         <div className="p-4 rounded-2xl border border-ds-border bg-ds-card flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-ds-green-tint flex items-center justify-center">
-            <Bell size={18} className="text-ds-green" />
+            <ModuleIcon id="notifications" size={30} />
           </div>
           <div className="flex-1">
             <p className="text-sm font-bold text-ds-ink">{summary?.unreadNotifications ?? 0} notifikasi belum dibaca</p>
@@ -166,6 +195,7 @@ const OperatorDashboard: React.FC<Props> = ({ operator, lang, onNavigate, refres
           </div>
         </div>
       )}
+          <OperatorContactLeads open={leadsOpen} onClose={() => { setLeadsOpen(false); load(); }} />
     </div>
   );
 };

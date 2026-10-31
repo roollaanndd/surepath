@@ -10,6 +10,7 @@ import { submitClaim, uploadClaimPhoto, analyzeClaimPhotos, ClaimPhotoAnalysisRe
 import { dataUrlToBlob } from '../services/orderDocuments';
 import ClaimSensePanel from './shared/ClaimSensePanel';
 import { consumeClaimPrefill } from '../services/claimHandoff';
+import ModuleIcon from './shared/ModuleIcon';
 
 const MAX_CLAIM_PHOTOS = 5;
 
@@ -385,7 +386,7 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
              onClick={() => { setClaimType('AUTO'); setStep('upload'); }}
              className="p-8 bg-white dark:bg-slate-900 rounded-[3rem] border border-slate-100 dark:border-white/5 shadow-xl flex items-center gap-8 group hover:border-emerald-500 transition-all active:scale-95"
            >
-              <div className="w-20 h-20 bg-blue-50 dark:bg-blue-500/10 rounded-3xl flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform shadow-inner"><Car size={40}/></div>
+              <div className="w-20 h-20 bg-blue-50 dark:bg-blue-500/10 rounded-3xl flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform shadow-inner"><ModuleIcon id="car_protection" size={60}/></div>
               <div className="text-left">
                  <h3 className="font-black text-2xl uppercase tracking-tight">{t('Car Claim', 'Klaim Mobil')}</h3>
                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2">{t('Submit photos of damage', 'Kirim foto kerusakan')}</p>
@@ -395,7 +396,7 @@ const ClaimManager = ({ onComplete, lang, currentUser: currentUserProp }: { onCo
              onClick={() => { setClaimType('HEALTH'); setStep('upload'); }}
              className="p-8 bg-white dark:bg-slate-900 rounded-[3rem] border border-slate-100 dark:border-white/5 shadow-xl flex items-center gap-8 group hover:border-emerald-500 transition-all active:scale-95"
            >
-              <div className="w-20 h-20 bg-rose-50 dark:bg-rose-500/10 rounded-3xl flex items-center justify-center text-rose-500 group-hover:scale-110 transition-transform shadow-inner"><HeartPulse size={40}/></div>
+              <div className="w-20 h-20 bg-rose-50 dark:bg-rose-500/10 rounded-3xl flex items-center justify-center text-rose-500 group-hover:scale-110 transition-transform shadow-inner"><ModuleIcon id="family_health" size={60}/></div>
               <div className="text-left">
                  <h3 className="font-black text-2xl uppercase tracking-tight">{t('Medical Claim', 'Klaim Medis')}</h3>
                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2">{t('Upload medical receipts', 'Kirim kuitansi rumah sakit')}</p>

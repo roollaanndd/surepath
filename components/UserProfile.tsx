@@ -1,21 +1,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { APP_VERSION } from '../src/version';
-import { 
-  User, ShieldCheck, ChevronRight, Landmark,
-  Bell, FileCheck, Zap, LogOut,
-  Lock, Package, Car, Plane,
-  X, History,
-  Fingerprint, ShieldAlert, BadgeCheck,
-  CreditCard, LayoutGrid, 
-  Microscope, Eye
-} from 'lucide-react';
+import { User, ShieldCheck, ChevronRight, Landmark, FileCheck, Zap, LogOut, Car, X, History, ShieldAlert, BadgeCheck, CreditCard, LayoutGrid, Microscope, Eye } from 'lucide-react';
 import { db, Policy, Claim, Transaction } from '../db';
 import { Language } from '../types';
 import { formatIDR } from './car-wizard/WizardUI';
 import { getTncRecord, type TncRecord } from '../services/supabaseService';
 import AccessibilitySettings from './customer/AccessibilitySettings';
 import ChangePasswordModal from './shared/ChangePasswordModal';
+import ModuleIcon from './shared/ModuleIcon';
+import { moduleIcon } from './shared/ModuleIcon';
 
 interface UserProfileProps {
   currentUser: any;
@@ -51,7 +45,7 @@ const PolicyDetailModal = ({ policy, onClose }: { policy: Policy, onClose: () =>
           <div className="p-8 border-b border-black/5 dark:border-white/5 flex justify-between items-center bg-gray-50 dark:bg-white/5">
              <div className="flex items-center gap-5">
                 <div className="w-14 h-14 bg-ds-green rounded-2xl flex items-center justify-center text-ds-on-green shadow-ds-green">
-                   {policy.type === 'CAR' ? <Car size={28}/> : <Plane size={28}/>}
+                   <ModuleIcon id={policy.type === 'CAR' ? 'car_protection' : 'travel_safe'} size={44}/>
                 </div>
                 <div>
                    <p className="text-[0.6rem] font-black text-ds-green uppercase tracking-[0.3em]">Policy Matrix Node</p>
@@ -283,7 +277,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ currentUser, lang = Language.
        </div>
        {policies.length === 0 ? (
           <div className="py-16 text-center flex flex-col items-center gap-3 bg-ds-card rounded-2xl border border-dashed border-ds-border">
-             <div className="w-12 h-12 rounded-2xl bg-ds-card2 flex items-center justify-center"><Package size={24} className="text-ds-ink3"/></div>
+             <div className="w-12 h-12 rounded-2xl bg-ds-card2 flex items-center justify-center"><ModuleIcon id="policy" size={36}/></div>
              <div className="space-y-1">
                 <p className="text-sm font-black text-ds-ink2">{t('No policies yet', 'Belum ada polis')}</p>
                 <p className="text-xs text-ds-ink3">{t('Start protecting yourself today', 'Mulai lindungi dirimu sekarang')}</p>
@@ -298,7 +292,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ currentUser, lang = Language.
             >
                <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
-                     {p.type === 'CAR' ? <Car size={18} className="text-ds-blue"/> : <Plane size={18} className="text-ds-blue"/>}
+                     <ModuleIcon id={p.type === 'CAR' ? 'car_protection' : 'travel_safe'} size={30}/>
                   </div>
                   <div>
                      <p className="text-sm font-black text-ds-ink">{p.policyNumber}</p>
@@ -323,7 +317,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ currentUser, lang = Language.
     <div className="space-y-3 animate-fade-in">
        {claims.length === 0 ? (
           <div className="py-16 text-center flex flex-col items-center gap-3 bg-ds-card rounded-2xl border border-dashed border-ds-border">
-             <div className="w-12 h-12 rounded-2xl bg-rose-50 flex items-center justify-center"><ShieldAlert size={24} className="text-ds-red"/></div>
+             <div className="w-12 h-12 rounded-2xl bg-rose-50 flex items-center justify-center"><ModuleIcon id="claims" size={36}/></div>
              <p className="text-sm font-black text-ds-ink2">{t('No Claims Submitted', 'Belum Ada Klaim')}</p>
              <p className="text-xs text-ds-ink3">{t('Your claims will appear here', 'Klaim Anda akan muncul di sini')}</p>
           </div>
@@ -375,18 +369,18 @@ const UserProfile: React.FC<UserProfileProps> = ({ currentUser, lang = Language.
        <p className="text-[10px] font-bold text-ds-ink3 uppercase tracking-widest">{t('Security & Account', 'Keamanan & Akun')}</p>
        <div className="bg-ds-card rounded-2xl border border-ds-border shadow-ds-sm overflow-hidden">
           {[
-              { id: 'biometric', label: t('Biometric Login', 'Login Biometrik'), icon: Fingerprint, sub: t('Encrypted', 'Terenkripsi') },
-              { id: 'bank', label: t('Bank Account', 'Data Rekening'), icon: Landmark, sub: t('Withdrawal sync', 'Sinkronisasi dana') },
-              { id: 'password', label: t('Password & Security', 'Password & Keamanan'), icon: Lock, sub: t('Update regularly', 'Perbarui berkala') },
-              { id: 'comms', label: t('Notifications', 'Notifikasi'), icon: Bell, sub: t('Email & Push', 'Email & Notif') },
+              { id: 'biometric', label: t('Biometric Login', 'Login Biometrik'), icon: moduleIcon('security'), sub: t('Encrypted', 'Terenkripsi') },
+              { id: 'bank', label: t('Bank Account', 'Data Rekening'), icon: moduleIcon('bank','bank'), sub: t('Withdrawal sync', 'Sinkronisasi dana') },
+              { id: 'password', label: t('Password & Security', 'Password & Keamanan'), icon: moduleIcon('security'), sub: t('Update regularly', 'Perbarui berkala') },
+              { id: 'comms', label: t('Notifications', 'Notifikasi'), icon: moduleIcon('notifications'), sub: t('Email & Push', 'Email & Notif') },
           ].map((item, i, arr) => (
               <div
                 key={i}
                 onClick={() => item.id === 'password' && setIsResetModalOpen(true)}
                 className={`flex items-center gap-3 px-4 py-3.5 active:bg-ds-card2 transition-colors cursor-pointer ${i < arr.length - 1 ? 'border-b border-ds-border' : ''}`}
               >
-                <div className="w-8 h-8 rounded-xl bg-ds-card2 border border-ds-border flex items-center justify-center text-ds-ink3 flex-shrink-0">
-                  <item.icon size={15}/>
+                <div className="w-10 h-10 rounded-xl bg-ds-card2 border border-ds-border flex items-center justify-center text-ds-ink3 flex-shrink-0">
+                  <item.icon size={28}/>
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-bold text-ds-ink">{item.label}</p>

@@ -1,12 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback, lazy, Suspense } from 'react';
 import '../../src/styles/portal-modernization.css';
-import {
-  Zap, ShieldCheck,
-  Car, Plane, Bot, FileText, AlertCircle, ArrowRight, RefreshCw,
-  House, ShieldPlus, FileWarning, History
-} from 'lucide-react';
+import { ShieldCheck, Plane, AlertCircle, ArrowRight, RefreshCw, House, ShieldPlus, FileWarning, History } from 'lucide-react';
 import { Language } from '../../types';
-import { IcPathy, IcBell, IcBuy, IcClaim, IcHistory } from '../shared/CustomerIcons';
+import { IcPathy } from '../shared/CustomerIcons';
 import PortalHeader from '../shared/PortalHeader';
 import PortalTabBar, { type PortalTab } from '../shared/PortalTabBar';
 import { scrollPortalToTop } from '../shared/scrollReset';
@@ -36,6 +32,8 @@ import PathyChat, { PATHY_OPEN_EVENT } from '../shared/PathyChat';
 import { CLAIM_OPEN_EVENT } from '../../services/claimHandoff';
 import OrderDetailSheet from './OrderDetailSheet';
 import OnboardingFlow, { needsOnboarding } from '../OnboardingFlow';
+import ModuleIcon from '../shared/ModuleIcon';
+import { moduleIcon } from '../shared/ModuleIcon';
 
 // Lightweight Suspense fallback — matches the portal's general feel
 const WizardLoader = () => (
@@ -236,7 +234,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                     <p className="mt-1 max-w-[16rem] text-xs leading-relaxed text-white/65">{t('A quick view of your SurePath account score and coverage.','Ringkasan skor akun dan perlindungan SurePath kamu.')}</p>
                   </div>
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-emerald-200/20 bg-white/[0.09] shadow-inner">
-                    <ShieldCheck size={23} strokeWidth={1.8} className="text-emerald-200" />
+                    <ModuleIcon id="security" size={36} />
                   </div>
                 </div>
                 <div className="relative z-10 mt-5 flex items-center gap-4">
@@ -286,10 +284,10 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                 <ClayCard padding="md" variant="default">
                   <CircularActionGrid
                     actions={[
-                      { id: 'buy', label: t('Buy', 'Beli'), icon: IcBuy, color: '#00C16A', onClick: () => navigate('products') },
-                      { id: 'claim', label: t('Claim', 'Klaim'), icon: IcClaim, color: '#EF4444', onClick: () => navigate('claim') },
-                      { id: 'history', label: t('Policies', 'Polis'), icon: IcHistory, color: '#3B82F6', onClick: () => navigate('history') },
-                      { id: 'pathy', label: 'Pathy', icon: IcPathy, color: '#7C3AED', onClick: openPathy },
+                      { id: 'buy', label: t('Buy', 'Beli'), icon: moduleIcon('product'), color: '#00C16A', onClick: () => navigate('products') },
+                      { id: 'claim', label: t('Claim', 'Klaim'), icon: moduleIcon('claims'), color: '#EF4444', onClick: () => navigate('claim') },
+                      { id: 'history', label: t('Policies', 'Polis'), icon: moduleIcon('policy'), color: '#3B82F6', onClick: () => navigate('history') },
+                      { id: 'pathy', label: 'Pathy', icon: moduleIcon('pathy'), color: '#7C3AED', onClick: openPathy },
                     ]}
                   />
                 </ClayCard>
@@ -338,8 +336,8 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                   <div className="sp-glass rounded-2xl overflow-hidden">
                     {customerPolicies.slice(0, 2).map((p, i) => (
                       <div key={p.id} className={`flex items-center gap-3 px-4 py-3 ${i < customerPolicies.slice(0, 2).length - 1 || customerClaims.length > 0 ? 'border-b border-ds-border' : ''}`}>
-                        <div className="w-9 h-9 rounded-xl bg-ds-green-tint flex items-center justify-center flex-shrink-0">
-                          <ShieldCheck size={16} className="text-ds-green" />
+                        <div className="w-10 h-10 rounded-xl bg-ds-green-tint flex items-center justify-center flex-shrink-0">
+                          <ModuleIcon id="policy" size={30} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-bold text-ds-ink truncate">{p.product_name}</p>
@@ -352,8 +350,8 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                     ))}
                     {customerClaims.slice(0, 1).map((c) => (
                       <div key={c.id} className="flex items-center gap-3 px-4 py-3">
-                        <div className="w-9 h-9 rounded-xl bg-ds-red-lt flex items-center justify-center flex-shrink-0">
-                          <Zap size={16} className="text-ds-red" />
+                        <div className="w-10 h-10 rounded-xl bg-ds-red-lt flex items-center justify-center flex-shrink-0">
+                          <ModuleIcon id="claims" size={30} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-bold text-ds-ink truncate">{t('Claim', 'Klaim')} #{c.claim_number ?? c.id.slice(0, 8)}</p>
@@ -384,7 +382,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
 
               {/* AI recommendation strip */}
               <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-ds-green-tint">
-                <Bot size={16} className="text-ds-green flex-shrink-0" />
+                <ModuleIcon id="pathy" size={28} className="flex-shrink-0" />
                 <p className="text-xs font-bold text-ds-green flex-1">{t('Pathy recommends: add Travel protection — fits your profile', 'Pathy rekomendasikan: tambah proteksi Travel — sesuai profilmu')}</p>
                 <button onClick={() => navigate('buy-travel')} className="flex-shrink-0">
                   <ArrowRight size={14} className="text-ds-green" />
@@ -495,7 +493,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
               <section className="relative overflow-hidden rounded-[1.5rem] border border-emerald-500/15 bg-gradient-to-r from-[#0B4539] to-[#08785A] p-4 text-white shadow-[0_12px_32px_rgba(3,72,53,0.14)]">
                 <div className="flex items-center gap-3">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white/10">
-                    <ShieldCheck size={24} className="text-emerald-200" strokeWidth={1.8} />
+                    <ModuleIcon id="security" size={38} />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-2xs font-bold uppercase tracking-[0.11em] text-emerald-100/70">{t('Protection score','Skor proteksi')}</p>
@@ -514,7 +512,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-widest flex items-center gap-1.5">
-                    <FileText size={11} className="text-ds-green" />
+                    <ModuleIcon id="policy" size={20} />
                     {t('My Policies', 'Polis Saya')}
                   </p>
                   <button
@@ -544,7 +542,7 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                     <div key={i} onClick={() => setSelectedOrder(p)} className="sp-glass rounded-2xl p-4 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-ds-green-tint flex items-center justify-center flex-shrink-0">
-                          {p.vehicle_type === 'CAR' ? <Car size={18} className="text-ds-green" /> : <ShieldCheck size={18} className="text-ds-green" />}
+                          <ModuleIcon id={p.vehicle_type === 'CAR' ? 'car_protection' : 'policy'} size={32} />
                         </div>
                         <div>
                           <p className="text-sm font-black text-ds-ink">{p.policy_number ?? p.order_number ?? p.id.slice(0,8).toUpperCase()}</p>
@@ -654,7 +652,6 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
           darkMode={darkMode}
           onToggleDark={() => setDarkMode(!darkMode)}
           onAvatarClick={() => navigate('profile')}
-          BellIcon={IcBell}
           labels={{
             notifications: t('Notifications', 'Notifikasi'),
             theme: t('Toggle theme', 'Ganti tema'),

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, Target, Coins, FilePlus2 } from 'lucide-react';
-import PromoBanner from '../PromoBanner';
+import { TrendingUp, Target } from 'lucide-react';
+import AgentPromoBanner from './AgentPromoBanner';
+import ModuleIcon from '../shared/ModuleIcon';
 import { motion, useReducedMotion } from 'motion/react';
 import { Language } from '../../types';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -13,7 +14,7 @@ import SuperAppHeader from '../shared/superapp/SuperAppHeader';
 import ProtectionSummaryCard from '../shared/superapp/ProtectionSummaryCard';
 import ServiceGrid, { type ServiceTile } from '../shared/superapp/ServiceGrid';
 import ContentRail, { type RailItem } from '../shared/superapp/ContentRail';
-import { IcQuote, IcWallet, IcRank } from './AgentIcons';
+import { IcQuote, IcWallet, IcRank, IcCoin } from './AgentIcons';
 import { useTierDefinitions, getTierByCode } from '../../hooks/useTierDefinitions';
 import '../../src/styles/portal-modernization.css';
 
@@ -183,7 +184,7 @@ const AgentHome: React.FC<Props> = ({
         onOpen={() => onNavigate('wallet')}
         actions={[
           { id: 'withdraw', label: t('Withdraw', 'Tarik Dana'), icon: IcWallet, color: 'var(--ds-primary)', onClick: () => onNavigate('wallet') },
-          { id: 'commission', label: t('Commission', 'Komisi'), icon: Coins,   color: 'var(--ds-info)',    onClick: () => onNavigate('commission') },
+          { id: 'commission', label: t('Commission', 'Komisi'), icon: IcCoin,  color: 'var(--ds-info)',    onClick: () => onNavigate('commission') },
           { id: 'quote', label: t('New quote', 'Quotation'),    icon: IcQuote,  color: 'var(--ds-accent)',  onClick: () => onNavigate('quotes') },
           { id: 'rank', label: t('Ranking', 'Peringkat'),       icon: IcRank,   color: 'var(--ds-warning)', onClick: () => onNavigate('leaderboard') },
         ]}
@@ -192,7 +193,7 @@ const AgentHome: React.FC<Props> = ({
       <div className="space-y-6 pt-6">
         {savedDraftProduct && (
           <div className="sp-agent-home__draft mx-5 flex items-center gap-3 rounded-2xl border border-ds-green/25 bg-ds-green-tint p-4" role="status">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ds-card text-ds-green"><FilePlus2 size={18} /></div>
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ds-card"><ModuleIcon id="quotes" size={30} /></div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-bold text-ds-ink">{t('Continue your saved quote', 'Lanjutkan draf penawaran')}</p>
               <p className="mt-0.5 text-xs text-ds-ink2">{t('Your progress is saved for this session.', 'Progres tersimpan untuk sesi ini.')}</p>
@@ -219,7 +220,7 @@ const AgentHome: React.FC<Props> = ({
         </motion.section>
 
         <div className="px-5">
-          <PromoBanner />
+          <AgentPromoBanner lang={lang} onCta={() => onNavigate('quotes')} />
         </div>
 
         {/* Rail produk — padanan bagian konten mendatar di acuan */}
@@ -270,8 +271,8 @@ const AgentHome: React.FC<Props> = ({
               </div>
             </div>
             <div className="mt-4 flex items-center gap-2.5 border-t border-ds-border pt-4">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-ds-green-tint text-ds-green">
-                <Target size={20} />
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-ds-green-tint">
+                <ModuleIcon id="tier_promo" size={30} />
               </div>
               <div>
                 <p className="text-2xs font-medium text-ds-ink3">{t('Daily Goal', 'Target Harian')}</p>
@@ -298,7 +299,7 @@ const AgentHome: React.FC<Props> = ({
             {recentCommissions.length === 0 ? (
               <div className="flex flex-col items-center gap-2 p-8 text-center">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-ds-green-tint">
-                  <Coins size={20} className="text-ds-green" />
+                  <ModuleIcon id="commission" size={34} />
                 </div>
                 <p className="text-sm font-bold text-ds-ink">{t('No commissions yet', 'Belum ada komisi')}</p>
                 <p className="max-w-[14rem] text-xs text-ds-ink3">{t('Close your first policy to start earning.', 'Tutup polis pertamamu untuk mulai dapat komisi.')}</p>

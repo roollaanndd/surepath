@@ -2,6 +2,7 @@ import React from 'react';
 import { AlertTriangle, RefreshCw, type LucideIcon } from 'lucide-react';
 import { getStatusMeta, type StatusMeta } from '../../lib/statusMeta';
 import { ILLUSTRATION_MAP, type SpEmptyStateVariant } from '../shared/SpEmptyState';
+import ModuleIcon from '../shared/ModuleIcon';
 
 // ─── Admin design-system primitives ──────────────────────────────────────────
 //
@@ -32,18 +33,20 @@ export const AdminKpiCard: React.FC<{
   /** Exact untruncated value, shown on hover when the compact value is rounded. */
   exact?: string;
   sub?: string;
-  icon: LucideIcon;
+  /** SurePath illustrated icon (Icon Manager id). Preferred over `icon`. */
+  iconId?: string;
+  icon?: LucideIcon;
   tone?: KpiTone;
   loading?: boolean;
   onClick?: () => void;
   href?: string;
-}> = ({ label, value, exact, sub, icon: Icon, tone = 'green', loading, onClick, href }) => {
+}> = ({ label, value, exact, sub, iconId, icon: Icon, tone = 'green', loading, onClick, href }) => {
   const t = KPI_TONE[tone];
   const inner = (
     <>
       <div className="flex items-start justify-between mb-3">
-        <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${t.icon}`}>
-          <Icon size={17} />
+        <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${t.icon}`}>
+          {iconId ? <ModuleIcon id={iconId} size={30} /> : Icon ? <Icon size={17} /> : null}
         </div>
         {onClick && (
           <span className="text-2xs font-bold text-ds-green opacity-0 group-hover:opacity-100 transition-opacity">
@@ -108,13 +111,15 @@ export const AdminStatusBadge: React.FC<{
 
 export const AdminEmptyState: React.FC<{
   icon?: LucideIcon;
+  /** SurePath illustrated icon (Icon Manager id); takes priority over `icon`. */
+  iconId?: string;
   /** Illustrated SurePath empty-state variant; takes priority over `icon` when set. */
   illustration?: SpEmptyStateVariant;
   title: string;
   hint?: string;
   actionLabel?: string;
   onAction?: () => void;
-}> = ({ icon: Icon, illustration, title, hint, actionLabel, onAction }) => (
+}> = ({ icon: Icon, iconId, illustration, title, hint, actionLabel, onAction }) => (
   <div className="flex flex-col items-center justify-center py-14 px-6 text-center">
     {illustration ? (
       <div className="mb-3">
@@ -122,7 +127,7 @@ export const AdminEmptyState: React.FC<{
       </div>
     ) : (
       <div className="w-14 h-14 rounded-2xl bg-ds-card2 border border-ds-border flex items-center justify-center text-ds-ink3 mb-4">
-        {Icon && <Icon size={24} />}
+        {iconId ? <ModuleIcon id={iconId} size={40} /> : Icon && <Icon size={24} />}
       </div>
     )}
     <p className="text-sm font-black uppercase tracking-widest text-ds-ink">{title}</p>

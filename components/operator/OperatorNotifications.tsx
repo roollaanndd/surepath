@@ -1,10 +1,11 @@
 // OperatorNotifications.tsx — slide-in drawer listing all admin notifications.
 import React, { useEffect, useState, useCallback } from 'react';
-import { Bell, CheckCheck, FileText, ShieldAlert, Wallet, UserCheck, CreditCard } from 'lucide-react';
+import { CheckCheck } from 'lucide-react';
 import { Language } from '../../types';
 import { SkeletonCard, useToast } from '../ui';
 import { AgentEmpty } from '../agent/AgentArt';
 import { listNotifications, markNotificationRead, markAllNotificationsRead, type OperatorNotification } from '../../services/operatorService';
+import ModuleIcon from '../shared/ModuleIcon';
 
 interface Props {
   lang: Language;
@@ -12,13 +13,13 @@ interface Props {
   onNavigate: (tab: string) => void;
 }
 
-const ICON_MAP: Record<string, any> = {
-  NEW_ORDER:        FileText,
-  NEW_CLAIM:        ShieldAlert,
-  NEW_WITHDRAWAL:   Wallet,
-  NEW_AGENT:        UserCheck,
-  NEW_CUSTOMER:     UserCheck,
-  NEW_PAYMENT:      CreditCard,
+const ICON_MAP: Record<string, string> = {
+  NEW_ORDER:        'policy_orders',
+  NEW_CLAIM:        'claims_admin',
+  NEW_WITHDRAWAL:   'withdrawals',
+  NEW_AGENT:        'agents',
+  NEW_CUSTOMER:     'clients',
+  NEW_PAYMENT:      'payments',
 };
 
 const COLOR_MAP: Record<string, string> = {
@@ -79,7 +80,7 @@ const OperatorNotifications: React.FC<Props> = ({ onClose, onNavigate }) => {
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-ds-border shrink-0">
           <div className="flex items-center gap-2">
-            <Bell size={18} className="text-ds-green" />
+            <ModuleIcon id="notifications" size={30} />
             <h3 className="text-base font-black text-ds-ink">Notifikasi</h3>
             {items.filter(i => !i.read).length > 0 && (
               <span className="bg-ds-green text-ds-on-green text-[10px] font-black px-1.5 py-0.5 rounded-full">
@@ -116,7 +117,7 @@ const OperatorNotifications: React.FC<Props> = ({ onClose, onNavigate }) => {
           ) : (
             <div className="space-y-2">
               {items.map(n => {
-                const Icon = ICON_MAP[String(n.type)] ?? Bell;
+                const iconId = ICON_MAP[String(n.type)] ?? 'notifications';
                 const color = COLOR_MAP[String(n.type)] ?? 'bg-ds-card2 text-ds-ink2';
                 return (
                   <button
@@ -130,7 +131,7 @@ const OperatorNotifications: React.FC<Props> = ({ onClose, onNavigate }) => {
                   >
                     <div className="flex items-start gap-3">
                       <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${color}`}>
-                        <Icon size={15} />
+                        <ModuleIcon id={iconId} size={26} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold text-ds-ink truncate">{n.title}</p>

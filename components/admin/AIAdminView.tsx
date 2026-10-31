@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Bot, CheckCircle, AlertTriangle, RefreshCw,
-  Zap, ChevronRight, Clock, Eye, Sparkles,
-} from 'lucide-react';
+import { Bot, CheckCircle, AlertTriangle, RefreshCw, Zap, ChevronRight, Clock, Eye, Sparkles } from 'lucide-react';
 import {
   getAllOrders, updateOrderStatus, runAIPolicyReview,
   type SpPolicyOrder, type AIPolicyReview,
 } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
+import ModuleIcon from '../shared/ModuleIcon';
 
 const RISK_COLOR: Record<string, string> = {
   LOW:    'text-ds-green',
@@ -112,8 +110,8 @@ const AIAdminView: React.FC = () => {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <div className="w-7 h-7 bg-emerald-500/10 rounded-xl flex items-center justify-center">
-              <Bot size={14} className="text-ds-green" />
+            <div className="w-9 h-9 bg-emerald-500/10 rounded-xl flex items-center justify-center">
+              <ModuleIcon id="ai_admin" size={26} />
             </div>
             <p className="text-xs font-semibold uppercase tracking-wide text-ds-ink3">AI Admin Agent</p>
           </div>
@@ -199,7 +197,7 @@ const AIAdminView: React.FC = () => {
                     {order._analyzing
                       ? <RefreshCw size={16} className="text-ds-green animate-spin" />
                       : ai
-                        ? <Bot size={16} className="text-ds-green" />
+                        ? <ModuleIcon id="ai_admin" size={30} />
                         : <Clock size={16} className="text-ds-ink3" />
                     }
                   </div>

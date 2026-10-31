@@ -1,10 +1,8 @@
 import React, { useState, useCallback } from 'react';
-import {
-  Bot, TrendingUp, AlertTriangle, CheckCircle, RefreshCw,
-  DollarSign, BarChart3, ShieldAlert, Zap,
-} from 'lucide-react';
+import { Bot, AlertTriangle, RefreshCw, ShieldAlert, Zap } from 'lucide-react';
 import { runAIFinanceReview, type AIFinanceReview } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
+import ModuleIcon from '../shared/ModuleIcon';
 
 const SEVERITY_BG: Record<string, string> = {
   LOW:      'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
@@ -93,7 +91,7 @@ const AIFinanceView: React.FC = () => {
       {!analysis && !loading && !error && (
         <div className="text-center py-20 bg-white/[0.01] border border-ds-border rounded-[2rem]">
           <div className="w-16 h-16 mx-auto bg-emerald-500/10 rounded-[1.5rem] flex items-center justify-center mb-4">
-            <BarChart3 size={28} className="text-emerald-700 dark:text-emerald-400" />
+            <ModuleIcon id="analytics" size={44} />
           </div>
           <p className="text-ds-ink font-black text-lg mb-2">Siap Menganalisis</p>
           <p className="text-ds-ink3 text-sm mb-6 max-w-xs mx-auto">
@@ -152,13 +150,13 @@ const AIFinanceView: React.FC = () => {
               <p className={`text-2xs font-black uppercase tracking-widest mt-1 ${HEALTH_COLOR(analysis.health_score)}`}>{HEALTH_LABEL(analysis.health_score)}</p>
             </div>
             {s && [
-              { label: 'Total GWP', value: formatIDR(s.total_gwp), icon: TrendingUp, color: 'text-emerald-700 dark:text-emerald-400' },
-              { label: 'Total Komisi', value: formatIDR(s.total_commissions), icon: DollarSign, color: 'text-blue-700 dark:text-blue-400' },
-              { label: 'Pendapatan Bersih', value: formatIDR(s.net_revenue ?? (s.total_gwp - s.total_commissions - (s.total_claims ?? 0))), icon: CheckCircle, color: 'text-emerald-700 dark:text-emerald-400' },
+              { label: 'Total GWP', value: formatIDR(s.total_gwp), iconId: 'analytics', color: 'text-emerald-700 dark:text-emerald-400' },
+              { label: 'Total Komisi', value: formatIDR(s.total_commissions), iconId: 'commission', color: 'text-blue-700 dark:text-blue-400' },
+              { label: 'Pendapatan Bersih', value: formatIDR(s.net_revenue ?? (s.total_gwp - s.total_commissions - (s.total_claims ?? 0))), iconId: 'financial', color: 'text-emerald-700 dark:text-emerald-400' },
             ].map(metric => (
               <div key={metric.label} className="bg-ds-card2 border border-ds-border rounded-[2rem] p-5">
-                <div className={`w-8 h-8 rounded-xl bg-ds-card2 flex items-center justify-center mb-3 ${metric.color}`}>
-                  <metric.icon size={16} />
+                <div className={`w-11 h-11 rounded-xl bg-ds-card2 flex items-center justify-center mb-3 ${metric.color}`}>
+                  <ModuleIcon id={metric.iconId} size={30} />
                 </div>
                 <p className={`text-xl font-black ${metric.color}`}>{metric.value}</p>
                 <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3 mt-1">{metric.label}</p>

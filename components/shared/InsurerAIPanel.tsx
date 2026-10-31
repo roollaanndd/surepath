@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import { Brain, AlertTriangle, CheckCircle, XCircle, HelpCircle, Loader2, Shield } from 'lucide-react';
 import { getInsurerAIRecommendation, type InsurerAIRecommendation } from '../../services/aiGateway';
 import { useToast } from '../ui';
+import ModuleIcon from './ModuleIcon';
 
 interface Props {
   orderData: {
@@ -63,7 +64,7 @@ const InsurerAIPanel: React.FC<Props> = ({ orderData, onRecommendation }) => {
       {/* Header */}
       <div className="flex items-center gap-2">
         <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
-          <Brain size={16} className="text-white" />
+          <ModuleIcon id="ai_admin" size={26} />
         </div>
         <div>
           <h3 className="text-sm font-bold text-ds-ink">InsurerAI</h3>

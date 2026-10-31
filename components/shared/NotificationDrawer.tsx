@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  X, Wallet, AlertTriangle, FileText, CheckCircle, Info, ChevronRight, BellOff,
-  ShieldCheck, ClipboardList, XCircle, BadgeCheck, UserX,
-} from 'lucide-react';
+import { X, AlertTriangle, CheckCircle, Info, ChevronRight, XCircle, UserX } from 'lucide-react';
 import { Language } from '../../types';
 import {
   getNotifications, markNotificationRead, markAllNotificationsRead,
   type SpNotification,
 } from '../../services/supabaseService';
+import ModuleIcon from './ModuleIcon';
+import { moduleIcon } from './ModuleIcon';
 
 /* ─── NotificationDrawer — one notification surface for every portal ─────────
    Was `agent/AgentNotifications`; generalised so the Customer portal gets the
@@ -26,13 +25,13 @@ export interface NotificationDrawerProps {
 }
 
 const TYPE_META: Record<SpNotification['type'], { Icon: any; color: string }> = {
-  COMMISSION_EARNED: { Icon: Wallet,        color: 'text-ds-green' },
-  CLAIM_UPDATE:      { Icon: FileText,      color: 'text-ds-blue' },
-  NEW_CLAIM:         { Icon: ClipboardList, color: 'text-ds-blue' },
-  ORDER_UPDATE:      { Icon: ClipboardList, color: 'text-ds-blue' },
-  POLICY_ISSUED:     { Icon: ShieldCheck,   color: 'text-ds-green' },
+  COMMISSION_EARNED: { Icon: moduleIcon('commission'),        color: 'text-ds-green' },
+  CLAIM_UPDATE:      { Icon: moduleIcon('claims'),      color: 'text-ds-blue' },
+  NEW_CLAIM:         { Icon: moduleIcon('claims'), color: 'text-ds-blue' },
+  ORDER_UPDATE:      { Icon: moduleIcon('policy_orders'), color: 'text-ds-blue' },
+  POLICY_ISSUED:     { Icon: moduleIcon('policy'),   color: 'text-ds-green' },
   POLICY_REJECTED:   { Icon: XCircle,       color: 'text-rose-500' },
-  AGENT_VERIFIED:    { Icon: BadgeCheck,    color: 'text-ds-green' },
+  AGENT_VERIFIED:    { Icon: moduleIcon('agents'),    color: 'text-ds-green' },
   AGENT_REJECTED:    { Icon: UserX,         color: 'text-rose-500' },
   RENEWAL_ALERT:     { Icon: AlertTriangle, color: 'text-ds-amber' },
   QUOTE_ACCEPTED:    { Icon: CheckCircle,   color: 'text-ds-green' },
@@ -136,7 +135,7 @@ const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
             ) : (
               <div className="flex flex-col items-center text-center gap-2 py-14 px-8">
                 <div className="w-12 h-12 rounded-2xl bg-ds-green-tint flex items-center justify-center">
-                  <BellOff size={20} className="text-ds-green" />
+                  <ModuleIcon id="notifications" size={36} />
                 </div>
                 <p className="text-sm font-bold text-ds-ink">{t('No notifications', 'Tidak ada notifikasi')}</p>
                 <p className="text-xs text-ds-ink3">{t('You\'re all caught up', 'Semua sudah terbaca')}</p>
@@ -153,7 +152,7 @@ const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
                 >
                   {!n.read && <div className="w-2 h-2 rounded-full bg-ds-green flex-shrink-0 mt-1.5" />}
                   <div className="w-9 h-9 rounded-xl bg-ds-green-tint flex items-center justify-center flex-shrink-0">
-                    <meta.Icon size={15} className={meta.color} />
+                    <meta.Icon size={26} className={meta.color} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-ds-ink leading-tight">{n.title}</p>

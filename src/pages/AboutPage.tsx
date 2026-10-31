@@ -1,35 +1,33 @@
 import React from 'react';
-import { ArrowRight, ChevronDown, Star } from 'lucide-react';
+import { ArrowRight, ChevronDown } from 'lucide-react';
 import SiteLayout from './site/SiteLayout';
-import { SitePageProps, useT, useSiteTheme, Reveal, AnimatedCounter, SectionLabel, useWebsiteConfig } from './site/siteKit';
+import { SitePageProps, useT, useSiteTheme, Reveal, SectionLabel, useWebsiteConfig } from './site/siteKit';
+import InsurerPartners from './site/InsurerPartners';
 
 const AboutPage: React.FC<SitePageProps> = (props) => {
   const { onSignIn, lang } = props;
   const t = useT(lang);
   const th = useSiteTheme(props.darkMode);
-  const { cardBg, cardBorder, cardShadow, textMuted, textMain, videoBg2, videoBg3, accent } = th;
+  const { cardBg, cardBorder, textMuted, textMain, videoBg2, videoBg3, accent } = th;
 
-  const config     = useWebsiteConfig('about');
-  const testiConf  = useWebsiteConfig('testimonials');
+  const config = useWebsiteConfig('about');
 
-  const STATS = [
-    { target: 12400, suffix: '+', label: t('Nasabah Aktif', 'Active Clients') },
-    { target: 98,    suffix: '%', label: t('Tingkat Kepuasan', 'Satisfaction Rate') },
-    { target: 18,    suffix: '+', label: t('Mitra Insurer', 'Insurer Partners') },
-    { target: 200,   suffix: '+', label: t('Kota Jangkauan', 'Cities Covered') },
-  ];
+  // DIHAPUS 31 Okt 2026 atas perintah roland: empat statistik ("12.400+ Nasabah
+  // Aktif", "98% Tingkat Kepuasan", "18+ Mitra Insurer", "200+ Kota Jangkauan")
+  // dan tiga testimoni bernama (Rafi A., Dewi S., Hendra K.). Tidak satu pun
+  // bisa dibuktikan; angka yang sama sudah dinonaktifkan di beranda justru
+  // karena itu, tapi masih tayang di sini. Untuk perantara produk keuangan,
+  // angka dan testimoni karangan adalah risiko pengawasan, bukan sekadar
+  // pemasaran yang lemah.
+  //
+  // Penggantinya: <InsurerPartners /> — enam mitra asuransi berizin OJK yang
+  // nyata, bersumber dari `sp_insurers`. Lihat site/insurerPartners.ts.
 
   const VALUES = [
     { title: t('Transparansi', 'Transparency'), desc: t('Tidak ada biaya tersembunyi, tidak ada klausul yang membingungkan.', 'No hidden fees, no confusing clauses.') },
     { title: t('Humanis', 'Human-Centered'),    desc: t('Di balik teknologi canggih, ada agen nyata yang siap mendampingi.', 'Behind advanced technology, real agents ready to support you.') },
     { title: t('Inovatif', 'Innovative'),        desc: t('Klaim dibantu AI, proses digital dari awal sampai akhir.', 'AI-assisted claims, digital from start to finish.') },
     { title: t('Terpercaya', 'Trusted'),         desc: t('Bekerja sama dengan perusahaan asuransi berijin OJK.', 'Partnered with insurers fully registered and supervised by OJK.') },
-  ];
-
-  const TESTIMONIALS = [
-    { name: 'Rafi A.', role: t('Pengusaha Muda', 'Young Entrepreneur'), city: 'Jakarta', initial: 'R', color: accent, quote: t('SurePath membantu saya menemukan produk yang benar-benar sesuai kebutuhan, bukan sekadar yang termurah. Mitra mereka meluangkan waktu untuk benar-benar mendengarkan.', 'SurePath helped me find products truly suited to my needs. Their partner took time to genuinely listen.') },
-    { name: 'Dewi S.', role: t('Profesional HR', 'HR Professional'), city: 'Surabaya', initial: 'D', color: '#2563eb', quote: t('Baru pertama kali saya memahami isi polis asuransi saya dengan baik. Mitra SurePath menjelaskan setiap klausa penting dengan sabar dan jelas.', "For the first time I truly understood my insurance policy. SurePath's partner patiently explained each clause clearly.") },
-    { name: 'Hendra K.', role: t('Arsitek', 'Architect'), city: 'Bandung', initial: 'H', color: '#7c3aed', quote: t('Proses seluruhnya digital namun saya tetap merasa ditangani secara personal. Ada manusia di balik teknologinya.', 'The process is fully digital yet I still felt handled personally. There are real humans behind the technology.') },
   ];
 
   const FAQS = [
@@ -99,63 +97,8 @@ const AboutPage: React.FC<SitePageProps> = (props) => {
         </div>
       </section>
 
-      {/* ─── Stats — giant numbers, borderless ─── */}
-      <section className="py-16 px-5" style={{ background: videoBg2, borderTop: `1px solid ${cardBorder}` }}>
-        <div className="max-w-5xl mx-auto">
-          <div className="flex flex-wrap justify-between gap-10">
-            {STATS.map((stat, i) => (
-              <Reveal key={stat.label} delay={i * 70}>
-                <div>
-                  <div style={{ fontSize: 'clamp(2.5rem,5.5vw,4rem)', fontWeight: 900, lineHeight: 1, color: textMain, letterSpacing: '-0.04em' }}>
-                    <AnimatedCounter target={stat.target} suffix={stat.suffix} />
-                  </div>
-                  <div style={{ width: 28, height: 3, background: accent, margin: '10px 0 8px', borderRadius: 99 }} />
-                  <div style={{ fontSize: '0.6875rem', fontWeight: 700, color: textMuted, textTransform: 'uppercase', letterSpacing: '0.14em' }}>
-                    {stat.label}
-                  </div>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── Testimonials ─── */}
-      <section className="py-24 px-5" style={{ background: videoBg3, borderTop: `1px solid ${cardBorder}` }}>
-        <div className="max-w-7xl mx-auto">
-          <Reveal>
-            <div className="text-center mb-14">
-              <SectionLabel darkMode={props.darkMode}>{t('Cerita Nasabah', 'Client Stories')}</SectionLabel>
-              <h2 className="font-bold leading-tight tracking-tight" style={{ fontSize: 'clamp(1.75rem,4vw,3rem)', color: textMain }}>
-                {testiConf?.headline || <>{t('Dipercaya, karena ', 'Trusted, because ')}<span style={{ color: accent }}>{t('mereka merasakannya', 'they felt it')}</span></>}
-              </h2>
-            </div>
-          </Reveal>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {TESTIMONIALS.map((tm, i) => (
-              <Reveal key={tm.name} delay={i * 100}>
-                <div className="spx-card spx-sheen p-7 rounded-2xl h-full flex flex-col"
-                  style={{ background: cardBg, borderLeft: `4px solid ${tm.color}`, boxShadow: cardShadow, ['--spx-accent' as string]: tm.color }}>
-                  {/* Giant quote mark */}
-                  <div style={{ position: 'absolute', top: -14, left: 16, fontSize: '8rem', fontWeight: 900, lineHeight: 1, color: tm.color, opacity: 0.08, fontFamily: 'Georgia, serif', pointerEvents: 'none', userSelect: 'none' }}>"</div>
-                  <div className="flex gap-1 mb-5 relative">
-                    {[...Array(5)].map((_, j) => (<Star key={j} size={13} fill="#f59e0b" style={{ color: '#f59e0b' }} />))}
-                  </div>
-                  <p className="text-sm leading-relaxed flex-1 mb-6 relative" style={{ color: textMuted }}>{tm.quote}</p>
-                  <div className="flex items-center gap-3 relative">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0 text-white"
-                      style={{ background: tm.color }}>{tm.initial}</div>
-                    <div>
-                      <p className="text-sm font-bold" style={{ color: textMain }}>{tm.name}</p>
-                      <p className="text-2xs" style={{ color: textMuted }}>{tm.role} · {tm.city}</p>
-                    </div>
-                  </div>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* ─── Mitra asuransi — menggantikan statistik & testimoni karangan ─── */}
+      <InsurerPartners lang={lang} darkMode={props.darkMode} background={videoBg2} />
 
       {/* ─── FAQ — editorial dividers ─── */}
       <section className="py-24 px-5" style={{ background: videoBg2, borderTop: `1px solid ${cardBorder}` }}>

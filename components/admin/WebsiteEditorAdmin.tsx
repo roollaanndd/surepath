@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import {
-  Monitor, Layout, Type, Image, Eye, EyeOff, Save,
-  RotateCcw, CheckCircle, ChevronRight, Layers, Palette, Upload, Loader2, Sparkles,
-} from 'lucide-react';
+import { Layout, Type, Image, Eye, EyeOff, Save, RotateCcw, CheckCircle, ChevronRight, Layers, Palette, Upload, Loader2, Sparkles } from 'lucide-react';
 import {
   SpWebsiteConfig, fetchWebsiteSection, upsertWebsiteSection,
   resetWebsiteSection, uploadSectionImage,
 } from '../../services/supabaseService';
 import PromoBannerAdmin from './PromoBannerAdmin';
+import ModuleIcon from '../shared/ModuleIcon';
 
 type SectionKey = 'hero' | 'marquee' | 'products' | 'how_it_works' | 'about' | 'stats' | 'testimonials' | 'footer' | 'splash' | 'promo_banner' | 'onboarding';
 
@@ -189,7 +187,7 @@ const WebsiteEditorAdmin: React.FC = () => {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center">
-              <Monitor size={18} className="text-emerald-700 dark:text-emerald-400" />
+              <ModuleIcon id="website_editor" size={30} />
             </div>
             <div>
               <h3 className="text-sm font-black uppercase tracking-widest text-ds-ink">

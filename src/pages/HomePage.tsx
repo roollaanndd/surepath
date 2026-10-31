@@ -5,6 +5,7 @@ import {
   ScanLine, ImageOff, Calculator, UserCheck,
 } from 'lucide-react';
 import SiteLayout from './site/SiteLayout';
+import { trackEvent } from '../analytics';
 import PremiumCalcWidget from './site/PremiumCalcWidget';
 import {
   SitePageProps, useT, useSiteTheme, Reveal, 
@@ -72,11 +73,11 @@ const HomePage: React.FC<SitePageProps> = (props) => {
             <div style={{ height: '1px', background: 'rgba(1,235,2,0.30)' }} />
           </div>
           <div className="flex flex-wrap gap-3 opacity-0 animate-fade-up" style={{ animationDelay: '0.7s' }}>
-            <button onClick={onSignIn} className="pointer-events-auto px-6 py-3 md:px-8 md:py-4 text-sm cursor-pointer transition-all active:scale-[0.97] hover:brightness-110"
+            <button onClick={() => { trackEvent('hero_cta_click', { label: 'primary' }); onSignIn(); }} className="pointer-events-auto px-6 py-3 md:px-8 md:py-4 text-sm cursor-pointer transition-all active:scale-[0.97] hover:brightness-110"
               style={{ background: 'hsl(119 99% 46%)', color: 'hsl(0 0% 4%)', borderRadius: '14px', fontWeight: 700, letterSpacing: '0.02em', boxShadow: '0 0 24px rgba(1,235,2,0.35)' }}>
               {heroCta}
             </button>
-            <button onClick={() => navigate('/products')} className="pointer-events-auto px-6 py-3 md:px-8 md:py-4 text-sm cursor-pointer transition-all active:scale-[0.97] hover:brightness-110"
+            <button onClick={() => { trackEvent('hero_cta_click', { label: 'secondary' }); navigate('/products'); }} className="pointer-events-auto px-6 py-3 md:px-8 md:py-4 text-sm cursor-pointer transition-all active:scale-[0.97] hover:brightness-110"
               style={{ background: 'rgba(255,255,255,0.08)', border: '1.5px solid rgba(255,255,255,0.25)', color: 'white', borderRadius: '14px', fontWeight: 700, letterSpacing: '0.02em' }}>
               {heroCtaSec}
             </button>
@@ -159,7 +160,7 @@ const HomePage: React.FC<SitePageProps> = (props) => {
               <Reveal key={p.name} delay={i * 60}>
                 <a href={`/product/${p.slug}`} className="spx-card spx-sheen group rounded-2xl cursor-pointer w-full text-left flex flex-col h-full"
                   style={{ background: cardBg, ['--spx-accent' as string]: p.color, textDecoration: 'none', color: 'inherit' }}
-                  onClick={e => { e.preventDefault(); navigate(`/product/${p.slug}`); }} aria-label={p.name}>
+                  onClick={e => { e.preventDefault(); trackEvent('product_card_click', { slug: p.slug }); navigate(`/product/${p.slug}`); }} aria-label={p.name}>
                   {/* Coloured header */}
                   <div className="flex items-center justify-center" style={{ height: 72, background: `linear-gradient(135deg, ${p.color}20 0%, ${p.color}08 100%)` }}>
                     <p.Icon color={p.color} size={34} className="transition-transform duration-300 group-hover:scale-110" />
@@ -276,7 +277,7 @@ const HomePage: React.FC<SitePageProps> = (props) => {
               {t('Mulai lindungi yang paling berharga dalam hidupmu — transparan, manusiawi, dan nggak ribet.', 'Start protecting what matters most — transparent, human-centered, and hassle-free.')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button onClick={onSignIn}
+              <button onClick={() => { trackEvent('final_cta_click'); onSignIn(); }}
                 className="group flex items-center justify-center gap-3 px-10 py-4 rounded-xl text-base font-bold text-white transition-all hover:scale-[1.02]"
                 style={{ background: accent, boxShadow: `0 10px 30px -10px ${accent}` }}>
                 {t('Mulai Sekarang', 'Start Now')} <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />

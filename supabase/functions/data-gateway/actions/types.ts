@@ -25,6 +25,11 @@ export interface GatewayContext {
     // sebagai tier, supaya klien tidak menyalin aturan tier (lihat _shared/trust.ts).
     emailConfirmedAt: string | null;
   };
+  // Diambil dari header permintaan di index.ts, BUKAN dari params. Aksi publik
+  // menyimpan jejak asal kiriman (mis. prospek formulir kontak), dan sebuah
+  // nilai yang bisa dikirim klien di params bukan jejak — ia bisa dipalsukan.
+  reqIp: string | null;
+  reqUserAgent: string | null;
   sendTelegram: (text: string) => void;
   logActivity: (insurerId: string | null, orderId: string | null, action: string, details?: Record<string, unknown>) => void;
   checkRateLimit: (identifier: string, limit: number) => Promise<boolean>;

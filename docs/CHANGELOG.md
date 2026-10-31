@@ -1,5 +1,62 @@
 # SurePath — Changelog
 
+## v2.7.35 — 2026-10-31
+
+Perbaikan situs publik, paket 1 — audit 31 Okt 2026.
+
+### Prospek dari formulir kontak akhirnya masuk ke antrean
+- `/contact` dulu hanya memanggil `setSent(true)` lalu memberi tahu
+  pengunjung "Pesan Terkirim!" tanpa mengirim apa pun. Setiap prospek
+  dibuang dan janjinya palsu. Kini isinya tersimpan di tabel baru
+  `sp_contact_leads` (RLS deny-all, tulis hanya lewat `data-gateway`
+  dengan rate limit per IP) dan muncul di dasbor operator sebagai
+  kartu "Prospek Masuk" + modal daftar lengkap dengan email/WhatsApp
+  terklik dan transisi NEW → DIPROSES → SELESAI.
+- Aksi gateway baru: `submit_contact_lead` (publik),
+  `list_contact_leads` + `update_contact_lead` (admin/operator).
+- Notifikasi Telegram terkirim untuk tiap prospek baru (email dan
+  WhatsApp belum aktif sebagai tujuan, konfirmasi roland 31 Okt 2026).
+
+### Statistik dan testimoni karangan di `/about` dihapus
+- Hilangkan "12.400+ Nasabah Aktif", "98% Tingkat Kepuasan",
+  "18+ Mitra Insurer", "200+ Kota Jangkauan" dan tiga testimoni
+  bernama (Rafi A., Dewi S., Hendra K.). Angka yang sama pernah
+  dinonaktifkan di beranda justru karena tidak nyata.
+- Diganti dengan daftar enam mitra asuransi yang NYATA, dari
+  `sp_insurers` produksi: Asuransi Sinar Mas, Intra Asia, Jasindo,
+  Sompo Insurance Indonesia, Tugu Insurance, Zurich Asuransi
+  Indonesia. Komponen `<InsurerPartners/>` baru di
+  `src/pages/site/`, sumber kebenaran tunggal di `insurerPartners.ts`.
+- Logo belum ada di sistem (`logo_url` NULL untuk kesepuluh baris),
+  jadi kartu tampil sebagai nama sampai berkas resmi tersedia.
+  Jangan isi dengan logo unduhan sembarangan — perlu izin pemakaian.
+
+### Jam layanan 24/7 di seluruh situs
+- `/contact` dulu menampilkan Sen–Jum 09:00–18:00 sementara beranda
+  menyatakan "24/7 Support Online". Dua klaim di situs yang sama.
+  Semua jam disamakan jadi 24 jam, sesuai arahan roland 31 Okt 2026.
+
+### Kontras footer dan aksen mode terang
+- Semua tulisan footer di atas `#0f172a` lulus WCAG AA. Hak cipta
+  1,74:1 → 8,03:1, pengungkapan OJK 2,88:1 → 10,34:1, 22 tautan
+  footer 3,81:1 → 7,66:1, deskripsi merek 4,46:1 → 13,02:1.
+- `DAY_ACCENT` di `siteKit.tsx` berubah dari `#16a34a` (3,11:1 di
+  latar krem — gagal AA) jadi `#166534` (6,73:1). Hue hijau yang
+  sama; dipakai setiap "Lihat Semua / Pelajari" dan kata beraksen
+  di judul halaman marketing. `ACCENT` untuk hero/dark mode tetap.
+
+### Event konversi GA4
+- `src/analytics.ts` helper `trackEvent()` baru. Dipasang di:
+  CTA utama + sekunder hero, kartu produk, CTA final beranda,
+  CTA kalkulator (signin / detail), tombol WhatsApp melayang
+  (bawa `source_path`), dan submit formulir kontak. GA4 sudah
+  terpasang (`G-CLB9K1RG97`) tapi dulu hanya mengirim `page_view`.
+
+### Dokumen rencana
+- `/mnt/project-files/website-2026-10-31/usulan-upgrade-website.md`
+  memuat semua 23 temuan dengan dampak/usaha/risiko. Paket A, B,
+  C, G, I dari daftar itu dikerjakan di sini.
+
 ## v2.7.34 — 2026-10-31
 
 ### Login & register screen (`AuthGate.tsx`) — redesign lebih premium & ramah

@@ -10,7 +10,7 @@
 // This component owns none of the record's data or business logic — it is
 // a layout shell. The caller still owns everything that happens inside it
 // (status changes, uploads, commission math, …) exactly as before.
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 
 export interface DetailDrawerProps {
@@ -27,11 +27,32 @@ export interface DetailDrawerProps {
 
 const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
+// How long the exit transition runs before the panel actually unmounts.
+// Mirrors the `slide-out-right` keyframe duration in tailwind.config.cjs.
+const CLOSE_TRANSITION_MS = 200;
+
 export const DetailDrawer: React.FC<DetailDrawerProps> = ({
   open, onClose, title, subtitle, headerExtra, children, footer,
 }) => {
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
+  // `open` is the caller's source of truth; `visible` lags behind it on the
+  // way to closed so the panel can play its exit transition instead of
+  // vanishing on the same render that flips `open` to false. The public
+  // `open`/`onClose` contract is untouched — this state is purely internal.
+  const [visible, setVisible] = useState(open);
+
+  useEffect(() => {
+    if (open) {
+      setVisible(true);
+      return;
+    }
+    if (!visible) return;
+    const t = setTimeout(() => setVisible(false), CLOSE_TRANSITION_MS);
+    return () => clearTimeout(t);
+  }, [open, visible]);
+
+  const closing = !open && visible;
 
   // Esc to close + a basic focus trap: Tab/Shift+Tab wrap inside the panel
   // while open, and focus returns to whatever opened the drawer on close.
@@ -69,10 +90,13 @@ export const DetailDrawer: React.FC<DetailDrawerProps> = ({
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!visible) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm" role="presentation">
+    <div
+      className={`fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm transition-opacity duration-200 ${closing ? 'opacity-0' : 'opacity-100'}`}
+      role="presentation"
+    >
       {/* Clicking the backdrop closes the drawer; the panel itself stops the click. */}
       <button
         type="button"
@@ -85,7 +109,7 @@ export const DetailDrawer: React.FC<DetailDrawerProps> = ({
         ref={panelRef}
         role="dialog"
         aria-modal="true"
-        className="relative flex h-full w-full max-w-[480px] flex-col bg-ds-card shadow-2xl animate-slide-in-right"
+        className={`relative flex h-full w-full max-w-[480px] flex-col bg-ds-card shadow-2xl ${closing ? 'animate-slide-out-right' : 'animate-slide-in-right'}`}
       >
         <div className="flex items-start justify-between gap-3 border-b border-ds-border p-5">
           <div className="min-w-0">
@@ -100,7 +124,7 @@ export const DetailDrawer: React.FC<DetailDrawerProps> = ({
               type="button"
               onClick={onClose}
               aria-label="Tutup panel"
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-ds-card2 text-ds-ink3 hover:text-ds-ink"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-ds-card2 text-ds-ink3 transition-colors hover:text-ds-ink"
             >
               <X size={14} />
             </button>

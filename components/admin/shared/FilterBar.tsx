@@ -41,7 +41,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           value={search ?? ''}
           onChange={e => onSearchChange(e.target.value)}
           placeholder={searchPlaceholder ?? 'Cari…'}
-          className="w-full pl-10 pr-4 py-2.5 bg-ds-card2 border border-ds-border rounded-2xl text-sm text-ds-ink focus:outline-none focus:border-ds-admin-forest"
+          className="w-full pl-10 pr-4 py-2.5 bg-ds-card2 border border-ds-border rounded-2xl text-sm text-ds-ink transition-colors duration-150 hover:border-ds-ink3/40 focus:outline-none focus:border-ds-admin-forest focus:ring-2 focus:ring-ds-admin-forest/15"
         />
       </div>
     )}
@@ -52,7 +52,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           type="button"
           onClick={() => onActiveChange(chip.id)}
           aria-pressed={active === chip.id}
-          className={`px-3 py-2 rounded-full text-2xs font-black uppercase tracking-widest transition-all ${
+          className={`px-3 py-2 rounded-full text-2xs font-black uppercase tracking-widest transition-all duration-150 ease-out ${
             active === chip.id ? 'bg-ds-admin-forest text-white' : 'bg-ds-card2 text-ds-ink3 hover:bg-ds-border/40'
           }`}
         >
@@ -67,9 +67,9 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         type="button"
         onClick={onRefresh}
         aria-label="Muat ulang"
-        className="w-9 h-9 flex-shrink-0 rounded-full bg-ds-card2 flex items-center justify-center text-ds-ink3 hover:text-ds-ink"
+        className="w-9 h-9 flex-shrink-0 rounded-full bg-ds-card2 flex items-center justify-center text-ds-ink3 transition-colors duration-150 hover:text-ds-ink hover:bg-ds-border/40"
       >
-        <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
+        <RefreshCw size={14} className={`transition-transform ${refreshing ? 'animate-spin' : ''}`} />
       </button>
     )}
   </div>

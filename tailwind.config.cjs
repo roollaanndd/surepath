@@ -177,6 +177,8 @@ module.exports = {
         'draw-check':    'drawCheck 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards',
         // Admin Portal 2.0 — DetailDrawer panel entrance.
         'slide-in-right': 'slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+        // Admin Portal 2.0 — DetailDrawer panel exit (motion polish pass).
+        'slide-out-right': 'slideOutRight 0.2s cubic-bezier(0.4, 0, 1, 1) forwards',
       },
       keyframes: {
         'fade-up': {
@@ -190,6 +192,10 @@ module.exports = {
         slideInRight: {
           '0%':   { transform: 'translateX(24px)', opacity: '0' },
           '100%': { transform: 'translateX(0)',     opacity: '1' },
+        },
+        slideOutRight: {
+          '0%':   { transform: 'translateX(0)',    opacity: '1' },
+          '100%': { transform: 'translateX(24px)', opacity: '0' },
         },
         mesh: {
           '0%, 100%': { backgroundPosition: '0% 50%' },

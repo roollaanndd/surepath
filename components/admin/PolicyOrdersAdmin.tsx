@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   FileText, CheckCircle, XCircle, Clock, Eye, Upload,
-  Car, Bike, ChevronDown, Search, Download, RefreshCw, Link, Bell,
+  Car, Bike, ChevronDown, Download, Link, Bell,
 } from 'lucide-react';
 import {
   getAllOrders, updateOrderStatus, uploadPolicyDocument,
@@ -17,6 +17,8 @@ import { publishAndDownloadQuotation } from '../../services/quotationService';
 import { fromCustomerOrder } from '../../services/quotationSlipAdapter';
 import { useToast } from '../ui';
 import { filterLabel } from './filterLabels';
+import { FilterBar } from './shared/FilterBar';
+import { DetailDrawer } from './shared/DetailDrawer';
 
 const STATUS_META: Record<SpPolicyOrder['status'], { label: string; color: string; Icon: any }> = {
   SUBMITTED:    { label: 'Submitted',    color: 'bg-amber-500/10 text-amber-800 dark:text-amber-400',   Icon: Clock },
@@ -209,28 +211,88 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
     setTimeout(() => onClose(), 3000);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 backdrop-blur-sm overflow-y-auto py-8 px-4">
-      <div className="bg-ds-card rounded-[2.5rem] border border-ds-border w-full max-w-2xl shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-ds-border">
-          <div>
-            <h3 className="font-black text-lg tracking-tight">{order.order_number ?? '—'}</h3>
-            <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-widest mt-0.5">
-              {order.product_name}
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            {(() => { const m = STATUS_META[order.status]; return (
-              <span className={`flex items-center gap-1 text-2xs font-black uppercase tracking-widest px-3 py-1.5 rounded-full ${m.color}`}>
-                <m.Icon size={10} /> {m.label}
-              </span>
-            ); })()}
-            <button onClick={onClose} className="w-8 h-8 rounded-full bg-ds-card2 flex items-center justify-center text-ds-ink3 hover:text-ds-ink">✕</button>
-          </div>
-        </div>
+  const statusMeta = STATUS_META[order.status];
 
-        <div className="p-6 space-y-5">
+  return (
+    <DetailDrawer
+      open
+      onClose={onClose}
+      title={order.order_number ?? '—'}
+      subtitle={order.product_name}
+      headerExtra={
+        <span className={`flex items-center gap-1 text-2xs font-black uppercase tracking-widest px-3 py-1.5 rounded-full ${statusMeta.color}`}>
+          <statusMeta.Icon size={10} /> {statusMeta.label}
+        </span>
+      }
+      footer={
+        <div className="flex gap-3 flex-wrap">
+          <button
+            disabled={downloadingSlip}
+            onClick={handleDownloadSlip}
+            className="flex items-center gap-1.5 px-4 py-3 rounded-2xl text-xs font-black uppercase tracking-widest bg-sky-500/10 text-sky-700 dark:text-sky-400 hover:bg-sky-500/20 transition-colors"
+          >
+            <Download size={12} />
+            {downloadingSlip ? 'Menyiapkan…' : 'Quotation Slip'}
+          </button>
+          {/* Send review link — available for all non-issued/rejected orders */}
+          {(order.status === 'SUBMITTED' || order.status === 'UNDER_REVIEW' || order.status === 'APPROVED') && (
+            <button
+              disabled={generatingLink}
+              onClick={handleSendReviewLink}
+              className={`flex items-center gap-1.5 px-4 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-colors ${
+                linkCopied
+                  ? 'bg-emerald-500 text-white'
+                  : 'bg-violet-500/10 text-violet-700 dark:text-violet-400 hover:bg-violet-500/20'
+              }`}
+            >
+              <Link size={12} />
+              {generatingLink ? '…' : linkCopied ? 'Link Tersalin!' : 'Kirim Link Review'}
+            </button>
+          )}
+          {order.status === 'SUBMITTED' && (
+            <button
+              disabled={saving}
+              onClick={handleReview}
+              className="flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-widest bg-blue-500/10 text-blue-700 dark:text-blue-400 hover:bg-blue-500 hover:text-white transition-colors"
+            >
+              {saving ? '…' : 'Mulai Review'}
+            </button>
+          )}
+          {(order.status === 'SUBMITTED' || order.status === 'UNDER_REVIEW') && (
+            <>
+              <button
+                disabled={saving}
+                onClick={handleApprove}
+                className="flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-widest bg-emerald-500 text-white hover:bg-emerald-600 transition-colors"
+              >
+                {saving ? '…' : 'Setujui'}
+              </button>
+              <button
+                disabled={saving}
+                onClick={handleReject}
+                className="flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-widest bg-rose-500/10 text-rose-700 dark:text-rose-300 hover:bg-rose-500 hover:text-white transition-colors"
+              >
+                {saving ? '…' : 'Tolak'}
+              </button>
+            </>
+          )}
+          {order.status === 'APPROVED' && (
+            <>
+              <input ref={fileRef} type="file" accept=".pdf" onChange={handleUploadPolicy} className="hidden" />
+              <button
+                disabled={uploading}
+                onClick={() => fileRef.current?.click()}
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-xs font-black uppercase tracking-widest bg-emerald-500 text-white hover:bg-emerald-600 transition-colors"
+              >
+                <Upload size={14} />
+                {uploading ? 'Mengupload…' : 'Upload Polis PDF → Terbitkan'}
+              </button>
+            </>
+          )}
+        </div>
+      }
+    >
+        <div className="space-y-5">
           {/* Client info */}
           <div>
             <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-3">Informasi Klien</p>
@@ -398,76 +460,8 @@ const OrderDetailModal: React.FC<DetailProps> = ({ order, onClose, onStatusChang
               {insurerMsg.text}
             </div>
           )}
-
-          {/* Action buttons */}
-          <div className="flex gap-3 pt-2 flex-wrap">
-            <button
-              disabled={downloadingSlip}
-              onClick={handleDownloadSlip}
-              className="flex items-center gap-1.5 px-4 py-3 rounded-2xl text-xs font-black uppercase tracking-widest bg-sky-500/10 text-sky-700 dark:text-sky-400 hover:bg-sky-500/20 transition-colors"
-            >
-              <Download size={12} />
-              {downloadingSlip ? 'Menyiapkan…' : 'Quotation Slip'}
-            </button>
-            {/* Send review link — available for all non-issued/rejected orders */}
-            {(order.status === 'SUBMITTED' || order.status === 'UNDER_REVIEW' || order.status === 'APPROVED') && (
-              <button
-                disabled={generatingLink}
-                onClick={handleSendReviewLink}
-                className={`flex items-center gap-1.5 px-4 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-colors ${
-                  linkCopied
-                    ? 'bg-emerald-500 text-white'
-                    : 'bg-violet-500/10 text-violet-700 dark:text-violet-400 hover:bg-violet-500/20'
-                }`}
-              >
-                <Link size={12} />
-                {generatingLink ? '…' : linkCopied ? 'Link Tersalin!' : 'Kirim Link Review'}
-              </button>
-            )}
-            {order.status === 'SUBMITTED' && (
-              <button
-                disabled={saving}
-                onClick={handleReview}
-                className="flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-widest bg-blue-500/10 text-blue-700 dark:text-blue-400 hover:bg-blue-500 hover:text-white transition-colors"
-              >
-                {saving ? '…' : 'Mulai Review'}
-              </button>
-            )}
-            {(order.status === 'SUBMITTED' || order.status === 'UNDER_REVIEW') && (
-              <>
-                <button
-                  disabled={saving}
-                  onClick={handleApprove}
-                  className="flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-widest bg-emerald-500 text-white hover:bg-emerald-600 transition-colors"
-                >
-                  {saving ? '…' : 'Setujui'}
-                </button>
-                <button
-                  disabled={saving}
-                  onClick={handleReject}
-                  className="flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-widest bg-rose-500/10 text-rose-700 dark:text-rose-300 hover:bg-rose-500 hover:text-white transition-colors"
-                >
-                  {saving ? '…' : 'Tolak'}
-                </button>
-              </>
-            )}
-            {order.status === 'APPROVED' && (
-              <>
-                <input ref={fileRef} type="file" accept=".pdf" onChange={handleUploadPolicy} className="hidden" />
-                <button
-                  disabled={uploading}
-                  onClick={() => fileRef.current?.click()}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-xs font-black uppercase tracking-widest bg-emerald-500 text-white hover:bg-emerald-600 transition-colors"
-                >
-                  <Upload size={14} />
-                  {uploading ? 'Mengupload…' : 'Upload Polis PDF → Terbitkan'}
-                </button>
-              </>
-            )}
-          </div>
         </div>
-      </div>
-    </div>
+    </DetailDrawer>
   );
 };
 
@@ -623,34 +617,15 @@ const PolicyOrdersAdmin: React.FC<{ initialPending?: boolean }> = ({ initialPend
       </div>
 
       {/* Toolbar */}
-      <div className="flex gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-48">
-          <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-ds-ink3" />
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Cari order, klien, KTP, plat, produk…"
-            className="w-full pl-10 pr-4 py-2.5 bg-ds-card2 border border-ds-border rounded-2xl text-sm text-ds-ink focus:outline-none focus:border-emerald-500"
-          />
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          {FILTERS.map(f => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-3 py-2 rounded-full text-2xs font-black uppercase tracking-widest transition-all ${
-                filter === f ? 'bg-emerald-500 text-white' : 'bg-ds-card2 text-ds-ink3 hover:bg-ds-card2'
-              }`}
-            >
-              {filterLabel(f)}
-              {` (${counts[f]})`}
-            </button>
-          ))}
-        </div>
-        <button onClick={load} className="w-9 h-9 rounded-full bg-ds-card2 flex items-center justify-center text-ds-ink3 hover:text-ds-ink">
-          <RefreshCw size={14} />
-        </button>
-      </div>
+      <FilterBar
+        chips={FILTERS.map(f => ({ id: f, label: filterLabel(f), count: counts[f] }))}
+        active={filter}
+        onActiveChange={setFilter}
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Cari order, klien, KTP, plat, produk…"
+        onRefresh={load}
+      />
 
       {/* Order list */}
       {loading ? (

@@ -175,6 +175,8 @@ module.exports = {
         'pulse-soft':    'pulseSoft 4s ease-in-out infinite',
         'flow':          'flow 30s linear infinite',
         'draw-check':    'drawCheck 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards',
+        // Admin Portal 2.0 — DetailDrawer panel entrance.
+        'slide-in-right': 'slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
       },
       keyframes: {
         'fade-up': {
@@ -184,6 +186,10 @@ module.exports = {
         'fade-in': {
           '0%':   { opacity: '0' },
           '100%': { opacity: '1' },
+        },
+        slideInRight: {
+          '0%':   { transform: 'translateX(24px)', opacity: '0' },
+          '100%': { transform: 'translateX(0)',     opacity: '1' },
         },
         mesh: {
           '0%, 100%': { backgroundPosition: '0% 50%' },

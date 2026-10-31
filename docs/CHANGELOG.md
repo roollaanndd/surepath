@@ -1,5 +1,30 @@
 # SurePath — Changelog
 
+## v2.7.30 — 2026-10-31
+
+### Module pass: Catalog (Admin) — Vehicle Pricelist
+
+- Lanjutan gelombang module-pass ke modul Katalog & Harga. Hanya
+  perubahan presentasi; data fetch (`supabase.from('sp_vehicle_overrides')`),
+  sync, upload, dan logika toggle/hapus tidak disentuh.
+- `VehiclePricelistAdmin.tsx`: search box + dropdown versi dipindah ke
+  primitive bersama `FilterBar`; tabel override literal dipindah ke
+  `DataTable` (kolom: merek/model, tahun, harga list, nilai pasar,
+  diskon, status, aksi) — sekarang bisa disortir per kolom dan
+  terpaginasi otomatis (sebelumnya semua baris ditampilkan sekaligus).
+  Catatan kecil: baris nonaktif tidak lagi diredupkan (opacity) secara
+  keseluruhan — status "Nonaktif" tetap terlihat jelas lewat badge.
+- Diperiksa tapi TIDAK dimigrasi: `OjkRateAdmin`'s 5×3 matrix editor
+  (bukan daftar — bentuknya tetap/fixed-shape, tidak cocok untuk
+  `DataTable`); `InsurerAdmin`'s nested per-insurer product table
+  (daftar kecil tertanam dalam accordion, nilai migrasi rendah untuk
+  pass ini).
+- Tidak ada ilustrasi empty-state baru yang dipasang di modul ini —
+  tidak ada varian `SpEmptyStateVariant` yang cocok untuk
+  rate-set/produk/kendaraan (dicek, tidak dipaksakan).
+- Verifikasi: `tsc --noEmit` bersih, vitest 459/459 lulus, build
+  produksi berhasil.
+
 ## v2.7.29 — 2026-10-31
 
 ### Module pass: Agents/Partners (Admin)

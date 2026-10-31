@@ -1,5 +1,29 @@
 # SurePath — Changelog
 
+## v2.7.34 — 2026-10-31
+
+### Login & register screen (`AuthGate.tsx`) — redesign lebih premium & ramah
+
+Roland minta layar login dibuat lebih premium dan friendly. `AuthGate.tsx`
+adalah satu-satunya layar login/register untuk portal Nasabah dan Mitra
+(dipakai lewat `src/app/routes/auth.tsx`); portal Admin/Operator/Insurer
+punya layar login terpisah dan tidak disentuh di PR ini. Website publik
+juga tidak disentuh — ini layar aplikasi, bukan marketing site.
+
+- Header lama berupa dua blok terpisah dan tumpang-tindih pesan: kartu
+  hero gelap ("Protection for every next step") lalu logo + "Welcome back"
+  di bawahnya, plus dot-matrix overlay + tiga radial gradient sekaligus —
+  terasa ramai, bukan premium. Disatukan jadi satu header: logo mark →
+  wordmark kecil "SurePath" → judul sambutan hangat ("Selamat datang
+  kembali 👋" / "Buat akun kamu") → subjudul singkat yang lebih personal
+  ("Masuk untuk melanjutkan perlindunganmu.").
+- Latar disederhanakan dari 3 radial gradient + dot-matrix 28px menjadi
+  satu ambient glow lembut — lebih tenang, kesan lebih mahal.
+- Form (tab Masuk/Daftar, input, tombol Google, OTP email, trust badge
+  OJK/enkripsi) tidak diubah secara struktural — semua handler, state,
+  dan urutan operasi (`handleLogin`, `handleRegister`,
+  `handleGoogleSignIn`, dst.) persis sama, perubahan murni presentasi.
+
 ## v2.7.33 — 2026-10-31
 
 ### Admin Portal 2.0 — CommandDashboard (MASTER_ADMIN) dibangun ulang

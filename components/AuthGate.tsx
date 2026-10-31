@@ -427,49 +427,35 @@ const AuthGate: React.FC<AuthGateProps> = ({
   const inputCls = 'w-full h-12 pl-11 pr-4 rounded-full border border-white bg-white text-slate-900 text-sm placeholder:text-slate-400 shadow-[0_8px_24px_-16px_rgba(15,23,42,0.35)] focus:outline-none focus:ring-2 focus:ring-emerald-600/25 focus:border-emerald-600 transition-all duration-150';
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden px-4 py-8 sm:py-10" style={{ fontFamily: "'Sora', sans-serif", background: 'linear-gradient(135deg, #fff8dc 0%, #f4fff7 52%, #fff3e8 100%)', paddingTop: 'max(2rem, env(safe-area-inset-top))', paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
+    <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden px-4 py-10 sm:py-12" style={{ fontFamily: "'Sora', sans-serif", background: 'linear-gradient(160deg, #fbfdf9 0%, #f3fbf6 48%, #fef9f0 100%)', paddingTop: 'max(2.5rem, env(safe-area-inset-top))', paddingBottom: 'max(2.5rem, env(safe-area-inset-bottom))' }}>
 
-      {/* Ambient emerald wash — same language as the apps */}
-      <div className="absolute inset-0 pointer-events-none" style={{
-        background: 'radial-gradient(440px 360px at 5% 0%, rgba(34,197,94,0.18), transparent 68%), radial-gradient(520px 440px at 100% 18%, rgba(249,115,22,0.18), transparent 70%), radial-gradient(520px 460px at 50% 115%, rgba(5,150,105,0.12), transparent 70%)' }} />
-      {/* Fine dot-matrix overlay */}
-      <div className="absolute inset-0 pointer-events-none" style={{
-        backgroundImage: 'radial-gradient(rgba(5,150,105,0.045) 1px, transparent 1px)',
-        backgroundSize: '28px 28px',
-      }} />
+      {/* Ambient wash — a single soft glow instead of a busy multi-gradient + dot-matrix */}
+      <div aria-hidden="true" className="absolute inset-0 pointer-events-none" style={{
+        background: 'radial-gradient(640px 520px at 50% -8%, rgba(16,185,129,0.14), transparent 62%), radial-gradient(520px 460px at 100% 100%, rgba(249,115,22,0.08), transparent 68%)' }} />
 
-      <div className="relative z-10 w-full max-w-md mx-auto px-1 sm:px-3 flex flex-col items-center gap-6">
+      <div className="relative z-10 w-full max-w-md mx-auto px-1 sm:px-3 flex flex-col items-center gap-7">
 
-        {/* Responsive login hero; preserves existing authentication actions and official logo component */}
-        <div className="w-full overflow-hidden rounded-[2rem] border border-white/80 bg-white shadow-[0_24px_70px_-30px_rgba(6,95,70,0.32)] sm:rounded-[2.25rem]">
-          <div className="relative min-h-[132px] sm:min-h-[158px] flex items-end p-5 sm:p-7 overflow-hidden" style={{ background: 'linear-gradient(125deg, #064e3b 0%, #047857 55%, #16a34a 100%)' }}>
-            <div aria-hidden="true" className="absolute -right-10 -top-20 h-64 w-64 rounded-[42%] rotate-12 opacity-95" style={{ background: "linear-gradient(135deg, rgba(251,146,60,0.98), rgba(245,158,11,0.9) 58%, rgba(253,186,116,0.7))", filter: "blur(0.2px)" }} />
-            <div aria-hidden="true" className="absolute right-10 -top-12 h-44 w-44 rounded-full border border-white/35" />
-            <div aria-hidden="true" className="absolute right-6 bottom-[-4.5rem] h-36 w-36 rounded-full bg-orange-300/35 blur-2xl" />
-            <div className="relative max-w-xs text-white">
-              <p className="text-2xs font-semibold uppercase tracking-[0.22em] text-emerald-100">{t('Insurance made simpler', 'Asuransi lebih mudah')}</p>
-              <p className="mt-2 text-xl font-bold leading-tight tracking-tight sm:text-2xl">{t('Protection for every next step.', 'Perlindungan untuk langkah selanjutnya.')}</p>
-              <p className="mt-2 text-xs leading-relaxed text-emerald-50/90 sm:text-sm">{t('One secure place for your insurance journey.', 'Satu tempat aman untuk perjalanan asuransimu.')}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Logo */}
-        <div className="flex flex-col items-center gap-3">
+        {/* Brand mark + warm greeting — one unified header instead of a separate hero banner */}
+        <div className="flex flex-col items-center gap-4 text-center">
           <div className="relative">
-            <div className="absolute -inset-6 rounded-full blur-3xl opacity-20" style={{ background: GRAD }} />
-            <div className="relative w-20 h-20 rounded-[1.9rem] flex items-center justify-center bg-white border border-emerald-100 shadow-[0_8px_28px_-16px_rgba(6,95,70,0.22)]">
-              <SurePathLogo className="w-[3.6rem] h-[3.6rem] object-contain" />
+            <div aria-hidden="true" className="absolute -inset-7 rounded-full blur-3xl opacity-25" style={{ background: GRAD }} />
+            <div className="relative w-[4.5rem] h-[4.5rem] rounded-[1.6rem] flex items-center justify-center bg-white shadow-[0_14px_34px_-14px_rgba(6,95,70,0.35)]">
+              <SurePathLogo className="w-9 h-9 object-contain" />
             </div>
           </div>
-          <div className="text-center">
-            <h1 style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.05em', lineHeight: 1, color: '#0f172a' }}>
-              Sure<span style={{ background: 'linear-gradient(135deg,#15803d,#059669 65%,#f97316 140%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Path</span>
-            </h1>
-            <p style={{ fontSize: '0.7rem', fontWeight: 600, color: 'rgba(15,23,42,0.55)', letterSpacing: '0.32em', textTransform: 'uppercase', marginTop: '0.6rem' }}>
+          <p style={{ fontSize: '1.05rem', fontWeight: 800, letterSpacing: '-0.03em', color: '#0f172a' }}>
+            Sure<span style={{ background: 'linear-gradient(135deg,#15803d,#059669 65%,#f97316 140%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Path</span>
+          </p>
+          <div>
+            <h1 style={{ fontSize: '1.9rem', fontWeight: 800, letterSpacing: '-0.045em', lineHeight: 1.05, color: '#0f172a' }}>
               {mode === 'REGISTER'
                 ? t('Create your account', 'Buat akun kamu')
-                : t('Welcome back', 'Selamat datang kembali')}
+                : t('Welcome back 👋', 'Selamat datang kembali 👋')}
+            </h1>
+            <p className="mt-2 text-sm leading-relaxed text-slate-500 max-w-[19rem] mx-auto">
+              {mode === 'REGISTER'
+                ? t("Join SurePath and protect what matters, in a few easy steps.", 'Gabung dengan SurePath, lindungi yang penting dalam beberapa langkah mudah.')
+                : t('Sign in to keep your protection moving forward.', 'Masuk untuk melanjutkan perlindunganmu.')}
             </p>
           </div>
         </div>

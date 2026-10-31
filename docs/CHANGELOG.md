@@ -27,6 +27,50 @@
 - Terverifikasi: `tsc --noEmit` bersih, ESLint bersih, `npm run build`
   sukses, **459/459 unit test lolos** (tidak ada regresi).
 
+## v2.7.32 — 2026-10-31
+
+### Admin Portal 2.0 — langkah 3: motion & micro-interaction pass
+
+Roland menilai hasil langkah 1–2 "terlihat sama saja" — tidak ada
+transition. Ini satu-satunya hal yang belum disentuh dari brief awal
+("advanced interactions: drawers, command palette, charts"). PR ini hanya
+menambah gerakan ke komponen bersama yang sudah ada — tidak menyentuh data
+fetching, gateway, atau logika bisnis apa pun — supaya perbaikannya
+otomatis merambat ke setiap view yang memakai komponen tersebut.
+
+- `DetailDrawer` — sebelumnya menutup secara instan (unmount React tanpa
+  animasi keluar). Ditambahkan status `visible` internal (kontrak publik
+  `open`/`onClose` tidak berubah) sehingga panel memutar transisi keluar
+  `slide-out-right` (200ms, keyframe baru di `tailwind.config.cjs`) dan
+  backdrop memudar (`transition-opacity`) sebelum benar-benar di-unmount.
+  Tombol tutup kini bertransisi warna saat hover.
+- `FilterBar` — chip aktif/nonaktif kini `transition-all duration-150`;
+  search input bertransisi warna border + ring saat hover/fokus; tombol
+  refresh bertransisi warna saat hover, ikon `RefreshCw` ditambah
+  `transition-transform` agar putaran spin tidak terasa "patah".
+- `adminUI.tsx` — `AdminKpiCard` yang bisa diklik kini terangkat tipis
+  (`hover:-translate-y-0.5`) + shadow lebih dalam saat hover, dan turun
+  balik saat ditekan; `AdminStatusBadge` ditambah `transition-colors`
+  untuk status yang berubah dinamis.
+- `AdminPortal.tsx` — command palette (Ctrl/Cmd+K) sebelumnya hanya punya
+  animasi masuk; ditambahkan status `paletteVisible` internal + keyframe
+  `spPaletteOut` (140ms) sehingga backdrop & panel memudar keluar alih-alih
+  hilang instan saat Esc/klik luar/pilih aksi. Indikator tab aktif di bar
+  navigasi bawah (mobile) sebelumnya di-mount/unmount langsung — sekarang
+  selalu dirender dan bertransisi opacity + scale-x (200ms) saat berpindah
+  tab.
+- `DataTable.tsx` — ikon sort kini satu ikon (`ArrowUp`) yang berotasi
+  180° (`transition-transform`) saat arah diganti, bukan menukar ikon
+  Up/Down secara instan; tombol header sort dan tombol pagination
+  ditambah `transition-colors`.
+- `prefers-reduced-motion` sudah dinetralkan secara global di `styles.css`
+  (aturan `*,*::before,*::after{animation-duration:.01ms!important;...}`
+  dari langkah 1) — semua transisi/animasi baru di atas otomatis ikut
+  dinonaktifkan di bawah preferensi itu tanpa perlu aturan tambahan.
+- Terverifikasi: `tsc --noEmit --skipLibCheck` bersih, ESLint bersih pada
+  file yang diubah, `npm run build` sukses, **459/459 unit test lolos**
+  (tidak ada regresi, tidak ada test baru — perubahan presentasional).
+
 ## v2.7.31 — 2026-10-31
 
 ### Module pass: Platform/Settings (Admin) — Activity Log

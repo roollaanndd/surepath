@@ -11,6 +11,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Activity, AlertTriangle, RefreshCw, Search, ShieldAlert, X } from 'lucide-react';
 import { callGateway } from '../../services/db';
+import { DataTable, type DataTableColumn } from './shared/DataTable';
 
 interface LogRow {
   id: number;
@@ -60,6 +61,40 @@ const fmtTime = (iso: string) =>
  *  being mapped through a second, drift-prone label table. */
 const humanAction = (a: string) =>
   a.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+function summaryColumns(): DataTableColumn<SummaryRow>[] {
+  return [
+    { id: 'actor', header: 'Pengguna', sortAccessor: s => s.actor_email ?? '', cell: s => <span className="font-bold text-ds-ink whitespace-nowrap">{s.actor_email ?? '—'}</span> },
+    { id: 'role', header: 'Peran', sortAccessor: s => s.actor_role ?? '', cell: s => <span className="text-ds-ink3 whitespace-nowrap">{s.actor_role ?? '—'}</span> },
+    { id: 'total', header: 'Aksi', sortAccessor: s => s.total, cell: s => <span className="font-black text-ds-green">{s.total}</span> },
+    {
+      id: 'denied', header: 'Ditolak', sortAccessor: s => s.denied,
+      cell: s => s.denied > 0
+        ? <span className="px-2 py-1 rounded-lg bg-ds-amber-lt text-ds-amber text-2xs font-black">{s.denied}</span>
+        : <span className="text-ds-ink3">0</span>,
+    },
+    { id: 'top_action', header: 'Paling Sering', sortAccessor: s => s.top_action, cell: s => <span className="text-ds-ink2 whitespace-nowrap">{humanAction(s.top_action)}</span> },
+    { id: 'last_seen', header: 'Terakhir', sortAccessor: s => s.last_seen, cell: s => <span className="text-ds-ink3 whitespace-nowrap">{fmtTime(s.last_seen)}</span> },
+  ];
+}
+
+function detailColumns(): DataTableColumn<LogRow>[] {
+  return [
+    { id: 'time', header: 'Waktu', sortAccessor: r => r.created_at, cell: r => <span className="text-ds-ink3 whitespace-nowrap">{fmtTime(r.created_at)}</span> },
+    { id: 'action', header: 'Aksi', sortAccessor: r => r.action, cell: r => <span className="font-bold text-ds-ink whitespace-nowrap">{humanAction(r.action)}</span> },
+    { id: 'target', header: 'Target', cell: r => <span className="font-mono text-ds-ink3 max-w-[160px] truncate block">{r.target_id ?? '—'}</span> },
+    {
+      id: 'status', header: 'Status', sortAccessor: r => r.status,
+      cell: r => <span className={`px-2 py-1 rounded-lg text-2xs font-black uppercase tracking-widest ${STATUS_STYLE[r.status]}`}>{r.status}</span>,
+    },
+    { id: 'duration', header: 'Durasi', align: 'right', sortAccessor: r => r.duration_ms ?? 0, cell: r => <span className="text-ds-ink3 whitespace-nowrap">{r.duration_ms ?? '—'} ms</span> },
+    {
+      id: 'params', header: 'Parameter',
+      cell: r => <span className="text-ds-ink3 max-w-[200px] truncate block" title={(r.param_keys ?? []).join(', ')}>{(r.param_keys ?? []).join(', ') || '—'}</span>,
+    },
+    { id: 'ip', header: 'IP', cell: r => <span className="font-mono text-ds-ink3 whitespace-nowrap">{r.ip ?? '—'}</span> },
+  ];
+}
 
 const ActivityLogView: React.FC = () => {
   const [range, setRange] = useState('7d');
@@ -198,51 +233,15 @@ const ActivityLogView: React.FC = () => {
             ))}
           </div>
 
-          <div className="rounded-[2rem] bg-ds-card border border-ds-border shadow-ds-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="border-b border-ds-border">
-                    {['Pengguna', 'Peran', 'Aksi', 'Ditolak', 'Paling Sering', 'Terakhir'].map(h => (
-                      <th key={h} className="px-5 py-3 text-2xs font-black uppercase tracking-[0.2em] text-ds-ink3 whitespace-nowrap">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {visibleSummary.map(s => (
-                    <tr
-                      key={s.actor_email ?? s.actor_id ?? Math.random()}
-                      onClick={() => { setStatusFilter(''); setFocus(s); }}
-                      className="border-b border-ds-border last:border-0 hover:bg-ds-card2 cursor-pointer transition-colors"
-                    >
-                      <td className="px-5 py-3.5 text-xs font-bold text-ds-ink whitespace-nowrap">{s.actor_email ?? '—'}</td>
-                      <td className="px-5 py-3.5 text-[0.7rem] text-ds-ink3 whitespace-nowrap">{s.actor_role ?? '—'}</td>
-                      <td className="px-5 py-3.5 text-xs font-black text-ds-green">{s.total}</td>
-                      <td className="px-5 py-3.5">
-                        {s.denied > 0
-                          ? <span className="px-2 py-1 rounded-lg bg-ds-amber-lt text-ds-amber text-2xs font-black">{s.denied}</span>
-                          : <span className="text-[0.7rem] text-ds-ink3">0</span>}
-                      </td>
-                      <td className="px-5 py-3.5 text-[0.7rem] text-ds-ink2 whitespace-nowrap">{humanAction(s.top_action)}</td>
-                      <td className="px-5 py-3.5 text-2xs text-ds-ink3 whitespace-nowrap">{fmtTime(s.last_seen)}</td>
-                    </tr>
-                  ))}
-                  {!loading && visibleSummary.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="px-5 py-12 text-center">
-                        <Activity size={24} className="mx-auto text-ds-ink3 mb-3" />
-                        <p className="text-xs font-bold text-ds-ink2 mb-1">Belum ada aktivitas tercatat</p>
-                        <p className="text-2xs text-ds-ink3 max-w-sm mx-auto leading-relaxed">
-                          Jejak ditulis oleh data-gateway. Kalau kosong padahal aplikasi dipakai,
-                          kemungkinan besar gateway versi terbaru belum ter-deploy.
-                        </p>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <DataTable<SummaryRow>
+            rows={visibleSummary}
+            rowKey={s => s.actor_email ?? s.actor_id ?? String(Math.random())}
+            onRowClick={s => { setStatusFilter(''); setFocus(s); }}
+            emptyIcon={!loading ? Activity : undefined}
+            emptyTitle={!loading ? 'Belum ada aktivitas tercatat' : undefined}
+            emptyHint="Jejak ditulis oleh data-gateway. Kalau kosong padahal aplikasi dipakai, kemungkinan besar gateway versi terbaru belum ter-deploy."
+            columns={summaryColumns()}
+          />
         </>
       )}
 
@@ -264,45 +263,15 @@ const ActivityLogView: React.FC = () => {
             </button>
           </div>
 
-          <div className="rounded-[2rem] bg-ds-card border border-ds-border shadow-ds-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="border-b border-ds-border">
-                    {['Waktu', 'Aksi', 'Target', 'Status', 'Durasi', 'Parameter', 'IP'].map(h => (
-                      <th key={h} className="px-5 py-3 text-2xs font-black uppercase tracking-[0.2em] text-ds-ink3 whitespace-nowrap">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map(r => (
-                    <tr key={r.id} className="border-b border-ds-border last:border-0 hover:bg-ds-card2 transition-colors">
-                      <td className="px-5 py-3 text-2xs text-ds-ink3 whitespace-nowrap">{fmtTime(r.created_at)}</td>
-                      <td className="px-5 py-3 text-xs font-bold text-ds-ink whitespace-nowrap">{humanAction(r.action)}</td>
-                      <td className="px-5 py-3 text-2xs font-mono text-ds-ink3 max-w-[160px] truncate">{r.target_id ?? '—'}</td>
-                      <td className="px-5 py-3">
-                        <span className={`px-2 py-1 rounded-lg text-2xs font-black uppercase tracking-widest ${STATUS_STYLE[r.status]}`}>
-                          {r.status}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3 text-2xs text-ds-ink3 whitespace-nowrap">{r.duration_ms ?? '—'} ms</td>
-                      <td className="px-5 py-3 text-2xs text-ds-ink3 max-w-[200px] truncate" title={(r.param_keys ?? []).join(', ')}>
-                        {(r.param_keys ?? []).join(', ') || '—'}
-                      </td>
-                      <td className="px-5 py-3 text-2xs font-mono text-ds-ink3 whitespace-nowrap">{r.ip ?? '—'}</td>
-                    </tr>
-                  ))}
-                  {!loading && rows.length === 0 && (
-                    <tr>
-                      <td colSpan={7} className="px-5 py-12 text-center text-xs text-ds-ink3">
-                        Tidak ada aktivitas pada rentang dan filter ini.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <DataTable<LogRow>
+            rows={rows}
+            rowKey={r => String(r.id)}
+            pageSize={50}
+            emptyIcon={!loading ? Activity : undefined}
+            emptyTitle={!loading ? 'Tidak ada aktivitas' : undefined}
+            emptyHint="Tidak ada aktivitas pada rentang dan filter ini."
+            columns={detailColumns()}
+          />
 
           <p className="text-2xs text-ds-ink3 leading-relaxed flex items-start gap-2">
             <ShieldAlert size={12} className="shrink-0 mt-0.5" />

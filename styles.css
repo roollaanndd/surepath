@@ -104,6 +104,29 @@
   --ds-purple:       var(--ds-accent);
   --ds-purple-lt:    var(--ds-accent-tint);
 
+  /* ── Admin Portal 2.0 — ALTITUDE-derived accent layer ───────────────────
+     Scoped additions for the admin CMS only (consumed by components/admin/*
+     and the workspace dashboards). Deliberately NOT a parallel token system:
+     these sit beside --ds-primary/--ds-orange/etc. and reuse them where a
+     color already exists (orange, the on-primary green) instead of
+     duplicating. Admin is light-only (design.md §4), so there is no .dark
+     counterpart — these never render under a dark shell.
+     Contrast measured against WCAG 2.1 AA (4.5:1 normal text):
+       white on --ds-admin-forest   → 6.93:1
+       white on --ds-admin-emerald  → 13.6:1
+       white on --ds-admin-dark-forest → 16.6:1
+       --ds-admin-forest on --ds-admin-lime → 5.49:1 (use for text/icons on
+         the lime accent chip — a white or near-white on lime fails at 1.26:1,
+         so lime never carries light text, only used as a small fill/border). */
+  --ds-admin-forest:      #076653;
+  --ds-admin-emerald:     #0C342C;
+  --ds-admin-dark-forest: #06231D;
+  --ds-admin-lime:        #E3EF26;
+  --ds-admin-lime-tint:   #E2FBCE;
+  --ds-admin-warm-white:  #FFFDEE;
+  --ds-admin-on-lime:     var(--ds-admin-forest);
+  --ds-admin-hero: linear-gradient(135deg, var(--ds-admin-dark-forest) 0%, var(--ds-admin-emerald) 55%, var(--ds-admin-forest) 100%);
+
   /* ── Radii ───────────────────────────────────────────────────────────── */
   --ds-radius-xs: 4px; --ds-radius-sm: 8px;
   --ds-radius-md:    12px;

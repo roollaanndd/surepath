@@ -141,6 +141,15 @@ module.exports = {
         'ds-purple':     'var(--ds-purple)',
         'ds-purple-lt':  'var(--ds-purple-lt)',
         'ds-whatsapp':   'var(--ds-whatsapp)',
+        // Admin Portal 2.0 — ALTITUDE-derived accent layer, admin-only (light
+        // theme only; see styles.css for the contrast notes on each pair).
+        'ds-admin-forest':      'var(--ds-admin-forest)',
+        'ds-admin-emerald':     'var(--ds-admin-emerald)',
+        'ds-admin-dark-forest': 'var(--ds-admin-dark-forest)',
+        'ds-admin-lime':        'var(--ds-admin-lime)',
+        'ds-admin-lime-tint':   'var(--ds-admin-lime-tint)',
+        'ds-admin-warm-white':  'var(--ds-admin-warm-white)',
+        'ds-admin-on-lime':     'var(--ds-admin-on-lime)',
         // Semantic tints — mode-aware, so status chips stay legible in dark mode
         'ds-blue-lt':    'var(--ds-info-tint)',
         'ds-amber-lt':   'var(--ds-warning-tint)',

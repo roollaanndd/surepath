@@ -28,7 +28,7 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = ({
           {/* min-w-0 + truncate: at 390px the title used to break mid-word
               ("Comman / d Center") and the subtitle ran to three lines. */}
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" style={{ background: `linear-gradient(135deg, ${meta.accent}, #003B2F)` }}>
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" style={{ background: `linear-gradient(135deg, ${meta.accent}, var(--ds-admin-dark-forest))` }}>
               <span className="text-xs font-black text-white">SP</span>
             </div>
             <div className="min-w-0">

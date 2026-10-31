@@ -4,9 +4,9 @@ import '../../src/styles/portal-modernization.css';
 import {
   LogOut, Search, Menu, Bell, CheckCircle, X, Upload, Loader2, RefreshCw,
   PanelLeftClose, PanelLeftOpen, CornerDownLeft, Keyboard,
-  FileText, ShieldCheck, XCircle, AlertTriangle, BadgeCheck, UserX, Info,
-  ClipboardList, Building2, UserPlus, LayoutDashboard, ClipboardCheck,
+  LayoutDashboard, ClipboardCheck, FileText, ShieldCheck,
 } from 'lucide-react';
+import { adminNotifMeta, adminNotifTimeAgo } from './notifMeta';
 // ── Performance: lazy-load all admin views ──────────────────────────────────
 // AdminPortal chunk was 724 KB (largest in the app). Each admin view is
 // 50-200 KB; loading all 17 eagerly bloated the initial bundle. Now they
@@ -144,45 +144,9 @@ class SettingsErrorBoundary extends Component<
   }
 }
 
-// ─── Notifikasi: ikon per tipe + waktu relatif ──────────────────────────────
-// Tipe nyata yang dikirim data-gateway ke sp_admin_notifications. Tipe tak
-// dikenal jatuh ke Info; prefiks umum tetap dicocokkan supaya tipe baru dari
-// backend tidak tampil tanpa ikon.
-const ADMIN_NOTIF_META: Record<string, { Icon: React.ElementType; cls: string }> = {
-  NEW_ORDER:          { Icon: ClipboardList, cls: 'text-ds-blue' },
-  NEW_CLAIM:          { Icon: FileText,      cls: 'text-ds-blue' },
-  CLAIM_FRAUD_ALERT:  { Icon: AlertTriangle, cls: 'text-rose-700 dark:text-rose-200' },
-  POLICY_ISSUED:      { Icon: ShieldCheck,   cls: 'text-ds-green' },
-  ORDER_REJECTED:     { Icon: XCircle,       cls: 'text-rose-700 dark:text-rose-200' },
-  ORDER_CANCELLED:    { Icon: XCircle,       cls: 'text-ds-ink3' },
-  AGENT_VERIFIED:     { Icon: BadgeCheck,    cls: 'text-ds-green' },
-  AGENT_REJECTED:     { Icon: UserX,         cls: 'text-rose-700 dark:text-rose-200' },
-  NEW_AGENT:          { Icon: UserPlus,      cls: 'text-ds-green' },
-  NEW_CUSTOMER:       { Icon: UserPlus,      cls: 'text-ds-blue' },
-  NEW_ADMIN:          { Icon: UserPlus,      cls: 'text-ds-blue' },
-  SECURITY:           { Icon: AlertTriangle, cls: 'text-rose-700 dark:text-rose-200' },
-  SYSTEM:             { Icon: Info,          cls: 'text-ds-ink3' },
-};
-
-function adminNotifMeta(type: string): { Icon: React.ElementType; cls: string } {
-  if (ADMIN_NOTIF_META[type]) return ADMIN_NOTIF_META[type];
-  if (type.startsWith('INSURER_')) return { Icon: Building2, cls: 'text-ds-blue' };
-  if (type.startsWith('CLAIM_'))   return { Icon: FileText, cls: 'text-ds-blue' };
-  if (type.startsWith('ORDER_'))   return { Icon: ClipboardList, cls: 'text-ds-blue' };
-  if (type.startsWith('NEW_'))     return { Icon: UserPlus, cls: 'text-ds-green' };
-  return { Icon: Info, cls: 'text-ds-ink3' };
-}
-
-function adminNotifTimeAgo(iso: string): string {
-  const t = new Date(iso).getTime();
-  if (!Number.isFinite(t)) return '';
-  const m = Math.floor((Date.now() - t) / 60000);
-  if (m < 1) return 'Baru saja';
-  if (m < 60) return `${m} mnt lalu`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h} jam lalu`;
-  return `${Math.floor(h / 24)} hr lalu`;
-}
+// Notifikasi (ikon per tipe + waktu relatif): diekstrak ke notifMeta.ts
+// (Admin Portal 2.0) supaya panel bell di header ini dan kartu "Aktivitas
+// Terbaru" di AdminDashboard memakai satu sumber kebenaran yang sama.
 
 // ─── Kesegaran data per sumber ───────────────────────────────────────────────
 type AdminSourceKey = 'stats' | 'claims' | 'withdrawals' | 'tier' | 'notif' | 'online';
@@ -707,6 +671,7 @@ const AdminPortal = ({
             withdrawals={withdrawalQueue}
             tierPending={tierPending}
             onlineUsers={onlineUsers}
+            notifications={notifications}
             currentUser={currentUser}
             onNavigate={goToTab}
           />

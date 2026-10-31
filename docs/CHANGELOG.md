@@ -1,5 +1,37 @@
 # SurePath — Changelog
 
+## v2.7.20 — 2026-10-31
+
+### Admin Portal 2.0 — langkah 1: design tokens ALTITUDE + Dashboard reinvented
+
+- **Audit & rencana bertahap** di `docs/ADMIN_PORTAL_2.0_PLAN.md`: 32 file,
+  ~700KB, 29 view admin diaudit; keputusan dibuat untuk memperluas token
+  `ds-*` yang sudah ada (bukan membuat sistem warna admin terpisah), menjaga
+  IA 6-grup dari S1 (PR #328), dan tetap **light-only** (keputusan
+  `design.md §4` yang sudah ada, bukan isu terbuka).
+- **Token baru**: `--ds-admin-forest` (#076653), `--ds-admin-emerald`
+  (#0C342C), `--ds-admin-dark-forest` (#06231D), `--ds-admin-lime`
+  (#E3EF26), `--ds-admin-lime-tint` (#E2FBCE), `--ds-admin-warm-white`
+  (#FFFDEE) — admin-only, kontras AA diukur di browser nyata (6.93:1 /
+  13.6:1 / 16.6:1 untuk teks putih; 5.49:1 untuk teks hijau di atas lime).
+- **Dashboard admin (`AdminDashboard.tsx`, dilihat role ADMIN) dirombak**:
+  hero editorial (premi diterbitkan + sparkline tren 6 bulan recharts,
+  bukan 4 kartu KPI identik), financial intelligence (tren premi
+  interaktif + komposisi produk recharts), **Mitra Terbaik** baru (dari
+  `adminStats.topAgents`, sudah dihitung backend, sebelumnya tidak dipakai
+  di dashboard mana pun), **Aktivitas Terbaru** baru (feed notifikasi,
+  dialirkan dari poll yang sudah ada di `AdminPortal`, bukan fetch baru).
+  Seluruh data tetap dari `buildDashboardModel()` (dashboardData.ts) — tidak
+  ada metrik yang dikarang.
+- `components/admin/notifMeta.ts` baru: ikon+waktu-relatif notifikasi
+  diekstrak dari `AdminPortal.tsx` agar panel bell header dan feed aktivitas
+  dashboard memakai satu sumber kebenaran.
+- `WorkspaceShell` (dipakai 7 dashboard berbasis peran) memakai gradient
+  token baru di chip logo.
+- Terverifikasi: `tsc --noEmit`, ESLint, `npm run build`, 447/447 unit test
+  (termasuk `adminDesignFloor.test.ts` — 0 lantai sub-11px, 0 teks putih di
+  permukaan terang), kontras token diukur langsung di Chromium.
+
 ## v2.7.18 — 2026-10-30
 
 ### Pendaftaran mitra tidak lagi buntu di gerbang perjanjian (dilaporkan pemilik)

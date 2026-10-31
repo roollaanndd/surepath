@@ -35,7 +35,12 @@ Logic bisnis, login, dan jalur uang tidak disentuh: saldo hanya dibaca
   tetap memakainya. Bel, tema, dan avatar ada di kedua bentuk.
 - Lingkaran tab aktif memakai tint + cincin hijau, bukan hijau pekat seperti
   acuan: ikon navigasi SurePath adalah ilustrasi berwarna, dan isian mint
-  serta pale-nya hampir hilang di atas `#00C16A` pekat.
+  serta pale-nya hampir hilang di atas `#00C16A` pekat. Cincinnya memakai
+  `--ds-green-text` (#047857, 5,1:1), bukan hijau isian `#00C16A` yang hanya
+  2,18:1 di atas bar putih — di bawah ambang 3:1 WCAG 1.4.11 untuk komponen
+  antarmuka. Token itu kini juga terdaftar di palet Tailwind, sehingga
+  `ring-`/`border-ds-green-text` tersedia di tempat lain yang butuh garis
+  hijau yang terbaca.
 
 ### Dua cacat lama yang ikut terbetulkan
 

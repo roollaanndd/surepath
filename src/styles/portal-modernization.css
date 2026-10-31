@@ -1330,11 +1330,11 @@ html.dark .sp-modern-app {
 }
 .sp-modern-app .sp-bottom-nav[data-nav-variant="flat"] button[aria-current="page"] > span:first-child:not(:only-child) {
   background: var(--ds-primary-tint);
-  box-shadow: 0 0 0 2px var(--ds-primary), 0 8px 18px -8px rgba(0, 193, 106, .55);
+  box-shadow: 0 0 0 2px var(--ds-primary-text), 0 8px 18px -8px rgba(0, 193, 106, .55);
 }
 html.dark .sp-modern-app .sp-bottom-nav[data-nav-variant="flat"] button[aria-current="page"] > span:first-child:not(:only-child) {
   background: var(--ds-primary-tint);
-  box-shadow: 0 0 0 2px var(--ds-primary), 0 8px 18px -8px rgba(0, 224, 122, .4);
+  box-shadow: 0 0 0 2px var(--ds-primary-text), 0 8px 18px -8px rgba(0, 224, 122, .4);
 }
 
 .sp-modern-app .sp-bottom-nav button:focus-visible {

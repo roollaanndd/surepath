@@ -126,6 +126,11 @@ module.exports = {
         'ds-green':      'var(--ds-green)',
         'ds-green-dk':   'var(--ds-green-dk)',
         'ds-green-tint': 'var(--ds-green-tint)',
+        // The darkened green the token layer already keeps for text. Exposed
+        // here too because a ring or border is held to WCAG 1.4.11's 3:1 the
+        // same way text is, and the fill green measures 2.18:1 on a light
+        // surface. It flips to the bright value in dark mode on its own.
+        'ds-green-text': 'var(--ds-green-text)',
         // Dark surfaces (hero sections — always dark in both modes)
         'ds-navy':       '#0B1120',
         'ds-navy2':      '#162032',

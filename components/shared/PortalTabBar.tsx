@@ -108,6 +108,12 @@ const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect, m
           // bukan glif satu warna seperti pada acuan. Di atas #00C16A pekat,
           // isian mint dan pale-nya hampir hilang. Tint menjaga ikon tetap
           // terbaca sambil mempertahankan isyarat "lingkaran terisi" yang sama.
+          //
+          // Cincinnya memakai --ds-green-text, bukan --ds-primary: sebagai
+          // garis di atas bar putih, #00C16A hanya 2,18:1 — di bawah ambang
+          // 3:1 WCAG 1.4.11 untuk komponen antarmuka. #047857 memberi 5,1:1,
+          // dan token itu sudah berbalik sendiri ke #00E07A di tema gelap,
+          // tempat nilai terang justru yang terbaca.
           return (
             <button
               key={id}
@@ -119,7 +125,7 @@ const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect, m
             >
               <span
                 aria-hidden="true"
-                className={`flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 ease-out motion-reduce:transition-none ${active ? 'bg-ds-green-tint text-ds-green ring-2 ring-ds-green scale-105' : 'text-ds-ink3'}`}
+                className={`flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 ease-out motion-reduce:transition-none ${active ? 'bg-ds-green-tint text-ds-green ring-2 ring-ds-green-text scale-105' : 'text-ds-ink3'}`}
                 style={active ? undefined : { ['--ic-tint' as string]: 'rgba(120,130,125,0.12)' }}
               >
                 <ManagedPortalIcon

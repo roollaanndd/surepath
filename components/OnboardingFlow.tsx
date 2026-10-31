@@ -29,106 +29,139 @@ export const onboardingKey = (role: Role) => `SP_ONBOARDED_${role}`;
 export const needsOnboarding = (role: Role) =>
   typeof window !== 'undefined' && localStorage.getItem(onboardingKey(role)) !== '1';
 
+type ToneKey = 'dawn' | 'teal' | 'gold' | 'moss';
+
 type OnboardingSlide = {
   Art: React.ElementType;
   id: [string, string];
   en: [string, string];
-  photo: string;
+  /** Which illustrated backdrop this scene sits on. */
+  tone: ToneKey;
 };
 
-// Curated editorial lifestyle photography makes the welcome tour feel human and
-// contemporary. If a remote image cannot load, the existing vector artwork is
-// retained as a graceful fallback.
-const PHOTO = {
-  customerJourney: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=85',
-  customerDigital: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=85',
-  customerSupport: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=1200&q=85',
-  partnerWelcome: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1200&q=85',
-  partnerQuote: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1200&q=85',
-  partnerWallet: 'https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1200&q=85',
-  partnerGrowth: 'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=1200&q=85',
+/* v2.7.38 — every slide of the welcome tour now draws SurePath's own
+   illustration, for every role.
+
+   What this replaced: seven remote Unsplash photographs, hotlinked per slide
+   for the AGENT / OPERATOR / INSURER tours. They were the wrong asset in three
+   separate ways.
+
+   - They covered the illustration layer completely. The vector scene only
+     rendered once the photo had already failed to load, so the artwork drawn
+     for these tours in `AgentArt.tsx` was in practice never seen.
+   - Onboarding is the first screen a new partner meets, and it was blocking on
+     a third-party host. Inside the Android APK, on a weak connection, or
+     behind a strict CSP, the slide showed an empty emerald box.
+   - Stock photography of identifiable people carries a licence this product
+     should not be leaning on for a regulated financial surface.
+
+   Each slide gets its own illustrated tone instead, so the four partner slides
+   still read as four distinct scenes rather than one repeated card. The
+   direction-aware transition, swipe, and dots from v2.7.37 are untouched. */
+
+const TONE: Record<ToneKey, { scene: string; glow: string; halo: string }> = {
+  dawn: {
+    scene: 'radial-gradient(ellipse at 50% 12%, #18744F 0%, #0B4935 52%, #082A22 100%)',
+    glow: 'rgba(110,231,183,0.22)',
+    halo: 'rgba(0,224,122,0.18)',
+  },
+  teal: {
+    scene: 'radial-gradient(ellipse at 62% 10%, #0E6A5C 0%, #084A3F 54%, #062A26 100%)',
+    glow: 'rgba(94,234,212,0.22)',
+    halo: 'rgba(45,212,191,0.16)',
+  },
+  gold: {
+    scene: 'radial-gradient(ellipse at 38% 14%, #1A6A45 0%, #0C4631 50%, #07281D 100%)',
+    glow: 'rgba(253,224,71,0.20)',
+    halo: 'rgba(250,204,21,0.14)',
+  },
+  moss: {
+    scene: 'radial-gradient(ellipse at 50% 88%, #157049 0%, #0A4030 55%, #072420 100%)',
+    glow: 'rgba(163,230,53,0.18)',
+    halo: 'rgba(0,224,122,0.16)',
+  },
 };
 
 const SLIDES: Record<Role, OnboardingSlide[]> = {
   CUSTOMER: [
     {
-      Art: ArtProtection, photo: PHOTO.customerJourney,
+      Art: ArtProtection, tone: 'dawn',
       id: ['Semua perlindungan, satu aplikasi', 'Mobil, jiwa, perjalanan, sampai gadget — bandingkan dan beli dalam hitungan menit dengan tarif resmi OJK.'],
       en: ['All protection, one app', 'Car, life, travel, gadgets — compare and buy in minutes with official OJK rates.'],
     },
     {
-      Art: ArtClaim, photo: PHOTO.customerDigital,
+      Art: ArtClaim, tone: 'teal',
       id: ['Klaim cukup lewat foto', 'Foto kerusakan dari HP kamu, AI kami langsung menilai. Tanpa formulir ribet, tanpa antre.'],
       en: ['Claim with just a photo', 'Snap the damage from your phone — our AI assesses it instantly. No forms, no queues.'],
     },
     {
-      Art: ArtSupport, photo: PHOTO.customerSupport,
+      Art: ArtSupport, tone: 'moss',
       id: ['Ada manusia di balik teknologi', 'Mitra berlisensi dan asisten Pathy siap bantu 24/7 — dari pilih polis sampai proses klaim.'],
       en: ['Real humans behind the tech', 'Licensed agents and Pathy assistant, ready 24/7 — from choosing a policy to settling a claim.'],
     },
   ],
   AGENT: [
     {
-      Art: ObWelcome, photo: PHOTO.partnerWelcome,
+      Art: ObWelcome, tone: 'dawn',
       id: ['Kantor asuransi di genggaman', 'Selamat datang, Mitra SurePath. Dashboard bisnis, polis, dan klien Anda — rapi dalam satu aplikasi berstandar perbankan.'],
       en: ['Your insurance office, in hand', 'Welcome, SurePath Partner. Your business dashboard, policies, and clients — organized in one bank-grade app.'],
     },
     {
-      Art: ObQuote, photo: PHOTO.partnerQuote,
+      Art: ObQuote, tone: 'teal',
       id: ['Buat penawaran dalam hitungan detik', 'Hitung premi tarif resmi OJK, terbitkan quotation slip PDF profesional, dan kirim ke klien langsung dari aplikasi.'],
       en: ['Quotes in seconds', 'Calculate official OJK rates, generate a professional PDF quotation slip, and send it to clients straight from the app.'],
     },
     {
-      Art: ObWallet, photo: PHOTO.partnerWallet,
+      Art: ObWallet, tone: 'gold',
       id: ['Komisi transparan, cair cepat', 'Pantau komisi per polis secara real-time di dompet Anda dan tarik dana langsung ke rekening bank.'],
       en: ['Transparent commission, fast payout', 'Track commission per policy in real time and withdraw straight to your bank account.'],
     },
     {
-      Art: ObGrowth, photo: PHOTO.partnerGrowth,
+      Art: ObGrowth, tone: 'moss',
       id: ['Naik level bersama tim Anda', 'Kelola klien, kembangkan jaringan mitra, kejar peringkat leaderboard, dan raih tier Elite dengan benefit eksklusif.'],
       en: ['Level up with your team', 'Manage clients, grow your partner network, climb the leaderboard, and reach Elite tier with exclusive benefits.'],
     },
   ],
   OPERATOR: [
     {
-      Art: ObOpsQueue, photo: PHOTO.partnerWelcome,
+      Art: ObOpsQueue, tone: 'dawn',
       id: ['Pusat kendali operasional', 'Semua antrean — polis, klaim, penarikan, verifikasi — masuk real-time ke satu dashboard. Notifikasi pop-up otomatis setiap ada pengajuan baru.'],
       en: ['Your operations command center', 'Every queue — policies, claims, withdrawals, verifications — flows in real time to one dashboard, with automatic pop-up alerts.'],
     },
     {
-      Art: ObOpsReview, photo: PHOTO.partnerQuote,
+      Art: ObOpsReview, tone: 'teal',
       id: ['Review cepat, keputusan tepat', 'Periksa dokumen, foto kendaraan, dan skor AI survey dalam satu layar — lalu setujui, minta info, atau tolak dengan satu ketukan.'],
       en: ['Fast review, right decision', 'Check documents, vehicle photos, and AI survey scores on one screen — then approve, request info, or decline in one tap.'],
     },
     {
-      Art: ObOpsPayout, photo: PHOTO.partnerWallet,
+      Art: ObOpsPayout, tone: 'gold',
       id: ['Pencairan dana yang aman', 'Proses penarikan komisi agen dengan persetujuan berlapis L1/L2/L3 — setiap rupiah tercatat dan terjaga.'],
       en: ['Payouts, guarded', 'Process agent withdrawals with layered L1/L2/L3 approvals — every rupiah logged and protected.'],
     },
     {
-      Art: ObOpsVerify, photo: PHOTO.partnerGrowth,
+      Art: ObOpsVerify, tone: 'moss',
       id: ['Jaga kualitas jaringan mitra', 'Verifikasi agen baru, tinjau kelengkapan dokumen, dan pastikan hanya mitra terpercaya yang mewakili SurePath.'],
       en: ['Keep the partner network strong', 'Verify new agents, review their documents, and make sure only trusted partners represent SurePath.'],
     },
   ],
   INSURER: [
     {
-      Art: ObOpsQueue, photo: PHOTO.partnerWelcome,
+      Art: ObOpsQueue, tone: 'dawn',
       id: ['Pengajuan masuk secara real-time', 'Setiap penutupan yang ditempatkan SurePath ke perusahaan Anda langsung muncul di dashboard — lengkap dengan notifikasi pop-up.'],
       en: ['Submissions arrive in real time', 'Every placement SurePath routes to your company appears instantly on your dashboard, with pop-up alerts.'],
     },
     {
-      Art: ObOpsReview, photo: PHOTO.partnerQuote,
+      Art: ObOpsReview, tone: 'teal',
       id: ['Review lengkap dalam satu layar', 'Data nasabah, detail kendaraan, foto, dan skor AI survey — lalu setujui, minta info tambahan, atau tolak dengan satu ketukan.'],
       en: ['Full review on one screen', 'Customer data, vehicle details, photos, and AI survey scores — approve, request info, or decline in one tap.'],
     },
     {
-      Art: ObInsIssue, photo: PHOTO.partnerWallet,
+      Art: ObInsIssue, tone: 'gold',
       id: ['Terbitkan polis tanpa hambatan', 'Upload PDF polis beserta nomornya — nasabah dan tim SurePath langsung menerima notifikasi penerbitan.'],
       en: ['Issue policies without friction', 'Upload the policy PDF with its number — the customer and SurePath team are notified instantly.'],
     },
     {
-      Art: ObWallet, photo: PHOTO.partnerGrowth,
+      Art: ObWallet, tone: 'moss',
       id: ['Pantau premi & pembayaran', 'Lacak pembayaran premi setiap polis yang Anda terbitkan — transparan, tercatat, dan real-time.'],
       en: ['Track premiums & payments', 'Follow premium payments for every policy you issue — transparent, logged, and real-time.'],
     },
@@ -140,7 +173,6 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ role, onComplete, lang 
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
   const [leaving, setLeaving] = useState(false);
-  const [imageFailed, setImageFailed] = useState(false);
 
   useEffect(() => {
     fetchWebsiteSection('onboarding')
@@ -148,20 +180,6 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ role, onComplete, lang 
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => { setImageFailed(false); }, [step, role]);
-
-  // Pre-load the next slide's image so the horizontal slide transition starts
-  // smoothly rather than with a blank frame. Noop for CUSTOMER (vector-only).
-  useEffect(() => {
-    if (role === 'CUSTOMER') return;
-    const next = slides[step + 1];
-    if (next?.photo) {
-      const img = new Image();
-      img.referrerPolicy = 'no-referrer';
-      img.src = next.photo;
-    }
-  }, [step, role, slides]);
 
   const goStep = (nextStep: number) => {
     setDirection(nextStep > step ? 1 : -1);
@@ -184,6 +202,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ role, onComplete, lang 
   const isID = lang === 'ID';
   const last = step === slides.length - 1;
   const accent = ACCENT[role];
+  const tone = TONE[slides[step].tone];
 
   const finish = () => {
     setLeaving(true);
@@ -205,7 +224,6 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ role, onComplete, lang 
         @keyframes ob-scene-in-right { from { opacity: 0; transform: translateX(42px) scale(1.03); } to { opacity: 1; transform: translateX(0) scale(1); } }
         @keyframes ob-scene-in-left { from { opacity: 0; transform: translateX(-42px) scale(1.03); } to { opacity: 1; transform: translateX(0) scale(1); } }
         @keyframes ob-glow { 0%,100% { opacity: .35; transform: scale(.98); } 50% { opacity: .65; transform: scale(1.04); } }
-        .ob-scene { background: radial-gradient(ellipse at 50% 15%, #176c4b 0%, #0b4935 52%, #092d25 100%); }
         .ob-scene-grid { background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px); background-size: 28px 28px; mask-image: linear-gradient(to bottom, black, transparent 88%); }
         .ob-anim { animation: ob-slide-in .42s cubic-bezier(.22,1,.36,1) both; }
         .ob-anim-copy-fwd { animation: ob-slide-in-right .5s cubic-bezier(.22,1,.36,1) both; }
@@ -236,30 +254,28 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ role, onComplete, lang 
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-        <section className="ob-scene relative mx-auto flex min-h-[235px] w-full max-w-[520px] flex-1 items-center justify-center overflow-hidden rounded-[30px] border border-white/50 shadow-[0_24px_70px_-32px_rgba(4,53,36,.65)] sm:rounded-[36px]" style={{ maxHeight: 'min(43vh, 430px)' }} aria-label={isID ? 'Ilustrasi fitur SurePath' : 'SurePath feature illustration'}>
-          {/* Customer onboarding uses SurePath's own vector illustrations, never stock people photos. */}
-          {role !== 'CUSTOMER' && !imageFailed && (
-            <img
-              src={slides[step].photo}
-              alt=""
-              aria-hidden="true"
-              onError={() => setImageFailed(true)}
-              className="absolute inset-0 h-full w-full object-cover"
-              loading={step === 0 ? 'eager' : 'lazy'}
-              referrerPolicy="no-referrer"
-            />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#062a21]/90 via-[#073c2d]/35 to-[#0b4935]/20" aria-hidden="true" />
+        <section
+          className="relative mx-auto flex min-h-[235px] w-full max-w-[520px] flex-1 items-center justify-center overflow-hidden rounded-[30px] border border-white/50 shadow-[0_24px_70px_-32px_rgba(4,53,36,.65)] sm:rounded-[36px]"
+          style={{ maxHeight: 'min(43vh, 430px)', background: tone.scene, transition: 'background .6s ease' }}
+          aria-label={isID ? 'Ilustrasi fitur SurePath' : 'SurePath feature illustration'}
+        >
           <div className="ob-scene-grid absolute inset-0" aria-hidden="true" />
-          <div className="ob-glow absolute -right-12 -top-16 h-56 w-56 rounded-full bg-emerald-300/20 blur-3xl" style={{ animation: 'ob-glow 6s ease-in-out infinite' }} aria-hidden="true" />
-          {role !== 'CUSTOMER' && !imageFailed && <div className="absolute inset-0 bg-emerald-950/10" aria-hidden="true" />}
-          {(role === 'CUSTOMER' || imageFailed) && (
-            <div className={`${direction === 1 ? 'ob-anim-scene-fwd' : 'ob-anim-scene-back'} relative z-10 flex w-full items-center justify-center px-3 pt-7 pb-2`} key={`scene-${step}`}>
-              <ArtKeyframes />
-              {role !== 'CUSTOMER' && <AgentArtKeyframes />}
-              {React.createElement(slides[step].Art)}
-            </div>
-          )}
+          <div
+            className="ob-glow absolute -right-12 -top-16 h-56 w-56 rounded-full blur-3xl"
+            style={{ background: tone.glow, animation: 'ob-glow 6s ease-in-out infinite' }}
+            aria-hidden="true"
+          />
+          <div
+            className="ob-glow absolute -bottom-20 -left-16 h-52 w-52 rounded-full blur-3xl"
+            style={{ background: tone.halo, animation: 'ob-glow 7.5s ease-in-out .8s infinite' }}
+            aria-hidden="true"
+          />
+          {/* SurePath's own illustration set — one scene per slide, every role. */}
+          <div className={`${direction === 1 ? 'ob-anim-scene-fwd' : 'ob-anim-scene-back'} relative z-10 flex w-full items-center justify-center px-3 pt-7 pb-2`} key={`scene-${role}-${step}`}>
+            <ArtKeyframes />
+            {role !== 'CUSTOMER' && <AgentArtKeyframes />}
+            {React.createElement(slides[step].Art)}
+          </div>
           <div className="absolute left-5 top-5 flex items-center gap-2 rounded-full border border-white/20 bg-black/20 px-3 py-1.5 text-[9px] font-bold uppercase tracking-[.18em] text-white/90 backdrop-blur-md sm:left-6 sm:top-6">
             <ShieldCheck size={12} className="text-emerald-200" />
             SurePath <span className="text-white/50">·</span> {isID ? 'Proteksi cerdas' : 'Smart protection'}

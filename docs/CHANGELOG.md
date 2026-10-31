@@ -1,6 +1,6 @@
 # SurePath — Changelog
 
-## v2.7.22 — 2026-10-31
+## v2.7.32 — 2026-10-31
 
 ### Admin Portal 2.0 — langkah 3: motion & micro-interaction pass
 
@@ -43,6 +43,235 @@ otomatis merambat ke setiap view yang memakai komponen tersebut.
 - Terverifikasi: `tsc --noEmit --skipLibCheck` bersih, ESLint bersih pada
   file yang diubah, `npm run build` sukses, **459/459 unit test lolos**
   (tidak ada regresi, tidak ada test baru — perubahan presentasional).
+
+## v2.7.31 — 2026-10-31
+
+### Module pass: Platform/Settings (Admin) — Activity Log
+
+- Lanjutan gelombang module-pass ke modul Platform. Hanya perubahan
+  presentasi; pemanggilan `admin_activity_summary`/`admin_activity_log`
+  dan logika rentang/filter/drill-down tidak disentuh.
+- `ActivityLogView.tsx`: kedua tabel literal (ringkasan per-pengguna
+  dan rincian jejak per-aksi) dipindah ke primitive bersama
+  `DataTable` — keduanya kini bisa disortir per kolom; mode rincian
+  (bisa sampai 500 baris) kini terpaginasi otomatis (50/halaman)
+  ketimbang menampilkan semua baris sekaligus.
+- Empty state kedua tabel dipertahankan sebagai teks biasa (ikon
+  Lucide `Activity`, bukan ilustrasi) — tidak ada varian
+  `SpEmptyStateVariant` yang cocok untuk jejak aktivitas admin.
+- Diperiksa tapi TIDAK dimigrasi pada pass ini: `AIAdminView`,
+  `AIFinanceView` (tidak ada tabel/filter literal untuk dipindah),
+  `WebsiteEditorAdmin` (editor konten CMS penuh, bentuknya berbeda
+  dan berisiko tinggi untuk disentuh di pass presentasi-saja ini).
+- Verifikasi: `tsc --noEmit` bersih, vitest 459/459 lulus, build
+  produksi berhasil.
+
+## v2.7.30 — 2026-10-31
+
+### Module pass: Catalog (Admin) — Vehicle Pricelist
+
+- Lanjutan gelombang module-pass ke modul Katalog & Harga. Hanya
+  perubahan presentasi; data fetch (`supabase.from('sp_vehicle_overrides')`),
+  sync, upload, dan logika toggle/hapus tidak disentuh.
+- `VehiclePricelistAdmin.tsx`: search box + dropdown versi dipindah ke
+  primitive bersama `FilterBar`; tabel override literal dipindah ke
+  `DataTable` (kolom: merek/model, tahun, harga list, nilai pasar,
+  diskon, status, aksi) — sekarang bisa disortir per kolom dan
+  terpaginasi otomatis (sebelumnya semua baris ditampilkan sekaligus).
+  Catatan kecil: baris nonaktif tidak lagi diredupkan (opacity) secara
+  keseluruhan — status "Nonaktif" tetap terlihat jelas lewat badge.
+- Diperiksa tapi TIDAK dimigrasi: `OjkRateAdmin`'s 5×3 matrix editor
+  (bukan daftar — bentuknya tetap/fixed-shape, tidak cocok untuk
+  `DataTable`); `InsurerAdmin`'s nested per-insurer product table
+  (daftar kecil tertanam dalam accordion, nilai migrasi rendah untuk
+  pass ini).
+- Tidak ada ilustrasi empty-state baru yang dipasang di modul ini —
+  tidak ada varian `SpEmptyStateVariant` yang cocok untuk
+  rate-set/produk/kendaraan (dicek, tidak dipaksakan).
+- Verifikasi: `tsc --noEmit` bersih, vitest 459/459 lulus, build
+  produksi berhasil.
+
+## v2.7.29 — 2026-10-31
+
+### Module pass: Agents/Partners (Admin)
+
+- Lanjutan dari gelombang empty-state illustrations (#340) dan rebuild
+  Icon Manager (#341) ke modul admin berikutnya. Hanya perubahan
+  presentasi — tidak ada logika bisnis, kontrak gateway, atau tier
+  komisi yang disentuh.
+- `AgentManagementView` ("Belum ada agen aktif" teks polos) dan
+  `PartnerDirectorySection` (`icon={Users}`) di `AdminViews.tsx`
+  sekarang memakai `AdminEmptyState illustration="clients"`, konsisten
+  dengan gelombang ilustrasi empty-state sebelumnya.
+- `UserDetailModal` (detail profil pengguna/mitra, dipakai di
+  `AgentManagementView` dan `UserManagementView`) dimigrasi dari modal
+  hand-rolled ke primitive bersama `DetailDrawer` — perilaku data,
+  field yang ditampilkan, dan `getAdminUser()` tidak berubah.
+- Diperiksa dan sengaja TIDAK dimigrasi: `AgentManagementView` sudah
+  berbasis kartu (bukan tabel/filter pill), jadi tidak ada `FilterBar`
+  atau `DataTable` yang relevan untuk dipasang di sini — konsisten
+  dengan `WithdrawalsAdminView` (#336) yang kartu-nya tetap kartu.
+  `BulkImportModal`, `AddMitraModal`, `CredentialModal` ditinjau tapi
+  dibiarkan sebagaimana adanya untuk modul ini.
+- Verifikasi: `tsc --noEmit` bersih, vitest 459/459 lulus, build
+  produksi berhasil.
+
+## v2.7.28 — 2026-10-31
+
+### Ilustrasi empty-state SurePath di modul Admin
+
+- Roland memberikan 12 ilustrasi SVG empty-state siap pakai (polis,
+  klaim, penawaran, dompet, klien, antrean operator, notifikasi,
+  pencarian, dokumen, rewards, sukses terverifikasi, offline) plus
+  komponen wrapper `SpEmptyState`, memakai palet ALTITUDE yang sama.
+  Disimpan verbatim di `components/shared/SpEmptyState.tsx`.
+- `AdminEmptyState` (`components/admin/adminUI.tsx`) kini punya prop
+  opsional `illustration` (varian `SpEmptyStateVariant`) yang
+  menggantikan ikon Lucide generik dengan ilustrasi bersangkutan;
+  pemanggil lama yang masih memakai `icon` tetap berjalan tanpa ubah.
+- Empat lokasi empty-state hasil migrasi (markup polos sebelumnya
+  diganti primitive bersama, logika data tidak disentuh):
+  `PolicyOrdersAdmin.tsx` ("Tidak ada order ditemukan" → `policies`),
+  `AdminViews.tsx` klaim ("No claims found" → `claims`) dan penarikan
+  ("Tidak ada data" → `wallet`), `CommissionLedger.tsx` ("Tidak ada
+  data komisi" → `wallet`).
+
+## v2.7.27 — 2026-10-31
+
+### Icon Manager dibangun ulang — satu sistem ikon terbaru untuk semua apps & dashboard
+
+- Roland minta Icon Manager yang lama dihapus dan dibangun ulang dengan
+  ilustrasi terbaru untuk **semua** ikon di seluruh apps dan dashboard,
+  bukan hanya opsi tambahan. Pemilihan gaya per-ikon (Studio/Orbit/Bold/
+  Illustrative/Brand — 5 pilihan manual) dihapus total; sekarang hanya
+  **satu** sistem visual otomatis: ikon dengan ilustrasi bespoke dari
+  roland (`car_protection`, `travel_safe`, `personal_safety`,
+  `item_shield`, `family_health`, `quotes`, `claims`/`claims_admin`,
+  `commission`/`commission_ledger`/`withdraw`/`withdrawals`, `security`,
+  `documents`, `vehicle_pricelist`) otomatis memakai ilustrasi "Brand"
+  itu; semua ikon lain otomatis memakai set ilustratif yang sudah jadi
+  default aplikasi — tidak ada lagi pilihan manual, tidak ada ikon yang
+  bolong/placeholder.
+- `components/shared/SurePathBrandIcon.tsx`: ditambah `hasBrandArt(id)`
+  agar pemanggil bisa memeriksa apakah id punya ilustrasi bespoke sebelum
+  memilih fallback.
+- `components/shared/PathyNavIcon.tsx` dan `ManagedPortalIcon.tsx` (dua
+  tempat yang merender ikon navigasi di keenam portal) disederhanakan:
+  tidak lagi membaca peta gaya per-ikon dari CMS, cukup
+  `hasBrandArt(id) ? Brand : Illustrative`. Upload ikon kustom tetap
+  menang di atas keduanya seperti sebelumnya.
+- `services/portalIcons.ts`: seluruh penyimpanan "styles" (CMS
+  `app_icons.extra_json.styles`) dihapus — hanya peta ikon kustom yang
+  tersisa. Data gaya lama di database (jika ada) diam-diam diabaikan,
+  tidak di-migrasikan, tidak menyebabkan error.
+- `components/admin/PortalIconManager.tsx` dibangun ulang: grid ikon
+  per-id (46 ikon di 7 kategori) tanpa tombol pilih-gaya; tiap kartu
+  menampilkan ilustrasi yang otomatis berlaku, badge **BRAND** untuk id
+  dengan ilustrasi bespoke, **CUSTOM** untuk upload sendiri. Stat "Gaya
+  visual" di header diganti "Ilustrasi brand" (jumlah id dengan art
+  bespoke).
+- Tidak ada perubahan pada data gateway, upload storage, atau logika
+  bisnis apa pun — murni penyederhanaan lapisan presentasi ikon.
+- Terverifikasi: `tsc --noEmit` bersih, ESLint bersih (file yang
+  diubah), `npm run build` sukses, 459/459 unit test lolos.
+
+## v2.7.26 — 2026-10-31
+
+### Icon Manager — gaya "Brand" dari ilustrasi kustom roland
+
+- Roland memberikan 20 komponen ilustrasi SVG siap pakai (brand shield,
+  7 kategori produk asuransi, climate shield, STNK/KTP OCR scanner, AI
+  vehicle audit, instant quote, fast claim tracker, wallet & komisi,
+  verified security, plus 6 ikon per-portal Admin/Agent/Customer/
+  Operator/Insurer/B2B), dipakai palet ALTITUDE yang sama
+  (`#076653`/`#06231D`/`#0C342C`/`#E3EF26`/`#E2FBCE`/`#FFFDEE`/`#FF6B2C`).
+  Disimpan verbatim di `components/shared/SurePathBrandIcon.tsx`.
+- Icon Manager (`components/admin/PortalIconManager.tsx`) kini punya gaya
+  ke-5, **"Brand"**, di samping Studio/Orbit/Bold/Illustrative. Dipilih
+  per-ikon seperti gaya lain (`setPortalIconStyle`,
+  `PortalIconStyleMap` di `services/portalIcons.ts` diperluas dengan
+  `'brand'`).
+- `SurePathBrandIcon` memetakan id Icon Manager yang cocok secara makna
+  ke ilustrasi bersangkutan (`car_protection`→mobil, `travel_safe`→
+  perjalanan, `personal_safety`, `item_shield`, `family_health`,
+  `quotes`→instant quote, `claims`/`claims_admin`→fast claim,
+  `commission`/`commission_ledger`/`withdraw`/`withdrawals`→wallet,
+  `security`→verified security, `documents`→STNK/KTP OCR,
+  `vehicle_pricelist`→AI vehicle audit); id lain jatuh ke ilustrasi
+  shield brand generik. `PathyNavIcon` dan `ManagedPortalIcon` (dua
+  tempat lain yang membaca `PortalIconStyleMap`) diperbarui agar gaya
+  "Brand" juga tampil benar di navigasi portal, bukan hanya di Icon
+  Manager. Enam ikon per-portal (`PORTAL_BRAND_ICONS`) diekspor untuk
+  dipakai nanti di halaman pemilihan portal/app.
+- Terverifikasi: `tsc --noEmit` bersih, ESLint bersih, `npm run build`
+  sukses, 459/459 unit test lolos (tidak ada test baru — ikon statis +
+  satu opsi gaya baru, tidak ada logika bisnis yang diubah).
+
+## v2.7.25 — 2026-10-31
+
+### Admin Portal 2.0 — modul Keuangan ke primitif bersama
+
+- `PaymentsAdminView` (`components/admin/AdminViews.tsx`): filter pill +
+  tombol refresh hand-rolled dimigrasikan ke `FilterBar`; tabel `<table>`
+  literal dimigrasikan ke `DataTable` generik (kolom, sort per kolom,
+  paginasi) — data fetch (`getAdminPayments`), mapping order/klien/produk,
+  dan kalkulasi KPI (total terbayar/pending/expired) tidak disentuh.
+- `WithdrawalsAdminView`: filter pill dimigrasikan ke `FilterBar`; modal
+  tolak-penarikan tengah dimigrasikan ke `DetailDrawer`. Daftar kartu
+  penarikan **tetap kartu** (bukan tabel literal) sesuai bentuk aslinya.
+  **Tidak disentuh sama sekali**: logika tier L1/L2/L3
+  (`approvalLevelForUser`, `canApprove`), alur `approveWithdrawal` →
+  `triggerDisbursement` di `handleApprove`, `rejectWithdrawal` di
+  `handleReject`, dan ambang Rp 10 juta / Rp 25 juta — hanya cangkang JSX
+  yang dipindah, fungsi dan urutan panggilan gateway sama persis.
+- `CommissionLedger.tsx`: filter tab + search hand-rolled dimigrasikan ke
+  `FilterBar`. Baris komisi tetap kartu (sama seperti Withdrawals) karena
+  bukan tabel literal. `payCommission`/`cancelCommission`/`payAllPending`
+  dan rute `admin_update_commission` tidak disentuh.
+- Terverifikasi: `tsc --noEmit` bersih, ESLint bersih (file yang diubah),
+  `npm run build` sukses, `vitest run` tidak regresi dari baseline.
+
+## v2.7.24 — 2026-10-31
+
+### Admin Portal 2.0 — langkah 3: modul Klaim ke primitif bersama
+
+- `ClaimsAdminView` (Klaim): toolbar status chip + tombol "Needs Review"
+  diganti `FilterBar` (menambah search klien/no. klaim/lokasi yang
+  sebelumnya tidak ada, mempertahankan gaya rose khusus chip "Needs
+  Review" lewat slot `extra`). `ClaimDetailModal` dimigrasikan ke
+  `DetailDrawer` (panel 480px, badge status di `headerExtra`). **Hanya
+  cangkang tampilan yang disentuh** — status transition (review/approve/
+  reject/tandai dibayar) dengan busy-state + rollback optimistik tidak
+  diubah sama sekali.
+- `EndorsementsAdminView` sengaja **tidak** dimigrasikan pada pass ini —
+  pola confirm-modalnya kecil dan tidak cocok dengan anatomi `DetailDrawer`
+  (lihat `docs/ADMIN_PORTAL_2.0_PLAN.md`).
+- Terverifikasi: `tsc --noEmit` bersih, ESLint bersih, `npm run build`
+  sukses, 459/459 unit test lolos (tidak ada test baru — migrasi murni
+  presentasional, logika bisnis tidak berubah).
+
+## v2.7.23 — 2026-10-31
+
+### Ikon navigasi — set illustrative jadi default di semua portal
+
+- Roland minta ikon navigasi di seluruh aplikasi (bukan hanya admin)
+  diganti ke gaya yang lebih bagus dan illustrative. `PathyNavIcon`
+  (dipakai bersama Customer/Agent/Operator/Insurer/Admin) sudah punya dua
+  set ikon siap pakai — `SurePathIcon` (gaya "studio", flat+kotak rounded)
+  dan `SurePathIllustrationIcon` (gaya "illustrative", lebih playful) —
+  jadi diganti **default aplikasi**-nya ke `illustrative`, bukan menulis
+  ulang 29+ ikon dari nol. Admin tetap bisa override per-ikon ke
+  studio/orbit/bold lewat halaman Icon Manager yang sudah ada.
+- `SurePathIllustrationIcon.tsx`: menambah 9 kategori ilustrasi baru
+  (bank/insurer/b2b, library/catalog, review/approval, tier, icon-manager/
+  palette, network/referral, renewal, chart/analytics, box/produk) yang
+  sebelumnya hanya ada di set "studio" — supaya id-id itu (termasuk
+  banyak menu khusus admin) tidak jatuh ke ikon generik "spark" begitu
+  illustrative jadi default. Juga memperbaiki `ojk_rates` yang salah
+  kena regex "rate" → ikon mobil; sekarang benar ke ikon proteksi.
+- Terverifikasi: `tsc --noEmit` bersih, ESLint bersih, `npm run build`
+  sukses, 459/459 unit test lolos (tidak ada test ikon sebelumnya, tidak
+  ada yang baru ditambahkan — murni SVG + pemilihan kategori).
 
 ## v2.7.21 — 2026-10-31
 

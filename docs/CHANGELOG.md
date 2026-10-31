@@ -1,5 +1,27 @@
 # SurePath — Changelog
 
+## v2.7.31 — 2026-10-31
+
+### Module pass: Platform/Settings (Admin) — Activity Log
+
+- Lanjutan gelombang module-pass ke modul Platform. Hanya perubahan
+  presentasi; pemanggilan `admin_activity_summary`/`admin_activity_log`
+  dan logika rentang/filter/drill-down tidak disentuh.
+- `ActivityLogView.tsx`: kedua tabel literal (ringkasan per-pengguna
+  dan rincian jejak per-aksi) dipindah ke primitive bersama
+  `DataTable` — keduanya kini bisa disortir per kolom; mode rincian
+  (bisa sampai 500 baris) kini terpaginasi otomatis (50/halaman)
+  ketimbang menampilkan semua baris sekaligus.
+- Empty state kedua tabel dipertahankan sebagai teks biasa (ikon
+  Lucide `Activity`, bukan ilustrasi) — tidak ada varian
+  `SpEmptyStateVariant` yang cocok untuk jejak aktivitas admin.
+- Diperiksa tapi TIDAK dimigrasi pada pass ini: `AIAdminView`,
+  `AIFinanceView` (tidak ada tabel/filter literal untuk dipindah),
+  `WebsiteEditorAdmin` (editor konten CMS penuh, bentuknya berbeda
+  dan berisiko tinggi untuk disentuh di pass presentasi-saja ini).
+- Verifikasi: `tsc --noEmit` bersih, vitest 459/459 lulus, build
+  produksi berhasil.
+
 ## v2.7.30 — 2026-10-31
 
 ### Module pass: Catalog (Admin) — Vehicle Pricelist

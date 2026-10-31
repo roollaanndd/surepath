@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Copy, Check, Share2, Users, ChevronDown, ChevronUp, ChevronRight, Coins } from 'lucide-react';
+import { Copy, Check, Share2, ChevronDown, ChevronUp, ChevronRight } from 'lucide-react';
 import { Language } from '../../types';
 import {
   getAgentDownlineTree,
@@ -13,6 +13,7 @@ import {
 import { formatIDR } from '../car-wizard/WizardUI';
 import { AgentArtKeyframes, AgentHero, SpotNetwork } from './AgentArt';
 import { useTierDefinitions, getTierByCode } from '../../hooks/useTierDefinitions';
+import ModuleIcon from '../shared/ModuleIcon';
 
 interface Props {
   agentId: string;
@@ -179,7 +180,7 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
       ) : (
         <div className="sp-glass rounded-[2rem] p-4 flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-ds-card2 flex items-center justify-center text-ds-ink3 flex-shrink-0">
-            <Users size={16} />
+            <ModuleIcon id="network" glyph="network" size={26} />
           </div>
           <div>
             <p className="text-xs font-black text-ds-ink">{tierCfg?.name ?? 'Standard'}</p>
@@ -243,7 +244,7 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
 
         {downlines.length === 0 ? (
           <div className="bg-ds-card2 border border-ds-border rounded-[2rem] p-8 text-center">
-            <Users size={32} className="mx-auto text-ds-ink3 mb-3" />
+            <ModuleIcon id="network" glyph="network" size={56} className="mx-auto mb-3" />
             <p className="text-sm font-bold text-ds-ink2">
               {t('No downlines yet', 'Belum ada downline')}
             </p>
@@ -358,7 +359,7 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
 
         {overrideTxns.length === 0 ? (
           <div className="bg-ds-card2 border border-ds-border rounded-[2rem] p-6 text-center">
-            <Coins size={28} className="mx-auto text-ds-ink3 mb-2" />
+            <ModuleIcon id="commission" size={48} className="mx-auto mb-2" />
             <p className="text-xs text-ds-ink3">{t('No override commissions yet', 'Belum ada komisi override')}</p>
           </div>
         ) : (

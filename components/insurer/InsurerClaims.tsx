@@ -1,11 +1,12 @@
 // InsurerClaims.tsx — Klaim tab. Lists claims for this insurer's orders.
 import React, { useEffect, useState, useCallback } from 'react';
-import { ShieldAlert, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { Language } from '../../types';
 import { SkeletonCard, useToast } from '../ui';
 import { useT } from '../../src/i18n';
 import { AgentArtKeyframes, AgentHero, SpotClaims, AgentEmpty } from '../agent/AgentArt';
 import { getInsurerDashboard, type InsurerOrder } from '../../services/insurerService';
+import ModuleIcon from '../shared/ModuleIcon';
 
 interface Props {
   authToken: string;
@@ -70,7 +71,7 @@ const InsurerClaims: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
       <div className="bg-ds-card border border-ds-border rounded-2xl p-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center">
-            <ShieldAlert size={18} className="text-blue-500" />
+            <ModuleIcon id="claims_admin" size={32} />
           </div>
           <div className="flex-1">
             <p className="text-sm font-bold text-ds-ink">Polis Aktif yang Dapat Diajukan Klaim</p>

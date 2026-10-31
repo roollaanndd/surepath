@@ -1,13 +1,14 @@
 // InsurerProfile.tsx — Profil tab. Insurer info + PWA install + logout.
 
 import React, { useState, useEffect } from 'react';
-import { LogOut, Moon, Sun, Download, Shield, Smartphone, Info, ChevronRight, AlertTriangle, Building2, Mail, Phone, User } from 'lucide-react';
+import { LogOut, Moon, Sun, Download, Shield, Smartphone, Info, ChevronRight, AlertTriangle, Mail, Phone, User } from 'lucide-react';
 import { Language } from '../../types';
 import { SectionLabel } from '../shared/cards';
 import { useToast, useConfirmDialog } from '../ui';
 import { useT } from '../../src/i18n';
 import { APP_VERSION } from '../../src/version';
 import { getInsurerDashboard, type InsurerProfile as InsurerProfileData } from '../../services/insurerService';
+import ModuleIcon from '../shared/ModuleIcon';
 
 interface Props {
   authToken: string;
@@ -86,7 +87,7 @@ const InsurerProfile: React.FC<Props> = ({ authToken, lang, onLogout, insurerNam
         <div className="relative z-10 flex items-center gap-4">
           <div className="w-16 h-16 rounded-full flex items-center justify-center ring-4 ring-white/15"
             style={{ background: 'linear-gradient(135deg, #10b981, #047857)' }}>
-            <Building2 size={28} className="text-white" />
+            <ModuleIcon id="insurers" size={48} />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-2xs font-bold uppercase tracking-wider text-white/70">Mitra Asuransi</p>

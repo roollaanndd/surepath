@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import {
-  FileText, Image, User, Eye, Filter, Search, FileImage, Shield, ClipboardCheck, ScrollText,
-} from 'lucide-react';
+import { FileText, Image, User, Eye, Filter, Search, FileImage, Shield, ClipboardCheck, ScrollText } from 'lucide-react';
 import { getAllOrders, getAllAgreements, callGateway, supabase, resolveDocumentUrl } from '../../services/supabaseService';
+import ModuleIcon from '../shared/ModuleIcon';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -79,7 +78,7 @@ const DocCard: React.FC<{ doc: DocItem }> = ({ doc }) => {
           />
         ) : (
           <div className="flex flex-col items-center gap-2 opacity-40">
-            {doc.isPdf ? <FileText size={36} className="text-blue-700 dark:text-blue-400" /> : <FileImage size={36} />}
+            <ModuleIcon id="documents" size={48} />
             <span className="text-2xs font-bold uppercase tracking-widest text-ds-ink3">
               {doc.isPdf ? 'PDF' : 'Document'}
             </span>

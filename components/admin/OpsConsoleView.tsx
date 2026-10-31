@@ -18,12 +18,10 @@
 // berguna hari ini juga dan tidak ikut antre di belakang deploy edge function.
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  AlertTriangle, ArrowRight, CheckCircle2, ClipboardList,
-  FileText, Inbox, Loader2, RefreshCw, Wallet,
-} from 'lucide-react';
+import { AlertTriangle, ArrowRight, Inbox, Loader2, RefreshCw } from 'lucide-react';
 import { getAllOrders, getAdminPayments } from '../../services/orders';
 import type { SpPolicyOrder, SpPayment } from '../../services/dbTypes';
+import ModuleIcon from '../shared/ModuleIcon';
 
 /** Hari penuh sejak `iso`. Null kalau tanggalnya tidak ada — dibedakan dari 0
  *  supaya baris tanpa tanggal tidak menyamar sebagai baris paling segar. */
@@ -84,7 +82,7 @@ interface FunnelStage {
   key: string;
   label: string;
   count: number;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  iconId: string;
 }
 
 const OpsConsoleView: React.FC = () => {
@@ -138,10 +136,10 @@ const OpsConsoleView: React.FC = () => {
     const paid = live.filter(o => payByOrder.get(o.id)?.paid).length;
     const issued = live.filter(o => o.status === 'ISSUED').length;
     return [
-      { key: 'created',  label: 'Order dibuat',   count: live.length, icon: ClipboardList },
-      { key: 'invoiced', label: 'Invoice terbit', count: invoiced,    icon: FileText },
-      { key: 'paid',     label: 'Dibayar',        count: paid,        icon: Wallet },
-      { key: 'issued',   label: 'Polis terbit',   count: issued,      icon: CheckCircle2 },
+      { key: 'created',  label: 'Order dibuat',   count: live.length, iconId: 'policy_orders' },
+      { key: 'invoiced', label: 'Invoice terbit', count: invoiced,    iconId: 'documents' },
+      { key: 'paid',     label: 'Dibayar',        count: paid,        iconId: 'payments' },
+      { key: 'issued',   label: 'Polis terbit',   count: issued,      iconId: 'policy' },
     ];
   }, [live, payByOrder]);
 
@@ -222,7 +220,6 @@ const OpsConsoleView: React.FC = () => {
           {funnel.map((s, i) => {
             const prev = i > 0 ? funnel[i - 1].count : null;
             const drop = prev === null ? 0 : prev - s.count;
-            const Icon = s.icon;
             return (
               <React.Fragment key={s.key}>
                 {i > 0 && (
@@ -236,7 +233,7 @@ const OpsConsoleView: React.FC = () => {
                   </div>
                 )}
                 <div className="flex-1 min-w-[130px] bg-ds-card2 border border-ds-border rounded-xl p-4">
-                  <Icon size={16} className="text-ds-ink3 mb-2" />
+                  <ModuleIcon id={s.iconId} size={30} className="mb-2" />
                   <div className="text-2xl font-bold text-ds-ink tabular-nums">{s.count}</div>
                   <div className="text-ds-sm text-ds-ink3 mt-0.5">{s.label}</div>
                 </div>

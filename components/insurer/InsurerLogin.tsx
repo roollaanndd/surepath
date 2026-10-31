@@ -4,8 +4,9 @@
 // On success, the token is stored in localStorage and the dashboard loads.
 
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, ArrowRight, AlertCircle, KeyRound, Link as LinkIcon } from 'lucide-react';
+import { ArrowRight, AlertCircle, KeyRound, Link as LinkIcon } from 'lucide-react';
 import { getInsurerDashboard } from '../../services/insurerService';
+import ModuleIcon from '../shared/ModuleIcon';
 
 interface InsurerLoginProps {
   initialToken?: string;
@@ -103,7 +104,7 @@ const InsurerLogin: React.FC<InsurerLoginProps> = ({ initialToken, onLoginSucces
               animation: 'ins-ping 3s ease-in-out infinite',
             }} />
             <div className="w-16 h-16 rounded-2xl sp-glass flex items-center justify-center">
-              <ShieldCheck size={32} style={{ color: '#059669' }} />
+              <ModuleIcon id="security" size={48} />
             </div>
           </div>
 

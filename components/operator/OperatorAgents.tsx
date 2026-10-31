@@ -4,13 +4,14 @@
 // Rejection sets verified=false + trust_score=50 + sends admin notification.
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { UserCheck, CheckCircle2, XCircle, Eye, FileText, ImageIcon, Phone, MapPin, CreditCard, Calendar, ShieldCheck, AlertCircle } from 'lucide-react';
+import { CheckCircle2, XCircle, Eye, FileText, Phone, MapPin, CreditCard, Calendar, ShieldCheck, AlertCircle } from 'lucide-react';
 import { Language } from '../../types';
 import { AgentArtKeyframes, AgentHero, SpotProfile, AgentEmpty } from '../agent/AgentArt';
 import { UnderlineTabs, SkeletonCard, useToast, useConfirmDialog } from '../ui';
 import { useT } from '../../src/i18n';
 import { listAgents, getAgentDetail, verifyAgent, rejectAgent, type OperatorAgent, type AgentDetail } from '../../services/operatorService';
 import { resolveDocumentUrl } from '../../services/storage';
+import ModuleIcon from '../shared/ModuleIcon';
 
 interface Props {
   operator: any;
@@ -282,7 +283,7 @@ const OperatorAgents: React.FC<Props> = ({ lang, refreshTick }) => {
                 </div>
 
                 {/* Personal info */}
-                <Section icon={<UserCheck size={14} />} title="Data Pribadi" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
+                <Section icon={<ModuleIcon id="agents" size={24} />} title="Data Pribadi" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
                   <DetailRow label="Nama" value={detail.agent.name} sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} />
                   <DetailRow label="Email" value={detail.agent.email} sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} />
                   <DetailRow label="Telepon" value={detail.agent.phone ?? '-'} icon={<Phone size={11} />} sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} />
@@ -293,7 +294,7 @@ const OperatorAgents: React.FC<Props> = ({ lang, refreshTick }) => {
                 </Section>
 
                 {/* Documents */}
-                <Section icon={<ImageIcon size={14} />} title="Dokumen Upload" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
+                <Section icon={<ModuleIcon id="documents" size={24} />} title="Dokumen Upload" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
                   {/* KTP document image */}
                   {resolvedKtpUrl ? (
                     <button
@@ -339,7 +340,7 @@ const OperatorAgents: React.FC<Props> = ({ lang, refreshTick }) => {
 
                 {/* Agreement */}
                 {detail.agreements && detail.agreements.length > 0 ? (
-                  <Section icon={<ShieldCheck size={14} />} title="Surat Perjanjian" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
+                  <Section icon={<ModuleIcon id="security" size={24} />} title="Surat Perjanjian" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
                     {detail.agreements.map((agr, i) => (
                       <div key={agr.id} className={`p-3 ${SHEET_INSET} ${i > 0 ? 'mt-2 rounded-xl' : ''}`}>
                         <div className="flex items-center justify-between mb-1">
@@ -424,7 +425,7 @@ const Section: React.FC<{
   return (
     <div>
       <div className="flex items-center gap-2 mb-2">
-        <div className="w-6 h-6 rounded-md bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center text-ds-green dark:text-emerald-400">
+        <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center text-ds-green dark:text-emerald-400">
           {icon}
         </div>
         <h4 className={`text-xs font-black uppercase tracking-widest ${sheetText}`}>{title}</h4>

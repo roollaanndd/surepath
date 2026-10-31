@@ -2,11 +2,12 @@
 // Simplified version: shows the insurer's recent orders as activity feed.
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { Bell, FileText, CheckCircle2, AlertTriangle, XCircle, Clock, ShieldCheck } from 'lucide-react';
+import { FileText, CheckCircle2, AlertTriangle, XCircle, Clock, ShieldCheck } from 'lucide-react';
 import { Language } from '../../types';
 import { SkeletonCard } from '../ui';
 import { AgentEmpty } from '../agent/AgentArt';
 import { getInsurerDashboard, type InsurerOrder } from '../../services/insurerService';
+import ModuleIcon from '../shared/ModuleIcon';
 
 interface Props {
   authToken: string;
@@ -62,7 +63,7 @@ const InsurerNotifications: React.FC<Props> = ({ authToken, onClose, onNavigate 
 
         <div className="flex items-center justify-between p-4 border-b border-ds-border shrink-0">
           <div className="flex items-center gap-2">
-            <Bell size={18} className="text-ds-green" />
+            <ModuleIcon id="notifications" size={30} />
             <h3 className="text-base font-black text-ds-ink">Aktivitas Terbaru</h3>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-ds-card2 text-ds-ink3 active:scale-95 transition-transform">✕</button>

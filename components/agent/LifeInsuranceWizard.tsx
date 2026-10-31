@@ -1,15 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Shield, Heart, TrendingUp, Landmark, ChevronLeft, ChevronRight,
-  Brain, Zap, BedDouble, CheckCircle2, AlertTriangle, RefreshCw,
-  Accessibility,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, Brain, Zap, BedDouble, CheckCircle2, AlertTriangle, RefreshCw, Accessibility } from 'lucide-react';
 import { Language } from '../../types';
 import {
   createLifeApplication,
   getAgentLifeApplications,
   type SpLifeApplication,
 } from '../../services/supabaseService';
+import { moduleIcon } from '../shared/ModuleIcon';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -61,10 +58,10 @@ const FREQ_DIVISOR: Record<string, number> = {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const PRODUCTS = [
-  { code: 'TERM_LIFE',  label: 'Term Life',  Icon: Shield,   color: 'blue',   desc: 'Proteksi jiwa murni untuk jangka waktu tertentu' },
-  { code: 'WHOLE_LIFE', label: 'Whole Life', Icon: Heart,    color: 'purple', desc: 'Perlindungan seumur hidup dengan nilai tunai' },
-  { code: 'UNIT_LINK',  label: 'Unit Link',  Icon: TrendingUp, color: 'amber', desc: 'Investasi + proteksi jiwa dalam satu polis' },
-  { code: 'ENDOWMENT',  label: 'Endowment', Icon: Landmark, color: 'green',  desc: 'Tabungan berencana dengan proteksi jiwa' },
+  { code: 'TERM_LIFE',  label: 'Term Life',  Icon: moduleIcon('personal_safety'),   color: 'blue',   desc: 'Proteksi jiwa murni untuk jangka waktu tertentu' },
+  { code: 'WHOLE_LIFE', label: 'Whole Life', Icon: moduleIcon('family_health'),    color: 'purple', desc: 'Perlindungan seumur hidup dengan nilai tunai' },
+  { code: 'UNIT_LINK',  label: 'Unit Link',  Icon: moduleIcon('analytics'), color: 'amber', desc: 'Investasi + proteksi jiwa dalam satu polis' },
+  { code: 'ENDOWMENT',  label: 'Endowment', Icon: moduleIcon('bank','bank'), color: 'green',  desc: 'Tabungan berencana dengan proteksi jiwa' },
 ] as const;
 
 const PRODUCT_COLOR_MAP: Record<string, string> = {
@@ -402,7 +399,7 @@ const StepPlanType: React.FC<{
             }`}
           >
             <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${selected ? 'bg-white/50 dark:bg-black/20' : 'bg-slate-100 dark:bg-white/5'}`}>
-              <Icon size={24} className={selected ? cls.split(' ')[3] : 'text-slate-400'} />
+              <Icon size={36} />
             </div>
             <div>
               <p className="font-bold text-sm text-slate-900 dark:text-white">{label}</p>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { AlertTriangle, Clock, Wallet, RefreshCw, Phone, FileWarning } from 'lucide-react';
+import { Clock, RefreshCw } from 'lucide-react';
 import WorkspaceShell from '../shared/WorkspaceShell';
 import KpiCard from '../shared/KpiCard';
 import { callGateway } from '../../../../services/db';
@@ -76,10 +76,10 @@ export const CollectionsDashboard: React.FC<Props> = ({ userRole, currentUser, o
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <KpiCard label="Tagihan Terbuka" value={overdue.length} sublabel="Belum dibayar" icon={FileWarning} accent="#F59E0B" />
-          <KpiCard label="Nilai Piutang" value={formatIDR(total)} sublabel="Total outstanding" icon={Wallet} accent="#3B82F6" />
-          <KpiCard label="Lewat 30 Hari" value={over30.length} sublabel="Perlu eskalasi" icon={AlertTriangle} accent="#EF4444" />
-          <KpiCard label="Follow-up Hari Ini" value={overdue.filter(o => o.days > 0).length} sublabel="Siap dihubungi" icon={Phone} accent="#22C55E" />
+          <KpiCard label="Tagihan Terbuka" value={overdue.length} sublabel="Belum dibayar" iconId="payments" accent="#F59E0B" />
+          <KpiCard label="Nilai Piutang" value={formatIDR(total)} sublabel="Total outstanding" iconId="financial" accent="#3B82F6" />
+          <KpiCard label="Lewat 30 Hari" value={over30.length} sublabel="Perlu eskalasi" iconId="transactions" accent="#EF4444" />
+          <KpiCard label="Follow-up Hari Ini" value={overdue.filter(o => o.days > 0).length} sublabel="Siap dihubungi" iconId="clients" accent="#22C55E" />
         </div>
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">

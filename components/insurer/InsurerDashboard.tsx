@@ -1,13 +1,14 @@
 // InsurerDashboard.tsx — Beranda tab. KPI cards + recent activity.
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { FileText, CheckCircle2, AlertTriangle, XCircle, ShieldCheck, Clock, TrendingUp, Eye, Banknote } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, XCircle, ShieldCheck, Clock, TrendingUp, Eye } from 'lucide-react';
 import { Language } from '../../types';
 import { SectionLabel } from '../shared/cards';
 import { SkeletonCard, useToast } from '../ui';
 import { useT } from '../../src/i18n';
 import { AgentArtKeyframes, SpotOrders } from '../agent/AgentArt';
 import { getInsurerDashboard, type InsurerDashboard as InsurerDashboardData } from '../../services/insurerService';
+import ModuleIcon from '../shared/ModuleIcon';
 
 interface Props {
   authToken: string;
@@ -133,7 +134,7 @@ const InsurerDashboard: React.FC<Props> = ({ authToken, lang, onNavigate, refres
           <p className="text-2xl font-black text-ds-green mt-1 truncate">{fmtIdr(totalPremium)}</p>
         </div>
         <span className="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center text-ds-green">
-          <Banknote size={20} />
+          <ModuleIcon id="payments" size={32} />
         </span>
       </div>
 
@@ -151,7 +152,7 @@ const InsurerDashboard: React.FC<Props> = ({ authToken, lang, onNavigate, refres
                 className="w-full p-3 rounded-3xl border border-ds-border bg-ds-card flex items-center gap-3 text-left hover:shadow-ds-md hover:border-ds-green/40 active:scale-[0.98] transition-all"
               >
                 <div className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center font-black text-ds-green shrink-0">
-                  <FileText size={16} />
+                  <ModuleIcon id="policy" size={30} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-ds-ink truncate">{o.client_name}</p>

@@ -1,13 +1,8 @@
 
 import React, { useState } from 'react';
-import { 
-  Car, Smartphone, Shield, 
-  AlertCircle, Palette, User, 
-  Wallet, Zap, Layers,
-  CheckCircle2, Plus, Calendar, 
-  BadgePercent, FileDown, Loader2
-} from 'lucide-react';
+import { Smartphone, Shield, AlertCircle, Palette, Zap, Layers, CheckCircle2, Plus, Calendar, BadgePercent, FileDown, Loader2 } from 'lucide-react';
 import { formatIDR } from './WizardUI';
+import ModuleIcon from '../shared/ModuleIcon';
 
 interface StepPreSummaryProps {
   vehicle: any;
@@ -257,7 +252,7 @@ const StepPreSummary: React.FC<StepPreSummaryProps> = ({
        <div className="p-6 bg-white dark:bg-white/5 rounded-[2.5rem] border border-black/5 shadow-sm relative overflow-hidden group">
           <div className="flex items-center gap-3 mb-6 relative z-10">
              <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-500 shadow-inner">
-                <Car size={20}/>
+                <ModuleIcon id="car_protection" size={32}/>
              </div>
              <h4 className="text-sm font-black uppercase tracking-tight text-gray-900 dark:text-white">Data Mobil</h4>
           </div>
@@ -274,7 +269,7 @@ const StepPreSummary: React.FC<StepPreSummaryProps> = ({
        <div className="p-6 bg-white dark:bg-white/5 rounded-[2.5rem] border border-black/5 shadow-sm relative overflow-hidden">
           <div className="flex items-center gap-3 mb-6 relative z-10">
              <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500 shadow-inner">
-                <User size={20}/>
+                <ModuleIcon id="clients" size={32}/>
              </div>
              <h4 className="text-sm font-black uppercase tracking-tight text-gray-900 dark:text-white">Data Pemilik</h4>
           </div>
@@ -295,7 +290,7 @@ const StepPreSummary: React.FC<StepPreSummaryProps> = ({
        <div className="p-6 bg-white dark:bg-white/5 rounded-[2.5rem] border border-black/5 shadow-sm">
           <div className="flex items-center gap-3 mb-6">
              <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500 shadow-inner">
-                <Shield size={20}/>
+                <ModuleIcon id="security" size={32}/>
              </div>
              <h4 className="text-sm font-black uppercase tracking-tight text-gray-900 dark:text-white">Paket Proteksi</h4>
           </div>
@@ -344,7 +339,7 @@ const StepPreSummary: React.FC<StepPreSummaryProps> = ({
                 <h4 className="text-2xl font-black uppercase tracking-tighter">Rincian Premi</h4>
              </div>
              <div className="p-3 bg-white/10 rounded-xl">
-                <Wallet size={20} className="text-emerald-400"/>
+                <ModuleIcon id="payments" size={32}/>
              </div>
           </div>
 

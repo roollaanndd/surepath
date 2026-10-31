@@ -1,8 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  RefreshCw, ChevronDown, ChevronUp, Plus, Trash2, CheckCircle2,
-  AlertTriangle, FileText, Building2, Heart,
-} from 'lucide-react';
+import { RefreshCw, ChevronDown, ChevronUp, Plus, Trash2, CheckCircle2, AlertTriangle, FileText, Heart } from 'lucide-react';
 import {
   getAllB2BSubmissions,
   updateB2BSubmissionStatus,
@@ -13,6 +10,7 @@ import {
   type SpB2BQuote,
   type SpLifeApplication,
 } from '../../services/supabaseService';
+import ModuleIcon from '../shared/ModuleIcon';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -413,8 +411,8 @@ const B2BAdminView: React.FC = () => {
 
       {/* Sub-tabs */}
       <div className="flex items-center gap-1 px-5 pt-5 pb-3">
-        <TabBtn active={tab === 'b2b'} onClick={() => setTab('b2b')} icon={<Building2 size={14} />} label="B2B Submissions" />
-        <TabBtn active={tab === 'life'} onClick={() => setTab('life')} icon={<Heart size={14} />} label="Life Applications" />
+        <TabBtn active={tab === 'b2b'} onClick={() => setTab('b2b')} icon={<ModuleIcon id="b2b" size={22} />} label="B2B Submissions" />
+        <TabBtn active={tab === 'life'} onClick={() => setTab('life')} icon={<ModuleIcon id="family_health" size={22} />} label="Life Applications" />
         <button onClick={load} className="ml-auto p-2 rounded-xl text-ds-ink3 hover:text-ds-ink2 dark:hover:text-ds-ink">
           <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
         </button>
@@ -493,7 +491,7 @@ const FilterPill: React.FC<{ label: string; active: boolean; onClick: () => void
 
 const Empty: React.FC = () => (
   <div className="flex flex-col items-center justify-center py-16 text-ds-ink3">
-    <FileText size={32} className="mb-3 opacity-40" />
+    <ModuleIcon id="documents" size={52} className="mb-3" />
     <p className="text-sm">No records found</p>
   </div>
 );

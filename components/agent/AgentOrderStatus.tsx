@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  FileText, Clock, Eye, CheckCircle, XCircle, Download, ChevronRight, Car, Bike, RefreshCw,
-  CreditCard, Loader2, ExternalLink,
-} from 'lucide-react';
+import { FileText, Clock, Eye, CheckCircle, XCircle, Download, ChevronRight, RefreshCw, CreditCard, Loader2, ExternalLink } from 'lucide-react';
 import { Language } from '../../types';
 import {
   getAgentOrders, getPaymentsByOrderIds,
@@ -13,6 +10,7 @@ import { resolveDocumentUrl } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { SecureDocLink } from '../shared/SecureDoc';
 import { AgentArtKeyframes, AgentHero, SpotOrders, AgentEmpty } from './AgentArt';
+import ModuleIcon from '../shared/ModuleIcon';
 
 interface Props {
   agentId: string;
@@ -299,7 +297,7 @@ const AgentOrderStatus: React.FC<Props> = ({ agentId, lang }) => {
         <div className="space-y-3">
           {visible.map(order => {
             const meta = STATUS_META[order.status];
-            const VIcon = order.vehicle_type === 'MOTORCYCLE' ? Bike : Car;
+            const vehicleIconId = order.vehicle_type === 'MOTORCYCLE' ? 'product' : 'car_protection';
             return (
               <button
                 key={order.id}
@@ -307,7 +305,7 @@ const AgentOrderStatus: React.FC<Props> = ({ agentId, lang }) => {
                 className="w-full text-left bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-[1.75rem] p-4 flex items-start gap-3 active:scale-[0.98] transition-transform shadow-sm"
               >
                 <div className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-white/10 flex items-center justify-center flex-shrink-0">
-                  <VIcon size={18} className="text-slate-500 dark:text-slate-400" />
+                  <ModuleIcon id={vehicleIconId} size={30} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2 mb-1">

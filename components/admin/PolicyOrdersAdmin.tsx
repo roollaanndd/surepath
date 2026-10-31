@@ -1,8 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  FileText, CheckCircle, XCircle, Clock, Eye, Upload,
-  Car, Bike, ChevronDown, Download, Link, Bell,
-} from 'lucide-react';
+import { FileText, CheckCircle, XCircle, Clock, Eye, Upload, ChevronDown, Download, Link } from 'lucide-react';
 import {
   getAllOrders, updateOrderStatus, uploadPolicyDocument,
   addNotification, addCommission, getAgentProfile, getProductConfig, awardCoins,
@@ -20,6 +17,7 @@ import { filterLabel } from './filterLabels';
 import { FilterBar } from './shared/FilterBar';
 import { DetailDrawer } from './shared/DetailDrawer';
 import { AdminEmptyState } from './adminUI';
+import ModuleIcon from '../shared/ModuleIcon';
 
 const STATUS_META: Record<SpPolicyOrder['status'], { label: string; color: string; Icon: any }> = {
   SUBMITTED:    { label: 'Submitted',    color: 'bg-amber-500/10 text-amber-800 dark:text-amber-400',   Icon: Clock },
@@ -543,7 +541,7 @@ const PolicyOrdersAdmin: React.FC<{ initialPending?: boolean }> = ({ initialPend
             className="flex items-center gap-2 mb-3"
           >
             <div className="relative">
-              <Bell size={14} className="text-ds-ink3" />
+              <ModuleIcon id="notifications" size={24} />
               {unreadCount > 0 && (
                 <span style={{ color: '#FFFFFF' }} className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-rose-600 rounded-full text-2xs font-black flex items-center justify-center">{unreadCount}</span>
               )}
@@ -643,7 +641,7 @@ const PolicyOrdersAdmin: React.FC<{ initialPending?: boolean }> = ({ initialPend
         <div className="space-y-3">
           {visible.map(order => {
             const m = STATUS_META[order.status];
-            const VIcon = order.vehicle_type === 'MOTORCYCLE' ? Bike : Car;
+            const vehicleIconId = order.vehicle_type === 'MOTORCYCLE' ? 'product' : 'car_protection';
             return (
               <div
                 key={order.id}
@@ -652,7 +650,7 @@ const PolicyOrdersAdmin: React.FC<{ initialPending?: boolean }> = ({ initialPend
               >
                 <div className="flex items-start gap-4">
                   <div className="w-11 h-11 rounded-2xl bg-ds-card2 flex items-center justify-center flex-shrink-0">
-                    <VIcon size={20} className="text-ds-ink3" />
+                    <ModuleIcon id={vehicleIconId} size={32} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-3 mb-1">

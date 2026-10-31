@@ -6,7 +6,8 @@
 // (until user explicitly logs out, which clears the choice).
 
 import React, { useState } from 'react';
-import { Home, Briefcase, ShieldCheck, Settings, TrendingUp, ArrowRight, LogOut } from 'lucide-react';
+import { ArrowRight, LogOut } from 'lucide-react';
+import { moduleIcon } from './shared/ModuleIcon';
 
 type AppId = 'CUSTOMER' | 'AGENT' | 'OPERATOR' | 'ADMIN' | 'MARKETING';
 
@@ -31,7 +32,7 @@ const APPS: Array<{
     id: 'CUSTOMER',
     label: 'Customer App',
     desc: 'Beli polis, klaim, lacak proteksi Anda',
-    Icon: Home,
+    Icon: moduleIcon('home'),
     color: 'text-emerald-600 dark:text-emerald-400',
     bg: 'bg-emerald-50 dark:bg-emerald-950/30',
   },
@@ -39,7 +40,7 @@ const APPS: Array<{
     id: 'AGENT',
     label: 'Agent App',
     desc: 'Buat penawaran, kelola nasabah, komisi',
-    Icon: Briefcase,
+    Icon: moduleIcon('agents'),
     color: 'text-blue-600 dark:text-blue-400',
     bg: 'bg-blue-50 dark:bg-blue-950/30',
   },
@@ -47,7 +48,7 @@ const APPS: Array<{
     id: 'OPERATOR',
     label: 'Operator App',
     desc: 'Approve polis, klaim, verifikasi agen',
-    Icon: ShieldCheck,
+    Icon: moduleIcon('ops_console'),
     color: 'text-amber-600 dark:text-amber-400',
     bg: 'bg-amber-50 dark:bg-amber-950/30',
   },
@@ -55,7 +56,7 @@ const APPS: Array<{
     id: 'ADMIN',
     label: 'Admin CMS',
     desc: 'Kelola produk, rates, users, laporan',
-    Icon: Settings,
+    Icon: moduleIcon('settings'),
     color: 'text-purple-600 dark:text-purple-400',
     bg: 'bg-purple-50 dark:bg-purple-950/30',
   },
@@ -63,7 +64,7 @@ const APPS: Array<{
     id: 'MARKETING',
     label: 'Marketing App',
     desc: 'CRM, KPI tim sales, dan pipeline mitra',
-    Icon: TrendingUp,
+    Icon: moduleIcon('analytics'),
     color: 'text-rose-600 dark:text-rose-400',
     bg: 'bg-rose-50 dark:bg-rose-950/30',
   },
@@ -96,7 +97,7 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, apps, onSelect, onLogou
 
       {/* App cards */}
       <div className="relative z-10 w-full max-w-md space-y-3">
-        {visibleApps.map(({ id, label, desc, Icon, color, bg }) => (
+        {visibleApps.map(({ id, label, desc, Icon, bg }) => (
           <button
             key={id}
             onClick={() => onSelect(id)}
@@ -110,7 +111,7 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, apps, onSelect, onLogou
             style={{ background: hovered === id ? undefined : 'var(--ds-card)' }}
           >
             <div className={`w-12 h-12 rounded-xl ${bg} flex items-center justify-center shrink-0`}>
-              <Icon size={22} className={color} />
+              <Icon size={36} />
             </div>
             <div className="flex-1 text-left min-w-0">
               <p className="text-sm font-black text-ds-ink">{label}</p>

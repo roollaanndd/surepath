@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Banknote, Wallet, ArrowDownToLine, AlertTriangle, FileText, RefreshCw } from 'lucide-react';
+import { ArrowDownToLine, AlertTriangle, RefreshCw } from 'lucide-react';
 import WorkspaceShell from '../shared/WorkspaceShell';
 import KpiCard from '../shared/KpiCard';
 import { getAdminStats } from '../../../../services/orders';
@@ -72,10 +72,10 @@ export const FinanceDashboard: React.FC<Props> = ({ userRole, currentUser, onLog
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <KpiCard label="Premi Dibayar" value={stats ? formatIDRCompact(stats.totalPremiumPaid) : '—'} sublabel="Akumulasi terbayar" icon={Banknote} accent="#22C55E" />
-          <KpiCard label="Premi Diterbitkan" value={stats ? formatIDRCompact(stats.totalPremiumIssued) : '—'} sublabel="Nilai polis terbit" icon={FileText} accent="#3B82F6" />
-          <KpiCard label="Komisi Tertunda" value={stats ? formatIDRCompact(stats.pendingCommissions) : '—'} sublabel="Menunggu cairkan" icon={Wallet} accent="#F59E0B" />
-          <KpiCard label="Penarikan Pending" value={withdrawals.length} sublabel="Butuh persetujuan" icon={ArrowDownToLine} accent="#EF4444" />
+          <KpiCard label="Premi Dibayar" value={stats ? formatIDRCompact(stats.totalPremiumPaid) : '—'} sublabel="Akumulasi terbayar" iconId="payments" accent="#22C55E" />
+          <KpiCard label="Premi Diterbitkan" value={stats ? formatIDRCompact(stats.totalPremiumIssued) : '—'} sublabel="Nilai polis terbit" iconId="policy_orders" accent="#3B82F6" />
+          <KpiCard label="Komisi Tertunda" value={stats ? formatIDRCompact(stats.pendingCommissions) : '—'} sublabel="Menunggu cairkan" iconId="commission" accent="#F59E0B" />
+          <KpiCard label="Penarikan Pending" value={withdrawals.length} sublabel="Butuh persetujuan" iconId="withdrawals" accent="#EF4444" />
         </div>
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">

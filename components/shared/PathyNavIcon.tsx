@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { getPortalIconMap, subscribePortalIcons, subscribePortalIconStyles, type PortalIconStyleMap } from '../../services/portalIcons';
 import SurePathIcon from './SurePathIcon';
 import SurePathIllustrationIcon from './SurePathIllustrationIcon';
+import SurePathBrandIcon from './SurePathBrandIcon';
 
 type Props = { id: string; size?: number; active?: boolean; className?: string };
 
@@ -22,6 +23,7 @@ export const PathyNavIcon: React.FC<Props> = ({ id, size = 30, active = false, c
   // admin can still pin a specific id to 'studio'/'orbit'/'bold' via the
   // Icon Manager — only an explicit non-illustrative override opts out.
   const resolvedStyle = styles[id] || 'illustrative';
+  if (resolvedStyle === 'brand') return <SurePathBrandIcon id={id} size={size} className={className} />;
   return resolvedStyle === 'illustrative'
     ? <SurePathIllustrationIcon id={id} size={size} active={active} className={className} />
     : <SurePathIcon id={id} size={size} style={resolvedStyle} active={active} className={className} />;

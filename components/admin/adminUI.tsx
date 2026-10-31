@@ -61,9 +61,9 @@ export const AdminKpiCard: React.FC<{
     </>
   );
   const cls =
-    'group text-left p-4 sm:p-5 rounded-2xl border bg-ds-card border-ds-border shadow-ds-sm transition-all ' +
+    'group text-left p-4 sm:p-5 rounded-2xl border bg-ds-card border-ds-border shadow-ds-sm transition-all duration-200 ease-out ' +
     (onClick || href
-      ? 'cursor-pointer hover:shadow-ds-md hover:border-ds-green/40 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green/40'
+      ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-ds-md hover:border-ds-green/40 active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green/40'
       : '');
   if (href) {
     return (
@@ -94,8 +94,8 @@ export const AdminStatusBadge: React.FC<{
   const meta = getStatusMeta(status, map);
   const cls =
     size === 'xs'
-      ? 'px-2 py-0.5 rounded-full text-2xs font-black uppercase tracking-widest'
-      : 'px-2.5 py-1 rounded-full text-2xs font-black uppercase tracking-widest';
+      ? 'px-2 py-0.5 rounded-full text-2xs font-black uppercase tracking-widest transition-colors duration-150'
+      : 'px-2.5 py-1 rounded-full text-2xs font-black uppercase tracking-widest transition-colors duration-150';
   return (
     <span className={`${cls} ${meta.badgeClass} border border-black/5 whitespace-nowrap`}>
       {meta.label}

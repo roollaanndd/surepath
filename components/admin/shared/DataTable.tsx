@@ -14,7 +14,7 @@
 // Not yet wired into a production view: it ships ready for the
 // module-by-module passes that follow this PR.
 import React, { useMemo, useState } from 'react';
-import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, ChevronsUpDown } from 'lucide-react';
+import { ArrowUp, ChevronLeft, ChevronRight, ChevronsUpDown } from 'lucide-react';
 import { nextSortState, paginate, sortRows, type SortState } from './dataTable';
 import { AdminEmptyState } from '../adminUI';
 import type { LucideIcon } from 'lucide-react';
@@ -113,12 +113,19 @@ export function DataTable<T>({
                     <button
                       type="button"
                       onClick={() => toggleSort(col.id)}
-                      className="inline-flex items-center gap-1 hover:text-ds-ink"
+                      className="group inline-flex items-center gap-1 transition-colors hover:text-ds-ink"
                     >
                       {col.header}
-                      {sort?.columnId === col.id
-                        ? (sort.direction === 'asc' ? <ArrowUp size={11} /> : <ArrowDown size={11} />)
-                        : <ChevronsUpDown size={11} className="opacity-40" />}
+                      {sort?.columnId === col.id ? (
+                        // Single icon that rotates on direction toggle, rather than
+                        // swapping Up/Down icons, so the change actually animates.
+                        <ArrowUp
+                          size={11}
+                          className={`transition-transform duration-150 ease-out ${sort.direction === 'asc' ? 'rotate-0' : 'rotate-180'}`}
+                        />
+                      ) : (
+                        <ChevronsUpDown size={11} className="opacity-40 transition-opacity duration-150 group-hover:opacity-70" />
+                      )}
                     </button>
                   ) : col.header}
                 </th>
@@ -167,7 +174,7 @@ export function DataTable<T>({
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={info.page <= 1}
               aria-label="Halaman sebelumnya"
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-ds-card2 text-ds-ink3 disabled:opacity-30 hover:text-ds-ink"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-ds-card2 text-ds-ink3 transition-colors duration-150 disabled:opacity-30 hover:text-ds-ink hover:bg-ds-border/40"
             >
               <ChevronLeft size={14} />
             </button>
@@ -177,7 +184,7 @@ export function DataTable<T>({
               onClick={() => setPage(p => Math.min(info.pageCount, p + 1))}
               disabled={info.page >= info.pageCount}
               aria-label="Halaman berikutnya"
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-ds-card2 text-ds-ink3 disabled:opacity-30 hover:text-ds-ink"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-ds-card2 text-ds-ink3 transition-colors duration-150 disabled:opacity-30 hover:text-ds-ink hover:bg-ds-border/40"
             >
               <ChevronRight size={14} />
             </button>

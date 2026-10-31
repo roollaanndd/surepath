@@ -253,6 +253,10 @@ const AdminPortal = ({
   // (c) Command palette (Ctrl/Cmd+K) — the header search was a dead input;
   // it now drives fuzzy menu navigation.
   const [paletteOpen, setPaletteOpen] = useState(false);
+  // Lags `paletteOpen` on the way to closed so the palette can play its
+  // exit transition (fade + scale down) instead of vanishing the instant
+  // Escape/backdrop/Enter flips `paletteOpen` to false.
+  const [paletteVisible, setPaletteVisible] = useState(false);
   const [paletteQuery, setPaletteQuery] = useState('');
   const [paletteIndex, setPaletteIndex] = useState(0);
   const paletteInputRef = useRef<HTMLInputElement>(null);
@@ -326,6 +330,18 @@ const AdminPortal = ({
     const t = setTimeout(() => paletteInputRef.current?.focus(), 30);
     return () => clearTimeout(t);
   }, [paletteOpen]);
+
+  // Exit-transition timing for the command palette — mirrors the
+  // spPaletteOut keyframe duration defined below.
+  useEffect(() => {
+    if (paletteOpen) {
+      setPaletteVisible(true);
+      return;
+    }
+    if (!paletteVisible) return;
+    const t = setTimeout(() => setPaletteVisible(false), 140);
+    return () => clearTimeout(t);
+  }, [paletteOpen, paletteVisible]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -758,6 +774,8 @@ const AdminPortal = ({
         @keyframes orb3 { 0%,100%{transform:translate(0,0) scale(1.05)} 50%{transform:translate(-30px,-60px) scale(0.95)} }
         @keyframes spPalette { from{opacity:0;transform:translateY(-8px) scale(.98)} to{opacity:1;transform:translateY(0) scale(1)} }
         .sp-palette-pop { animation: spPalette 160ms ease-out both; }
+        @keyframes spPaletteOut { from{opacity:1;transform:translateY(0) scale(1)} to{opacity:0;transform:translateY(-6px) scale(.98)} }
+        .sp-palette-pop-out { animation: spPaletteOut 140ms ease-in both; }
         @keyframes spDrawer { from{transform:translateX(-18px);opacity:0} to{transform:translateX(0);opacity:1} }
         .sp-drawer-in { animation: spDrawer 240ms cubic-bezier(0.22,1,0.36,1) both; }
         @keyframes spFade { from{opacity:0} to{opacity:1} }
@@ -776,7 +794,7 @@ const AdminPortal = ({
         @keyframes spBadgePop { from{transform:scale(.5)} to{transform:scale(1)} }
         .sp-badge-pop { animation: spBadgePop 220ms cubic-bezier(0.34,1.56,0.64,1) both; }
         @media (prefers-reduced-motion: reduce) {
-          .sp-palette-pop, .sp-drawer-in, .sp-fade-in, .sp-pop-in,
+          .sp-palette-pop, .sp-palette-pop-out, .sp-drawer-in, .sp-fade-in, .sp-pop-in,
           .sp-nav-group, .sp-accent-bar, .sp-badge-pop { animation: none; }
         }
       `}</style>
@@ -802,11 +820,14 @@ const AdminPortal = ({
       )}
 
       {/* ── Command palette (Ctrl/Cmd+K) — replaces the old dead search input ── */}
-      {paletteOpen && (
-        <div className="fixed inset-0 z-[1100] flex items-start justify-center pt-[12vh] px-4" onMouseDown={() => setPaletteOpen(false)}>
+      {paletteVisible && (
+        <div
+          className={`fixed inset-0 z-[1100] flex items-start justify-center pt-[12vh] px-4 transition-opacity duration-150 ${paletteOpen ? 'opacity-100' : 'opacity-0'}`}
+          onMouseDown={() => setPaletteOpen(false)}
+        >
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
           <div
-            className="relative w-full max-w-lg rounded-3xl border bg-ds-card border-ds-border shadow-2xl overflow-hidden sp-palette-pop"
+            className={`relative w-full max-w-lg rounded-3xl border bg-ds-card border-ds-border shadow-2xl overflow-hidden ${paletteOpen ? 'sp-palette-pop' : 'sp-palette-pop-out'}`}
             onMouseDown={e => e.stopPropagation()}
             role="dialog"
             aria-label="Cari menu"
@@ -1163,7 +1184,14 @@ const AdminPortal = ({
                       active ? 'text-ds-green' : 'text-ds-ink3'
                     }`}
                   >
-                    {active && <span aria-hidden className="absolute top-0 h-0.5 w-8 rounded-full bg-ds-green" />}
+                    {/* Always mounted so the indicator can transition in/out instead of
+                        popping instantly when the active tab changes. */}
+                    <span
+                      aria-hidden
+                      className={`absolute top-0 h-0.5 w-8 rounded-full bg-ds-green transition-all duration-200 ease-out ${
+                        active ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0'
+                      }`}
+                    />
                     <item.icon size={19} />
                     <span>{item.label}</span>
                   </button>

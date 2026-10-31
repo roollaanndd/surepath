@@ -1,6 +1,6 @@
 # SurePath — Changelog
 
-## v2.7.24 — 2026-10-31
+## v2.7.25 — 2026-10-31
 
 ### Admin Portal 2.0 — modul Keuangan ke primitif bersama
 
@@ -23,6 +23,25 @@
   dan rute `admin_update_commission` tidak disentuh.
 - Terverifikasi: `tsc --noEmit` bersih, ESLint bersih (file yang diubah),
   `npm run build` sukses, `vitest run` tidak regresi dari baseline.
+
+## v2.7.24 — 2026-10-31
+
+### Admin Portal 2.0 — langkah 3: modul Klaim ke primitif bersama
+
+- `ClaimsAdminView` (Klaim): toolbar status chip + tombol "Needs Review"
+  diganti `FilterBar` (menambah search klien/no. klaim/lokasi yang
+  sebelumnya tidak ada, mempertahankan gaya rose khusus chip "Needs
+  Review" lewat slot `extra`). `ClaimDetailModal` dimigrasikan ke
+  `DetailDrawer` (panel 480px, badge status di `headerExtra`). **Hanya
+  cangkang tampilan yang disentuh** — status transition (review/approve/
+  reject/tandai dibayar) dengan busy-state + rollback optimistik tidak
+  diubah sama sekali.
+- `EndorsementsAdminView` sengaja **tidak** dimigrasikan pada pass ini —
+  pola confirm-modalnya kecil dan tidak cocok dengan anatomi `DetailDrawer`
+  (lihat `docs/ADMIN_PORTAL_2.0_PLAN.md`).
+- Terverifikasi: `tsc --noEmit` bersih, ESLint bersih, `npm run build`
+  sukses, 459/459 unit test lolos (tidak ada test baru — migrasi murni
+  presentasional, logika bisnis tidak berubah).
 
 ## v2.7.23 — 2026-10-31
 

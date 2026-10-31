@@ -1,5 +1,30 @@
 # SurePath — Changelog
 
+## v2.7.29 — 2026-10-31
+
+### Module pass: Agents/Partners (Admin)
+
+- Lanjutan dari gelombang empty-state illustrations (#340) dan rebuild
+  Icon Manager (#341) ke modul admin berikutnya. Hanya perubahan
+  presentasi — tidak ada logika bisnis, kontrak gateway, atau tier
+  komisi yang disentuh.
+- `AgentManagementView` ("Belum ada agen aktif" teks polos) dan
+  `PartnerDirectorySection` (`icon={Users}`) di `AdminViews.tsx`
+  sekarang memakai `AdminEmptyState illustration="clients"`, konsisten
+  dengan gelombang ilustrasi empty-state sebelumnya.
+- `UserDetailModal` (detail profil pengguna/mitra, dipakai di
+  `AgentManagementView` dan `UserManagementView`) dimigrasi dari modal
+  hand-rolled ke primitive bersama `DetailDrawer` — perilaku data,
+  field yang ditampilkan, dan `getAdminUser()` tidak berubah.
+- Diperiksa dan sengaja TIDAK dimigrasi: `AgentManagementView` sudah
+  berbasis kartu (bukan tabel/filter pill), jadi tidak ada `FilterBar`
+  atau `DataTable` yang relevan untuk dipasang di sini — konsisten
+  dengan `WithdrawalsAdminView` (#336) yang kartu-nya tetap kartu.
+  `BulkImportModal`, `AddMitraModal`, `CredentialModal` ditinjau tapi
+  dibiarkan sebagaimana adanya untuk modul ini.
+- Verifikasi: `tsc --noEmit` bersih, vitest 459/459 lulus, build
+  produksi berhasil.
+
 ## v2.7.28 — 2026-10-31
 
 ### Ilustrasi empty-state SurePath di modul Admin

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Users, ShieldCheck, ArrowUpRight,
+  ShieldCheck, ArrowUpRight,
   Search,
   FileText,
   CheckCircle, Check, Settings, ShieldAlert,
@@ -67,20 +67,7 @@ const UserDetailModal: React.FC<{ userId: string; onClose: () => void }> = ({ us
   );
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-start justify-center pt-12 px-4 pb-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-md" />
-      <div
-        className="relative z-10 w-full max-w-2xl bg-ds-card border border-ds-border rounded-3xl shadow-2xl overflow-y-auto max-h-[85vh]"
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-ds-border">
-          <h2 className="font-black text-sm uppercase tracking-widest text-ds-ink">Detail Pengguna</h2>
-          <button onClick={onClose} className="p-2 rounded-xl bg-ds-card2 text-ds-ink3 hover:text-ds-ink hover:bg-ds-card2 transition-all">
-            <X size={16} />
-          </button>
-        </div>
-
+    <DetailDrawer open onClose={onClose} title="Detail Pengguna">
         {loading ? (
           <div className="flex justify-center py-16">
             <div className="w-8 h-8 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
@@ -88,7 +75,7 @@ const UserDetailModal: React.FC<{ userId: string; onClose: () => void }> = ({ us
         ) : !user ? (
           <div className="text-center py-12 text-ds-ink3 text-sm font-bold">Data tidak ditemukan.</div>
         ) : (
-          <div className="p-6 space-y-6">
+          <div className="space-y-6">
             {/* Photos */}
             <div className="grid grid-cols-2 gap-4">
               {/* Profile photo */}
@@ -154,8 +141,7 @@ const UserDetailModal: React.FC<{ userId: string; onClose: () => void }> = ({ us
             )}
           </div>
         )}
-      </div>
-    </div>
+    </DetailDrawer>
   );
 };
 
@@ -400,7 +386,7 @@ export const PartnerDirectorySection: React.FC = () => {
         </div>
       ) : filtered.length === 0 ? (
         <AdminEmptyState
-          icon={Users}
+          illustration="clients"
           title="Tidak ada partner"
           hint="Belum ada pengguna yang cocok dengan pencarian Anda."
         />
@@ -1885,7 +1871,7 @@ export const AgentManagementView = () => {
           Mitra Aktif ({active.length})
         </h3>
         {active.length === 0 ? (
-          <Card className="text-center py-10 text-ds-ink3 text-sm font-bold">Belum ada agen aktif.</Card>
+          <AdminEmptyState illustration="clients" title="Belum Ada Mitra Aktif" hint="Belum ada agen aktif saat ini." />
         ) : (
           <div className="space-y-3">
             {active.map(a => <AgentRow key={a.id} a={a} />)}

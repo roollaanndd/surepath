@@ -1,5 +1,54 @@
 # SurePath — Changelog
 
+## v2.7.37 — 2026-10-31
+
+App Mitra: audit alur beli asuransi mobil, banner promo beranda, dan
+layar pendaftaran.
+
+### Kode produk order kendaraan salah sejak awal
+- `productInfo()` di `VehicleUnderwritingWizard` merangkai `MRKB` + `B4`
+  sehingga menghasilkan **`MRKBB4-COMP`**. Tidak satu pun baris
+  `sp_product_configs` memakai kode itu (yang ada `MRKB4-COMP`,
+  `MRKB4-TLO`, `MRKB2-COMP`, `MRKB2-TLO`), jadi `getProductConfig()`
+  selalu null — plafon diskon dan tarif komisi tampilan jatuh ke nilai
+  cadangan, dan **kelima order di produksi tersimpan dengan kode produk
+  yang tidak dikenali laporan mana pun**. Diperbaiki menjadi `MRKB4-…` /
+  `MRKB2-…`, dengan tes penjaga
+  `services/__tests__/agentVehicleProductCode.test.ts`.
+
+### Slider diskon yang tidak pernah berlaku dicabut
+- `create_policy_order` menimpa `discount_rate` dengan 0 untuk setiap
+  pengajuan tanpa kode promo tervalidasi, dan tagihan Xendit selalu
+  dibuat dari premi penuh. Slider "Diskon untuk Klien" di step 6 karena
+  itu menjanjikan potongan kepada nasabah yang tidak pernah tersimpan di
+  order maupun dipotong dari tagihan. Slider diganti catatan yang
+  menyebut plafon produk dan menjelaskan bahwa potongan hanya berlaku
+  lewat kode promo resmi.
+
+### Beranda Mitra: banner promo bergambar
+- `components/agent/AgentPromoCarousel.tsx` — carousel ilustratif
+  (berputar otomatis, bisa digeser, berhenti saat disentuh/hover, diam
+  pada `prefers-reduced-motion`) menggantikan strip teks `PromoBanner`
+  yang dirancang untuk pita atas situs publik dan tidak pernah
+  menampilkan gambar. Promo CMS (`sp_website_config.promo_banner`) tetap
+  tampil sebagai kartu pertama dan memakai `extra_json.image_url` bila
+  admin mengunggah gambar; tiga kartu bawaan menautkan ke layar nyata.
+- `components/agent/AgentPromoArt.tsx` — empat adegan vektor 16:7 baru
+  (mobil, komisi, survei AI, pendaftaran) dalam gaya ilustrasi SurePath.
+  Vektor, bukan raster: tidak ada permintaan jaringan tambahan dan tidak
+  ada foto stok tertaut dari luar.
+
+### Layar pendaftaran Mitra: teks putih di atas latar terang
+- `AgentOnboarding` pernah dipindah ke latar krem terang dengan kartu
+  putih, tetapi seluruh kelas teksnya tetap `text-white` / `text-gray-400`
+  dari desain gelap sebelumnya. Judul "Daftar Mitra", "Informasi
+  Pribadi", "Informasi Profesional" dan "Cek Email Kamu" karenanya
+  **putih di atas putih — tidak terbaca sama sekali**. Layar ditulis
+  ulang pada palet terang AuthGate (kontras AA), ditambah pita hero
+  berilustrasi, transisi antar-langkah yang halus (dinonaktifkan pada
+  `prefers-reduced-motion`), label aria pada tombol lihat-sandi, dan
+  `role="alert"` pada pesan galat. Logika pendaftaran tidak disentuh.
+
 ## v2.7.36 — 2026-10-31
 
 Perbaikan situs publik, paket 1 — audit 31 Okt 2026.

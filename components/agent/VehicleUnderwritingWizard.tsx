@@ -168,7 +168,12 @@ function productInfo(vehicleType: VehicleType, coverageType: CoverageType) {
   const typeLabel = vehicleType === 'CAR' ? 'Roda 4' : 'Roda 2';
   const covLabel = coverageType === 'COMPREHENSIVE' ? 'Komprehensif (All Risk)' : 'TLO';
   const covCode = coverageType === 'COMPREHENSIVE' ? 'COMP' : 'TLO';
-  const typeCode = vehicleType === 'CAR' ? 'B4' : 'B2';
+  // FIX 2026-10-31: kode produk sebelumnya dirangkai `MRKB` + `B4` sehingga
+  // menghasilkan MRKBB4-COMP — tidak cocok dengan satu pun baris
+  // sp_product_configs (MRKB4-COMP / MRKB4-TLO / MRKB2-COMP / MRKB2-TLO).
+  // Akibatnya getProductConfig() selalu null dan seluruh order Mitra di
+  // produksi tersimpan dengan kode produk yang tidak dikenali laporan.
+  const typeCode = vehicleType === 'CAR' ? '4' : '2';
   return {
     code: `MRKB${typeCode}-${covCode}`,
     name: `Kendaraan ${typeLabel} – ${covLabel}`,
@@ -312,7 +317,9 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
 
   // ── Step 6: Discount ──
   const [productConfig, setProductConfig] = useState<SpProductConfig | null>(null);
-  const [discountRate, setDiscountRate] = useState(initialQuote?.discountRate ?? 0); // 0.00 – max_discount_rate
+  // Hanya dapat diisi dari konversi quotation; tidak ada kontrol di layar ini
+  // (lihat catatan pada panel "Diskon & Komisi Mitra" di step 6).
+  const [discountRate] = useState(initialQuote?.discountRate ?? 0); // 0.00 – max_discount_rate
 
   // ── Step 6b: Delivery ──
   const [deliveryMethod, setDeliveryMethod] = useState<'DIGITAL' | 'POS_STANDARD' | 'POS_OVERNIGHT'>('DIGITAL');
@@ -533,7 +540,6 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
   useEffect(() => {
     if (step !== 6) return;
     const { code } = productInfo(vehicleType, coverageType);
-    // product code in DB uses dash: MRKB4-COMP; productInfo returns MRKB4-COMP (already)
     getProductConfig(code).then(cfg => setProductConfig(cfg ?? null));
   }, [step, vehicleType, coverageType]);  
 
@@ -650,7 +656,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
           stamp_duty: breakdown.stampDuty,
           total_premium: breakdown.total + 26000,
           ojk_rate: breakdown.rate,
-          discount_rate: discountRate,
+          discount_rate: cappedDiscountRate,
           discount_amount: discountAmount,
           net_premium: netPremium,
           commission_rate: effectiveCommRate,
@@ -1775,29 +1781,22 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
                 Diskon & Komisi Mitra
               </h3>
 
-              {/* Discount slider */}
-              {maxDisc > 0 ? (
-                <div className="mb-5">
-                  <div className="flex justify-between items-center mb-2">
-                    <Label>Diskon untuk Klien</Label>
-                    <span className="text-sm font-black text-ds-green">{(discountRate * 100).toFixed(1)}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min={0}
-                    max={Math.round(maxDisc * 1000)}
-                    step={5}
-                    value={Math.round(discountRate * 1000)}
-                    onChange={e => setDiscountRate(parseInt(e.target.value, 10) / 1000)}
-                    className="w-full accent-ds-green"
-                  />
-                  <div className="flex justify-between text-[9px] text-slate-400 mt-1">
-                    <span>0%</span><span>Max {(maxDisc * 100).toFixed(0)}%</span>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-xs text-slate-400 mb-4">Produk ini tidak mendukung diskon.</p>
-              )}
+              {/* Diskon klien.
+                  FIX 2026-10-31: slider diskon dinonaktifkan. Gateway
+                  (create_policy_order) menolak discount_rate apa pun yang
+                  tidak disertai kode promo tervalidasi dan menimpanya dengan
+                  0 — jadi slider lama menjanjikan potongan kepada nasabah
+                  yang tidak pernah tersimpan di order maupun dipotong dari
+                  tagihan Xendit. Sampai mekanisme kode promo tersedia di
+                  aplikasi Mitra, panel ini hanya menampilkan plafonnya. */}
+              <div className="mb-5 rounded-2xl bg-slate-50 dark:bg-white/5 px-4 py-3">
+                <Label>Diskon untuk Klien</Label>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {maxDisc > 0
+                    ? `Produk ini berplafon diskon hingga ${(maxDisc * 100).toFixed(0)}%, namun potongan hanya berlaku lewat kode promo resmi SurePath. Hubungi admin untuk kode promo kampanye yang sedang berjalan.`
+                    : 'Produk ini tidak mendukung diskon.'}
+                </p>
+              </div>
 
               {/* Summary table */}
               <div className="divide-y divide-slate-100 dark:divide-white/5 text-sm">

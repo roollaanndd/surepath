@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { callGateway } from '../../services/supabaseService';
 import { useToast, useConfirmDialog } from '../ui';
-import { AdminErrorBanner } from './adminUI';
+import { AdminErrorBanner, AdminEmptyState } from './adminUI';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { FilterBar } from './shared/FilterBar';
 
@@ -264,8 +264,8 @@ const CommissionLedger: React.FC = () => {
           <div className="w-10 h-10 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="bg-ds-card border border-ds-border shadow-sm rounded-2xl text-center py-16 text-ds-ink3 font-medium text-sm">
-          Tidak ada data komisi.
+        <div className="bg-ds-card border border-ds-border shadow-sm rounded-2xl">
+          <AdminEmptyState illustration="wallet" title="Tidak Ada Data Komisi" hint="Belum ada transaksi komisi yang cocok dengan filter saat ini." />
         </div>
       ) : (
         <div className="space-y-2">

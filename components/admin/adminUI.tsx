@@ -1,6 +1,7 @@
 import React from 'react';
 import { AlertTriangle, RefreshCw, type LucideIcon } from 'lucide-react';
 import { getStatusMeta, type StatusMeta } from '../../lib/statusMeta';
+import { ILLUSTRATION_MAP, type SpEmptyStateVariant } from '../shared/SpEmptyState';
 
 // ─── Admin design-system primitives ──────────────────────────────────────────
 //
@@ -106,16 +107,24 @@ export const AdminStatusBadge: React.FC<{
 // ── Empty state ──────────────────────────────────────────────────────────────
 
 export const AdminEmptyState: React.FC<{
-  icon: LucideIcon;
+  icon?: LucideIcon;
+  /** Illustrated SurePath empty-state variant; takes priority over `icon` when set. */
+  illustration?: SpEmptyStateVariant;
   title: string;
   hint?: string;
   actionLabel?: string;
   onAction?: () => void;
-}> = ({ icon: Icon, title, hint, actionLabel, onAction }) => (
+}> = ({ icon: Icon, illustration, title, hint, actionLabel, onAction }) => (
   <div className="flex flex-col items-center justify-center py-14 px-6 text-center">
-    <div className="w-14 h-14 rounded-2xl bg-ds-card2 border border-ds-border flex items-center justify-center text-ds-ink3 mb-4">
-      <Icon size={24} />
-    </div>
+    {illustration ? (
+      <div className="mb-3">
+        {React.createElement(ILLUSTRATION_MAP[illustration], { size: 128 })}
+      </div>
+    ) : (
+      <div className="w-14 h-14 rounded-2xl bg-ds-card2 border border-ds-border flex items-center justify-center text-ds-ink3 mb-4">
+        {Icon && <Icon size={24} />}
+      </div>
+    )}
     <p className="text-sm font-black uppercase tracking-widest text-ds-ink">{title}</p>
     {hint && <p className="mt-2 max-w-md text-xs leading-relaxed text-ds-ink3">{hint}</p>}
     {actionLabel && onAction && (

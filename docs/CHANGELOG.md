@@ -1,5 +1,25 @@
 # SurePath — Changelog
 
+## v2.7.28 — 2026-10-31
+
+### Ilustrasi empty-state SurePath di modul Admin
+
+- Roland memberikan 12 ilustrasi SVG empty-state siap pakai (polis,
+  klaim, penawaran, dompet, klien, antrean operator, notifikasi,
+  pencarian, dokumen, rewards, sukses terverifikasi, offline) plus
+  komponen wrapper `SpEmptyState`, memakai palet ALTITUDE yang sama.
+  Disimpan verbatim di `components/shared/SpEmptyState.tsx`.
+- `AdminEmptyState` (`components/admin/adminUI.tsx`) kini punya prop
+  opsional `illustration` (varian `SpEmptyStateVariant`) yang
+  menggantikan ikon Lucide generik dengan ilustrasi bersangkutan;
+  pemanggil lama yang masih memakai `icon` tetap berjalan tanpa ubah.
+- Empat lokasi empty-state hasil migrasi (markup polos sebelumnya
+  diganti primitive bersama, logika data tidak disentuh):
+  `PolicyOrdersAdmin.tsx` ("Tidak ada order ditemukan" → `policies`),
+  `AdminViews.tsx` klaim ("No claims found" → `claims`) dan penarikan
+  ("Tidak ada data" → `wallet`), `CommissionLedger.tsx` ("Tidak ada
+  data komisi" → `wallet`).
+
 ## v2.7.27 — 2026-10-31
 
 ### Icon Manager dibangun ulang — satu sistem ikon terbaru untuk semua apps & dashboard

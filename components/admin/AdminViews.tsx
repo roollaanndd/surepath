@@ -29,6 +29,8 @@ import {
 } from '../../services/supabaseService';
 import { useToast } from '../ui';
 import { AdminEmptyState, AdminErrorBanner, AdminPageHeader, AdminStatusBadge } from './adminUI';
+import { FilterBar } from './shared/FilterBar';
+import { DetailDrawer } from './shared/DetailDrawer';
 import { CLAIM_STATUS_META } from '../../lib/statusMeta';
 import { PERMISSION_MENU_IDS, defaultPermissionsFor, SP_ROLE_PERMISSIONS_KEY } from './navigation';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -176,23 +178,14 @@ const ClaimDetailModal: React.FC<{ claim: SpClaim; claims: SpClaim[]; onClose: (
   const verdictMeta = claim.ai_fraud_verdict ? CLAIM_FRAUD_VERDICT_META[claim.ai_fraud_verdict] : null;
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-start justify-center pt-12 px-4 pb-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-md" />
-      <div
-        className="relative z-10 w-full max-w-2xl bg-ds-card border border-ds-border rounded-3xl shadow-2xl overflow-y-auto max-h-[85vh]"
-        onClick={e => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between px-6 py-5 border-b border-ds-border">
-          <div>
-            <h2 className="font-black text-sm uppercase tracking-widest text-ds-ink">{claim.claim_number ?? claim.id.slice(0, 8)}</h2>
-            <p className="text-2xs font-bold text-ds-ink3 mt-0.5">{claim.client_name ?? '—'} · {claim.product_type ?? '—'}</p>
-          </div>
-          <button onClick={onClose} className="p-2 rounded-xl bg-ds-card2 text-ds-ink3 hover:text-ds-ink hover:bg-ds-card2 transition-all">
-            <X size={16} />
-          </button>
-        </div>
-
-        <div className="p-6 space-y-6">
+    <DetailDrawer
+      open
+      onClose={onClose}
+      title={claim.claim_number ?? claim.id.slice(0, 8)}
+      subtitle={`${claim.client_name ?? '—'} · ${claim.product_type ?? '—'}`}
+      headerExtra={<AdminStatusBadge status={claim.status} map={CLAIM_STATUS_META} size="xs" />}
+    >
+      <div className="space-y-6">
           {verdictMeta && (
             <div className={`p-5 rounded-2xl border flex items-center gap-4 ${verdictMeta.color}`}>
               <verdictMeta.Icon size={26} className="shrink-0" />
@@ -276,9 +269,8 @@ const ClaimDetailModal: React.FC<{ claim: SpClaim; claims: SpClaim[]; onClose: (
               <p className="text-xs font-bold text-ds-ink leading-relaxed">{claim.chronology || '—'}</p>
             </div>
           </div>
-        </div>
       </div>
-    </div>
+    </DetailDrawer>
   );
 };
 
@@ -1912,6 +1904,7 @@ export const ClaimsAdminView = () => {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>('ALL');
+  const [search, setSearch] = useState('');
   const [selectedClaim, setSelectedClaim] = useState<SpClaim | null>(null);
 
   const load = useCallback(async () => {
@@ -1952,7 +1945,14 @@ export const ClaimsAdminView = () => {
   };
 
   const needsReview = (c: SpClaim) => (c as any).ai_fraud_verdict === 'REVIEW_REQUIRED' || (c as any).ai_fraud_verdict === 'REJECTED';
-  const visible = filter === 'ALL' ? claims : filter === 'NEEDS_REVIEW' ? claims.filter(needsReview) : claims.filter(c => c.status === filter);
+  const byFilter = filter === 'ALL' ? claims : filter === 'NEEDS_REVIEW' ? claims.filter(needsReview) : claims.filter(c => c.status === filter);
+  const q = search.trim().toLowerCase();
+  const visible = q
+    ? byFilter.filter(c =>
+        (c.client_name ?? '').toLowerCase().includes(q) ||
+        (c.claim_number ?? '').toLowerCase().includes(q) ||
+        (c.location ?? '').toLowerCase().includes(q))
+    : byFilter;
   const needsReviewCount = claims.filter(needsReview).length;
 
   return (
@@ -1967,20 +1967,20 @@ export const ClaimsAdminView = () => {
       )}
       {loadError && <AdminErrorBanner message={loadError} onRetry={load} retrying={loading} />}
       {/* Filter — PAID chip added so a settled claim is no longer invisible. */}
-      <div className="flex gap-2 flex-wrap">
-        {['ALL', 'SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'PAID', 'REJECTED'].map(f => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-full text-2xs font-black uppercase tracking-widest transition-all ${
-              filter === f ? 'bg-emerald-500 text-white' : 'bg-ds-card2 text-ds-ink3 hover:bg-ds-card2'
-            }`}
-          >
-            {f === 'ALL' ? 'All' : STATUS_LABEL[f] ?? f}
-            {f === 'ALL' ? ` (${claims.length})` : ` (${claims.filter(c => c.status === f).length})`}
-          </button>
-        ))}
-        {needsReviewCount > 0 && (
+      <FilterBar
+        chips={['ALL', 'SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'PAID', 'REJECTED'].map(f => ({
+          id: f,
+          label: f === 'ALL' ? 'All' : STATUS_LABEL[f] ?? f,
+          count: f === 'ALL' ? claims.length : claims.filter(c => c.status === f).length,
+        }))}
+        active={filter}
+        onActiveChange={setFilter}
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Cari klien, no. klaim, lokasi…"
+        onRefresh={load}
+        refreshing={loading}
+        extra={needsReviewCount > 0 ? (
           <button
             onClick={() => setFilter('NEEDS_REVIEW')}
             className={`px-4 py-2 rounded-full text-2xs font-black uppercase tracking-widest transition-all flex items-center gap-1.5 ${
@@ -1989,8 +1989,8 @@ export const ClaimsAdminView = () => {
           >
             <ShieldAlert size={12} /> Needs Review ({needsReviewCount})
           </button>
-        )}
-      </div>
+        ) : undefined}
+      />
 
       {loading ? (
         <div className="flex justify-center py-20">

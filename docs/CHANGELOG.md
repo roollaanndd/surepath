@@ -1,5 +1,38 @@
 # SurePath — Changelog
 
+## v2.7.35 — 2026-10-31
+
+### Audit ikon: semua ikon modul di app & dashboard memakai set ilustrasi baru
+
+Roland: "icon di app dan dashboard masih beberapa menggunakan icon yg lama".
+Audit menyeluruh di keenam portal (Admin, Customer, Agent, Operator, Insurer,
+B2B) plus portal Marketing dan layar bersama. Website publik (`src/pages`,
+`components/landing`) sengaja tidak disentuh.
+
+- **Satu pintu ikon**: `components/shared/ModuleIcon.tsx` (`<ModuleIcon id>`,
+  `moduleIcon(id)`). Ikon dipilih lewat id Icon Manager, jadi unggahan admin
+  tetap berlaku di mana-mana, lalu seni Brand, lalu set ilustrasi.
+- **Admin**: kartu KPI & empty state (`iconId`), tujuh dashboard workspace,
+  AdminDashboard, CommandDashboard, palet perintah, bottom-nav HP, panel
+  lonceng, jenis notifikasi (`notifMeta`), serta modul Views, Insurer, Ops
+  Console, AI Finance/Admin, Perjanjian Mitra, Polis, Website, Dokumen, OJK,
+  Promo, Tier, Pricelist, B2B, Transkrip Pathy. Definisi ikon lucide lama di
+  `navigation.ts` dihapus (ikon kini diturunkan dari `id` menu).
+- **Aplikasi**: pilihan produk (Mobil/Travel/PA/Barang/Kesehatan) di Beli,
+  Penawaran, Klaim, Komisi; Beranda, Dompet, Jaringan, Papan Peringkat, menu
+  Profil Mitra; aksi cepat & kartu polis Nasabah; antrean dan notifikasi
+  Operator; dashboard, order, profil Insurer; pilihan produk B2B; kartu
+  Marketing; AppSelector, UserProfile, NotificationDrawer, panel AI, wizard
+  (mobil, travel, PA, MPAR, custom, jiwa) dan halaman review.
+- **Lonceng header**: `PortalHeader` kini selalu memakai ikon `notifications`;
+  prop `BellIcon` ditandai usang dan dihapus dari semua pemanggil.
+- Lucide tetap dipakai untuk kontrol/afordans (chevron, X, cari, mata, panah,
+  spinner, status centang/peringatan) — bukan ikon modul.
+- Tes penjaga baru `services/__tests__/moduleIconIds.test.ts`: setiap id yang
+  dipakai `ModuleIcon`/`moduleIcon`/`iconId` harus ada di daftar Icon Manager.
+
+Verifikasi: `tsc --noEmit` bersih, ESLint bersih, vitest 461/461.
+
 ## v2.7.34 — 2026-10-31
 
 ### Login & register screen (`AuthGate.tsx`) — redesign lebih premium & ramah

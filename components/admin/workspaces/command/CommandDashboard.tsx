@@ -25,11 +25,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Area, AreaChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip,
 } from 'recharts';
-import {
-  Activity, AlertTriangle, ArrowDownRight, ArrowUpRight, Award, Banknote,
-  Clock, FileText, KeyRound, ListChecks, LogIn, RefreshCw, ShieldAlert,
-  ShieldCheck, Sparkles, Users,
-} from 'lucide-react';
+import { AlertTriangle, ArrowDownRight, ArrowUpRight, Clock, LogIn, RefreshCw } from 'lucide-react';
 import WorkspaceShell from '../shared/WorkspaceShell';
 import KpiCard from '../shared/KpiCard';
 import { AdminSectionCard } from '../../adminUI';
@@ -43,6 +39,7 @@ import {
 import type { SpClaim, SpPolicyOrder, Withdrawal } from '../../../../services/dbTypes';
 import { formatIDR } from '../../../car-wizard/WizardUI';
 import { formatIDRCompact } from '../../../../src/i18n';
+import ModuleIcon from '../../../shared/ModuleIcon';
 
 interface Props {
   userRole: string;
@@ -53,11 +50,11 @@ interface Props {
 const PRODUCT_COLORS = ['#076653', '#3B82F6', '#F59E0B', '#8B5CF6', '#94A3B8'];
 const idr = (n: number) => formatIDR(Math.round(n));
 
-const TASK_META: Record<DashboardTask['kind'], { icon: React.ElementType; className: string; label: string }> = {
-  order:      { icon: FileText,    className: 'bg-amber-500/10 text-amber-800',   label: 'Polis' },
-  claim:      { icon: ShieldAlert, className: 'bg-rose-500/10 text-rose-700',     label: 'Klaim' },
-  withdrawal: { icon: Banknote,    className: 'bg-blue-500/10 text-blue-700',     label: 'Penarikan' },
-  tier:       { icon: Activity,    className: 'bg-violet-500/10 text-violet-700', label: 'Tier' },
+const TASK_META: Record<DashboardTask['kind'], { iconId: string; className: string; label: string }> = {
+  order:      { iconId: 'policy_orders', className: 'bg-amber-500/10 text-amber-800',   label: 'Polis' },
+  claim:      { iconId: 'claims_admin', className: 'bg-rose-500/10 text-rose-700',     label: 'Klaim' },
+  withdrawal: { iconId: 'withdrawals', className: 'bg-blue-500/10 text-blue-700',     label: 'Penarikan' },
+  tier:       { iconId: 'tier_promo', className: 'bg-violet-500/10 text-violet-700', label: 'Tier' },
 };
 
 export const CommandDashboard: React.FC<Props> = ({ userRole, currentUser, onLogout }) => {
@@ -197,7 +194,7 @@ export const CommandDashboard: React.FC<Props> = ({ userRole, currentUser, onLog
             <div className="flex w-full flex-col gap-2 lg:w-[280px]">
               <div className="flex items-center justify-between text-2xs font-bold uppercase tracking-widest text-white/60">
                 <span>Tren premi 6 bulan</span>
-                <Sparkles size={13} className="text-ds-admin-lime" />
+                <ModuleIcon id="analytics" size={22} />
               </div>
               <div className="h-16 w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -269,10 +266,10 @@ export const CommandDashboard: React.FC<Props> = ({ userRole, currentUser, onLog
 
         {/* ── Statistik platform ── */}
         <div className="sp-stagger-cards grid grid-cols-2 gap-4 xl:grid-cols-4">
-          <KpiCard label="Total Pesanan" value={adminStats?.totalOrders ?? model.totals.orders} sublabel="Seluruh status" icon={Activity} accent="#3B82F6" />
-          <KpiCard label="Mitra Aktif" value={model.totals.activeAgents} sublabel={`${model.totals.tierPending} tier menunggu`} icon={Users} accent="#A855F7" />
-          <KpiCard label="Komisi Tertunda" value={adminStats ? formatIDRCompact(adminStats.pendingCommissions) : '—'} sublabel="Perlu review" icon={Banknote} accent="#F59E0B" />
-          <KpiCard label="Klaim Menunggu" value={model.totals.pendingClaims} sublabel={`${claims.length} klaim total`} icon={ShieldAlert} accent="#EF4444" />
+          <KpiCard label="Total Pesanan" value={adminStats?.totalOrders ?? model.totals.orders} sublabel="Seluruh status" iconId="policy_orders" accent="#3B82F6" />
+          <KpiCard label="Mitra Aktif" value={model.totals.activeAgents} sublabel={`${model.totals.tierPending} tier menunggu`} iconId="agents" accent="#A855F7" />
+          <KpiCard label="Komisi Tertunda" value={adminStats ? formatIDRCompact(adminStats.pendingCommissions) : '—'} sublabel="Perlu review" iconId="commission" accent="#F59E0B" />
+          <KpiCard label="Klaim Menunggu" value={model.totals.pendingClaims} sublabel={`${claims.length} klaim total`} iconId="claims_admin" accent="#EF4444" />
         </div>
 
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
@@ -354,8 +351,8 @@ export const CommandDashboard: React.FC<Props> = ({ userRole, currentUser, onLog
                   <h2 className="text-sm font-black tracking-tight text-ds-ink">Mitra Terbaik</h2>
                   <p className="text-2xs text-ds-ink3">Berdasarkan premi yang dihasilkan</p>
                 </div>
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-ds-admin-lime-tint text-ds-admin-forest">
-                  <Award size={17} />
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-ds-admin-lime-tint text-ds-admin-forest">
+                  <ModuleIcon id="tier_promo" size={30} />
                 </span>
               </div>
               <div className="mt-4 space-y-2">
@@ -383,24 +380,23 @@ export const CommandDashboard: React.FC<Props> = ({ userRole, currentUser, onLog
                   <h2 className="text-sm font-black tracking-tight text-ds-ink">Antrean Prioritas</h2>
                   <p className="text-2xs text-ds-ink3">Yang paling lama menunggu di seluruh platform</p>
                 </div>
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-ds-admin-lime-tint text-ds-admin-forest">
-                  <ListChecks size={17} />
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-ds-admin-lime-tint text-ds-admin-forest">
+                  <ModuleIcon id="approvals" size={30} />
                 </span>
               </div>
               <div className="mt-4 space-y-2">
                 {priorityTasks.length === 0 ? (
                   <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-ds-border py-8">
-                    <ShieldCheck size={22} className="text-emerald-700" />
+                    <ModuleIcon id="security" size={36} />
                     <p className="mt-2 text-xs font-bold text-ds-ink2">Tidak ada tugas menunggu</p>
                     <p className="text-2xs text-ds-ink3">Semua antrean bersih.</p>
                   </div>
                 ) : priorityTasks.map(task => {
                   const meta = TASK_META[task.kind];
-                  const Icon = meta.icon;
                   return (
                     <div key={task.id} className="flex w-full items-center gap-3 rounded-2xl border border-transparent px-2 py-2 transition-colors hover:border-ds-border hover:bg-ds-card2">
-                      <span className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl ${meta.className}`}>
-                        <Icon size={14} />
+                      <span className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${meta.className}`}>
+                        <ModuleIcon id={meta.iconId} size={28} />
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="flex items-center gap-1.5">
@@ -428,8 +424,8 @@ export const CommandDashboard: React.FC<Props> = ({ userRole, currentUser, onLog
             <AdminSectionCard className="rounded-[1.75rem]">
               <div className="flex items-center justify-between gap-3">
                 <h2 className="text-sm font-black tracking-tight text-ds-ink">Kesehatan & Keamanan Platform</h2>
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-ds-admin-lime-tint text-ds-admin-forest">
-                  <KeyRound size={16} />
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-ds-admin-lime-tint text-ds-admin-forest">
+                  <ModuleIcon id="security" size={30} />
                 </span>
               </div>
               <div className="mt-4 grid grid-cols-2 gap-3">
@@ -464,8 +460,8 @@ export const CommandDashboard: React.FC<Props> = ({ userRole, currentUser, onLog
             <AdminSectionCard className="rounded-[1.75rem]">
               <div className="flex items-center justify-between gap-3">
                 <h2 className="text-sm font-black tracking-tight text-ds-ink">Aktivitas Terbaru</h2>
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-ds-admin-lime-tint text-ds-admin-forest">
-                  <Sparkles size={16} />
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-ds-admin-lime-tint text-ds-admin-forest">
+                  <ModuleIcon id="notifications" size={30} />
                 </span>
               </div>
               <div className="mt-3 space-y-1">
@@ -473,11 +469,10 @@ export const CommandDashboard: React.FC<Props> = ({ userRole, currentUser, onLog
                   <p className="py-6 text-center text-2xs text-ds-ink3">Belum ada aktivitas.</p>
                 ) : recentNotifications.map(n => {
                   const meta = adminNotifMeta(n.type);
-                  const Icon = meta.Icon;
                   return (
                     <div key={n.id} className="flex items-start gap-2.5 rounded-xl px-1 py-1.5">
-                      <span className={`mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg bg-ds-card2 ${meta.cls}`}>
-                        <Icon size={12} />
+                      <span className={`mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-ds-card2 ${meta.cls}`}>
+                        <ModuleIcon id={meta.iconId} size={24} />
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-xs font-bold text-ds-ink">{n.title}</span>

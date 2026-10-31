@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Lock, Mail, ArrowRight, AlertCircle, Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import { Lock, Mail, ArrowRight, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../../services/supabaseService';
 import { checkRateLimit, recordFailedAttempt, clearRateLimit } from '../../services/authService';
 import { UserRole } from '../../types';
+import ModuleIcon from '../shared/ModuleIcon';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 
@@ -159,7 +160,7 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onBack })
               animation: 'op-ping 3s ease-in-out infinite',
             }} />
             <div className="w-16 h-16 rounded-2xl sp-glass flex items-center justify-center">
-              <ShieldCheck size={32} style={{ color: '#059669' }} />
+              <ModuleIcon id="security" size={48} />
             </div>
           </div>
 

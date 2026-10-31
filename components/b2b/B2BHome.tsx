@@ -1,8 +1,9 @@
 import React from 'react';
-import { FilePlus, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { Language } from '../../types';
 import { type SpB2BSubmission, type SpB2BQuote } from '../../services/supabaseService';
 import { HeroCard } from '../shared/cards';
+import ModuleIcon from '../shared/ModuleIcon';
 
 interface Props {
   client: any;
@@ -82,7 +83,7 @@ const B2BHome: React.FC<Props> = ({ client, submissions, quotes, onNavigate, lan
         onClick={() => onNavigate('new')}
         className="w-full flex items-center justify-center gap-2 rounded-2xl bg-ds-green text-ds-on-green py-4 font-black text-sm active:scale-95 transition-transform shadow-ds-green"
       >
-        <FilePlus size={18} />
+        <ModuleIcon id="quotes" size={28} />
         {t('New Submission', 'Pengajuan Baru')}
       </button>
 

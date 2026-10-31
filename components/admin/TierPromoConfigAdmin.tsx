@@ -9,6 +9,7 @@ import {
   getPromoCodes, createPromoCode, updatePromoCode,
   type SpAgentTier, type SpTierChangeRequest, type SpPromoCode,
 } from '../../services/supabaseService';
+import ModuleIcon from '../shared/ModuleIcon';
 
 const SESSION_KEY = 'SUREPATH_SESSION';
 // FIX 2026-10-26 (audit): these read sessionStorage ONLY, while App.tsx writes
@@ -800,7 +801,7 @@ const PromoCodesTab: React.FC = () => {
         </div>
       ) : codes.length === 0 ? (
         <div className="text-center py-12 text-ds-ink3 text-sm">
-          <Tag size={28} className="mx-auto mb-2 opacity-30" />
+          <ModuleIcon id="tier_promo" size={52} className="mx-auto mb-2" />
           Belum ada kode promo
         </div>
       ) : (

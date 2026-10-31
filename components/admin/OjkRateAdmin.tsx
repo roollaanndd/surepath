@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { RefreshCw, Save, Copy, Trash2, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { RefreshCw, Save, Copy, Trash2, CheckCircle2 } from 'lucide-react';
 import {
   getAllOjkRateSets, createOjkRateSet, updateOjkRateSet, activateOjkRateSet, deleteOjkRateSet,
   type SpOjkRateSet,
 } from '../../services/supabaseService';
 import { useConfirmDialog, useToast } from '../ui';
+import ModuleIcon from '../shared/ModuleIcon';
 
 // ─── Shared UI primitives (mirrors InsurerAdmin.tsx conventions) ─────────────
 
@@ -202,7 +203,7 @@ const OjkRateAdmin: React.FC = () => {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h2 className="text-2xl font-black tracking-tight text-ds-ink flex items-center gap-2">
-            <ShieldCheck size={22} className="text-emerald-700 dark:text-emerald-400" /> Rate OJK — Asuransi Kendaraan Bermotor
+            <ModuleIcon id="ojk_rates" size={32} /> Rate OJK — Asuransi Kendaraan Bermotor
           </h2>
           <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3 mt-1">
             SEOJK No. 6/SEOJK.05/2017 · {sets.length} versi tersimpan

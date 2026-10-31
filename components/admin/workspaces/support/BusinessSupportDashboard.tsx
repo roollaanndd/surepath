@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ClipboardList, Search, Headphones, AlertTriangle, RefreshCw, ShieldCheck } from 'lucide-react';
+import { Search, RefreshCw } from 'lucide-react';
 import WorkspaceShell from '../shared/WorkspaceShell';
 import KpiCard from '../shared/KpiCard';
 import { callGateway } from '../../../../services/db';
@@ -60,10 +60,10 @@ export const BusinessSupportDashboard: React.FC<Props> = ({ userRole, currentUse
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <KpiCard label="Order Menunggu" value={queue?.pendingOrders ?? '—'} sublabel="Perlu tindak lanjut" icon={ClipboardList} accent="#3B82F6" />
-          <KpiCard label="Klaim Berjalan" value={queue?.pendingClaims ?? pendingClaims.length} sublabel="Status aktif" icon={ShieldCheck} accent="#22C55E" />
-          <KpiCard label="Notifikasi Baru" value={queue?.unreadNotifications ?? '—'} sublabel="Belum dibaca" icon={Headphones} accent="#06B6D4" />
-          <KpiCard label="Pembayaran Pending" value={queue?.pendingPayments ?? '—'} sublabel="Cek status" icon={AlertTriangle} accent="#F59E0B" />
+          <KpiCard label="Order Menunggu" value={queue?.pendingOrders ?? '—'} sublabel="Perlu tindak lanjut" iconId="policy_orders" accent="#3B82F6" />
+          <KpiCard label="Klaim Berjalan" value={queue?.pendingClaims ?? pendingClaims.length} sublabel="Status aktif" iconId="claims" accent="#22C55E" />
+          <KpiCard label="Notifikasi Baru" value={queue?.unreadNotifications ?? '—'} sublabel="Belum dibaca" iconId="notifications" accent="#06B6D4" />
+          <KpiCard label="Pembayaran Pending" value={queue?.pendingPayments ?? '—'} sublabel="Cek status" iconId="payments" accent="#F59E0B" />
         </div>
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">

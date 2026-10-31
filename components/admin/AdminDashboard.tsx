@@ -11,11 +11,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Area, AreaChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip,
 } from 'recharts';
-import {
-  ArrowDownRight, ArrowUpRight, Award, Banknote, CalendarDays, CheckCircle2,
-  ChevronRight, Clock, FileText, ListChecks, RefreshCw, ShieldAlert,
-  Sparkles, TrendingUp, Users,
-} from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, ChevronRight, Clock, RefreshCw } from 'lucide-react';
 import { getAllOrders } from '../../services/orders';
 import type { AdminStats, OnlineUsersResult, SpAdminNotification } from '../../services/supabaseService';
 import type { SpClaim, SpPolicyOrder, Withdrawal } from '../../services/dbTypes';
@@ -23,6 +19,7 @@ import { formatIDR } from '../car-wizard/WizardUI';
 import { formatIDRCompact } from '../../src/i18n';
 import { buildDashboardModel, groupProducts, type DashboardTask } from './dashboardData';
 import { adminNotifMeta, adminNotifTimeAgo } from './notifMeta';
+import ModuleIcon from '../shared/ModuleIcon';
 
 interface AdminDashboardProps {
   adminStats: AdminStats | null;
@@ -44,11 +41,11 @@ const STATUS_STYLE: Record<string, { label: string; className: string }> = {
   CANCELLED:    { label: 'Dibatalkan',   className: 'bg-slate-500/10 text-slate-500 border-slate-500/20' },
 };
 
-const TASK_META: Record<DashboardTask['kind'], { icon: React.ElementType; className: string; label: string }> = {
-  order:      { icon: FileText,    className: 'bg-amber-500/10 text-amber-800 dark:text-amber-300',   label: 'Polis' },
-  claim:      { icon: ShieldAlert, className: 'bg-rose-500/10 text-rose-700 dark:text-rose-200',     label: 'Klaim' },
-  withdrawal: { icon: Banknote,    className: 'bg-blue-500/10 text-blue-700 dark:text-blue-300',     label: 'Penarikan' },
-  tier:       { icon: TrendingUp,  className: 'bg-violet-500/10 text-violet-700 dark:text-violet-300', label: 'Tier' },
+const TASK_META: Record<DashboardTask['kind'], { iconId: string; className: string; label: string }> = {
+  order:      { iconId: 'policy_orders', className: 'bg-amber-500/10 text-amber-800 dark:text-amber-300',   label: 'Polis' },
+  claim:      { iconId: 'claims_admin', className: 'bg-rose-500/10 text-rose-700 dark:text-rose-200',     label: 'Klaim' },
+  withdrawal: { iconId: 'withdrawals', className: 'bg-blue-500/10 text-blue-700 dark:text-blue-300',     label: 'Penarikan' },
+  tier:       { iconId: 'tier_promo', className: 'bg-violet-500/10 text-violet-700 dark:text-violet-300', label: 'Tier' },
 };
 
 // Palet produk: lime sebagai aksen pertama (sesuai brief, dipakai hemat),
@@ -135,10 +132,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
   const secondaryStats = [
-    { label: 'Total Pesanan', value: String(model.totals.orders), icon: FileText, sub: `${model.totals.pendingOrders} perlu keputusan`, tab: 'policy_orders' },
-    { label: 'Klaim Menunggu', value: String(model.totals.pendingClaims), icon: ShieldAlert, sub: `${claims?.length ?? 0} klaim total`, tab: 'claims_admin' },
-    { label: 'Penarikan Pending', value: String(model.totals.pendingWithdrawals), icon: Banknote, sub: formatIDRCompact(model.totals.withdrawalAmount), tab: 'withdrawals' },
-    { label: 'Mitra Aktif', value: String(model.totals.activeAgents), icon: Users, sub: `${model.totals.tierPending} tier menunggu`, tab: 'agents' },
+    { label: 'Total Pesanan', value: String(model.totals.orders), iconId: 'policy_orders', sub: `${model.totals.pendingOrders} perlu keputusan`, tab: 'policy_orders' },
+    { label: 'Klaim Menunggu', value: String(model.totals.pendingClaims), iconId: 'claims_admin', sub: `${claims?.length ?? 0} klaim total`, tab: 'claims_admin' },
+    { label: 'Penarikan Pending', value: String(model.totals.pendingWithdrawals), iconId: 'withdrawals', sub: formatIDRCompact(model.totals.withdrawalAmount), tab: 'withdrawals' },
+    { label: 'Mitra Aktif', value: String(model.totals.activeAgents), iconId: 'agents', sub: `${model.totals.tierPending} tier menunggu`, tab: 'agents' },
   ];
 
   // Mitra terbaik: adminStats.topAgents sudah dihitung server-side (getAdminStats)
@@ -186,7 +183,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <div className="flex w-full flex-col gap-2 lg:w-[280px]">
             <div className="flex items-center justify-between text-2xs font-bold uppercase tracking-widest text-white/60">
               <span>Tren premi 6 bulan</span>
-              <Sparkles size={13} className="text-ds-admin-lime" />
+              <ModuleIcon id="analytics" size={22} />
             </div>
             <div className="h-16 w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -282,15 +279,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {/* Statistik sekunder: kompak, bukan 4 kartu identik berulang dari hero */}
       <div className="sp-stagger-cards grid grid-cols-2 gap-4 xl:grid-cols-4">
         {secondaryStats.map(kpi => {
-          const Icon = kpi.icon;
           return (
             <button
               key={kpi.label}
               onClick={() => onNavigate(kpi.tab)}
               className="rounded-[1.5rem] border border-ds-border bg-ds-card p-4 text-left shadow-ds-sm transition-all hover:-translate-y-0.5 hover:shadow-ds-md"
             >
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-ds-admin-lime-tint text-ds-admin-forest">
-                <Icon size={16} />
+              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-ds-admin-lime-tint text-ds-admin-forest">
+                <ModuleIcon id={kpi.iconId} size={30} />
               </span>
               <p className="mt-3 text-2xs font-black uppercase tracking-[0.16em] text-ds-ink3">{kpi.label}</p>
               <p className="mt-1 text-xl font-black tracking-tight text-ds-ink">{kpi.value}</p>
@@ -402,7 +398,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               ) : model.recent.length === 0 ? (
                 <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-ds-border py-10">
-                  <FileText size={22} className="text-ds-ink3" />
+                  <ModuleIcon id="policy_orders" size={36} />
                   <p className="mt-2 text-xs font-bold text-ds-ink2">Belum ada pesanan</p>
                   <p className="text-2xs text-ds-ink3">Pesanan dari agen akan muncul di sini.</p>
                 </div>
@@ -454,8 +450,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <h2 className="text-sm font-black tracking-tight text-ds-ink">Mitra Terbaik</h2>
                 <p className="text-2xs text-ds-ink3">Berdasarkan premi yang dihasilkan</p>
               </div>
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-ds-admin-lime-tint text-ds-admin-forest">
-                <Award size={17} />
+              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-ds-admin-lime-tint text-ds-admin-forest">
+                <ModuleIcon id="tier_promo" size={30} />
               </span>
             </div>
 
@@ -488,8 +484,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <section className="rounded-[1.75rem] border border-ds-border bg-ds-card p-5 shadow-ds-sm">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-sm font-black tracking-tight text-ds-ink">Aktivitas Terbaru</h2>
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-ds-admin-lime-tint text-ds-admin-forest">
-                <Sparkles size={16} />
+              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-ds-admin-lime-tint text-ds-admin-forest">
+                <ModuleIcon id="notifications" size={30} />
               </span>
             </div>
             <div className="mt-3 space-y-1">
@@ -497,11 +493,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <p className="py-6 text-center text-2xs text-ds-ink3">Belum ada aktivitas.</p>
               ) : recentNotifications.map(n => {
                 const meta = adminNotifMeta(n.type);
-                const Icon = meta.Icon;
                 return (
                   <div key={n.id} className="flex items-start gap-2.5 rounded-xl px-1 py-1.5">
-                    <span className={`mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg bg-ds-card2 ${meta.cls}`}>
-                      <Icon size={12} />
+                    <span className={`mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-ds-card2 ${meta.cls}`}>
+                      <ModuleIcon id={meta.iconId} size={24} />
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-xs font-bold text-ds-ink">{n.title}</span>
@@ -520,8 +515,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <h2 className="text-sm font-black tracking-tight text-ds-ink">Jatuh Tempo</h2>
                 <p className="text-2xs capitalize text-ds-ink3">{monthName}</p>
               </div>
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-ds-admin-lime-tint text-ds-admin-forest">
-                <CalendarDays size={17} />
+              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-ds-admin-lime-tint text-ds-admin-forest">
+                <ModuleIcon id="renewal" size={30} />
               </span>
             </div>
 
@@ -569,29 +564,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <h2 className="text-sm font-black tracking-tight text-ds-ink">Tugas Saya</h2>
                 <p className="text-2xs text-ds-ink3">Yang paling lama menunggu lebih dulu</p>
               </div>
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-ds-admin-lime-tint text-ds-admin-forest">
-                <ListChecks size={17} />
+              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-ds-admin-lime-tint text-ds-admin-forest">
+                <ModuleIcon id="approvals" size={30} />
               </span>
             </div>
 
             <div className="mt-4 space-y-2">
               {model.tasks.length === 0 ? (
                 <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-ds-border py-8">
-                  <CheckCircle2 size={22} className="text-emerald-700 dark:text-emerald-300" />
+                  <ModuleIcon id="security" size={36} />
                   <p className="mt-2 text-xs font-bold text-ds-ink2">Tidak ada tugas menunggu</p>
                   <p className="text-2xs text-ds-ink3">Semua antrean bersih.</p>
                 </div>
               ) : model.tasks.map(task => {
                 const meta = TASK_META[task.kind];
-                const Icon = meta.icon;
                 return (
                   <button
                     key={task.id}
                     onClick={() => onNavigate(task.tab)}
                     className="flex w-full items-center gap-3 rounded-2xl border border-transparent px-2 py-2 text-left transition-colors hover:border-ds-border hover:bg-ds-card2"
                   >
-                    <span className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl ${meta.className}`}>
-                      <Icon size={14} />
+                    <span className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${meta.className}`}>
+                      <ModuleIcon id={meta.iconId} size={28} />
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-1.5">

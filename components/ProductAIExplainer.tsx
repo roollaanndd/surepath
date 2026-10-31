@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import {
-  X, FileText, Check, ShieldCheck,
-  Activity, Info,
-  ArrowRight, Sparkles,
-} from 'lucide-react';
+import { X, Check, ShieldCheck, Activity, Info, ArrowRight, Sparkles } from 'lucide-react';
 import { explainProductAI, ProductExplanation } from '../services/geminiService';
 import { Language } from '../types';
+import ModuleIcon from './shared/ModuleIcon';
 
 interface ProductAIExplainerProps {
   productName: string;
@@ -46,7 +43,7 @@ const ProductAIExplainer: React.FC<ProductAIExplainerProps> = ({ productName, la
         <div className="p-8 border-b border-white/5 flex items-center justify-between bg-black/20">
           <div className="flex items-center gap-5">
             <div className="w-14 h-14 bg-emerald-500/10 rounded-2xl flex items-center justify-center border border-emerald-500/20">
-              <FileText size={26} className="text-emerald-500" />
+              <ModuleIcon id="documents" size={40} />
             </div>
             <div>
               <p className="text-[0.6rem] font-black uppercase text-gray-500 tracking-[0.3em] mb-1">

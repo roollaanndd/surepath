@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  TrendingUp, ChevronRight, Target, Star, Coins,
-  FilePlus2,
-} from 'lucide-react';
+import { TrendingUp, ChevronRight, Target, Star } from 'lucide-react';
 import PromoBanner from '../PromoBanner';
 import { motion, useReducedMotion } from 'motion/react';
 import { Language } from '../../types';
@@ -20,6 +17,7 @@ import {
 } from './AgentIcons';
 import { resolveTierPalette } from './AgentPartnerCard';
 import { useTierDefinitions, getTierByCode } from '../../hooks/useTierDefinitions';
+import ModuleIcon from '../shared/ModuleIcon';
 import '../../src/styles/portal-modernization.css';
 
 interface Props {
@@ -205,7 +203,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
       <div className="relative z-0 rounded-t-[2rem] bg-ds-bg pt-6 pb-28 shadow-[0_-14px_30px_-18px_rgba(11,17,32,0.18)]">
         {savedDraftProduct && (
           <div className="sp-agent-home__draft mx-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 flex items-center gap-3" role="status">
-            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-emerald-700 shrink-0"><FilePlus2 size={18} /></div>
+            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-emerald-700 shrink-0"><ModuleIcon id="quotes" size={30} /></div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-emerald-950">{t('Continue your saved quote', 'Lanjutkan draf penawaran')}</p>
               <p className="text-xs text-emerald-800 mt-0.5">{t('Your progress is saved for this session.', 'Progres tersimpan untuk sesi ini.')}</p>
@@ -295,7 +293,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
             </div>
             <div className="flex items-center gap-2.5 mt-4 pt-4 border-t border-ds-border">
               <div className="w-8 h-8 rounded-xl bg-ds-green-tint flex items-center justify-center flex-shrink-0 text-ds-green">
-                <Target size={20} />
+                <ModuleIcon id="tier_promo" size={30} />
               </div>
               <div>
                 <p className="text-2xs text-ds-ink3 font-medium">{t('Daily Goal', 'Target Harian')}</p>
@@ -322,7 +320,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
             {recentCommissions.length === 0 ? (
               <div className="p-8 flex flex-col items-center text-center gap-2">
                 <div className="w-11 h-11 rounded-2xl bg-ds-green-tint flex items-center justify-center">
-                  <Coins size={20} className="text-ds-green" />
+                  <ModuleIcon id="commission" size={34} />
                 </div>
                 <p className="text-sm font-bold text-ds-ink">{t('No commissions yet', 'Belum ada komisi')}</p>
                 <p className="text-xs text-ds-ink3 max-w-[14rem]">{t('Close your first policy to start earning.', 'Tutup polis pertamamu untuk mulai dapat komisi.')}</p>

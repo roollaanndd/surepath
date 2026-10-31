@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Save, Eye, EyeOff, CheckCircle, Loader2, Megaphone, X } from 'lucide-react';
+import { Save, Eye, EyeOff, CheckCircle, Loader2, X } from 'lucide-react';
 import {
   SpWebsiteConfig, fetchWebsiteSection, upsertWebsiteSection, uploadSectionImage,
 } from '../../services/supabaseService';
+import ModuleIcon from '../shared/ModuleIcon';
 
 const inputCls = 'bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-emerald-500/50 w-full text-ds-ink placeholder-gray-600 transition-colors';
 const labelCls = 'text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-1.5 block';
@@ -105,7 +106,7 @@ const PromoBannerAdmin: React.FC = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center">
-            <Megaphone size={18} className="text-emerald-700 dark:text-emerald-400" />
+            <ModuleIcon id="website_editor" size={30} />
           </div>
           <div>
             <h3 className="text-sm font-black uppercase tracking-widest text-ds-ink">Promo Banner</h3>

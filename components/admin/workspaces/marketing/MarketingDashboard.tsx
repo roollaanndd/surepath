@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Users, Target, TrendingUp, Building2, RefreshCw, Megaphone } from 'lucide-react';
+import { RefreshCw, Megaphone } from 'lucide-react';
 import WorkspaceShell from '../shared/WorkspaceShell';
 import KpiCard from '../shared/KpiCard';
 import { callGateway } from '../../../../services/db';
@@ -63,10 +63,10 @@ export const MarketingDashboard: React.FC<Props> = ({ userRole, currentUser, onL
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <KpiCard label="Handler Marketing" value={team.length} sublabel="Tim aktif" icon={Users} accent="#A855F7" />
-          <KpiCard label="Agen Terkelola" value={totalAgents} sublabel="Di bawah tim" icon={TrendingUp} accent="#3B82F6" />
-          <KpiCard label="Agen Produktif" value={totalProductive} sublabel="Punya order" icon={Target} accent="#22C55E" />
-          <KpiCard label="Pipeline B2B" value={openB2b.length} sublabel="Perlu tindak lanjut" icon={Building2} accent="#F59E0B" />
+          <KpiCard label="Handler Marketing" value={team.length} sublabel="Tim aktif" iconId="user_mgmt" accent="#A855F7" />
+          <KpiCard label="Agen Terkelola" value={totalAgents} sublabel="Di bawah tim" iconId="agents" accent="#3B82F6" />
+          <KpiCard label="Agen Produktif" value={totalProductive} sublabel="Punya order" iconId="tier_promo" accent="#22C55E" />
+          <KpiCard label="Pipeline B2B" value={openB2b.length} sublabel="Perlu tindak lanjut" iconId="b2b" accent="#F59E0B" />
         </div>
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">

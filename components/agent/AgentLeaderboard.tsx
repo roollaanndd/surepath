@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Trophy, RefreshCw, TrendingUp, Star, Crown } from 'lucide-react';
+import { RefreshCw, TrendingUp, Star } from 'lucide-react';
 import { Language } from '../../types';
 import { getLeaderboard, getAgentStats, type AgentStats } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { AgentArtKeyframes, AgentHero, SpotTrophy, AgentEmpty } from './AgentArt';
 import { useTierDefinitions, getTierByCode } from '../../hooks/useTierDefinitions';
 import type { SpAgentTier } from '../../services/dbTypes';
+import ModuleIcon from '../shared/ModuleIcon';
 
 interface Props {
   agentId: string;
@@ -200,10 +201,7 @@ const AgentLeaderboard: React.FC<Props> = ({ agentId, lang, agentTier }) => {
               </p>
             </div>
             <div className="w-14 h-14 rounded-2xl bg-white/40 flex items-center justify-center flex-shrink-0">
-              {!nextTier
-                ? <Crown size={28} style={{ color }} />
-                : <Trophy size={28} style={{ color }} />
-              }
+              <ModuleIcon id="tier_promo" glyph="trophy" size={40} />
             </div>
           </div>
         </div>

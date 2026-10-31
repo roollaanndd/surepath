@@ -5,6 +5,7 @@ import { acceptAgreement, attachAgreementPdf, SpAgentAgreement } from '../../ser
 import { generateAgreementPDF, buildAgreementPdfBlob } from '../../services/agreementPdf';
 import { uploadAgentAgreementPdfBlob } from '../../services/supabaseService';
 import { AGREEMENT_META, AGREEMENT_CLAUSES } from './agreementContent';
+import ModuleIcon from '../shared/ModuleIcon';
 
 interface Props {
   agent: any;
@@ -161,7 +162,7 @@ const AgentAgreementGate: React.FC<Props> = ({ agent, lang, onAccepted }) => {
       {/* Header */}
       <div className="px-6 pt-8 pb-4 text-center flex-shrink-0" style={{ paddingTop: 'max(2rem, env(safe-area-inset-top))' }}>
         <div className="w-14 h-14 mx-auto rounded-2xl bg-white shadow-lg shadow-emerald-500/20 ring-1 ring-emerald-500/20 flex items-center justify-center mb-3">
-          <ShieldCheck size={28} className="text-ds-green" />
+          <ModuleIcon id="documents" size={42} />
         </div>
         <h1 className="text-lg font-black text-slate-900 tracking-tight">{AGREEMENT_META.title}</h1>
         <p className="text-[11px] font-bold uppercase tracking-widest text-ds-green mt-1">

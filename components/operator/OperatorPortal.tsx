@@ -9,7 +9,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import '../../src/styles/portal-modernization.css';
-import { Bell, Home, FileText, ShieldAlert, Wallet, User, UserCheck } from 'lucide-react';
+import { Home, FileText, ShieldAlert, Wallet, User, UserCheck } from 'lucide-react';
 import { Language } from '../../types';
 import { scrollPortalToTop } from '../shared/scrollReset';
 import PortalHeader from '../shared/PortalHeader';
@@ -171,7 +171,6 @@ const OperatorPortal: React.FC<Props> = ({ operator, onLogout, lang }) => {
         darkMode={darkMode}
         onToggleDark={() => setDarkMode(!darkMode)}
         onAvatarClick={() => handleTabChange('profile')}
-        BellIcon={Bell}
         labels={{ notifications: 'Notifikasi', theme: 'Ganti tema', profile: 'Profil' }}
       />
 

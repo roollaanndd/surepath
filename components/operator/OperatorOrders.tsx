@@ -2,7 +2,7 @@ import { getStatusMeta } from '../../lib/statusMeta';
 // OperatorOrders.tsx — Polis tab. List of policy orders, filter by status,
 // approve/reject/issue inline. Detail sheet includes document viewer.
 import React, { useEffect, useState, useCallback } from 'react';
-import { FileText, Search, CheckCircle2, XCircle, Eye, Clock, ImageIcon, ExternalLink, Car, User, Phone, CreditCard, Calendar, ShieldCheck, AlertTriangle, Sparkles, Download } from 'lucide-react';
+import { FileText, Search, CheckCircle2, XCircle, Eye, Clock, ImageIcon, ExternalLink, Phone, CreditCard, AlertTriangle, Download } from 'lucide-react';
 import { Language } from '../../types';
 import { AgentArtKeyframes, AgentHero, SpotOrders, AgentEmpty } from '../agent/AgentArt';
 import { UnderlineTabs, SkeletonCard, useToast, useConfirmDialog } from '../ui';
@@ -10,6 +10,7 @@ import { useT } from '../../src/i18n';
 import { listOrders, updateOrderStatus, sendInsurerReviewLink, type OperatorOrder } from '../../services/operatorService';
 import { publishAndDownloadQuotation } from '../../services/quotationService';
 import { fromOperatorOrder } from '../../services/quotationSlipAdapter';
+import ModuleIcon from '../shared/ModuleIcon';
 
 interface Props {
   operator: any;
@@ -304,7 +305,7 @@ const OperatorOrders: React.FC<Props> = ({ lang, refreshTick }) => {
               </div>
 
               {/* Customer info */}
-              <Section icon={<User size={14} />} title="Data Nasabah" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
+              <Section icon={<ModuleIcon id="clients" size={24} />} title="Data Nasabah" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
                 <DetailRow label="Nama" value={selectedOrder.client_name} sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER} />
                 <DetailRow label="Telepon" value={selectedOrder.client_phone ?? '-'} icon={<Phone size={11} />} sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER} />
                 <DetailRow label="No. KTP" value={selectedOrder.client_ktp ?? '-'} icon={<CreditCard size={11} />} sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER} />
@@ -312,7 +313,7 @@ const OperatorOrders: React.FC<Props> = ({ lang, refreshTick }) => {
 
               {/* Vehicle info */}
               {selectedOrder.vehicle_details && (
-                <Section icon={<Car size={14} />} title="Data Kendaraan" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
+                <Section icon={<ModuleIcon id="car_protection" size={24} />} title="Data Kendaraan" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
                   {(() => {
                     const vd = selectedOrder.vehicle_details ?? {};
                     return (
@@ -331,7 +332,7 @@ const OperatorOrders: React.FC<Props> = ({ lang, refreshTick }) => {
               )}
 
               {/* Document viewer — vehicle photo + policy doc */}
-              <Section icon={<ImageIcon size={14} />} title="Dokumen Upload" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
+              <Section icon={<ModuleIcon id="documents" size={24} />} title="Dokumen Upload" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
                 {selectedOrder.vehicle_image_url ? (
                   <button
                     onClick={() => setLightboxUrl(selectedOrder.vehicle_image_url)}
@@ -376,7 +377,7 @@ const OperatorOrders: React.FC<Props> = ({ lang, refreshTick }) => {
               </Section>
 
               {/* Coverage & premium */}
-              <Section icon={<ShieldCheck size={14} />} title="Coverage & Premi" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
+              <Section icon={<ModuleIcon id="security" size={24} />} title="Coverage & Premi" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
                 <DetailRow label="Coverage Type" value={selectedOrder.coverage_type} sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER} />
                 <DetailRow label="Sum Insured" value={fmtIdr(selectedOrder.sum_insured)} sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER} />
                 <DetailRow label="Base Premi" value={fmtIdr(selectedOrder.base_premium)} sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER} />
@@ -393,7 +394,7 @@ const OperatorOrders: React.FC<Props> = ({ lang, refreshTick }) => {
               </Section>
 
               {/* Insurer & policy */}
-              <Section icon={<Calendar size={14} />} title="Insurer & Polis" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
+              <Section icon={<ModuleIcon id="policy" size={24} />} title="Insurer & Polis" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
                 <DetailRow label="Insurer" value={selectedOrder.insurer_name ?? '-'} sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER} />
                 <DetailRow label="No. Polis" value={selectedOrder.policy_number ?? '-'} sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER} />
                 <DetailRow label="Start Date" value={selectedOrder.start_date ?? '-'} sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER} />
@@ -405,7 +406,7 @@ const OperatorOrders: React.FC<Props> = ({ lang, refreshTick }) => {
 
               {/* AI review (if present) */}
               {(selectedOrder.ai_admin_recommendation || selectedOrder.ai_admin_risk_level) && (
-                <Section icon={<Sparkles size={14} />} title="AI Review" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
+                <Section icon={<ModuleIcon id="ai_admin" size={24} />} title="AI Review" sheetText={SHEET_TEXT} sheetMuted={SHEET_TEXT_MUTED} sheetBorder={SHEET_BORDER}>
                   {selectedOrder.ai_admin_risk_level && (
                     <div className={`flex items-center gap-2 p-3 rounded-xl mb-2 ${
                       selectedOrder.ai_admin_risk_level === 'HIGH' ? 'bg-rose-50 dark:bg-rose-950/30' :
@@ -560,7 +561,7 @@ const Section: React.FC<{
   return (
   <div>
     <div className="flex items-center gap-2 mb-2">
-      <div className="w-6 h-6 rounded-md bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center text-ds-green dark:text-emerald-400">
+      <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center text-ds-green dark:text-emerald-400">
         {icon}
       </div>
       <h4 className={`text-xs font-black uppercase tracking-widest ${sheetText}`}>{title}</h4>

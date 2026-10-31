@@ -2,6 +2,7 @@ import React from 'react';
 import { Sun, Moon } from 'lucide-react';
 import { SurePathLogo } from '../Navbar';
 import { APP_VERSION } from '../../src/version';
+import ModuleIcon from './ModuleIcon';
 
 /* Shared accessible header for customer, agent and internal portals. */
 export interface PortalHeaderProps {
@@ -15,7 +16,8 @@ export interface PortalHeaderProps {
   darkMode: boolean;
   onToggleDark: () => void;
   onAvatarClick: () => void;
-  BellIcon: React.ComponentType<{ size?: number; className?: string }>;
+  /** @deprecated The bell is now the shared illustrated `notifications` icon; kept so callers still compile. */
+  BellIcon?: React.ComponentType<{ size?: number; className?: string }>;
   labels: { notifications: string; theme: string; profile: string };
 }
 
@@ -27,7 +29,7 @@ const CONTROL =
 const PortalHeader: React.FC<PortalHeaderProps> = ({
   portalLabel, userName, userCode, userMeta, avatarInitial,
   unreadCount = 0, onBellClick, darkMode, onToggleDark, onAvatarClick,
-  BellIcon, labels,
+  labels,
 }) => (
   <header className="fixed top-0 inset-x-0 z-40 sp-glass-strong border-x-0 border-t-0 rounded-none" style={{ paddingTop: "env(safe-area-inset-top, 0px)", paddingLeft: "env(safe-area-inset-left, 0px)", paddingRight: "env(safe-area-inset-right, 0px)" }}>
     <div className="flex items-center justify-between gap-2 px-5 py-3">
@@ -61,7 +63,7 @@ const PortalHeader: React.FC<PortalHeaderProps> = ({
           aria-label={unreadCount > 0 ? `${labels.notifications}, ${unreadCount} belum dibaca` : labels.notifications}
           className={`relative ${CONTROL}`}
         >
-          <BellIcon size={18} className="text-ds-ink2" />
+          <ModuleIcon id="notifications" size={26} />
           {unreadCount > 0 && (
             <span aria-hidden="true" className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-ds-green text-ds-on-green rounded-full text-[8px] font-black flex items-center justify-center leading-none ring-2 ring-ds-card">
               {unreadCount > 9 ? '9+' : unreadCount}

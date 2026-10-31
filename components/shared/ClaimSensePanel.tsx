@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import { Brain, AlertTriangle, Clock, Wrench, Shield, Loader2, TrendingDown } from 'lucide-react';
 import { analyzeClaim, type ClaimAnalysis } from '../../services/aiGateway';
 import { useToast } from '../ui';
+import ModuleIcon from './ModuleIcon';
 
 interface Props {
   claimData: {
@@ -58,7 +59,7 @@ const ClaimSensePanel: React.FC<Props> = ({ claimData, onAnalysisComplete }) => 
       {/* Header */}
       <div className="flex items-center gap-2">
         <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
-          <Brain size={16} className="text-white" />
+          <ModuleIcon id="ai_admin" size={26} />
         </div>
         <div>
           <h3 className="text-sm font-bold text-ds-ink">ClaimSense AI</h3>

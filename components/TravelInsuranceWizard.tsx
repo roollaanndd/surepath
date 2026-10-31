@@ -1,15 +1,12 @@
 
 import React, { useState, useMemo } from 'react';
-import {
-  Globe, MapPin, Users, ChevronRight,
-  ShieldCheck, Info, Check,
-  ChevronLeft, User, AlertCircle,
-  Wallet, ExternalLink, ArrowRight, Loader2} from 'lucide-react';
+import { Globe, MapPin, Users, ChevronRight, ShieldCheck, Info, Check, ChevronLeft, User, AlertCircle, Wallet, ExternalLink, ArrowRight, Loader2 } from 'lucide-react';
 import { createPolicyOrder } from '../services/supabaseService';
 import { createXenditInvoice } from '../services/paymentService';
 // Porting missing constants from root constants.ts
 import { TRAVEL_PRICING, TRAVEL_BENEFITS } from '../constants';
 import { TravelState, TravelPlanType, TravelRegion, Language } from '../types';
+import ModuleIcon from './shared/ModuleIcon';
 
 const formatIDR = (n: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
 
@@ -71,7 +68,7 @@ const TravelInsuranceWizard = ({ onComplete, currentUser, lang: _lang }: { onCom
   const renderStep0 = () => (
     <div className="space-y-6 animate-fade-in">
       <div className="p-4 bg-emerald-500/10 rounded-3xl border border-emerald-500/20 flex gap-4">
-         <Globe className="text-emerald-500 flex-shrink-0" size={24}/>
+         <ModuleIcon id="travel_safe" size={40} className="flex-shrink-0"/>
          <p className="text-[0.65rem] font-bold text-gray-600 dark:text-gray-300 leading-relaxed uppercase tracking-wider">
            Sistem Asuransi Perjalanan Digital. Configure your itinerary for proses persetujuan instan.
          </p>

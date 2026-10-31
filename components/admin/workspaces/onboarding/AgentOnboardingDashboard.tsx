@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { UserCheck, UserX, Clock, ShieldCheck, RefreshCw, FileText } from 'lucide-react';
+import { UserCheck, UserX, RefreshCw } from 'lucide-react';
 import WorkspaceShell from '../shared/WorkspaceShell';
 import KpiCard from '../shared/KpiCard';
 import { callGateway } from '../../../../services/db';
@@ -69,10 +69,10 @@ export const AgentOnboardingDashboard: React.FC<Props> = ({ userRole, currentUse
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <KpiCard label="Menunggu Review" value={pending.length} sublabel="Pendaftaran baru" icon={Clock} accent="#F97316" />
-          <KpiCard label="Dengan Perjanjian" value={withAgreement} sublabel="Sudah setuju" icon={FileText} accent="#3B82F6" />
-          <KpiCard label="Dokumen Kurang" value={missingDocs} sublabel="Perlu tindak lanjut" icon={ShieldCheck} accent="#F59E0B" />
-          <KpiCard label="Siap Aktif" value={Math.max(0, pending.length - missingDocs)} sublabel="Dokumen lengkap" icon={UserCheck} accent="#22C55E" />
+          <KpiCard label="Menunggu Review" value={pending.length} sublabel="Pendaftaran baru" iconId="approvals" accent="#F97316" />
+          <KpiCard label="Dengan Perjanjian" value={withAgreement} sublabel="Sudah setuju" iconId="policy" accent="#3B82F6" />
+          <KpiCard label="Dokumen Kurang" value={missingDocs} sublabel="Perlu tindak lanjut" iconId="documents" accent="#F59E0B" />
+          <KpiCard label="Siap Aktif" value={Math.max(0, pending.length - missingDocs)} sublabel="Dokumen lengkap" iconId="agents" accent="#22C55E" />
         </div>
 
         {error && (

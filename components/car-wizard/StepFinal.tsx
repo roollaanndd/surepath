@@ -1,12 +1,11 @@
 
 import React, { useState } from 'react';
-import { 
-  Car, Smartphone, ShieldCheck, CheckCircle2, Shield, Wallet, 
-  BrainCircuit, Zap, FileDown } from 'lucide-react';
+import { Car, Smartphone, ShieldCheck, CheckCircle2, Shield, BrainCircuit, Zap, FileDown } from 'lucide-react';
 import { formatIDR, PageTransition } from './WizardUI';
 import { Language } from '../../types';
 import { publishAndDownloadQuotation } from '../../services/quotationService';
 import { fromAgentQuote } from '../../services/quotationSlipAdapter';
+import ModuleIcon from '../shared/ModuleIcon';
 
 interface StepFinalProps {
   vehicle: any;
@@ -138,7 +137,7 @@ const StepFinal: React.FC<StepFinalProps> = ({
                  <h4 className="text-4xl font-black uppercase tracking-tighter">{t('Premi Audit', 'Rincian Premi')}</h4>
               </div>
               <div className="p-4 bg-white/10 rounded-2xl shadow-xl">
-                 <Wallet size={24} className="text-emerald-400"/>
+                 <ModuleIcon id="payments" size={36}/>
               </div>
            </div>
 
@@ -184,7 +183,7 @@ const StepFinal: React.FC<StepFinalProps> = ({
            onClick={handleFinalPayment} 
            className="w-full py-6 bg-slate-900 dark:bg-white text-white dark:text-black rounded-[2.5rem] font-black uppercase text-base tracking-[0.4em] shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-4 group border border-white/5"
         >
-           <Wallet size={28} className="text-emerald-500 group-hover:rotate-12 transition-transform"/> 
+           <ModuleIcon id="payments" size={40} className="group-hover:rotate-12 transition-transform"/> 
            {t('AUTHENTICATE & PAY', 'OTORISASI & BAYAR')}
         </button>
       </div>

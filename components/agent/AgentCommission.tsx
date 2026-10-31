@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, ArrowDownToLine, TrendingUp, Clock, Car, Plane, Shield, Smartphone, Coins } from 'lucide-react';
+import { RefreshCw, ArrowDownToLine, TrendingUp, Clock } from 'lucide-react';
 import { Language } from '../../types';
 import { getAgentCommissions, getAgentCoinBalance, getAgentCoinLedger, getMyWithdrawals, type SpCommission, type SpCoinLedger } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { AgentArtKeyframes, SpotWallet, AgentEmpty } from './AgentArt';
 import { IcWallet, IcCoin } from './AgentIcons';
+import ModuleIcon from '../shared/ModuleIcon';
+import { moduleIcon } from '../shared/ModuleIcon';
 
 interface Props {
   agentId: string;
@@ -21,7 +23,7 @@ const statusColors: Record<string, string> = {
 };
 
 const productIcons: Record<string, React.ElementType> = {
-  CAR: Car, TRAVEL: Plane, PA: Shield, MPAR: Smartphone,
+  CAR: moduleIcon('car_protection'), TRAVEL: moduleIcon('travel_safe'), PA: moduleIcon('personal_safety'), MPAR: moduleIcon('item_shield'),
 };
 
 const productColors: Record<string, string> = {
@@ -235,12 +237,12 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang, onNavigate }) => {
       {activeTab === 'byproduct' && (
         <div className="space-y-2 px-4 mt-2">
           {byProduct.map(({ type, count, total, pending: pend }) => {
-            const Icon = productIcons[type] ?? Shield;
+            const Icon = productIcons[type] ?? moduleIcon('product');
             const colorClass = productColors[type] ?? 'bg-ds-card2 text-ds-ink3';
             return (
               <div key={type} className="sp-glass rounded-2xl p-4 flex items-center gap-4">
                 <div className={`w-11 h-11 rounded-2xl ${colorClass} flex items-center justify-center flex-shrink-0`}>
-                  <Icon size={20} />
+                  <Icon size={32} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-black text-sm text-ds-ink">{type}</p>
@@ -273,7 +275,7 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang, onNavigate }) => {
               return (
                 <div key={entry.id ?? i} className="sp-glass rounded-2xl p-4 flex items-center gap-3">
                   <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 ${isEarned ? 'bg-amber-50 text-ds-amber' : isRedeemed ? 'bg-rose-50 text-ds-red' : 'bg-ds-card2 text-ds-ink3'}`}>
-                    <Coins size={18} />
+                    <ModuleIcon id="commission" size={28} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-black text-sm text-ds-ink truncate">{entry.description ?? (isEarned ? t('Coins Earned', 'Koin Diperoleh') : t('Coins Redeemed', 'Koin Digunakan'))}</p>
@@ -308,12 +310,12 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang, onNavigate }) => {
             </div>
           ) : (
             getFilteredCommissions().map((c, i) => {
-              const Icon = productIcons[c.product_type] ?? Shield;
+              const Icon = productIcons[c.product_type] ?? moduleIcon('product');
               const colorClass = productColors[c.product_type] ?? 'bg-ds-card2 text-ds-ink3';
               return (
                 <div key={c.id ?? i} className="sp-glass rounded-2xl p-4 flex items-center gap-3">
                   <div className={`w-9 h-9 rounded-xl ${colorClass} flex items-center justify-center flex-shrink-0`}>
-                    <Icon size={18} />
+                    <Icon size={28} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-ds-ink truncate">{c.client_name}</p>

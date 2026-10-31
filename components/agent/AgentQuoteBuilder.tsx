@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  ChevronLeft, ChevronRight, Car, Plane, Shield, Smartphone, Bike,
-  CheckCircle2, Send, RefreshCw, FileCheck, User, Users, UserPlus, Download, ClipboardList, Heart, FileText
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle2, Send, RefreshCw, FileCheck, User, Users, UserPlus, Download, ClipboardList, FileText } from 'lucide-react';
 import { Language } from '../../types';
 import { formatIDR } from '../car-wizard/WizardUI';
 import {
@@ -25,6 +22,8 @@ import {
   VEHICLE_BRANDS, getModelsForBrand, getMarketValue, getMarketValueForYear,
   MOTO_BRANDS, getModelsForMotoBrand, getMarketValueForMoto, getMarketValueForMotoYear,
 } from '../../services/vehicleDatabase';
+import ModuleIcon from '../shared/ModuleIcon';
+import { moduleIcon } from '../shared/ModuleIcon';
 
 interface Props {
   agentId: string;
@@ -59,11 +58,11 @@ interface PAInputs { category: 'GENERAL' | 'STUDENT'; plan: 'BASIC' | 'PREMIUM' 
 interface MPARInputs { category: 'ELECTRONIC' | 'GADGET'; itemName: string; price: number; period: 6 | 12; }
 
 const PRODUCTS: { type: ProductType; icon: React.ElementType; color: string; bgColor: string; enLabel: string; idLabel: string; enDesc: string; idDesc: string; ojk?: boolean }[] = [
-  { type: 'CAR',        icon: Car,        color: 'text-blue-500',    bgColor: 'bg-blue-500/10',    enLabel: 'Auto (Roda 4)',       idLabel: 'Kendaraan Roda 4',     enDesc: 'OJK Regulated Full Underwriting', idDesc: 'Underwriting Penuh OJK', ojk: true },
-  { type: 'MOTORCYCLE', icon: Bike,       color: 'text-cyan-500',    bgColor: 'bg-cyan-500/10',    enLabel: 'Motorcycle (Roda 2)', idLabel: 'Kendaraan Roda 2',     enDesc: 'OJK Regulated Full Underwriting', idDesc: 'Underwriting Penuh OJK', ojk: true },
-  { type: 'TRAVEL',     icon: Plane,      color: 'text-ds-green', bgColor: 'bg-emerald-500/10', enLabel: 'Travel Insurance',    idLabel: 'Asuransi Perjalanan',  enDesc: 'Domestic & International',        idDesc: 'Domestik & Internasional' },
-  { type: 'PA',         icon: Shield,     color: 'text-violet-500',  bgColor: 'bg-violet-500/10',  enLabel: 'Personal Accident',   idLabel: 'Kecelakaan Diri',      enDesc: 'General & Student Plans',         idDesc: 'Umum & Pelajar' },
-  { type: 'MPAR',       icon: Smartphone, color: 'text-ds-amber',   bgColor: 'bg-amber-500/10',   enLabel: 'Gadget / MPAR',       idLabel: 'Gadget / MPAR',        enDesc: 'Electronics & Gadgets',           idDesc: 'Elektronik & Gadget' },
+  { type: 'CAR',        icon: moduleIcon('car_protection'),        color: 'text-blue-500',    bgColor: 'bg-blue-500/10',    enLabel: 'Auto (Roda 4)',       idLabel: 'Kendaraan Roda 4',     enDesc: 'OJK Regulated Full Underwriting', idDesc: 'Underwriting Penuh OJK', ojk: true },
+  { type: 'MOTORCYCLE', icon: moduleIcon('car_protection'),       color: 'text-cyan-500',    bgColor: 'bg-cyan-500/10',    enLabel: 'Motorcycle (Roda 2)', idLabel: 'Kendaraan Roda 2',     enDesc: 'OJK Regulated Full Underwriting', idDesc: 'Underwriting Penuh OJK', ojk: true },
+  { type: 'TRAVEL',     icon: moduleIcon('travel_safe'),      color: 'text-ds-green', bgColor: 'bg-emerald-500/10', enLabel: 'Travel Insurance',    idLabel: 'Asuransi Perjalanan',  enDesc: 'Domestic & International',        idDesc: 'Domestik & Internasional' },
+  { type: 'PA',         icon: moduleIcon('personal_safety'),     color: 'text-violet-500',  bgColor: 'bg-violet-500/10',  enLabel: 'Personal Accident',   idLabel: 'Kecelakaan Diri',      enDesc: 'General & Student Plans',         idDesc: 'Umum & Pelajar' },
+  { type: 'MPAR',       icon: moduleIcon('item_shield'), color: 'text-ds-amber',   bgColor: 'bg-amber-500/10',   enLabel: 'Gadget / MPAR',       idLabel: 'Gadget / MPAR',        enDesc: 'Electronics & Gadgets',           idDesc: 'Elektronik & Gadget' },
 ];
 
 const calcPremium = (product: ProductType, inputs: any, addonState?: AddonState): number => {
@@ -796,7 +795,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
                   }`}
                 >
                   <div className={`w-12 h-12 ${p.bgColor} rounded-2xl flex items-center justify-center mb-3`}>
-                    <Icon size={22} className={p.color} />
+                    <Icon size={36} />
                   </div>
                   <p className="font-black text-sm leading-tight">
                     {lang === Language.EN ? p.enLabel : p.idLabel}
@@ -821,7 +820,7 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
               }`}
             >
               <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center mb-3">
-                <Heart size={22} className="text-ds-green" />
+                <ModuleIcon id="family_health" size={34} />
               </div>
               <p className="font-black text-sm leading-tight">
                 {lang === Language.EN ? 'Life Insurance' : 'Asuransi Jiwa'}

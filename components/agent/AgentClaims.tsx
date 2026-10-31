@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  FileText, Plus, X, ChevronRight, AlertCircle,
-  CheckCircle, Clock, XCircle, Search, Car, Plane, Shield, Package
-} from 'lucide-react';
+import { FileText, Plus, X, ChevronRight, AlertCircle, CheckCircle, Clock, XCircle, Search } from 'lucide-react';
 import { Language } from '../../types';
 import {
   getAgentClaims, submitClaim, getAgentPolicies,
@@ -10,6 +7,7 @@ import {
 } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { AgentArtKeyframes, AgentHero, SpotClaims, AgentEmpty } from './AgentArt';
+import { moduleIcon } from '../shared/ModuleIcon';
 
 interface Props {
   agentId: string;
@@ -29,7 +27,7 @@ const STATUS_META: Record<SpClaim['status'], { label: string; labelId: string; c
   CLOSED:       { label: 'Closed',       labelId: 'Ditutup',       color: 'bg-slate-100 text-slate-500 dark:bg-slate-500/20 dark:text-slate-400',      Icon: FileText },
 };
 
-const PRODUCT_ICONS: Record<string, any> = { CAR: Car, TRAVEL: Plane, PA: Shield, MPAR: Package };
+const PRODUCT_ICONS: Record<string, any> = { CAR: moduleIcon('car_protection'), TRAVEL: moduleIcon('travel_safe'), PA: moduleIcon('personal_safety'), MPAR: moduleIcon('item_shield') };
 
 const FILTERS: Array<{ id: ClaimStatus; en: string; id_: string }> = [
   { id: 'ALL',          en: 'All',          id_: 'Semua' },
@@ -375,7 +373,7 @@ const AgentClaims: React.FC<Props> = ({ agentId, lang }) => {
         <div className="space-y-3">
           {filtered.map(claim => {
             const meta = STATUS_META[claim.status];
-            const Icon = PRODUCT_ICONS[claim.product_type ?? ''] ?? FileText;
+            const Icon = PRODUCT_ICONS[claim.product_type ?? ''] ?? moduleIcon('claims');
             return (
               <button
                 key={claim.id}
@@ -383,7 +381,7 @@ const AgentClaims: React.FC<Props> = ({ agentId, lang }) => {
                 className="w-full text-left bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-[1.75rem] p-5 flex items-start gap-4 active:scale-[0.98] transition-transform shadow-sm"
               >
                 <div className="w-11 h-11 rounded-2xl bg-slate-100 dark:bg-white/10 flex items-center justify-center flex-shrink-0">
-                  <Icon size={20} className="text-slate-500 dark:text-slate-400" />
+                  <Icon size={32} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">

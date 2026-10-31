@@ -19,6 +19,7 @@ import { useToast } from '../ui';
 import { filterLabel } from './filterLabels';
 import { FilterBar } from './shared/FilterBar';
 import { DetailDrawer } from './shared/DetailDrawer';
+import { AdminEmptyState } from './adminUI';
 
 const STATUS_META: Record<SpPolicyOrder['status'], { label: string; color: string; Icon: any }> = {
   SUBMITTED:    { label: 'Submitted',    color: 'bg-amber-500/10 text-amber-800 dark:text-amber-400',   Icon: Clock },
@@ -633,7 +634,11 @@ const PolicyOrdersAdmin: React.FC<{ initialPending?: boolean }> = ({ initialPend
           <div className="w-10 h-10 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
         </div>
       ) : visible.length === 0 ? (
-        <div className="text-center py-20 text-ds-ink3 text-sm font-bold">Tidak ada order ditemukan.</div>
+        <AdminEmptyState
+          illustration="policies"
+          title="Tidak Ada Order Ditemukan"
+          hint="Belum ada order polis yang cocok dengan filter saat ini."
+        />
       ) : (
         <div className="space-y-3">
           {visible.map(order => {

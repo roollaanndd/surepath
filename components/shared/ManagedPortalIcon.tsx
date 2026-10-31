@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { getPortalIconMap, subscribePortalIcons, subscribePortalIconStyles, type PortalIconStyleMap } from '../../services/portalIcons';
-import SurePathIcon from './SurePathIcon';
+import { getPortalIconMap, subscribePortalIcons } from '../../services/portalIcons';
 import SurePathIllustrationIcon from './SurePathIllustrationIcon';
-import SurePathBrandIcon from './SurePathBrandIcon';
+import SurePathBrandIcon, { hasBrandArt } from './SurePathBrandIcon';
 
 /** Canonical artwork keys understood by the SurePath SVG icon library. */
 export type SurePathGlyph =
@@ -44,13 +43,11 @@ type Props = {
 
 export default function ManagedPortalIcon({ id, glyph, size = 24, fallback, className = '', imageClassName = '' }: Props) {
   const [icons, setIcons] = useState<Record<string, string>>({});
-  const [styles, setStyles] = useState<PortalIconStyleMap>({});
   const [failedSrc, setFailedSrc] = useState('');
   useEffect(() => {
     const unsubscribeIcons = subscribePortalIcons(setIcons);
-    const unsubscribeStyles = subscribePortalIconStyles(setStyles);
     getPortalIconMap().catch(() => {});
-    return () => { unsubscribeIcons(); unsubscribeStyles(); };
+    return () => { unsubscribeIcons(); };
   }, []);
   const src = icons[id];
   useEffect(() => { setFailedSrc(''); }, [src]);
@@ -70,12 +67,9 @@ export default function ManagedPortalIcon({ id, glyph, size = 24, fallback, clas
   }
   if (!id && fallback) return <>{fallback}</>;
   const artworkId = glyph ?? GLYPH_BY_ID[id] ?? id;
-  const resolvedStyle = styles[id] || 'studio';
   return <span className={className} style={{ width: size, height: size, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-    {resolvedStyle === 'brand'
+    {hasBrandArt(id)
       ? <SurePathBrandIcon id={id} size={size} className={imageClassName} />
-      : resolvedStyle === 'illustrative'
-      ? <SurePathIllustrationIcon id={artworkId} size={size} className={imageClassName} />
-      : <SurePathIcon id={artworkId} size={size} style={resolvedStyle} className={imageClassName} />}
+      : <SurePathIllustrationIcon id={artworkId} size={size} className={imageClassName} />}
   </span>;
 }

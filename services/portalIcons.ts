@@ -1,23 +1,16 @@
 import { fetchWebsiteSection, upsertWebsiteSection, uploadPortalIcon } from './supabaseService';
 
 export type PortalIconMap = Record<string, string>;
-export type PortalIconStyleMap = Record<string, 'studio' | 'orbit' | 'bold' | 'illustrative' | 'brand'>;
 const SECTION_KEY = 'app_icons';
 let cached: PortalIconMap = {};
-let styles: PortalIconStyleMap = {};
 let loaded = false;
 let pending: Promise<PortalIconMap> | null = null;
 const listeners = new Set<(icons: PortalIconMap) => void>();
-const styleListeners = new Set<(styles: PortalIconStyleMap) => void>();
 
 function publish(next: PortalIconMap) {
   cached = next;
   loaded = true;
   listeners.forEach(listener => listener(cached));
-}
-function publishStyles(next: PortalIconStyleMap) {
-  styles = next;
-  styleListeners.forEach(listener => listener(styles));
 }
 function validMap(value: unknown): Record<string, string> {
   if (!value || typeof value !== 'object') return {};
@@ -27,16 +20,15 @@ async function readConfig() {
   const section = await fetchWebsiteSection(SECTION_KEY);
   const extra = section?.extra_json;
   const record = extra && typeof extra === 'object' ? extra as Record<string, unknown> : {};
-  return { icons: validMap(record.icons), styles: validMap(record.styles) as PortalIconStyleMap };
+  return { icons: validMap(record.icons) };
 }
-async function persistConfig(nextIcons: PortalIconMap, nextStyles: PortalIconStyleMap) {
+async function persistConfig(nextIcons: PortalIconMap) {
   const saved = await upsertWebsiteSection({
     section_key: SECTION_KEY,
-    extra_json: { icons: nextIcons, styles: nextStyles },
+    extra_json: { icons: nextIcons },
   });
   if (!saved) throw new Error('Konfigurasi ikon belum tersimpan. Periksa izin CMS dan coba lagi.');
   publish(nextIcons);
-  publishStyles(nextStyles);
 }
 
 export function subscribePortalIcons(listener: (icons: PortalIconMap) => void) {
@@ -44,31 +36,16 @@ export function subscribePortalIcons(listener: (icons: PortalIconMap) => void) {
   listener(cached);
   return () => { listeners.delete(listener); };
 }
-export function subscribePortalIconStyles(listener: (styles: PortalIconStyleMap) => void) {
-  styleListeners.add(listener);
-  listener(styles);
-  return () => { styleListeners.delete(listener); };
-}
-export function getPortalIconStyles(): PortalIconStyleMap { return styles; }
 
 export async function getPortalIconMap(force = false): Promise<PortalIconMap> {
   if (loaded && !force) return cached;
   if (pending && !force) return pending;
   pending = (async () => {
     const config = await readConfig();
-    publishStyles(config.styles);
     publish(config.icons);
     return cached;
   })();
   try { return await pending; } finally { pending = null; }
-}
-
-export async function setPortalIconStyle(iconKey: string, style: 'studio' | 'orbit' | 'bold' | 'illustrative' | 'brand'): Promise<PortalIconStyleMap> {
-  if (!/^[a-z0-9_-]{1,64}$/i.test(iconKey)) throw new Error('Kunci ikon tidak valid.');
-  const config = await readConfig();
-  const nextStyles = { ...config.styles, [iconKey]: style };
-  await persistConfig(config.icons, nextStyles);
-  return nextStyles;
 }
 
 export async function savePortalIcon(iconKey: string, file: File): Promise<PortalIconMap | null> {
@@ -79,7 +56,7 @@ export async function savePortalIcon(iconKey: string, file: File): Promise<Porta
   if (!url) throw new Error('Upload gambar gagal. Periksa koneksi dan izin storage.');
   const config = await readConfig();
   const next = { ...config.icons, [iconKey]: url };
-  await persistConfig(next, config.styles);
+  await persistConfig(next);
   return next;
 }
 
@@ -87,6 +64,6 @@ export async function removePortalIcon(iconKey: string): Promise<PortalIconMap> 
   const config = await readConfig();
   const next = { ...config.icons };
   delete next[iconKey];
-  await persistConfig(next, config.styles);
+  await persistConfig(next);
   return next;
 }

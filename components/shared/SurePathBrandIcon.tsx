@@ -364,6 +364,11 @@ export const PORTAL_BRAND_ICONS = {
   B2B: SpPortalB2bIcon,
 } as const;
 
+/** Whether `id` has dedicated bespoke brand artwork (vs. falling back to the generic shield). */
+export function hasBrandArt(id: string): boolean {
+  return id in BRAND_ICON_BY_ID;
+}
+
 export default function SurePathBrandIcon({ id, size = 48, className = '' }: BrandIconProps) {
   const Art = BRAND_ICON_BY_ID[id] ?? SpShieldBrandIcon;
   return <Art size={size} className={className} />;

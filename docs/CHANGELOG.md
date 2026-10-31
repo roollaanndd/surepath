@@ -1,6 +1,6 @@
 # SurePath — Changelog
 
-## v2.7.27 — 2026-10-31
+## v2.7.28 — 2026-10-31
 
 ### Ilustrasi empty-state SurePath di modul Admin
 
@@ -19,6 +19,45 @@
   `AdminViews.tsx` klaim ("No claims found" → `claims`) dan penarikan
   ("Tidak ada data" → `wallet`), `CommissionLedger.tsx` ("Tidak ada
   data komisi" → `wallet`).
+
+## v2.7.27 — 2026-10-31
+
+### Icon Manager dibangun ulang — satu sistem ikon terbaru untuk semua apps & dashboard
+
+- Roland minta Icon Manager yang lama dihapus dan dibangun ulang dengan
+  ilustrasi terbaru untuk **semua** ikon di seluruh apps dan dashboard,
+  bukan hanya opsi tambahan. Pemilihan gaya per-ikon (Studio/Orbit/Bold/
+  Illustrative/Brand — 5 pilihan manual) dihapus total; sekarang hanya
+  **satu** sistem visual otomatis: ikon dengan ilustrasi bespoke dari
+  roland (`car_protection`, `travel_safe`, `personal_safety`,
+  `item_shield`, `family_health`, `quotes`, `claims`/`claims_admin`,
+  `commission`/`commission_ledger`/`withdraw`/`withdrawals`, `security`,
+  `documents`, `vehicle_pricelist`) otomatis memakai ilustrasi "Brand"
+  itu; semua ikon lain otomatis memakai set ilustratif yang sudah jadi
+  default aplikasi — tidak ada lagi pilihan manual, tidak ada ikon yang
+  bolong/placeholder.
+- `components/shared/SurePathBrandIcon.tsx`: ditambah `hasBrandArt(id)`
+  agar pemanggil bisa memeriksa apakah id punya ilustrasi bespoke sebelum
+  memilih fallback.
+- `components/shared/PathyNavIcon.tsx` dan `ManagedPortalIcon.tsx` (dua
+  tempat yang merender ikon navigasi di keenam portal) disederhanakan:
+  tidak lagi membaca peta gaya per-ikon dari CMS, cukup
+  `hasBrandArt(id) ? Brand : Illustrative`. Upload ikon kustom tetap
+  menang di atas keduanya seperti sebelumnya.
+- `services/portalIcons.ts`: seluruh penyimpanan "styles" (CMS
+  `app_icons.extra_json.styles`) dihapus — hanya peta ikon kustom yang
+  tersisa. Data gaya lama di database (jika ada) diam-diam diabaikan,
+  tidak di-migrasikan, tidak menyebabkan error.
+- `components/admin/PortalIconManager.tsx` dibangun ulang: grid ikon
+  per-id (46 ikon di 7 kategori) tanpa tombol pilih-gaya; tiap kartu
+  menampilkan ilustrasi yang otomatis berlaku, badge **BRAND** untuk id
+  dengan ilustrasi bespoke, **CUSTOM** untuk upload sendiri. Stat "Gaya
+  visual" di header diganti "Ilustrasi brand" (jumlah id dengan art
+  bespoke).
+- Tidak ada perubahan pada data gateway, upload storage, atau logika
+  bisnis apa pun — murni penyederhanaan lapisan presentasi ikon.
+- Terverifikasi: `tsc --noEmit` bersih, ESLint bersih (file yang
+  diubah), `npm run build` sukses, 459/459 unit test lolos.
 
 ## v2.7.26 — 2026-10-31
 

@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search } from 'lucide-react';
 import { callGateway } from '../../services/supabaseService';
 import { useToast, useConfirmDialog } from '../ui';
 import { AdminErrorBanner } from './adminUI';
 import { formatIDR } from '../car-wizard/WizardUI';
+import { FilterBar } from './shared/FilterBar';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -230,39 +230,20 @@ const CommissionLedger: React.FC = () => {
       )}
 
       {/* ── Filter tabs + search ── */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-        <div className="flex gap-1 bg-ds-card p-1 rounded-2xl border border-ds-border shadow-sm flex-wrap">
-          {TABS.map(tab => {
-            const count = tab === 'ALL'
-              ? rows.length
-              : rows.filter(r => r.status === tab).length;
-            return (
-              <button
-                key={tab}
-                onClick={() => setFilter(tab)}
-                className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-                  filter === tab
-                    ? 'bg-emerald-500 text-white shadow-sm'
-                    : 'text-ds-ink3 hover:bg-ds-card2'
-                }`}
-              >
-                {tab === 'ALL' ? 'Semua' : STATUS_LABEL[tab as CommissionStatus]}{' '}
-                <span className="opacity-60">({count})</span>
-              </button>
-            );
-          })}
-        </div>
-        <div className="relative flex-1 min-w-[200px]">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ds-ink3" />
-          <input
-            type="text"
-            placeholder="Cari agen / klien…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="w-full h-10 pl-9 pr-3 bg-ds-card border border-ds-border rounded-xl text-sm text-ds-ink outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-colors placeholder:text-ds-ink3"
-          />
-        </div>
-      </div>
+      <FilterBar
+        chips={TABS.map(tab => ({
+          id: tab,
+          label: tab === 'ALL' ? 'Semua' : STATUS_LABEL[tab as CommissionStatus],
+          count: tab === 'ALL' ? rows.length : rows.filter(r => r.status === tab).length,
+        }))}
+        active={filter}
+        onActiveChange={v => setFilter(v as FilterTab)}
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Cari agen / klien…"
+        onRefresh={loadData}
+        refreshing={loading}
+      />
 
       {/* ── Summary bar ── */}
       <div className="bg-ds-card border border-ds-border shadow-sm rounded-2xl px-6 py-3 flex items-center justify-between flex-wrap gap-2">

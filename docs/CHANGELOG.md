@@ -1,5 +1,29 @@
 # SurePath — Changelog
 
+## v2.7.22 — 2026-10-31
+
+### Admin Portal 2.0 — modul Keuangan ke primitif bersama
+
+- `PaymentsAdminView` (`components/admin/AdminViews.tsx`): filter pill +
+  tombol refresh hand-rolled dimigrasikan ke `FilterBar`; tabel `<table>`
+  literal dimigrasikan ke `DataTable` generik (kolom, sort per kolom,
+  paginasi) — data fetch (`getAdminPayments`), mapping order/klien/produk,
+  dan kalkulasi KPI (total terbayar/pending/expired) tidak disentuh.
+- `WithdrawalsAdminView`: filter pill dimigrasikan ke `FilterBar`; modal
+  tolak-penarikan tengah dimigrasikan ke `DetailDrawer`. Daftar kartu
+  penarikan **tetap kartu** (bukan tabel literal) sesuai bentuk aslinya.
+  **Tidak disentuh sama sekali**: logika tier L1/L2/L3
+  (`approvalLevelForUser`, `canApprove`), alur `approveWithdrawal` →
+  `triggerDisbursement` di `handleApprove`, `rejectWithdrawal` di
+  `handleReject`, dan ambang Rp 10 juta / Rp 25 juta — hanya cangkang JSX
+  yang dipindah, fungsi dan urutan panggilan gateway sama persis.
+- `CommissionLedger.tsx`: filter tab + search hand-rolled dimigrasikan ke
+  `FilterBar`. Baris komisi tetap kartu (sama seperti Withdrawals) karena
+  bukan tabel literal. `payCommission`/`cancelCommission`/`payAllPending`
+  dan rute `admin_update_commission` tidak disentuh.
+- Terverifikasi: `tsc --noEmit` bersih, ESLint bersih (file yang diubah),
+  `npm run build` sukses, `vitest run` tidak regresi dari baseline.
+
 ## v2.7.21 — 2026-10-31
 
 ### Admin Portal 2.0 — langkah 2: DataTable/FilterBar/DetailDrawer bersama

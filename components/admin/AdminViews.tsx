@@ -31,6 +31,7 @@ import { useToast } from '../ui';
 import { AdminEmptyState, AdminErrorBanner, AdminPageHeader, AdminStatusBadge } from './adminUI';
 import { FilterBar } from './shared/FilterBar';
 import { DetailDrawer } from './shared/DetailDrawer';
+import { DataTable, type DataTableColumn } from './shared/DataTable';
 import { CLAIM_STATUS_META } from '../../lib/statusMeta';
 import { PERMISSION_MENU_IDS, defaultPermissionsFor, SP_ROLE_PERMISSIONS_KEY } from './navigation';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -2561,17 +2562,45 @@ export const PaymentsAdminView = () => {
 
     const fmtDate = (iso?: string) => iso ? new Date(iso).toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'2-digit' }) : '-';
 
+    const PAYMENT_COLUMNS: DataTableColumn<any>[] = [
+        { id: 'created_at', header: 'Tanggal', cell: p => <span className="whitespace-nowrap text-2xs text-ds-ink3">{fmtDate(p.created_at)}</span>, sortAccessor: p => p.created_at },
+        { id: 'order_number', header: 'Order #', cell: p => <span className="font-mono text-emerald-700 dark:text-emerald-400 whitespace-nowrap text-2xs">{p.order_number ?? p.external_id?.slice(0, 14) ?? '—'}</span>, sortAccessor: p => p.order_number ?? p.external_id },
+        { id: 'client_name', header: 'Klien', cell: p => <span className="font-semibold text-ds-ink whitespace-nowrap">{p.client_name ?? '—'}</span>, sortAccessor: p => p.client_name },
+        { id: 'product_name', header: 'Produk', cell: p => <span className="text-ds-ink3 whitespace-nowrap">{p.product_name ?? '—'}</span>, sortAccessor: p => p.product_name },
+        { id: 'amount', header: 'Jumlah', align: 'right', cell: p => <span className="font-mono text-ds-ink whitespace-nowrap">{formatIDR(p.paid_amount ?? p.amount ?? 0)}</span>, sortAccessor: p => p.paid_amount ?? p.amount ?? 0 },
+        {
+            id: 'status', header: 'Status', align: 'center',
+            cell: p => (
+                <span className={`px-2.5 py-1 rounded-lg text-2xs font-black uppercase tracking-widest border ${statusColor(p.status)}`}>
+                    {p.status}
+                </span>
+            ),
+            sortAccessor: p => p.status,
+        },
+        { id: 'payment_method', header: 'Metode', cell: p => <span className="text-ds-ink3 whitespace-nowrap text-2xs">{p.payment_method ?? p.payment_channel ?? '—'}</span>, sortAccessor: p => p.payment_method ?? p.payment_channel },
+        { id: 'paid_at', header: 'Bayar Tgl', cell: p => <span className="text-ds-ink3 whitespace-nowrap text-2xs">{fmtDate(p.paid_at)}</span>, sortAccessor: p => p.paid_at },
+        {
+            id: 'invoice', header: 'Invoice',
+            cell: p => p.invoice_url && p.status === 'PENDING' ? (
+                <a
+                    href={p.invoice_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={e => e.stopPropagation()}
+                    className="text-2xs font-black text-amber-800 dark:text-amber-400 hover:text-amber-300 uppercase tracking-widest flex items-center gap-1"
+                >
+                    <Globe size={10} /> Buka
+                </a>
+            ) : <span className="text-ds-ink2">—</span>,
+        },
+    ];
+
     return (
         <div className="space-y-8 animate-fade-in">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h2 className="text-2xl font-black uppercase tracking-tighter">Pembayaran <span className="text-ds-green">Xendit</span></h2>
-                    <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3 mt-1">Semua transaksi invoice dari gateway Xendit</p>
-                </div>
-                <button onClick={loadPayments} className="flex items-center gap-2 px-4 py-2.5 bg-ds-card2 border border-ds-border rounded-2xl text-2xs font-black uppercase tracking-widest text-ds-ink3 hover:text-ds-ink transition-colors">
-                    <RefreshCw size={13} /> Refresh
-                </button>
+            <div>
+                <h2 className="text-2xl font-black uppercase tracking-tighter">Pembayaran <span className="text-ds-green">Xendit</span></h2>
+                <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3 mt-1">Semua transaksi invoice dari gateway Xendit</p>
             </div>
 
             {loadError && (
@@ -2600,83 +2629,28 @@ export const PaymentsAdminView = () => {
                 </div>
             </div>
 
-            {/* Filter pills */}
-            <div className="flex gap-2 flex-wrap">
-                {(['ALL', 'PAID', 'PENDING', 'EXPIRED'] as const).map(f => (
-                    <button
-                        key={f}
-                        onClick={() => setFilter(f)}
-                        className={`px-4 py-2 rounded-full text-2xs font-black uppercase tracking-widest transition-all ${
-                            filter === f ? 'bg-emerald-500 text-white shadow-md' : 'bg-ds-card2 text-ds-ink3 hover:text-ds-ink border border-ds-border'
-                        }`}
-                    >
-                        {f === 'ALL' ? `Semua (${payments.length})` : `${f} (${payments.filter(p => p.status === f).length})`}
-                    </button>
-                ))}
-            </div>
+            {/* Toolbar */}
+            <FilterBar
+                chips={(['ALL', 'PAID', 'PENDING', 'EXPIRED'] as const).map(f => ({
+                    id: f,
+                    label: f === 'ALL' ? 'Semua' : f,
+                    count: f === 'ALL' ? payments.length : payments.filter(p => p.status === f).length,
+                }))}
+                active={filter}
+                onActiveChange={v => setFilter(v as typeof filter)}
+                onRefresh={loadPayments}
+                refreshing={loading}
+            />
 
             {/* Table */}
-            <div className="bg-ds-card2 border border-ds-border rounded-[2rem] overflow-hidden">
-                {loading ? (
-                    <div className="flex justify-center py-16">
-                        <div className="w-8 h-8 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
-                    </div>
-                ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-xs min-w-[900px]">
-                            <thead>
-                                <tr className="text-ds-ink3 text-2xs font-black uppercase tracking-widest border-b border-ds-border">
-                                    <th className="px-6 py-4 text-left">Tanggal</th>
-                                    <th className="px-4 py-4 text-left">Order #</th>
-                                    <th className="px-4 py-4 text-left">Klien</th>
-                                    <th className="px-4 py-4 text-left">Produk</th>
-                                    <th className="px-4 py-4 text-right">Jumlah</th>
-                                    <th className="px-4 py-4 text-center">Status</th>
-                                    <th className="px-4 py-4 text-left">Metode</th>
-                                    <th className="px-4 py-4 text-left">Bayar Tgl</th>
-                                    <th className="px-6 py-4 text-left">Invoice</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filtered.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={9} className="text-center py-12 text-ds-ink2 font-bold text-sm">
-                                            Tidak ada data pembayaran.
-                                        </td>
-                                    </tr>
-                                ) : filtered.map(p => (
-                                    <tr key={p.id} className="border-b border-ds-border hover:bg-ds-card2 transition-colors">
-                                        <td className="px-6 py-3 text-ds-ink3 whitespace-nowrap text-2xs">{fmtDate(p.created_at)}</td>
-                                        <td className="px-4 py-3 font-mono text-emerald-700 dark:text-emerald-400 whitespace-nowrap text-2xs">{p.order_number ?? p.external_id?.slice(0, 14) ?? '—'}</td>
-                                        <td className="px-4 py-3 font-semibold text-ds-ink whitespace-nowrap">{p.client_name ?? '—'}</td>
-                                        <td className="px-4 py-3 text-ds-ink3 whitespace-nowrap">{p.product_name ?? '—'}</td>
-                                        <td className="px-4 py-3 text-right font-mono text-ds-ink whitespace-nowrap">{formatIDR(p.paid_amount ?? p.amount ?? 0)}</td>
-                                        <td className="px-4 py-3 text-center">
-                                            <span className={`px-2.5 py-1 rounded-lg text-2xs font-black uppercase tracking-widest border ${statusColor(p.status)}`}>
-                                                {p.status}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3 text-ds-ink3 whitespace-nowrap text-2xs">{p.payment_method ?? p.payment_channel ?? '—'}</td>
-                                        <td className="px-4 py-3 text-ds-ink3 whitespace-nowrap text-2xs">{fmtDate(p.paid_at)}</td>
-                                        <td className="px-6 py-3">
-                                            {p.invoice_url && p.status === 'PENDING' ? (
-                                                <a
-                                                    href={p.invoice_url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-2xs font-black text-amber-800 dark:text-amber-400 hover:text-amber-300 uppercase tracking-widest flex items-center gap-1"
-                                                >
-                                                    <Globe size={10} /> Buka
-                                                </a>
-                                            ) : <span className="text-ds-ink2">—</span>}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-            </div>
+            <DataTable
+                columns={PAYMENT_COLUMNS}
+                rows={filtered}
+                rowKey={p => p.id}
+                loading={loading}
+                emptyIcon={FileText}
+                emptyTitle="Tidak ada data pembayaran."
+            />
         </div>
     );
 };
@@ -2824,11 +2798,6 @@ export const WithdrawalsAdminView: React.FC = () => {
       <AdminPageHeader
         title="Penarikan Dana Mitra"
         subtitle="Persetujuan berjenjang L1 / L2 / L3"
-        actions={
-          <button onClick={load} aria-label="Muat ulang penarikan" className="p-2.5 rounded-xl bg-ds-card2 border border-ds-border text-ds-ink3 hover:text-ds-ink transition-all active:scale-95">
-            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-          </button>
-        }
       />
 
       {loadError && (
@@ -2853,18 +2822,17 @@ export const WithdrawalsAdminView: React.FC = () => {
         ))}
       </div>
 
-      {/* Filter pills */}
-      <div className="flex gap-2 flex-wrap">
-        {['ALL','PENDING','APPROVED','DISBURSED','REJECTED'].map(f => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-full text-2xs font-black uppercase tracking-widest transition-all ${filter === f ? 'bg-emerald-500 text-white' : 'bg-ds-card2 text-ds-ink3 hover:bg-ds-card2'}`}
-          >
-            {f === 'ALL' ? 'Semua' : f === 'PENDING' ? 'Pending' : f === 'APPROVED' ? 'Disetujui' : f === 'DISBURSED' ? 'Cair' : 'Ditolak'}
-          </button>
-        ))}
-      </div>
+      {/* Toolbar */}
+      <FilterBar
+        chips={['ALL', 'PENDING', 'APPROVED', 'DISBURSED', 'REJECTED'].map(f => ({
+          id: f,
+          label: f === 'ALL' ? 'Semua' : f === 'PENDING' ? 'Pending' : f === 'APPROVED' ? 'Disetujui' : f === 'DISBURSED' ? 'Cair' : 'Ditolak',
+        }))}
+        active={filter}
+        onActiveChange={setFilter}
+        onRefresh={load}
+        refreshing={loading}
+      />
 
       {/* Table */}
       <div className="space-y-3">
@@ -2958,17 +2926,12 @@ export const WithdrawalsAdminView: React.FC = () => {
 
       {/* Reject modal */}
       {rejectModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end justify-center p-4">
-          <div className="bg-ds-card border border-ds-border rounded-[2rem] p-6 w-full max-w-md space-y-4">
-            <h3 className="text-lg font-black uppercase tracking-tight">Tolak Penarikan</h3>
-            <p className="text-sm text-ds-ink3">Penarikan dari {rejectModal.agentName} akan dibatalkan dan saldo dikembalikan.</p>
-            <textarea
-              className="w-full bg-ds-card2 border border-ds-border rounded-xl p-4 text-sm outline-none focus:border-red-500 resize-none"
-              rows={3}
-              placeholder="Alasan penolakan..."
-              value={rejectReason}
-              onChange={e => setRejectReason(e.target.value)}
-            />
+        <DetailDrawer
+          open
+          onClose={() => { setRejectModal(null); setRejectReason(''); }}
+          title="Tolak Penarikan"
+          subtitle={rejectModal.agentName}
+          footer={
             <div className="flex gap-3">
               <button onClick={() => { setRejectModal(null); setRejectReason(''); }} className="flex-1 py-3 rounded-xl border border-ds-border text-ds-ink3 font-black text-xs uppercase tracking-widest">Batal</button>
               <button
@@ -2979,8 +2942,19 @@ export const WithdrawalsAdminView: React.FC = () => {
                 Tolak &amp; Kembalikan Dana
               </button>
             </div>
+          }
+        >
+          <div className="space-y-4">
+            <p className="text-sm text-ds-ink3">Penarikan dari {rejectModal.agentName} akan dibatalkan dan saldo dikembalikan.</p>
+            <textarea
+              className="w-full bg-ds-card2 border border-ds-border rounded-xl p-4 text-sm outline-none focus:border-red-500 resize-none"
+              rows={3}
+              placeholder="Alasan penolakan..."
+              value={rejectReason}
+              onChange={e => setRejectReason(e.target.value)}
+            />
           </div>
-        </div>
+        </DetailDrawer>
       )}
     </div>
   );

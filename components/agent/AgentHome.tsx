@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, ChevronRight, Target, Star } from 'lucide-react';
-import PromoBanner from '../PromoBanner';
+import AgentPromoBanner from './AgentPromoBanner';
 import { motion, useReducedMotion } from 'motion/react';
 import { Language } from '../../types';
 import ManagedPortalIcon from '../shared/ManagedPortalIcon';
@@ -213,7 +213,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
         )}
 
         <div className="px-5 pt-4">
-          <PromoBanner />
+          <AgentPromoBanner lang={lang} onCta={() => onNavigate('quotes')} />
         </div>
 
         {/* Fitur Mitra — every tile is a real portal destination */}

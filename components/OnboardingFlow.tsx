@@ -138,6 +138,7 @@ const SLIDES: Record<Role, OnboardingSlide[]> = {
 const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ role, onComplete, lang }) => {
   const slides = SLIDES[role];
   const [step, setStep] = useState(0);
+  const [direction, setDirection] = useState<1 | -1>(1);
   const [leaving, setLeaving] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
 
@@ -149,6 +150,36 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ role, onComplete, lang 
   }, []);
 
   useEffect(() => { setImageFailed(false); }, [step, role]);
+
+  // Pre-load the next slide's image so the horizontal slide transition starts
+  // smoothly rather than with a blank frame. Noop for CUSTOMER (vector-only).
+  useEffect(() => {
+    if (role === 'CUSTOMER') return;
+    const next = slides[step + 1];
+    if (next?.photo) {
+      const img = new Image();
+      img.referrerPolicy = 'no-referrer';
+      img.src = next.photo;
+    }
+  }, [step, role, slides]);
+
+  const goStep = (nextStep: number) => {
+    setDirection(nextStep > step ? 1 : -1);
+    setStep(nextStep);
+  };
+
+  // Swipe to advance (mobile — <= -40px = next, >= 40px = previous).
+  const touchX = React.useRef<number | null>(null);
+  const handleTouchStart: React.TouchEventHandler = (e) => {
+    touchX.current = e.changedTouches[0]?.clientX ?? null;
+  };
+  const handleTouchEnd: React.TouchEventHandler = (e) => {
+    if (touchX.current == null) return;
+    const dx = (e.changedTouches[0]?.clientX ?? touchX.current) - touchX.current;
+    touchX.current = null;
+    if (dx <= -40 && step < slides.length - 1) goStep(step + 1);
+    else if (dx >= 40 && step > 0) goStep(step - 1);
+  };
 
   const isID = lang === 'ID';
   const last = step === slides.length - 1;
@@ -169,11 +200,23 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ role, onComplete, lang 
     >
       <style>{`
         @keyframes ob-slide-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes ob-slide-in-right { from { opacity: 0; transform: translateX(32px) scale(.98); } to { opacity: 1; transform: translateX(0) scale(1); } }
+        @keyframes ob-slide-in-left { from { opacity: 0; transform: translateX(-32px) scale(.98); } to { opacity: 1; transform: translateX(0) scale(1); } }
+        @keyframes ob-scene-in-right { from { opacity: 0; transform: translateX(42px) scale(1.03); } to { opacity: 1; transform: translateX(0) scale(1); } }
+        @keyframes ob-scene-in-left { from { opacity: 0; transform: translateX(-42px) scale(1.03); } to { opacity: 1; transform: translateX(0) scale(1); } }
         @keyframes ob-glow { 0%,100% { opacity: .35; transform: scale(.98); } 50% { opacity: .65; transform: scale(1.04); } }
         .ob-scene { background: radial-gradient(ellipse at 50% 15%, #176c4b 0%, #0b4935 52%, #092d25 100%); }
         .ob-scene-grid { background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px); background-size: 28px 28px; mask-image: linear-gradient(to bottom, black, transparent 88%); }
         .ob-anim { animation: ob-slide-in .42s cubic-bezier(.22,1,.36,1) both; }
-        @media (prefers-reduced-motion: reduce) { .ob-anim, .ob-anim *, .ob-glow { animation: none !important; transition: none !important; } }
+        .ob-anim-copy-fwd { animation: ob-slide-in-right .5s cubic-bezier(.22,1,.36,1) both; }
+        .ob-anim-copy-back { animation: ob-slide-in-left .5s cubic-bezier(.22,1,.36,1) both; }
+        .ob-anim-scene-fwd { animation: ob-scene-in-right .55s cubic-bezier(.22,1,.36,1) both; }
+        .ob-anim-scene-back { animation: ob-scene-in-left .55s cubic-bezier(.22,1,.36,1) both; }
+        @media (prefers-reduced-motion: reduce) {
+          .ob-anim, .ob-anim-copy-fwd, .ob-anim-copy-back, .ob-anim-scene-fwd, .ob-anim-scene-back, .ob-glow {
+            animation: none !important; transition: none !important;
+          }
+        }
       `}</style>
 
       <header className="relative z-10 flex items-center justify-between gap-4 px-5 sm:px-7 pt-5 sm:pt-6" style={{ paddingTop: 'max(1.1rem, env(safe-area-inset-top))' }}>
@@ -188,7 +231,11 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ role, onComplete, lang 
         </div>
       </header>
 
-      <main className="relative z-10 flex min-h-0 flex-1 flex-col px-4 sm:px-7 pt-4 pb-3">
+      <main
+        className="relative z-10 flex min-h-0 flex-1 flex-col px-4 sm:px-7 pt-4 pb-3"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         <section className="ob-scene relative mx-auto flex min-h-[235px] w-full max-w-[520px] flex-1 items-center justify-center overflow-hidden rounded-[30px] border border-white/50 shadow-[0_24px_70px_-32px_rgba(4,53,36,.65)] sm:rounded-[36px]" style={{ maxHeight: 'min(43vh, 430px)' }} aria-label={isID ? 'Ilustrasi fitur SurePath' : 'SurePath feature illustration'}>
           {/* Customer onboarding uses SurePath's own vector illustrations, never stock people photos. */}
           {role !== 'CUSTOMER' && !imageFailed && (
@@ -207,7 +254,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ role, onComplete, lang 
           <div className="ob-glow absolute -right-12 -top-16 h-56 w-56 rounded-full bg-emerald-300/20 blur-3xl" style={{ animation: 'ob-glow 6s ease-in-out infinite' }} aria-hidden="true" />
           {role !== 'CUSTOMER' && !imageFailed && <div className="absolute inset-0 bg-emerald-950/10" aria-hidden="true" />}
           {(role === 'CUSTOMER' || imageFailed) && (
-            <div className="ob-anim relative z-10 flex w-full items-center justify-center px-3 pt-7 pb-2" key={`scene-${step}`}>
+            <div className={`${direction === 1 ? 'ob-anim-scene-fwd' : 'ob-anim-scene-back'} relative z-10 flex w-full items-center justify-center px-3 pt-7 pb-2`} key={`scene-${step}`}>
               <ArtKeyframes />
               {role !== 'CUSTOMER' && <AgentArtKeyframes />}
               {React.createElement(slides[step].Art)}
@@ -226,10 +273,10 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ role, onComplete, lang 
           </div>
         </section>
 
-        <section className="ob-anim mx-auto mt-4 flex w-full max-w-[520px] flex-col rounded-[28px] border border-white/90 bg-white/90 px-5 pb-4 pt-5 shadow-[0_18px_50px_-28px_rgba(10,58,38,.24)] backdrop-blur-xl sm:mt-5 sm:rounded-[32px] sm:px-8 sm:pb-6 sm:pt-7" key={`copy-${step}`}>
+        <section className={`${direction === 1 ? 'ob-anim-copy-fwd' : 'ob-anim-copy-back'} mx-auto mt-4 flex w-full max-w-[520px] flex-col rounded-[28px] border border-white/90 bg-white/90 px-5 pb-4 pt-5 shadow-[0_18px_50px_-28px_rgba(10,58,38,.24)] backdrop-blur-xl sm:mt-5 sm:rounded-[32px] sm:px-8 sm:pb-6 sm:pt-7`} key={`copy-${step}`}>
           <div className="mb-3 flex items-center justify-center gap-1.5" aria-label={`${step + 1} / ${slides.length}`}>
             {slides.map((_, i) => (
-              <button key={i} type="button" onClick={() => setStep(i)} aria-label={`Go to slide ${i + 1}`} aria-current={i === step ? 'step' : undefined} className="h-1.5 rounded-full transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2" style={{ width: i === step ? 28 : 7, background: i === step ? accent.dot : accent.dotDim }} />
+              <button key={i} type="button" onClick={() => goStep(i)} aria-label={`Go to slide ${i + 1}`} aria-current={i === step ? 'step' : undefined} className="h-1.5 rounded-full transition-all duration-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2" style={{ width: i === step ? 28 : 7, background: i === step ? accent.dot : accent.dotDim }} />
             ))}
           </div>
           <h1 className="mb-2 text-center text-[1.45rem] font-extrabold leading-[1.18] tracking-[-.035em] text-[#122c22] sm:text-[1.8rem]">
@@ -238,7 +285,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ role, onComplete, lang 
           <p className="mx-auto mb-5 max-w-[390px] text-center text-[13px] leading-[1.65] text-slate-600 sm:mb-6 sm:text-sm">
             {isID ? slides[step].id[1] : slides[step].en[1]}
           </p>
-          <button type="button" onClick={() => (last ? finish() : setStep(s => s + 1))} className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#0b6844] via-[#08743b] to-[#0b5739] px-5 py-3.5 text-[12px] font-extrabold uppercase tracking-[.12em] text-white shadow-[0_12px_26px_-12px_rgba(8,116,59,.62)] transition hover:brightness-105 active:scale-[.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2">
+          <button type="button" onClick={() => (last ? finish() : goStep(step + 1))} className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#0b6844] via-[#08743b] to-[#0b5739] px-5 py-3.5 text-[12px] font-extrabold uppercase tracking-[.12em] text-white shadow-[0_12px_26px_-12px_rgba(8,116,59,.62)] transition hover:brightness-105 active:scale-[.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2">
             {last ? (isID ? 'Mulai Sekarang' : 'Get Started') : (isID ? 'Lanjut' : 'Continue')}
             <ChevronRight size={17} />
           </button>

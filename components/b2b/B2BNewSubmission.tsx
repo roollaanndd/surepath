@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Truck, FileSignature, HeartPulse, ChevronLeft, ChevronRight, Loader2, CheckCircle2, Upload } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, CheckCircle2, Upload } from 'lucide-react';
 import { Language } from '../../types';
 import {
   createB2BSubmission,
   uploadB2BDocument,
   type SpB2BSubmission,
 } from '../../services/supabaseService';
+import { moduleIcon } from '../shared/ModuleIcon';
 
 interface Props {
   clientId: string;
@@ -155,9 +156,9 @@ const B2BNewSubmission: React.FC<Props> = ({ clientId, client, onDone, lang }) =
     <div className="space-y-4">
       <h2 className="font-black text-lg">{t('Choose Product Type', 'Pilih Jenis Produk')}</h2>
       {[
-        { type: 'FLEET_MV' as ProductType, Icon: Truck, title: t('Fleet MV', 'Armada Kendaraan'), desc: t('Vehicle fleet insurance, 50+ vehicles', 'Asuransi kendaraan armada, 50+ unit') },
-        { type: 'BONDING' as ProductType, Icon: FileSignature, title: t('Bonding', 'Surety Bond'), desc: t('Contract bonds, bid bonds, performance bonds', 'Jaminan kontrak, penawaran, dan pelaksanaan') },
-        { type: 'GROUP_HEALTH' as ProductType, Icon: HeartPulse, title: t('Group Health', 'Kesehatan Kumpulan'), desc: t('Employee group health insurance', 'Asuransi kesehatan karyawan kumpulan') },
+        { type: 'FLEET_MV' as ProductType, Icon: moduleIcon('car_protection'), title: t('Fleet MV', 'Armada Kendaraan'), desc: t('Vehicle fleet insurance, 50+ vehicles', 'Asuransi kendaraan armada, 50+ unit') },
+        { type: 'BONDING' as ProductType, Icon: moduleIcon('documents'), title: t('Bonding', 'Surety Bond'), desc: t('Contract bonds, bid bonds, performance bonds', 'Jaminan kontrak, penawaran, dan pelaksanaan') },
+        { type: 'GROUP_HEALTH' as ProductType, Icon: moduleIcon('family_health'), title: t('Group Health', 'Kesehatan Kumpulan'), desc: t('Employee group health insurance', 'Asuransi kesehatan karyawan kumpulan') },
       ].map(({ type, Icon, title, desc }) => (
         <button
           key={type}
@@ -168,8 +169,8 @@ const B2BNewSubmission: React.FC<Props> = ({ clientId, client, onDone, lang }) =
               : 'border-slate-200 dark:border-white/10 bg-white dark:bg-white/5'
           }`}
         >
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${productType === type ? 'bg-ds-green text-ds-on-green' : 'bg-ds-card2 text-ds-ink3'}`}>
-            <Icon size={20} />
+          <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${productType === type ? 'bg-ds-green text-ds-on-green' : 'bg-ds-card2 text-ds-ink3'}`}>
+            <Icon size={32} />
           </div>
           <div>
             <div className="font-black text-sm">{title}</div>

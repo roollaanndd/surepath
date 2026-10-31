@@ -1,10 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  User, Mail, Phone, MapPin, ShieldCheck, BadgeCheck,
-  Edit2, Save, X, LogOut, Copy, CheckCircle, 
-  Trophy, Loader2, Network, RefreshCw, FileEdit, Coins, Wallet, LockKeyhole,
-  AlertCircle, Camera, Building2, ChevronRight, FileCheck2, Download,
-} from 'lucide-react';
+import { User, Mail, Phone, MapPin, ShieldCheck, BadgeCheck, Edit2, Save, X, LogOut, Copy, CheckCircle, Loader2, LockKeyhole, AlertCircle, Camera, Building2, ChevronRight, FileCheck2, Download } from 'lucide-react';
 import { Language } from '../../types';
 import { APP_VERSION } from '../../src/version';
 import {
@@ -20,6 +15,7 @@ import { getMyAgreement, type SpAgentAgreement } from '../../services/agreements
 import { generateAgreementPDF } from '../../services/agreementPdf';
 import { useTierDefinitions, getTierByCode } from '../../hooks/useTierDefinitions';
 import ChangePasswordModal from '../shared/ChangePasswordModal';
+import { moduleIcon } from '../shared/ModuleIcon';
 
 interface Props {
   agent: any;
@@ -422,14 +418,14 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
             <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-2">{t('Business', 'Bisnis')}</p>
             <div className="rounded-2xl sp-glass overflow-hidden">
               {[
-                { id: 'network', label: t('Agent network', 'Jaringan Agen'), icon: Network },
-                { id: 'leaderboard', label: t('Leaderboard', 'Papan Peringkat'), icon: Trophy },
-                { id: 'renewals', label: t('Policy renewals', 'Perpanjangan Polis'), icon: RefreshCw },
-                { id: 'endorsements', label: t('Policy endorsements', 'Perubahan Polis'), icon: FileEdit },
+                { id: 'network', label: t('Agent network', 'Jaringan Agen'), icon: moduleIcon('network','network') },
+                { id: 'leaderboard', label: t('Leaderboard', 'Papan Peringkat'), icon: moduleIcon('tier_promo','trophy') },
+                { id: 'renewals', label: t('Policy renewals', 'Perpanjangan Polis'), icon: moduleIcon('renewal','renewal') },
+                { id: 'endorsements', label: t('Policy endorsements', 'Perubahan Polis'), icon: moduleIcon('endorsements') },
               ].map(item => (
                 <button key={item.id} type="button" onClick={() => onNavigate(item.id)}
                   className="flex items-center gap-3 px-5 py-4 border-b last:border-b-0 border-ds-border active:bg-ds-card2 transition-colors w-full">
-                  <div className="w-8 h-8 rounded-xl bg-ds-card2 border border-ds-border flex items-center justify-center text-ds-ink2 flex-shrink-0"><item.icon size={16} /></div>
+                  <div className="w-10 h-10 rounded-xl bg-ds-card2 border border-ds-border flex items-center justify-center text-ds-ink2 flex-shrink-0"><item.icon size={26} /></div>
                   <span className="text-sm font-medium text-ds-ink flex-1 text-left">{item.label}</span>
                   <ChevronRight size={16} className="text-ds-ink3" />
                 </button>
@@ -440,12 +436,12 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
             <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3 mb-2">{t('Earnings', 'Penghasilan')}</p>
             <div className="rounded-2xl sp-glass overflow-hidden">
               {[
-                { id: 'commission', label: t('Commissions & history', 'Komisi & Riwayat'), icon: Coins },
-                { id: 'wallet', label: t('Wallet & withdrawals', 'Dompet & Penarikan'), icon: Wallet },
+                { id: 'commission', label: t('Commissions & history', 'Komisi & Riwayat'), icon: moduleIcon('commission') },
+                { id: 'wallet', label: t('Wallet & withdrawals', 'Dompet & Penarikan'), icon: moduleIcon('withdraw','wallet') },
               ].map(item => (
                 <button key={item.id} type="button" onClick={() => onNavigate(item.id)}
                   className="flex items-center gap-3 px-5 py-4 border-b last:border-b-0 border-ds-border active:bg-ds-card2 transition-colors w-full">
-                  <div className="w-8 h-8 rounded-xl bg-ds-card2 border border-ds-border flex items-center justify-center text-ds-ink2 flex-shrink-0"><item.icon size={16} /></div>
+                  <div className="w-10 h-10 rounded-xl bg-ds-card2 border border-ds-border flex items-center justify-center text-ds-ink2 flex-shrink-0"><item.icon size={26} /></div>
                   <span className="text-sm font-medium text-ds-ink flex-1 text-left">{item.label}</span>
                   <ChevronRight size={16} className="text-ds-ink3" />
                 </button>

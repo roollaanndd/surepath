@@ -1,5 +1,4 @@
 import React from 'react';
-import type { LucideIcon } from 'lucide-react';
 import { AdminKpiCard, type KpiTone } from '../../adminUI';
 
 // Single owner for admin KPI cards.
@@ -25,18 +24,19 @@ interface KpiCardProps {
   label: string;
   value: string | number;
   sublabel?: string;
-  icon: LucideIcon;
+  /** Icon Manager id for the illustrated SurePath icon. */
+  iconId: string;
   /** Legacy hex accent kept for the seven workspace dashboards; mapped to a ds tone. */
   accent?: string;
   onClick?: () => void;
 }
 
-export const KpiCard: React.FC<KpiCardProps> = ({ label, value, sublabel, icon, accent = '#00C16A', onClick }) => (
+export const KpiCard: React.FC<KpiCardProps> = ({ label, value, sublabel, iconId, accent = '#00C16A', onClick }) => (
   <AdminKpiCard
     label={label}
     value={value}
     sub={sublabel}
-    icon={icon}
+    iconId={iconId}
     tone={ACCENT_TONE[accent.toUpperCase()] ?? 'green'}
     onClick={onClick}
   />

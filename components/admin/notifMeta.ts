@@ -5,14 +5,9 @@
 // "Aktivitas Terbaru" di dashboard — sebelumnya logiknya hanya ada di
 // AdminPortal dan dashboard tidak menerima notifikasi sama sekali.
 
-import type { ComponentType } from 'react';
-import {
-  AlertTriangle, BadgeCheck, Building2, ClipboardList, FileText, Info,
-  ShieldCheck, UserPlus, UserX, XCircle,
-} from 'lucide-react';
-
 export interface AdminNotifMeta {
-  Icon: ComponentType<{ size?: number; className?: string }>;
+  /** Icon Manager id — rendered with ModuleIcon (SurePath illustrated set). */
+  iconId: string;
   cls: string;
 }
 
@@ -20,28 +15,28 @@ export interface AdminNotifMeta {
 // dikenal jatuh ke Info; prefiks umum tetap dicocokkan supaya tipe baru dari
 // backend tidak tampil tanpa ikon.
 const ADMIN_NOTIF_META: Record<string, AdminNotifMeta> = {
-  NEW_ORDER:          { Icon: ClipboardList, cls: 'text-ds-blue' },
-  NEW_CLAIM:          { Icon: FileText,      cls: 'text-ds-blue' },
-  CLAIM_FRAUD_ALERT:  { Icon: AlertTriangle, cls: 'text-rose-700 dark:text-rose-200' },
-  POLICY_ISSUED:      { Icon: ShieldCheck,   cls: 'text-ds-green' },
-  ORDER_REJECTED:     { Icon: XCircle,       cls: 'text-rose-700 dark:text-rose-200' },
-  ORDER_CANCELLED:    { Icon: XCircle,       cls: 'text-ds-ink3' },
-  AGENT_VERIFIED:     { Icon: BadgeCheck,    cls: 'text-ds-green' },
-  AGENT_REJECTED:     { Icon: UserX,         cls: 'text-rose-700 dark:text-rose-200' },
-  NEW_AGENT:          { Icon: UserPlus,      cls: 'text-ds-green' },
-  NEW_CUSTOMER:       { Icon: UserPlus,      cls: 'text-ds-blue' },
-  NEW_ADMIN:          { Icon: UserPlus,      cls: 'text-ds-blue' },
-  SECURITY:           { Icon: AlertTriangle, cls: 'text-rose-700 dark:text-rose-200' },
-  SYSTEM:             { Icon: Info,          cls: 'text-ds-ink3' },
+  NEW_ORDER:          { iconId: 'policy_orders', cls: 'text-ds-blue' },
+  NEW_CLAIM:          { iconId: 'claims_admin', cls: 'text-ds-blue' },
+  CLAIM_FRAUD_ALERT:  { iconId: 'security', cls: 'text-rose-700 dark:text-rose-200' },
+  POLICY_ISSUED:      { iconId: 'policy', cls: 'text-ds-green' },
+  ORDER_REJECTED:     { iconId: 'approvals', cls: 'text-rose-700 dark:text-rose-200' },
+  ORDER_CANCELLED:    { iconId: 'policy_orders', cls: 'text-ds-ink3' },
+  AGENT_VERIFIED:     { iconId: 'agents', cls: 'text-ds-green' },
+  AGENT_REJECTED:     { iconId: 'agents', cls: 'text-rose-700 dark:text-rose-200' },
+  NEW_AGENT:          { iconId: 'agents', cls: 'text-ds-green' },
+  NEW_CUSTOMER:       { iconId: 'clients', cls: 'text-ds-blue' },
+  NEW_ADMIN:          { iconId: 'user_mgmt', cls: 'text-ds-blue' },
+  SECURITY:           { iconId: 'security', cls: 'text-rose-700 dark:text-rose-200' },
+  SYSTEM:             { iconId: 'settings', cls: 'text-ds-ink3' },
 };
 
 export function adminNotifMeta(type: string): AdminNotifMeta {
   if (ADMIN_NOTIF_META[type]) return ADMIN_NOTIF_META[type];
-  if (type.startsWith('INSURER_')) return { Icon: Building2, cls: 'text-ds-blue' };
-  if (type.startsWith('CLAIM_'))   return { Icon: FileText, cls: 'text-ds-blue' };
-  if (type.startsWith('ORDER_'))   return { Icon: ClipboardList, cls: 'text-ds-blue' };
-  if (type.startsWith('NEW_'))     return { Icon: UserPlus, cls: 'text-ds-green' };
-  return { Icon: Info, cls: 'text-ds-ink3' };
+  if (type.startsWith('INSURER_')) return { iconId: 'insurers', cls: 'text-ds-blue' };
+  if (type.startsWith('CLAIM_'))   return { iconId: 'claims_admin', cls: 'text-ds-blue' };
+  if (type.startsWith('ORDER_'))   return { iconId: 'policy_orders', cls: 'text-ds-blue' };
+  if (type.startsWith('NEW_'))     return { iconId: 'users', cls: 'text-ds-green' };
+  return { iconId: 'notifications', cls: 'text-ds-ink3' };
 }
 
 export function adminNotifTimeAgo(iso: string): string {

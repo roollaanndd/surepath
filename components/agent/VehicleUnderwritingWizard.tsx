@@ -1,9 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import {
-  Car, Bike, Search, User, ChevronRight, Upload, CheckCircle,
-  AlertTriangle, XCircle, ArrowLeft, Loader2, FileText,
-  Mail, Package, Smartphone,
-} from 'lucide-react';
+import { Search, User, ChevronRight, Upload, CheckCircle, AlertTriangle, XCircle, ArrowLeft, Loader2, FileText, Mail, Package, Smartphone } from 'lucide-react';
 import SearchableSelect from '../car-wizard/SearchableSelect';
 import { Language } from '../../types';
 import { analyzeVehicleSurvey, validateVehiclePhoto, SurveyAnalysisResult } from '../../services/geminiService';
@@ -28,6 +24,7 @@ import { createXenditInvoice } from '../../services/paymentService';
 import { attachOrderDocuments } from '../../services/orderDocuments';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { InsurerLogo, INSURER_BRANDS } from '../shared/InsurerLogos';
+import ModuleIcon from '../shared/ModuleIcon';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -768,13 +765,9 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
               }`}
             >
               {type === 'CAR' ? (
-                <Car
-                  className={`w-12 h-12 ${isActive ? 'text-ds-green' : 'text-slate-400'}`}
-                />
+                <ModuleIcon id="car_protection" size={56} className={isActive ? '' : 'opacity-60 grayscale'} />
               ) : (
-                <Bike
-                  className={`w-12 h-12 ${isActive ? 'text-ds-green' : 'text-slate-400'}`}
-                />
+                <ModuleIcon id="product" size={56} className={isActive ? '' : 'opacity-60 grayscale'} />
               )}
               <span
                 className={`font-black text-sm uppercase tracking-wide ${
@@ -1840,7 +1833,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
         {/* ── Delivery Options ── */}
         <SectionCard>
           <h3 className="font-black text-slate-700 dark:text-slate-200 text-sm uppercase tracking-widest mb-4 flex items-center gap-2">
-            <Package className="w-4 h-4 text-ds-green" />
+            <ModuleIcon id="inventory" size={26} />
             Pengiriman Polis
           </h3>
 

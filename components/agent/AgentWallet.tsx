@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Wallet, ArrowDownLeft, ArrowUpRight, Clock, CheckCircle2,
-  XCircle, AlertCircle, RefreshCw, Building2, ChevronRight, Info,
-} from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, Clock, CheckCircle2, XCircle, AlertCircle, RefreshCw, ChevronRight, Info } from 'lucide-react';
 import {
   getMyWallet, getMyWalletTransactions, getMyWithdrawals,
   requestWithdrawal, getAgentCoinBalance,
@@ -10,6 +7,7 @@ import {
   type AgentWallet, type WalletTransaction, type Withdrawal
 } from '../../services/supabaseService';
 import { AgentEmpty } from './AgentArt';
+import ModuleIcon from '../shared/ModuleIcon';
 
 const BANKS = [
   { code: 'BCA',     name: 'BCA' },
@@ -432,7 +430,7 @@ const AgentWalletView: React.FC = () => {
               <p className="text-white/40 text-xs mt-1">Saldo Dompet</p>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center">
-              <Wallet size={22} className="text-white" />
+              <ModuleIcon id="transactions" glyph="wallet" size={34} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -473,8 +471,8 @@ const AgentWalletView: React.FC = () => {
           <p className="text-[0.55rem] font-black uppercase tracking-widest text-ds-ink3">Rekening Terdaftar</p>
           {savedAccounts.map((acc, idx) => (
             <div key={idx} className="flex items-center gap-3 p-3 rounded-2xl sp-glass">
-              <div className="w-9 h-9 rounded-xl bg-ds-green-tint flex items-center justify-center">
-                <Building2 size={14} className="text-ds-green" />
+              <div className="w-10 h-10 rounded-xl bg-ds-green-tint flex items-center justify-center">
+                <ModuleIcon id="bank" glyph="bank" size={28} />
               </div>
               <div className="flex-1">
                 <p className="text-xs font-black text-ds-ink">{acc.bank_code} · {acc.account_number}</p>
@@ -540,7 +538,7 @@ const AgentWalletView: React.FC = () => {
               <div key={wd.id} className="sp-glass rounded-2xl px-4 py-3 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <Building2 size={16} className="text-ds-ink3" />
+                    <ModuleIcon id="bank" glyph="bank" size={26} />
                     <div>
                       <p className="text-sm font-medium text-ds-ink">{wd.bank_code} · {wd.account_number}</p>
                       <p className="text-xs text-ds-ink3">{wd.account_holder_name}</p>
@@ -582,15 +580,15 @@ const AgentWalletView: React.FC = () => {
         <div className="space-y-3 mx-5 mt-4">
           {savedAccounts.length === 0 ? (
             <div className="text-center py-12 text-ds-ink3 text-sm">
-              <Building2 size={32} className="mx-auto mb-3 opacity-30" />
+              <ModuleIcon id="bank" glyph="bank" size={56} className="mx-auto mb-3 opacity-80" />
               <p>Belum ada rekening tersimpan</p>
               <p className="text-[10px] mt-1">Tambahkan rekening untuk memudahkan penarikan</p>
             </div>
           ) : (
             savedAccounts.map((acc, idx) => (
               <div key={idx} className="flex items-center gap-3 p-4 rounded-2xl sp-glass">
-                <div className="w-10 h-10 rounded-xl bg-ds-green-tint flex items-center justify-center">
-                  <Building2 size={16} className="text-ds-green" />
+                <div className="w-11 h-11 rounded-xl bg-ds-green-tint flex items-center justify-center">
+                  <ModuleIcon id="bank" glyph="bank" size={30} />
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-black text-ds-ink">{acc.bank_code} · {acc.account_number}</p>

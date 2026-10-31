@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import {
-  CheckCircle, XCircle, Download, Shield, Car, User,
-  FileText, AlertTriangle, Clock, ExternalLink
-} from 'lucide-react';
+import { CheckCircle, XCircle, Download, Shield, AlertTriangle, Clock, ExternalLink } from 'lucide-react';
 import {
   getOrderByToken, submitInsurerReview,
   type SpPolicyOrder, type SpReviewToken,
 } from '../services/supabaseService';
 import { formatIDR } from './car-wizard/WizardUI';
+import { moduleIcon } from './shared/ModuleIcon';
 
 interface Props {
   token: string;
@@ -72,7 +70,7 @@ const InfoCard = ({ label, value }: { label: string; value: string }) => (
 const Section = ({ title, icon: Icon, children }: { title: string; icon: any; children: React.ReactNode }) => (
   <div className="space-y-3">
     <div className="flex items-center gap-2 mb-1">
-      <Icon size={14} className="text-violet-400" />
+      <Icon size={24} />
       <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{title}</p>
     </div>
     {children}
@@ -234,7 +232,7 @@ const InsuranceReviewPage: React.FC<Props> = ({ token }) => {
         </div>
 
         {/* Client info */}
-        <Section title="Informasi Nasabah" icon={User}>
+        <Section title="Informasi Nasabah" icon={moduleIcon('clients')}>
           <div className="grid grid-cols-2 gap-2">
             <InfoCard label="Nama Lengkap" value={order.client_name} />
             <InfoCard label="No. Telepon" value={order.client_phone ?? ''} />
@@ -243,7 +241,7 @@ const InsuranceReviewPage: React.FC<Props> = ({ token }) => {
         </Section>
 
         {/* Vehicle info */}
-        <Section title="Data Kendaraan" icon={Car}>
+        <Section title="Data Kendaraan" icon={moduleIcon('car_protection')}>
           <div className="grid grid-cols-2 gap-2">
             <InfoCard label="Jenis" value={order.vehicle_type === 'MOTORCYCLE' ? 'Roda 2 (Motor)' : 'Roda 4 (Mobil)'} />
             <InfoCard label="Merk / Model" value={`${v.make ?? ''} ${v.model ?? ''}`.trim()} />
@@ -260,7 +258,7 @@ const InsuranceReviewPage: React.FC<Props> = ({ token }) => {
 
         {/* Vehicle photo */}
         {order.vehicle_image_url && (
-          <Section title="Foto Kendaraan" icon={FileText}>
+          <Section title="Foto Kendaraan" icon={moduleIcon('documents')}>
             <div className="grid gap-3">
               <div className="relative group">
                 <img
@@ -283,7 +281,7 @@ const InsuranceReviewPage: React.FC<Props> = ({ token }) => {
 
         {/* AI Analysis */}
         {(order.ai_score !== undefined && order.ai_score !== null) && (
-          <Section title="Hasil Analisis AI" icon={Shield}>
+          <Section title="Hasil Analisis AI" icon={moduleIcon('ai_admin')}>
             <div className="bg-white/5 rounded-2xl p-5">
               <div className="flex items-center justify-between mb-4">
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Skor Kondisi Kendaraan</p>
@@ -310,7 +308,7 @@ const InsuranceReviewPage: React.FC<Props> = ({ token }) => {
         )}
 
         {/* Premium breakdown */}
-        <Section title="Rincian Premi" icon={FileText}>
+        <Section title="Rincian Premi" icon={moduleIcon('payments')}>
           <div className="bg-white/5 rounded-2xl p-4 space-y-2">
             {[
               ['Jenis Pertanggungan', order.coverage_type],

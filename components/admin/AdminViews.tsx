@@ -1,18 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  ShieldCheck, ArrowUpRight,
-  Search,
-  FileText,
-  CheckCircle, Check, Settings, ShieldAlert,
-  Cpu, RefreshCw,
-
-  Terminal, ShieldX,
-  Globe, FileDown, Upload, Plus,
-  UserPlus, ChevronDown, Pencil, Shield,
-  X, Clock, AlertCircle, Send, Sparkles,
-  KeyRound, Copy, MailCheck,
-} from 'lucide-react';
+import { ShieldCheck, ArrowUpRight, Search, FileText, CheckCircle, Check, ShieldAlert, RefreshCw, Globe, FileDown, Upload, Plus, UserPlus, ChevronDown, Pencil, X, Clock, AlertCircle, Send, Sparkles, KeyRound, Copy, MailCheck } from 'lucide-react';
 import { db, CustomProduct, User } from '../../db';
 import {
   getAllAgents, getAllClaims, updateAgentVerification, updateAgentCommissionRate,
@@ -49,6 +37,7 @@ const Card: React.FC<{ children?: React.ReactNode, className?: string, onClick?:
 // ── User/Agent detail modal ──────────────────────────────────────────────────
 import { getAdminUser } from '../../services/supabaseService';
 import { SecureDocLink, SecureDocImage } from '../shared/SecureDoc';
+import ModuleIcon from '../shared/ModuleIcon';
 
 const UserDetailModal: React.FC<{ userId: string; onClose: () => void }> = ({ userId, onClose }) => {
   const [user, setUser] = useState<any>(null);
@@ -277,11 +266,15 @@ export const Badge = ({ children, color = "primary" }: { children?: React.ReactN
   );
 };
 
-const StatCard = ({ label, value, trend, icon: Icon, color }: any) => (
+const PLATFORM_PRODUCT_ICON: Record<string, string> = {
+  car: 'car_protection', travel: 'travel_safe', pa: 'personal_safety', mpar: 'item_shield', 'health-ind': 'family_health',
+};
+
+const StatCard = ({ label, value, trend, iconId, color }: any) => (
   <Card>
     <div className="flex justify-between items-start mb-6">
       <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner ${color}`}>
-        <Icon size={24} />
+        <ModuleIcon id={iconId} size={34} />
       </div>
       {trend && (
         <div className={`flex items-center gap-1 text-2xs font-black ${trend.startsWith('+') ? 'text-ds-green' : 'text-rose-700 dark:text-rose-200'}`}>
@@ -494,13 +487,13 @@ export const SecurityView = () => {
           <StatCard
             label="Login Gagal (24 jam)"
             value={loading ? '…' : (secStats?.failedLogins24h ?? 0).toString()}
-            icon={ShieldAlert}
+            iconId="security"
             color="bg-emerald-500/10 text-ds-green"
           />
           <StatCard
             label="Sesi Aktif (5 mnt)"
             value={loading ? '…' : (secStats?.activeSessionsCount ?? 0).toString()}
-            icon={Cpu}
+            iconId="activity_log"
             color="bg-blue-500/10 text-blue-700 dark:text-blue-300"
           />
        </div>
@@ -509,7 +502,7 @@ export const SecurityView = () => {
           <Card className="lg:col-span-2">
              <div className="flex justify-between items-center mb-10">
                 <div className="flex items-center gap-4">
-                   <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-ds-green"><Terminal size={20}/></div>
+                   <div className="w-11 h-11 bg-emerald-500/10 rounded-xl flex items-center justify-center text-ds-green"><ModuleIcon id="activity_log" size={30}/></div>
                    <div>
                       <h3 className="font-black uppercase tracking-widest text-sm">Aktivitas Sesi Per Jam (24j)</h3>
                       <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-[0.2em] mt-1">Berdasarkan data sp_user_sessions nyata</p>
@@ -549,7 +542,7 @@ export const SecurityView = () => {
           <Card>
              <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
-                   <div className="w-10 h-10 bg-rose-500/10 rounded-xl flex items-center justify-center text-rose-700 dark:text-rose-200"><ShieldX size={20}/></div>
+                   <div className="w-11 h-11 bg-rose-500/10 rounded-xl flex items-center justify-center text-rose-700 dark:text-rose-200"><ModuleIcon id="security" size={30}/></div>
                    <h3 className="font-black uppercase tracking-widest text-sm">Blokir Login</h3>
                 </div>
                 <Badge color="rose">Real Data</Badge>
@@ -632,8 +625,8 @@ const BackupView: React.FC = () => {
       {/* Header row */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
-            <Shield size={20} />
+          <div className="w-11 h-11 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
+            <ModuleIcon id="security" size={30} />
           </div>
           <div>
             <p className="font-black uppercase text-sm text-ds-ink">Backup Data</p>
@@ -918,7 +911,7 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
   return (
     <div className="space-y-8 animate-fade-in pb-32">
        <div className="flex items-center gap-4 mb-6">
-          <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-ds-green"><Settings size={22}/></div>
+          <div className="w-11 h-11 bg-emerald-500/10 rounded-xl flex items-center justify-center text-ds-green"><ModuleIcon id="settings" size={30}/></div>
           <h3 className="font-black uppercase tracking-widest text-sm">Konfigurasi Sistem</h3>
        </div>
 
@@ -1015,7 +1008,7 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
             {customProducts.map(p => (
               <Card key={p.id} className="flex items-center justify-between py-6">
                 <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-emerald-500/10 text-ds-green`}><FileText size={24}/></div>
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-emerald-500/10 text-ds-green`}><ModuleIcon id="product" size={34}/></div>
                   <div>
                     <p className="font-black uppercase text-sm">{p.name}</p>
                     <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-widest">Rate: {(p.rate || 0) * 100}% | Premium {formatIDR(p.basePremium)}</p>
@@ -1037,7 +1030,7 @@ export const SettingsView = ({ products, setProducts, currentUserRole }: { produ
           {safeProducts.map(p => (
             <Card key={p.id} className="flex items-center justify-between py-6">
               <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-ds-card2 ${p.color}`}><p.icon size={24}/></div>
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-ds-card2 ${p.color}`}><ModuleIcon id={PLATFORM_PRODUCT_ICON[p.id] || 'product'} size={34}/></div>
                 <div>
                   <p className="font-black uppercase text-sm">{p.label}</p>
                   <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-widest">{p.active ? 'Modul Aktif' : 'Modul Dinonaktifkan'}</p>

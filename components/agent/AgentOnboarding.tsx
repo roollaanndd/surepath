@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
-import {
-  ChevronLeft, ChevronRight, Eye, EyeOff, RefreshCw,
-  User, Globe, Phone, Lock, MapPin, CreditCard, ShieldCheck
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, Eye, EyeOff, RefreshCw, User, Globe, Phone, Lock, MapPin, CreditCard, ShieldCheck } from 'lucide-react';
 import { Language } from '../../types';
 import { supabase, ensureProfile } from '../../services/supabaseService';
 import { isUntrustedEmail } from '../../supabase/functions/_shared/trust';
+import ModuleIcon from '../shared/ModuleIcon';
 
 interface Props {
   onSuccess: (agent: any) => void;
@@ -198,7 +196,7 @@ const AgentOnboarding: React.FC<Props> = ({ onSuccess, onBack, lang }) => {
           {checkEmail && (
             <div className="text-center space-y-4">
               <div className="w-20 h-20 rounded-3xl bg-emerald-500/20 flex items-center justify-center mb-6 mx-auto">
-                <ShieldCheck size={26} className="text-emerald-400" />
+                <ModuleIcon id="security" size={46} />
               </div>
               <p className="text-xl font-bold text-white mb-2">
                 {t('Check Your Email', 'Cek Email Kamu')}

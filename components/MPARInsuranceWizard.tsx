@@ -1,17 +1,12 @@
 
 import React, { useState, useMemo } from 'react';
-import {
-  Laptop, Smartphone, Home as House, ChevronRight,
-  ChevronLeft, Check, ShieldCheck, Wallet,
-  Camera, Zap,
-  Trash2, Microscope,
-  ImagePlus, ExternalLink, ArrowRight, Loader2
-} from 'lucide-react';
+import { Laptop, Smartphone, Home as House, ChevronRight, ChevronLeft, Check, ShieldCheck, Wallet, Camera, Zap, Trash2, Microscope, ImagePlus, ExternalLink, ArrowRight, Loader2 } from 'lucide-react';
 import { MPAR_PRICING } from '../constants';
 import { MPARState, Language } from '../types';
 import { analyzeVehicleSurvey } from '../services/geminiService';
 import { createPolicyOrder } from '../services/supabaseService';
 import { createXenditInvoice } from '../services/paymentService';
+import ModuleIcon from './shared/ModuleIcon';
 
 const formatIDR = (n: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
 
@@ -225,7 +220,7 @@ const MPARInsuranceWizard = ({ onComplete, currentUser, lang: _lang }: { onCompl
           </div>
 
           <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100 flex gap-3">
-            <ShieldCheck className="text-emerald-500 flex-shrink-0" size={20}/>
+            <ModuleIcon id="item_shield" size={40} className="flex-shrink-0"/>
             <p className="text-xs text-emerald-700 leading-relaxed">
                MPAR Protection covers: Accidental Damage, Fire, Riots, and Water Damage.
             </p>

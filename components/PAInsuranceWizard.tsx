@@ -1,13 +1,11 @@
 
 import React, { useState, useMemo } from 'react';
-import {
-  ShieldAlert, User, GraduationCap, Briefcase,
-  ChevronRight, ChevronLeft, Check, Wallet,
-  ShieldCheck, Heart, ExternalLink, ArrowRight, Loader2 } from 'lucide-react';
+import { User, GraduationCap, Briefcase, ChevronRight, ChevronLeft, Check, Wallet, ShieldCheck, Heart, ExternalLink, ArrowRight, Loader2 } from 'lucide-react';
 import { createPolicyOrder } from '../services/supabaseService';
 import { createXenditInvoice } from '../services/paymentService';
 import { PA_PLANS } from '../constants';
 import { PAState, Language } from '../types';
+import ModuleIcon from './shared/ModuleIcon';
 
 const formatIDR = (n: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
 
@@ -113,7 +111,7 @@ const PAInsuranceWizard = ({ onComplete, currentUser, lang: _lang }: { onComplet
   const renderStep0 = () => (
     <div className="space-y-6 animate-fade-in">
       <div className="p-4 bg-emerald-500/10 rounded-3xl border border-emerald-500/20 flex gap-4">
-         <ShieldAlert className="text-emerald-500 flex-shrink-0" size={24}/>
+         <ModuleIcon id="personal_safety" size={40} className="flex-shrink-0"/>
          <p className="text-[0.65rem] font-bold text-gray-600 dark:text-gray-300 leading-relaxed uppercase tracking-wider">
            Sistem Asuransi Kecelakaan Diri. Protect yourself or your students with PSAKDI grade coverage.
          </p>

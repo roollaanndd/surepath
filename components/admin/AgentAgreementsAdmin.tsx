@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, Download, ShieldCheck, Search, FileText, Archive, FileWarning } from 'lucide-react';
+import { RefreshCw, Download, Search, Archive, FileWarning } from 'lucide-react';
 import { getAllAgreements, callGateway, SpAgentAgreement } from '../../services/supabaseService';
 import { generateAgreementPDF } from '../../services/agreementPdf';
+import ModuleIcon from '../shared/ModuleIcon';
 
 type Row = SpAgentAgreement & { agent_email?: string; agent_phone?: string };
 
@@ -63,7 +64,7 @@ const AgentAgreementsAdmin: React.FC = () => {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h2 className="text-2xl font-black tracking-tight text-ds-ink flex items-center gap-2">
-            <ShieldCheck size={22} className="text-emerald-700 dark:text-emerald-400" /> Perjanjian Mitra
+            <ModuleIcon id="documents" size={32} /> Perjanjian Mitra
           </h2>
           <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3 mt-1">
             {rows.length} mitra menyetujui · {rows.filter(r => r.pdf_path).length} PDF terarsip · audit legal
@@ -88,7 +89,7 @@ const AgentAgreementsAdmin: React.FC = () => {
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-20 text-ds-ink3">
-          <FileText size={32} className="mx-auto mb-3 opacity-40" />
+          <ModuleIcon id="documents" size={56} className="mx-auto mb-3 opacity-70" />
           <p className="text-sm font-bold">Belum ada perjanjian tercatat.</p>
         </div>
       ) : (

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronRight, Package, ShieldCheck, ExternalLink, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { ChevronRight, ShieldCheck, ExternalLink, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import { Language } from '../types';
 import { User } from '../db';
 import { db, CustomProduct } from '../db';
 import { Badge, formatIDR } from './car-wizard/WizardUI';
 import { createPolicyOrder } from '../services/supabaseService';
 import { createXenditInvoice } from '../services/paymentService';
+import ModuleIcon from './shared/ModuleIcon';
 
 const Card = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
   <div className={`bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 shadow-2xl rounded-[2.5rem] relative overflow-hidden backdrop-blur-xl ${className}`}>
@@ -179,7 +180,7 @@ export default function CustomInsuranceWizard({
           <Card className="mb-6 p-8">
             <div className="flex justify-between items-start mb-6">
                <div className="w-16 h-16 bg-emerald-500/10 text-emerald-500 rounded-2xl flex justify-center items-center">
-                  <Package size={32}/>
+                  <ModuleIcon id="product" size={48}/>
                </div>
                <Badge color="emerald">Custom Coverage</Badge>
             </div>

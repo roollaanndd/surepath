@@ -12,13 +12,14 @@
 // miliknya sendiri dari kueri yang sama persis.
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, ArrowLeft, Bot, Loader2, MessageSquare, RefreshCw, Search, User } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Bot, Loader2, RefreshCw, Search, User } from 'lucide-react';
 import {
   fetchPathyMessages,
   summarisePathyUsers,
   type PathyMessageRow,
   type PathyUserSummary,
 } from '../../services/pathyLog';
+import ModuleIcon from '../shared/ModuleIcon';
 
 const RANGES = [
   { id: '24h', label: '24 Jam', hours: 24 },
@@ -206,7 +207,7 @@ const PathyTranscriptsView: React.FC = () => {
 
           {filteredUsers.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <MessageSquare size={28} className="text-ds-ink3 mb-3" />
+              <ModuleIcon id="pathy_logs" size={52} className="mb-3" />
               <p className="text-ds-ink2 font-medium">Belum ada percakapan</p>
               <p className="text-ds-sm text-ds-ink3 mt-1 max-w-md">
                 Rekaman mulai terkumpul sejak rilis ini — percakapan sebelumnya tidak

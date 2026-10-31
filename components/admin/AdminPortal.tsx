@@ -1,11 +1,7 @@
 
 import React, { useState, useEffect, useRef, useCallback, Component, lazy, Suspense } from 'react';
 import '../../src/styles/portal-modernization.css';
-import {
-  LogOut, Search, Menu, Bell, CheckCircle, X, Upload, Loader2, RefreshCw,
-  PanelLeftClose, PanelLeftOpen, CornerDownLeft, Keyboard,
-  LayoutDashboard, ClipboardCheck, FileText, ShieldCheck,
-} from 'lucide-react';
+import { LogOut, Search, Menu, Bell, CheckCircle, X, Upload, Loader2, RefreshCw, PanelLeftClose, PanelLeftOpen, CornerDownLeft, Keyboard } from 'lucide-react';
 import { adminNotifMeta, adminNotifTimeAgo } from './notifMeta';
 // ── Performance: lazy-load all admin views ──────────────────────────────────
 // AdminPortal chunk was 724 KB (largest in the app). Each admin view is
@@ -57,6 +53,7 @@ import CollectionsDashboard from './workspaces/collections/CollectionsDashboard'
 import BusinessSupportDashboard from './workspaces/support/BusinessSupportDashboard';
 import AgentOnboardingDashboard from './workspaces/onboarding/AgentOnboardingDashboard';
 import MarketingDashboard from './workspaces/marketing/MarketingDashboard';
+import ModuleIcon from '../shared/ModuleIcon';
 
 // Suspense fallback for lazy-loaded admin views
 const AdminViewLoader = () => (
@@ -72,11 +69,11 @@ const AdminViewLoader = () => (
 // ── Bar navigasi bawah (< 1024px) ────────────────────────────────────────────
 // Empat tujuan tersibuk; sisanya tetap lewat drawer. Difilter per izin role
 // dengan allowedLeafIds, jadi role tanpa akses tidak pernah melihat tombolnya.
-const BOTTOM_NAV: Array<{ id: string; label: string; icon: React.ElementType }> = [
-  { id: 'dashboard',    label: 'Ringkasan', icon: LayoutDashboard },
-  { id: 'approvals',    label: 'Review',    icon: ClipboardCheck },
-  { id: 'policy_orders', label: 'Polis',    icon: FileText },
-  { id: 'claims_admin', label: 'Klaim',     icon: ShieldCheck },
+const BOTTOM_NAV: Array<{ id: string; label: string }> = [
+  { id: 'dashboard',    label: 'Ringkasan' },
+  { id: 'approvals',    label: 'Review' },
+  { id: 'policy_orders', label: 'Polis' },
+  { id: 'claims_admin', label: 'Klaim' },
 ];
 
 const formatRole = (role: string) =>
@@ -420,7 +417,7 @@ const AdminPortal = ({
 
   // Command palette = aksi cepat + navigasi menu (TDZ-safe: semua dependensi
   // sudah dideklarasikan di atas blok ini).
-  type PaletteRow = { key: string; label: string; icon: React.ElementType; onSelect: () => void };
+  type PaletteRow = { key: string; label: string; icon?: React.ElementType; iconId?: string; onSelect: () => void };
   const closePalette = () => { setPaletteOpen(false); setPaletteQuery(''); };
   const quickActions: PaletteRow[] = [
     { key: 'act-refresh', label: 'Muat ulang data dashboard', icon: RefreshCw, onSelect: () => { refreshStats(); closePalette(); } },
@@ -430,14 +427,14 @@ const AdminPortal = ({
   const filteredActions = q
     ? quickActions.filter(a => a.label.toLowerCase().includes(q))
     : quickActions;
-  const menuItems = filteredMenu.filter(m => !m.isSeparator) as Array<{ id: string; label: string; icon: React.ElementType }>;
+  const menuItems = filteredMenu.filter(m => !m.isSeparator) as Array<{ id: string; label: string }>;
   const filteredMenus = (q
     ? menuItems.filter(m => m.label.toLowerCase().includes(q) || m.id.toLowerCase().includes(q))
     : menuItems
   ).slice(0, 8).map<PaletteRow>(m => ({
     key: m.id,
     label: m.label,
-    icon: m.icon,
+    iconId: m.id,
     onSelect: () => { goToTab(m.id); closePalette(); },
   }));
   const paletteRows = [...filteredActions, ...filteredMenus];
@@ -864,7 +861,7 @@ const AdminPortal = ({
                     onClick={r.onSelect}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-left ${i === paletteIndex ? 'bg-ds-green-tint' : 'hover:bg-ds-card2'}`}
                   >
-                    <r.icon size={16} className={i === paletteIndex ? 'text-ds-green' : 'text-ds-ink3'} />
+                    {r.iconId ? <ModuleIcon id={r.iconId} size={24} /> : r.icon ? <r.icon size={16} className={i === paletteIndex ? 'text-ds-green' : 'text-ds-ink3'} /> : null}
                     <span className={`text-xs font-bold flex-1 min-w-0 truncate ${i === paletteIndex ? 'text-ds-ink' : 'text-ds-ink2'}`}>{r.label}</span>
                     {i === paletteIndex && <CornerDownLeft size={13} className="text-ds-green flex-shrink-0" />}
                   </button>
@@ -1087,8 +1084,8 @@ const AdminPortal = ({
                           className={`w-full text-left px-4 py-3 border-b transition-colors ${'border-ds-border hover:bg-ds-card2'} ${!n.read ? 'bg-ds-green-tint' : ''}`}
                         >
                           <div className="flex items-start gap-2.5">
-                            <span className={`w-7 h-7 rounded-lg bg-ds-card2 flex items-center justify-center flex-shrink-0 ${meta.cls}`}>
-                              <meta.Icon size={14} />
+                            <span className={`w-9 h-9 rounded-lg bg-ds-card2 flex items-center justify-center flex-shrink-0 ${meta.cls}`}>
+                              <ModuleIcon id={meta.iconId} size={26} />
                             </span>
                             <div className="min-w-0 flex-1">
                               <p className={`text-xs font-black leading-tight ${'text-ds-ink'}`}>{n.title}</p>
@@ -1192,7 +1189,7 @@ const AdminPortal = ({
                         active ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0'
                       }`}
                     />
-                    <item.icon size={19} />
+                    <ModuleIcon id={item.id} size={26} />
                     <span>{item.label}</span>
                   </button>
                 );

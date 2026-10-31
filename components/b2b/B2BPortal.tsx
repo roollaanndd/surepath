@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Home, FilePlus, ClipboardList, FileCheck, UserCircle, Bell } from 'lucide-react';
+import { Home, FilePlus, ClipboardList, FileCheck, UserCircle } from 'lucide-react';
 import { Language } from '../../types';
 import PortalTabBar, { type PortalTab } from '../shared/PortalTabBar';
 import PortalHeader from '../shared/PortalHeader';
@@ -124,7 +124,6 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
         darkMode={darkMode}
         onToggleDark={() => setDarkMode(!darkMode)}
         onAvatarClick={() => handleTabChange('profile')}
-        BellIcon={Bell}
         labels={{
           notifications: t('Notifications', 'Notifikasi'),
           theme: t('Toggle theme', 'Ganti tema'),

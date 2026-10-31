@@ -6,7 +6,7 @@
 // sp_payments fire popup toasts.
 
 import React, { useState, useEffect } from 'react';
-import { Bell, Home, FileText, ShieldAlert, Wallet, User } from 'lucide-react';
+import { Home, FileText, ShieldAlert, Wallet, User } from 'lucide-react';
 import { Language } from '../../types';
 import { scrollPortalToTop } from '../shared/scrollReset';
 import PortalHeader from '../shared/PortalHeader';
@@ -125,7 +125,6 @@ const InsurerPortal: React.FC<Props> = ({ authToken, onLogout, lang }) => {
         darkMode={darkMode}
         onToggleDark={() => setDarkMode(!darkMode)}
         onAvatarClick={() => handleTabChange('profile')}
-        BellIcon={Bell}
         labels={{ notifications: 'Notifikasi', theme: 'Ganti tema', profile: 'Profil' }}
       />
 

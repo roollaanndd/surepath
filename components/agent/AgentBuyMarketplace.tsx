@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Car, Bike, Plane, Shield, Smartphone, Heart, ChevronRight, ArrowLeft } from 'lucide-react';
+import { ChevronRight, ArrowLeft } from 'lucide-react';
 import { Language } from '../../types';
 import VehicleUnderwritingWizard from './VehicleUnderwritingWizard';
 import LifeInsuranceWizard from './LifeInsuranceWizard';
@@ -8,6 +8,7 @@ import PAInsuranceWizard from '../PAInsuranceWizard';
 import MPARInsuranceWizard from '../MPARInsuranceWizard';
 import { type SpClient } from '../../services/supabaseService';
 import { AgentArtKeyframes, AgentHero, SpotMarket } from './AgentArt';
+import { moduleIcon } from '../shared/ModuleIcon';
 
 interface Props {
   agentId: string;
@@ -22,7 +23,7 @@ type ProductChoice = 'CAR' | 'MOTORCYCLE' | 'TRAVEL' | 'PA' | 'MPAR' | 'LIFE' | 
 const PRODUCTS = [
   {
     id: 'CAR' as const,
-    icon: Car,
+    icon: moduleIcon('car_protection'),
     gradient: 'from-blue-600 to-blue-800',
     shadow: 'shadow-blue-500/30',
     label: 'Kendaraan Roda 4',
@@ -32,7 +33,7 @@ const PRODUCTS = [
   },
   {
     id: 'MOTORCYCLE' as const,
-    icon: Bike,
+    icon: moduleIcon('car_protection'),
     gradient: 'from-cyan-600 to-teal-700',
     shadow: 'shadow-cyan-500/30',
     label: 'Kendaraan Roda 2',
@@ -42,7 +43,7 @@ const PRODUCTS = [
   },
   {
     id: 'TRAVEL' as const,
-    icon: Plane,
+    icon: moduleIcon('travel_safe'),
     gradient: 'from-emerald-600 to-green-700',
     shadow: 'shadow-emerald-500/30',
     label: 'Asuransi Perjalanan',
@@ -52,7 +53,7 @@ const PRODUCTS = [
   },
   {
     id: 'PA' as const,
-    icon: Shield,
+    icon: moduleIcon('personal_safety'),
     gradient: 'from-violet-600 to-purple-800',
     shadow: 'shadow-violet-500/30',
     label: 'Kecelakaan Diri',
@@ -62,7 +63,7 @@ const PRODUCTS = [
   },
   {
     id: 'MPAR' as const,
-    icon: Smartphone,
+    icon: moduleIcon('item_shield'),
     gradient: 'from-amber-500 to-orange-600',
     shadow: 'shadow-amber-500/30',
     label: 'Gadget / MPAR',
@@ -72,7 +73,7 @@ const PRODUCTS = [
   },
   {
     id: 'LIFE' as const,
-    icon: Heart,
+    icon: moduleIcon('family_health'),
     gradient: 'from-rose-500 to-pink-700',
     shadow: 'shadow-rose-500/30',
     label: 'Asuransi Jiwa',
@@ -176,7 +177,7 @@ const AgentBuyMarketplace: React.FC<Props> = ({ agentId, agent, clients, lang, o
                 </span>
               )}
               <div className="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center">
-                <Icon size={22} className="text-white" strokeWidth={2} />
+                <Icon size={36} />
               </div>
               <div>
                 <p className="font-black text-white text-sm leading-snug">{label}</p>

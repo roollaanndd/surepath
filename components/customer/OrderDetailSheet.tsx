@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { X, Car, ShieldCheck, CheckCircle, Circle, XCircle, Download } from 'lucide-react';
+import { X, CheckCircle, Circle, XCircle, Download } from 'lucide-react';
 import { Language } from '../../types';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { cancelMyOrder, type SpPolicyOrder } from '../../services/supabaseService';
 import { publishAndDownloadQuotation } from '../../services/quotationService';
 import { fromCustomerOrder } from '../../services/quotationSlipAdapter';
 import { useToast, useConfirmDialog } from '../ui';
+import ModuleIcon from '../shared/ModuleIcon';
 
 interface Props {
   order: SpPolicyOrder;
@@ -178,7 +179,7 @@ const OrderDetailSheet: React.FC<Props> = ({ order, lang, onClose, onCancelled, 
           {order.vehicle_type && (
             <div className="sp-glass rounded-2xl p-4">
               <div className="flex items-center gap-2 mb-3">
-                <Car size={14} className="text-ds-green" />
+                <ModuleIcon id="car_protection" size={24} />
                 <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3">{t('Vehicle', 'Kendaraan')}</p>
               </div>
               <div className="space-y-1.5">
@@ -201,7 +202,7 @@ const OrderDetailSheet: React.FC<Props> = ({ order, lang, onClose, onCancelled, 
           {/* Perlindungan */}
           <div className="sp-glass rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-3">
-              <ShieldCheck size={14} className="text-ds-green" />
+              <ModuleIcon id="security" size={24} />
               <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3">{t('Coverage', 'Perlindungan')}</p>
             </div>
             <div className="space-y-1.5">

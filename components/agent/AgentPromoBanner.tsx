@@ -193,20 +193,32 @@ const AgentPromoBanner: React.FC<Props> = ({ lang, onCta }) => {
           <p className="mt-1.5 text-xs sm:text-sm font-medium opacity-90 leading-relaxed">
             {copy[1]}
           </p>
-          {/* Dots */}
-          <div className="mt-3 flex items-center gap-1.5" aria-hidden>
+          {/* Dots.
+              Titiknya adalah <span> di dalam tombol, bukan tombolnya sendiri:
+              shell portal memasang `min-height: 44px` pada setiap button
+              (.sp-modern-app, portal-modernization.css) dan min-height menang
+              atas height berapa pun, jadi tombol setinggi 6px tetap terbit
+              setinggi 44px dan titiknya terbaca sebagai batang tegak. Dengan
+              pemisahan ini sasaran sentuh tetap 44px sesuai WCAG 2.5.8
+              sementara yang terlihat tetap satu garis tipis; margin negatif
+              menyerap tinggi sasaran itu agar kartunya tidak melar. */}
+          <div className="mt-0.5 -mb-3 flex items-center gap-1.5" aria-hidden>
             {BUILTIN_SLIDES.map((_, i) => (
               <button
                 key={i}
                 type="button"
                 onClick={() => setSlideIdx(i)}
-                className="h-1.5 rounded-full transition-all"
-                style={{
-                  width: i === slideIdx ? 20 : 6,
-                  background: i === slideIdx ? '#ffffff' : 'rgba(255,255,255,0.35)',
-                }}
+                className="flex h-11 items-center"
                 aria-label={`Slide ${i + 1}`}
-              />
+              >
+                <span
+                  className="block h-1.5 rounded-full transition-all"
+                  style={{
+                    width: i === slideIdx ? 20 : 6,
+                    background: i === slideIdx ? '#ffffff' : 'rgba(255,255,255,0.35)',
+                  }}
+                />
+              </button>
             ))}
           </div>
         </div>

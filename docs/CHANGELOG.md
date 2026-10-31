@@ -42,8 +42,14 @@ Logic bisnis, login, dan jalur uang tidak disentuh: saldo hanya dibaca
   `ring-`/`border-ds-green-text` tersedia di tempat lain yang butuh garis
   hijau yang terbaca.
 
-### Dua cacat lama yang ikut terbetulkan
+### Tiga cacat lama yang ikut terbetulkan
 
+- Titik carousel di `AgentPromoBanner` dan `OnboardingFlow` terbit sebagai
+  **batang tegak setinggi 44px**, bukan titik. Penyebabnya bukan kelas
+  tingginya: shell portal (`.sp-modern-app`) memasang `min-height: 44px` pada
+  setiap `button`, dan `min-height` menang atas `height` berapa pun. Titiknya
+  kini `<span>` di dalam tombol, jadi sasaran sentuh tetap 44px sesuai
+  WCAG 2.5.8 sementara yang terlihat kembali setinggi 6px.
 - `AgentIcons.tsx` diam-diam membuang prop `style`, sehingga setiap pemanggil
   yang mewarnai ikon mitra lewat `style={{ color }}` mendapat tinta warisan.
   `shared/duotone.tsx`, kembarannya, selalu meneruskannya.
@@ -55,7 +61,7 @@ Logic bisnis, login, dan jalur uang tidak disentuh: saldo hanya dibaca
 ### Verifikasi
 
 `tsc --noEmit` bersih, ESLint bersih (satu peringatan lama tidak terkait),
-459 unit test lulus, `npm run build` hijau, dan layarnya dilihat sendiri di
+461 unit test lulus, `npm run build` hijau, dan layarnya dilihat sendiri di
 Chromium 390×844 pada mode terang dan gelap.
 ## v2.7.37 — 2026-10-31
 

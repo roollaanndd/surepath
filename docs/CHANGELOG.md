@@ -1,5 +1,30 @@
 # SurePath — Changelog
 
+## v2.7.21 — 2026-10-31
+
+### Admin Portal 2.0 — langkah 2: DataTable/FilterBar/DetailDrawer bersama
+
+- `components/admin/shared/`: tiga primitif presentasi baru, generik dan
+  tanpa state data sendiri (caller tetap memegang fetch & logika bisnis).
+  - `FilterBar` — search + chip filter + refresh, diekstrak dari pola yang
+    sebelumnya ditulis ulang per view.
+  - `DetailDrawer` — panel geser 480px (anatomi sesuai
+    `docs/UI_REDESIGN_2026-10.md` §4: header ringkasan, body scroll, footer
+    aksi sticky, Esc + focus trap), menggantikan modal tengah penuh layar.
+  - `DataTable` + `dataTable.ts` — tabel generik dengan sort & pagination;
+    logika murni di `dataTable.ts` diuji 12 kasus di
+    `services/__tests__/dataTable.test.ts`. **Belum dipakai view manapun**
+    di PR ini — siap untuk modul Polis/Klaim, Keuangan, Mitra, Katalog,
+    Platform di PR berikutnya.
+- `PolicyOrdersAdmin.tsx` (Pesanan Polis + Antrean Review) dimigrasikan ke
+  `FilterBar`+`DetailDrawer` sebagai bukti produksi pertama. **Hanya
+  cangkang tampilan yang disentuh** — approve/reject/upload polis,
+  perhitungan komisi & koin, notifikasi agen, submit ke insurer: semua
+  logika di dalam modal lama dipindah apa adanya ke `children`/`footer`.
+- Terverifikasi: `tsc --noEmit` bersih, ESLint bersih, `npm run build`
+  sukses, **459/459 unit test lolos** (447 sebelumnya + 12 baru untuk
+  `dataTable.ts`).
+
 ## v2.7.20 — 2026-10-31
 
 ### Admin Portal 2.0 — langkah 1: design tokens ALTITUDE + Dashboard reinvented

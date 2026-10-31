@@ -1,3 +1,4 @@
+import { trackEvent } from '../../analytics';
 import React, { useMemo, useState } from 'react';
 import { Car, Shield, ArrowRight, Sparkles, MessageCircle } from 'lucide-react';
 import { Language } from '../../../types';
@@ -194,12 +195,12 @@ const PremiumCalcWidget: React.FC<Props> = ({ lang, darkMode, onSignIn, onDetail
           </div>
 
           <div className="flex flex-col gap-2.5 mt-3">
-            <button onClick={onSignIn}
+            <button onClick={() => { trackEvent('calculator_cta_click', { label: 'signin' }); onSignIn(); }}
               className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl font-bold text-sm text-white transition-all hover:scale-[1.02] active:scale-95"
               style={{ background: th.accent, boxShadow: `0 10px 26px -10px ${th.accent}` }}>
               <MessageCircle size={15} /> {t('Konsultasi Gratis', 'Free Consultation')}
             </button>
-            <button onClick={onDetail}
+            <button onClick={() => { trackEvent('calculator_cta_click', { label: 'detail' }); onDetail(); }}
               className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm transition-all hover:opacity-80"
               style={{ background: th.cardBg, border: `1px solid ${th.cardBorder}`, color: th.textMain }}>
               {t('Hitung lengkap & kirim ke agen', 'Full calc & send to agent')} <ArrowRight size={14} />

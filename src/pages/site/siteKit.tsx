@@ -40,9 +40,14 @@ export const useWebsiteConfig = (sectionKey: string): SpWebsiteConfig | null => 
 
 // ─── Design tokens — unified green brand identity ────────────────────────────
 //   NIGHT: signature green on dark navy (cinematic, brand hero).
-//   DAY:   same signature green on warm ivory/pearl — consistent brand colour.
-export const ACCENT = '#16a34a';            // signature green
-export const DAY_ACCENT = '#16a34a';        // day accent — matches brand green
+//   DAY:   darker green for text/CTA use on warm ivory — same hue, lulus WCAG AA.
+// FIX 31 Okt 2026: DAY_ACCENT dulu sama dengan ACCENT (#16a34a). Pada latar
+// krem #faf8f5 kontrasnya 3,11:1 — gagal AA untuk teks kecil (ambang 4,5:1).
+// Setiap "Lihat Semua / Pelajari / Pelajari Teknologinya" dan tiap kata
+// beraksen di judul halaman marketing kena. #166534 memberi 6,73:1 pada hue
+// hijau yang sama.
+export const ACCENT = '#16a34a';            // signature green (hero/dark mode)
+export const DAY_ACCENT = '#166534';        // dense green for text on cream, AA ✓
 export const LP_GREEN = 'hsl(119 99% 46%)'; // kept for hero dark-bg neon glow only
 
 // Mode-aware accent — use this everywhere a highlight/CTA must adapt to the mode.

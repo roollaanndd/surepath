@@ -28,6 +28,7 @@ import { handleInsurersAction } from './actions/insurers.ts';
 import { handleAgentsAction } from './actions/agents.ts';
 import { handleNotificationsAction } from './actions/notifications.ts';
 import { handleAdminAction } from './actions/admin.ts';
+import { handleContactLeadsAction } from './actions/contactLeads.ts';
 import { handleMiscAction } from './actions/misc.ts';
 import { checkRateLimit as sharedCheckRateLimit } from '../_shared/rateLimit.ts';
 import { handleTiersAction } from './actions/tiers.ts';
@@ -58,7 +59,7 @@ const FINANCE_ROLES = ['MASTER_ADMIN', 'ADMIN', 'FINANCE', 'FINANCE_MANAGER', 'F
 
 interface Caller { authId: string; email: string; spUser: Record<string, any> | null; role: string | null; isAdmin: boolean; isFinanceAdmin: boolean; userMetadata: Record<string, any> | null; ownerId: string; ownerIds: string[]; emailConfirmedAt: string | null; }
 
-const PUBLIC_ACTIONS = new Set(['get_insurer_review', 'submit_insurer_decision', 'get_insurer_dashboard', 'insurer_submit_decision_authed', 'insurer_list_payments', 'insurer_upload_policy', 'get_public_quotation', 'confirm_public_quotation']);
+const PUBLIC_ACTIONS = new Set(['submit_contact_lead', 'get_insurer_review', 'submit_insurer_decision', 'get_insurer_dashboard', 'insurer_submit_decision_authed', 'insurer_list_payments', 'insurer_upload_policy', 'get_public_quotation', 'confirm_public_quotation']);
 
 Deno.serve(async (req) => {
   const CORS = corsHeaders(req.headers.get('origin'));
@@ -231,7 +232,7 @@ Deno.serve(async (req) => {
     }
 
     // Build context for modules
-    const ctx: GatewayContext = { db, params, caller, sendTelegram, logActivity, checkRateLimit, RESEND_KEY };
+    const ctx: GatewayContext = { db, params, caller, reqIp, reqUserAgent, sendTelegram, logActivity, checkRateLimit, RESEND_KEY };
 
     // Dispatch to domain modules (first non-null result wins)
     const result: ActionResult | null =
@@ -248,6 +249,7 @@ Deno.serve(async (req) => {
       await handleMarketingAction(action, ctx) ??
       await handleMitraAccountsAction(action, ctx) ??
       await handleDocumentsAction(action, ctx) ??
+      await handleContactLeadsAction(action, ctx) ??
       await handleMiscAction(action, ctx);
 
     if (result) {

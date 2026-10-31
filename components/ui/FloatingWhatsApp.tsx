@@ -11,6 +11,7 @@
 import React, { useState, useEffect } from 'react';
 import { MessageCircle, X } from 'lucide-react';
 import { useHaptic } from './useHaptic';
+import { trackEvent } from '../../src/analytics';
 import { SUREPATH_WHATSAPP } from '../../constants';
 
 export interface FloatingWhatsAppProps {
@@ -38,6 +39,7 @@ export const FloatingWhatsApp: React.FC<FloatingWhatsAppProps> = ({
 
   const handleClick = () => {
     haptic.tap();
+    trackEvent('whatsapp_click', { source_path: typeof window !== 'undefined' ? window.location.pathname : null });
     const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(defaultMessage)}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };

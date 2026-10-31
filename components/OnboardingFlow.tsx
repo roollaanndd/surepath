@@ -274,9 +274,16 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ role, onComplete, lang 
         </section>
 
         <section className={`${direction === 1 ? 'ob-anim-copy-fwd' : 'ob-anim-copy-back'} mx-auto mt-4 flex w-full max-w-[520px] flex-col rounded-[28px] border border-white/90 bg-white/90 px-5 pb-4 pt-5 shadow-[0_18px_50px_-28px_rgba(10,58,38,.24)] backdrop-blur-xl sm:mt-5 sm:rounded-[32px] sm:px-8 sm:pb-6 sm:pt-7`} key={`copy-${step}`}>
-          <div className="mb-3 flex items-center justify-center gap-1.5" aria-label={`${step + 1} / ${slides.length}`}>
+          {/* Titiknya <span> di dalam tombol: carousel ini dirender di dalam
+              shell portal (.sp-modern-app) yang memasang min-height 44px pada
+              setiap button, dan min-height menang atas height, jadi tombol
+              setinggi 6px terbit setinggi 44px dan titiknya jadi batang tegak.
+              Sasaran sentuh tetap 44px; margin negatif menyerap tingginya. */}
+          <div className="-my-4 mb-0 flex items-center justify-center gap-1.5" aria-label={`${step + 1} / ${slides.length}`}>
             {slides.map((_, i) => (
-              <button key={i} type="button" onClick={() => goStep(i)} aria-label={`Go to slide ${i + 1}`} aria-current={i === step ? 'step' : undefined} className="h-1.5 rounded-full transition-all duration-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2" style={{ width: i === step ? 28 : 7, background: i === step ? accent.dot : accent.dotDim }} />
+              <button key={i} type="button" onClick={() => goStep(i)} aria-label={`Go to slide ${i + 1}`} aria-current={i === step ? 'step' : undefined} className="flex h-11 items-center rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2">
+                <span className="block h-1.5 rounded-full transition-all duration-500" style={{ width: i === step ? 28 : 7, background: i === step ? accent.dot : accent.dotDim }} />
+              </button>
             ))}
           </div>
           <h1 className="mb-2 text-center text-[1.45rem] font-extrabold leading-[1.18] tracking-[-.035em] text-[#122c22] sm:text-[1.8rem]">

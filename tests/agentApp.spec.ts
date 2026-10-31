@@ -336,7 +336,14 @@ test.describe('Apps Mitra — UI/UX', () => {
     // Ketukan 1: buka alur kutipan → pilih kartu produk.
     await page.getByText('Buat kutipan', { exact: true }).first().click();
     await expect(page.getByText('pilih produknya', { exact: false })).toBeVisible({ timeout: 10_000 });
-    await page.getByRole('button', { name: /Mobil/ }).click();
+    // Dibatasi ke dalam dialog Pathy. Lokator ini sebelumnya mencari ke
+    // seluruh halaman, dan itu hanya bekerja selama tidak ada apa pun
+    // bertuliskan "Mobil" di beranda di belakang dialog — yang memang hanya
+    // kebetulan: dialognya overlay, berandanya tetap terpasang. Sejak beranda
+    // Mitra punya kartu "Mobil & Motor" (v2.7.35), lokator lama cocok dengan
+    // dua tombol dan gagal karena strict mode. Elemen yang diklik sama.
+    await page.getByRole('dialog', { name: 'Asisten Pathy' })
+      .getByRole('button', { name: /Mobil/ }).click();
 
     // Ketukan 2: kartu foto STNK dengan tombol kamera nyata.
     await expect(page.getByText('Ketuk 2: foto STNK', { exact: false })).toBeVisible({ timeout: 10_000 });

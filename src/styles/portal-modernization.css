@@ -1320,6 +1320,23 @@ html.dark .sp-modern-app {
 .sp-modern-app .sp-bottom-nav button[aria-current="page"] > span:first-child:not(:only-child) {
   background: linear-gradient(90deg, #F97316, #FDBA74);
 }
+/* Varian super app (v2.7.35): tab aktif ditandai lingkaran hijau penuh berisi
+   ikonnya. Dua aturan di atas ditulis untuk varian `raised`, yang anak
+   pertamanya adalah batang penanda tipis — di varian `flat` anak pertama itu
+   adalah lingkaran ikon, sehingga gradasi jingga penanda tadi mengecat
+   lingkarannya. Keduanya dikembalikan ke token di sini. */
+.sp-modern-app .sp-bottom-nav[data-nav-variant="flat"] button[aria-current="page"] {
+  background: transparent;
+}
+.sp-modern-app .sp-bottom-nav[data-nav-variant="flat"] button[aria-current="page"] > span:first-child:not(:only-child) {
+  background: var(--ds-primary-tint);
+  box-shadow: 0 0 0 2px var(--ds-primary-text), 0 8px 18px -8px rgba(0, 193, 106, .55);
+}
+html.dark .sp-modern-app .sp-bottom-nav[data-nav-variant="flat"] button[aria-current="page"] > span:first-child:not(:only-child) {
+  background: var(--ds-primary-tint);
+  box-shadow: 0 0 0 2px var(--ds-primary-text), 0 8px 18px -8px rgba(0, 224, 122, .4);
+}
+
 .sp-modern-app .sp-bottom-nav button:focus-visible {
   outline: 2px solid #059669;
   outline-offset: 3px;

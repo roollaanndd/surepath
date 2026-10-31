@@ -1,6 +1,6 @@
 # SurePath — Changelog
 
-## v2.7.22 — 2026-10-31
+## v2.7.24 — 2026-10-31
 
 ### Admin Portal 2.0 — modul Keuangan ke primitif bersama
 
@@ -23,6 +23,29 @@
   dan rute `admin_update_commission` tidak disentuh.
 - Terverifikasi: `tsc --noEmit` bersih, ESLint bersih (file yang diubah),
   `npm run build` sukses, `vitest run` tidak regresi dari baseline.
+
+## v2.7.23 — 2026-10-31
+
+### Ikon navigasi — set illustrative jadi default di semua portal
+
+- Roland minta ikon navigasi di seluruh aplikasi (bukan hanya admin)
+  diganti ke gaya yang lebih bagus dan illustrative. `PathyNavIcon`
+  (dipakai bersama Customer/Agent/Operator/Insurer/Admin) sudah punya dua
+  set ikon siap pakai — `SurePathIcon` (gaya "studio", flat+kotak rounded)
+  dan `SurePathIllustrationIcon` (gaya "illustrative", lebih playful) —
+  jadi diganti **default aplikasi**-nya ke `illustrative`, bukan menulis
+  ulang 29+ ikon dari nol. Admin tetap bisa override per-ikon ke
+  studio/orbit/bold lewat halaman Icon Manager yang sudah ada.
+- `SurePathIllustrationIcon.tsx`: menambah 9 kategori ilustrasi baru
+  (bank/insurer/b2b, library/catalog, review/approval, tier, icon-manager/
+  palette, network/referral, renewal, chart/analytics, box/produk) yang
+  sebelumnya hanya ada di set "studio" — supaya id-id itu (termasuk
+  banyak menu khusus admin) tidak jatuh ke ikon generik "spark" begitu
+  illustrative jadi default. Juga memperbaiki `ojk_rates` yang salah
+  kena regex "rate" → ikon mobil; sekarang benar ke ikon proteksi.
+- Terverifikasi: `tsc --noEmit` bersih, ESLint bersih, `npm run build`
+  sukses, 459/459 unit test lolos (tidak ada test ikon sebelumnya, tidak
+  ada yang baru ditambahkan — murni SVG + pemilihan kategori).
 
 ## v2.7.21 — 2026-10-31
 

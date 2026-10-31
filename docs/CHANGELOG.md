@@ -1,5 +1,58 @@
 # SurePath — Changelog
 
+## v2.7.35 — 2026-10-31
+
+### Beranda Mitra dibangun ulang dalam bahasa super app
+
+Roland memberi satu tangkapan layar super app sebagai acuan dan minta app
+Mitra dibentuk seperti itu: tata letak, ikon, navigasi, header, submenu.
+Lima bagian acuan dipetakan ke produk ini, bukan disalin — tidak ada aset,
+warna, atau merek dari gambar acuan yang ikut, dan seluruh nilai berasal
+dari token `--ds-*` yang sudah ada.
+
+| Acuan | Di SurePath |
+|---|---|
+| pita sapaan bergradasi | `shared/superapp/SuperAppHeader.tsx` — sapaan menurut jam, kode mitra, lencana tier, bel, tema, avatar |
+| kartu "Balance" + 4 aksi | `shared/superapp/ProtectionSummaryCard.tsx` — saldo dompet komisi asli dari `sp_agent_wallets`, lalu Tarik Dana / Komisi / Quotation / Peringkat |
+| grid layanan 2×4 | `shared/superapp/ServiceGrid.tsx` — delapan tujuan "Fitur Mitra" yang sama persis, plus baris "Lainnya" |
+| rail konten mendatar | `shared/superapp/ContentRail.tsx` — "Produk untuk Dijual" |
+| nav 5 tab rata | `PortalTabBar` varian baru `flat` |
+
+**Tidak ada tujuan, alat, atau angka yang hilang.** Banner draf penawaran,
+PromoBanner, kedelapan tujuan Fitur Mitra, keempat Lainnya, GWP & konversi,
+pelatih Pathy, RenewalAlerts, dan daftar komisi terbaru semuanya tetap ada.
+Logic bisnis, login, dan jalur uang tidak disentuh: saldo hanya dibaca
+(`getMyWallet`), tidak pernah ditulis dari klien.
+
+### Perubahan perilaku yang perlu disadari
+
+- **Tombol tengah "Buat" tidak lagi menonjol.** Acuan memakai lima tab
+  sederajat, jadi `PortalTabBar` mendapat varian `flat`: tab aktif ditandai
+  lingkaran terisi, bukan tonjolan. Tujuan dan urutan tab tidak berubah.
+  Pathy tetap punya tombol mengambang sendiri, seperti sebelumnya.
+- **Beranda tidak lagi memakai `PortalHeader` yang menempel di atas layar**,
+  karena membawa pita sapaannya sendiri yang ikut menggulung. Layar lain
+  tetap memakainya. Bel, tema, dan avatar ada di kedua bentuk.
+- Lingkaran tab aktif memakai tint + cincin hijau, bukan hijau pekat seperti
+  acuan: ikon navigasi SurePath adalah ilustrasi berwarna, dan isian mint
+  serta pale-nya hampir hilang di atas `#00C16A` pekat.
+
+### Dua cacat lama yang ikut terbetulkan
+
+- `AgentIcons.tsx` diam-diam membuang prop `style`, sehingga setiap pemanggil
+  yang mewarnai ikon mitra lewat `style={{ color }}` mendapat tinta warisan.
+  `shared/duotone.tsx`, kembarannya, selalu meneruskannya.
+- `CircularActionGrid` menyusun tint-nya dengan menyambung alpha heksadesimal
+  (`${color}1F`), jadi sebuah token desain (`var(--ds-primary)`) menghasilkan
+  warna tidak sah dan petaknya kehilangan latar. Sekarang memakai
+  `color-mix`, sehingga token bekerja.
+
+### Verifikasi
+
+`tsc --noEmit` bersih, ESLint bersih (satu peringatan lama tidak terkait),
+459 unit test lulus, `npm run build` hijau, dan layarnya dilihat sendiri di
+Chromium 390×844 pada mode terang dan gelap.
+
 ## v2.7.34 — 2026-10-31
 
 ### Login & register screen (`AuthGate.tsx`) — redesign lebih premium & ramah

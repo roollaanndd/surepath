@@ -13,10 +13,18 @@ export interface AgentIconProps {
   className?: string;
   /** duotone tint fill behind the stroke; defaults to soft emerald */
   tint?: string;
+  /**
+   * Inline style — callers colour the glyph with `color`, because every
+   * stroke here is `currentColor`. The frame below used to drop this prop,
+   * so `style={{ color }}` was silently ignored and the icon fell back to
+   * whatever ink it inherited. `shared/duotone.tsx`, the twin of this set,
+   * has always forwarded it.
+   */
+  style?: React.CSSProperties;
 }
 
-const S: React.FC<AgentIconProps & { children: React.ReactNode }> = ({ size = 24, className = '', children }) => (
-  <svg viewBox="0 0 48 48" width={size} height={size} fill="none" className={className}
+const S: React.FC<AgentIconProps & { children: React.ReactNode }> = ({ size = 24, className = '', style, children }) => (
+  <svg viewBox="0 0 48 48" width={size} height={size} fill="none" className={className} style={style}
     stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
     {children}
   </svg>

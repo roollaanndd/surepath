@@ -29,15 +29,25 @@ export interface PortalTabBarProps {
   lockedIds?: string[];
   /** Keterangan singkat untuk tab terkunci, mis. "menunggu verifikasi". */
   lockedHint?: string;
+  /**
+   * Bentuk bar. `raised` (bawaan) = empat tab dengan satu tombol tengah yang
+   * menonjol, bentuk yang dipakai lima portal sejak v2.3.0. `flat` = lima tab
+   * sederajat dengan tab aktif berupa lingkaran hijau pekat — bahasa navigasi
+   * super app yang dipakai portal Nasabah sejak v2.7.35. Tab bertanda `center`
+   * kehilangan tonjolannya di mode `flat`; letakkan aksinya di tombol
+   * mengambang (FAB) bila ia memang sebuah aksi, bukan halaman.
+   */
+  variant?: 'raised' | 'flat';
 }
 
 const GREEN_GRADIENT = 'linear-gradient(135deg, #00C16A, #047857)';
 const FOCUS_RING = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green focus-visible:ring-offset-2 focus-visible:ring-offset-ds-card';
 
-const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect, modernIcons = false, lockedIds, lockedHint }) => (
+const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect, modernIcons = false, lockedIds, lockedHint, variant = 'raised' }) => (
   <nav
     aria-label="Navigasi utama"
     className="fixed inset-x-4 z-50 sp-glass-strong sp-bottom-nav rounded-[2rem]"
+    data-nav-variant={variant}
     style={{
       bottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.25rem)',
       boxShadow: '0 18px 40px -16px rgba(11,17,32,0.4)',
@@ -46,6 +56,7 @@ const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect, m
     <div className="flex items-end justify-around px-2 pt-2 pb-2">
       {tabs.map(({ id, label, Icon, center, overlay, glyph }) => {
         const active = !overlay && activeId === id;
+        const raisedCentre = center && variant === 'raised';
         const locked = !!lockedIds?.includes(id);
         const ariaLabel = locked && lockedHint ? `${label} — ${lockedHint}` : label;
         const LockBadge = locked ? (
@@ -55,7 +66,7 @@ const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect, m
           </span>
         ) : null;
 
-        if (center) {
+        if (raisedCentre) {
           return (
             <button
               key={id}
@@ -77,6 +88,49 @@ const PortalTabBar: React.FC<PortalTabBarProps> = ({ tabs, activeId, onSelect, m
                 <ManagedPortalIcon id={id} glyph={glyph} size={34} imageClassName="w-[34px] h-[34px] object-contain" fallback={<PathyNavIcon id={id} size={34} active={active} />} />
               </span>
               <span className={`text-2xs font-black uppercase tracking-wide leading-none ${active ? 'text-ds-green' : 'text-ds-ink3'}`}>
+                {label}
+              </span>
+              {LockBadge}
+            </button>
+          );
+        }
+
+        if (variant === 'flat') {
+          // Bahasa super app: lima tab sederajat, yang aktif ditandai lingkaran
+          // penuh berisi ikonnya. Lingkaran itu adalah penanda BENTUK, bukan
+          // sekadar warna, jadi tab aktif tetap terbaca oleh mata yang sulit
+          // membedakan warna — syarat yang sama yang dipenuhi batang hijau di
+          // varian `raised`.
+          //
+          // Isinya tint + cincin hijau, bukan hijau pekat seperti di acuan.
+          // Sebabnya: ikon navigasi SurePath adalah ilustrasi berwarna (mint,
+          // lime, tinta gelap) yang dipilih otomatis oleh ManagedPortalIcon,
+          // bukan glif satu warna seperti pada acuan. Di atas #00C16A pekat,
+          // isian mint dan pale-nya hampir hilang. Tint menjaga ikon tetap
+          // terbaca sambil mempertahankan isyarat "lingkaran terisi" yang sama.
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => onSelect(id)}
+              aria-label={ariaLabel}
+              aria-current={active ? 'page' : undefined}
+              className={`relative flex flex-1 flex-col items-center gap-1 px-0.5 py-1 rounded-2xl transition-all duration-300 ease-out active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 min-w-[48px] min-h-[52px] justify-center ${FOCUS_RING}`}
+            >
+              <span
+                aria-hidden="true"
+                className={`flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 ease-out motion-reduce:transition-none ${active ? 'bg-ds-green-tint text-ds-green ring-2 ring-ds-green scale-105' : 'text-ds-ink3'}`}
+                style={active ? undefined : { ['--ic-tint' as string]: 'rgba(120,130,125,0.12)' }}
+              >
+                <ManagedPortalIcon
+                  id={id}
+                  glyph={glyph}
+                  size={22}
+                  imageClassName="w-[22px] h-[22px] object-contain"
+                  fallback={modernIcons ? <Icon size={22} strokeWidth={active ? 2.6 : 1.9} /> : <PathyNavIcon id={id} size={26} active={active} />}
+                />
+              </span>
+              <span className={`text-2xs font-black tracking-tight leading-none transition-colors ${active ? 'text-ds-green' : 'text-ds-ink3'}`}>
                 {label}
               </span>
               {LockBadge}

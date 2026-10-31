@@ -1,5 +1,57 @@
 # SurePath — Changelog
 
+## v2.7.27 — 2026-10-31
+
+### Ilustrasi empty-state SurePath di modul Admin
+
+- Roland memberikan 12 ilustrasi SVG empty-state siap pakai (polis,
+  klaim, penawaran, dompet, klien, antrean operator, notifikasi,
+  pencarian, dokumen, rewards, sukses terverifikasi, offline) plus
+  komponen wrapper `SpEmptyState`, memakai palet ALTITUDE yang sama.
+  Disimpan verbatim di `components/shared/SpEmptyState.tsx`.
+- `AdminEmptyState` (`components/admin/adminUI.tsx`) kini punya prop
+  opsional `illustration` (varian `SpEmptyStateVariant`) yang
+  menggantikan ikon Lucide generik dengan ilustrasi bersangkutan;
+  pemanggil lama yang masih memakai `icon` tetap berjalan tanpa ubah.
+- Empat lokasi empty-state hasil migrasi (markup polos sebelumnya
+  diganti primitive bersama, logika data tidak disentuh):
+  `PolicyOrdersAdmin.tsx` ("Tidak ada order ditemukan" → `policies`),
+  `AdminViews.tsx` klaim ("No claims found" → `claims`) dan penarikan
+  ("Tidak ada data" → `wallet`), `CommissionLedger.tsx` ("Tidak ada
+  data komisi" → `wallet`).
+
+## v2.7.26 — 2026-10-31
+
+### Icon Manager — gaya "Brand" dari ilustrasi kustom roland
+
+- Roland memberikan 20 komponen ilustrasi SVG siap pakai (brand shield,
+  7 kategori produk asuransi, climate shield, STNK/KTP OCR scanner, AI
+  vehicle audit, instant quote, fast claim tracker, wallet & komisi,
+  verified security, plus 6 ikon per-portal Admin/Agent/Customer/
+  Operator/Insurer/B2B), dipakai palet ALTITUDE yang sama
+  (`#076653`/`#06231D`/`#0C342C`/`#E3EF26`/`#E2FBCE`/`#FFFDEE`/`#FF6B2C`).
+  Disimpan verbatim di `components/shared/SurePathBrandIcon.tsx`.
+- Icon Manager (`components/admin/PortalIconManager.tsx`) kini punya gaya
+  ke-5, **"Brand"**, di samping Studio/Orbit/Bold/Illustrative. Dipilih
+  per-ikon seperti gaya lain (`setPortalIconStyle`,
+  `PortalIconStyleMap` di `services/portalIcons.ts` diperluas dengan
+  `'brand'`).
+- `SurePathBrandIcon` memetakan id Icon Manager yang cocok secara makna
+  ke ilustrasi bersangkutan (`car_protection`→mobil, `travel_safe`→
+  perjalanan, `personal_safety`, `item_shield`, `family_health`,
+  `quotes`→instant quote, `claims`/`claims_admin`→fast claim,
+  `commission`/`commission_ledger`/`withdraw`/`withdrawals`→wallet,
+  `security`→verified security, `documents`→STNK/KTP OCR,
+  `vehicle_pricelist`→AI vehicle audit); id lain jatuh ke ilustrasi
+  shield brand generik. `PathyNavIcon` dan `ManagedPortalIcon` (dua
+  tempat lain yang membaca `PortalIconStyleMap`) diperbarui agar gaya
+  "Brand" juga tampil benar di navigasi portal, bukan hanya di Icon
+  Manager. Enam ikon per-portal (`PORTAL_BRAND_ICONS`) diekspor untuk
+  dipakai nanti di halaman pemilihan portal/app.
+- Terverifikasi: `tsc --noEmit` bersih, ESLint bersih, `npm run build`
+  sukses, 459/459 unit test lolos (tidak ada test baru — ikon statis +
+  satu opsi gaya baru, tidak ada logika bisnis yang diubah).
+
 ## v2.7.25 — 2026-10-31
 
 ### Admin Portal 2.0 — modul Keuangan ke primitif bersama

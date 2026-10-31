@@ -1998,7 +1998,9 @@ export const ClaimsAdminView = () => {
           <div className="w-10 h-10 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
         </div>
       ) : visible.length === 0 ? (
-        <Card className="text-center py-12 text-ds-ink3 text-sm font-bold">No claims found.</Card>
+        <Card className="py-4">
+          <AdminEmptyState illustration="claims" title="Tidak Ada Klaim" hint="Belum ada klaim yang cocok dengan filter saat ini." />
+        </Card>
       ) : (
         <div className="space-y-3">
           {visible.map(claim => {
@@ -2837,7 +2839,9 @@ export const WithdrawalsAdminView: React.FC = () => {
       {/* Table */}
       <div className="space-y-3">
         {loading && <div className="text-center py-8 text-ds-ink3 text-sm">Memuat...</div>}
-        {!loading && filtered.length === 0 && <div className="text-center py-8 text-ds-ink3 text-sm">Tidak ada data</div>}
+        {!loading && filtered.length === 0 && (
+          <AdminEmptyState illustration="wallet" title="Tidak Ada Penarikan" hint="Belum ada permintaan penarikan dana yang cocok dengan filter saat ini." />
+        )}
         {filtered.map(wd => {
           const { cls, label } = statusBadge(wd.status);
           const busy = actionLoading === wd.id;

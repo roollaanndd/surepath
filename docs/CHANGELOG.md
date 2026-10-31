@@ -1,5 +1,32 @@
 # SurePath — Changelog
 
+## v2.7.33 — 2026-10-31
+
+### Admin Portal 2.0 — CommandDashboard (MASTER_ADMIN) dibangun ulang
+
+- Roland login sebagai `MASTER_ADMIN` dan diarahkan ke workspace `command`
+  (`getAdminWorkspace()`), bukan `AdminDashboard.tsx` yang sudah dirombak di
+  PR #332 — layar itu masih versi lama (4 KPI generik + tombol tanpa aksi,
+  tanpa transisi). Ini perbaikan prioritas tertinggi: dirombak sekarang.
+- `components/admin/workspaces/command/CommandDashboard.tsx` memakai bahasa
+  visual yang sama dengan `AdminDashboard.tsx` (hero editorial ALTITUDE,
+  sparkline & grafik area/pie recharts, stagger transition `sp-stagger-cards`,
+  `animate-fade-in`) tapi dari sudut pandang pemilik platform: tren premi 6
+  bulan, keputusan berisiko tertunda (pesanan + penarikan), Mitra Terbaik,
+  Antrean Prioritas, dan panel baru **Kesehatan & Keamanan Platform** (sesi
+  aktif, login gagal 24 jam, pengguna online per peran) — bukan duplikat
+  dashboard admin biasa.
+- Data 100% nyata, tidak ada metrik karangan: `getAdminStats()`,
+  `getAllOrders()`, `getAllClaims()`, `getAdminWithdrawals()`,
+  `getTierChangeRequests()`, `getAdminNotifications()`, `getOnlineUsers()`,
+  `getSecurityStats()` (semua sudah ada di `services/`), dihitung lewat
+  `buildDashboardModel()`/`groupProducts()` (`dashboardData.ts`) yang sama
+  dipakai `AdminDashboard.tsx`. Kontrak props komponen (`userRole`,
+  `currentUser`, `onLogout`) dan pemakaiannya di `AdminPortal.tsx` tidak
+  diubah. Tetap light-only (`design.md §4`) — tidak ada varian dark.
+- Terverifikasi: `tsc --noEmit` bersih, ESLint bersih, `npm run build`
+  sukses, **459/459 unit test lolos** (tidak ada regresi).
+
 ## v2.7.32 — 2026-10-31
 
 ### Admin Portal 2.0 — langkah 3: motion & micro-interaction pass

@@ -10,24 +10,17 @@ import type { SpAgentTier } from '../../services/dbTypes';
    owns the money card, exactly where the member looks for it.
 
    Colour is tier-driven (owner logic: tier membedakan warna kartu):
-   - STANDARD / starting tier / unknown tier is the **corporate green**, not
-     graphite. It used to be charcoal #10131A→#3A4150, which is what the owner
-     asked to be taken out on 1 Nov 2026: a partner with no tier yet is not a
-     metal, so the card shows the brand instead of a grey that means nothing.
-     A custom tier carrying its own DB colour keeps this base and uses that
-     colour as the accent (ring, glow, chip ink).
-   - The metal tiers (SILVER, PLATINUM, DIAMOND, BRONZE) keep their metal
-     identity: that greyness is the tier, not a styling accident.
+   - Graphite ("abu-abu metalik") = STANDARD / starting tier / unknown tier;
+     a custom tier that carries its own DB colour keeps graphite as base and
+     uses that colour as the accent (ring, glow, chip ink).
    - GOLD keeps the original emerald + gold look — it is the template every
      other tier palette was derived from.
-
-   The `band` field is gone (v2.7.40). It coloured the Beranda hero band, and
-   the super-app rebuild in v2.7.39 replaced that band with SuperAppHeader, so
-   nothing read it any more.
    Purely presentational. */
 
 export interface TierPalette {
   key: string;
+  /** Hero band gradient (owner request: hero follows the card colour). */
+  band: string;
   /** Partner-card gradient. */
   card: string;
   /** Soft glow orb inside the card. */
@@ -42,6 +35,10 @@ export interface TierPalette {
 
 const GOLD: TierPalette = {
   key: 'GOLD',
+  /* #00B268 put white small text at 2.8:1 — the worst band in the set, on the
+   * tier partners work hardest to reach. Darkened to 5.8:1; the card, glow and
+   * money gradients below are untouched, so Gold still reads as Gold. */
+  band: 'linear-gradient(165deg, #007543 0%, #00583A 100%)',
   card: 'linear-gradient(120deg, #0B1120 0%, #0E3B2E 52%, #0B5E3B 100%)',
   glow: 'rgba(0,193,106,0.22)',
   progress: '#00C16A',
@@ -51,6 +48,7 @@ const GOLD: TierPalette = {
 
 const SILVER: TierPalette = {
   key: 'SILVER',
+  band: 'linear-gradient(165deg, #5A6675 0%, #262D3A 100%)',
   card: 'linear-gradient(120deg, #0B0F16 0%, #2A3442 52%, #566475 100%)',
   glow: 'rgba(203,213,225,0.20)',
   progress: '#CBD5E1',
@@ -60,6 +58,8 @@ const SILVER: TierPalette = {
 
 const PLATINUM: TierPalette = {
   key: 'PLATINUM',
+  /* #3D8FB0 sat at 3.7:1 for white small text; darkened to 5.7:1. */
+  band: 'linear-gradient(165deg, #2B6E8C 0%, #123049 100%)',
   card: 'linear-gradient(120deg, #0A1220 0%, #123A52 52%, #1E6E8E 100%)',
   glow: 'rgba(125,211,252,0.22)',
   progress: '#7DD3FC',
@@ -69,6 +69,7 @@ const PLATINUM: TierPalette = {
 
 const DIAMOND: TierPalette = {
   key: 'DIAMOND',
+  band: 'linear-gradient(165deg, #0E7490 0%, #101B4A 100%)',
   card: 'linear-gradient(120deg, #05091E 0%, #101B4A 52%, #155E75 100%)',
   glow: 'rgba(34,211,238,0.20)',
   progress: '#22D3EE',
@@ -78,6 +79,7 @@ const DIAMOND: TierPalette = {
 
 const BRONZE: TierPalette = {
   key: 'BRONZE',
+  band: 'linear-gradient(165deg, #A5612B 0%, #3E2210 100%)',
   card: 'linear-gradient(120deg, #140B04 0%, #4A2410 52%, #7A3A12 100%)',
   glow: 'rgba(217,119,6,0.22)',
   progress: '#E08A3C',
@@ -85,17 +87,26 @@ const BRONZE: TierPalette = {
   chip: '#C2410C',
 };
 
+/* STANDARD is not a tier identity — it is "no tier yet", which is what most
+ * partners are. Its band used to be graphite (#46505F → #23272E), so the
+ * default partner's Beranda opened on a flat black slab directly above the
+ * green promo card. The metal tiers below keep their own colour because that
+ * colour means something; this one only ever meant "nothing earned yet", so it
+ * now carries the brand instead. The card gradient is unchanged — the Partner
+ * Card still reads as the neutral starting tier. */
 const STANDARD: TierPalette = {
   key: 'STANDARD',
-  // Tier bawaan bukan logam, jadi ia tidak mewarisi abu-abu seperti SILVER
-  // atau PLATINUM: ia memakai hijau korporat. Sebelumnya arang
-  // `#10131A → #3A4150`, yang membuat mitra tanpa tier melihat kartu hitam
-  // polos — persis yang diminta roland dihilangkan (1 Nov 2026).
-  card: 'linear-gradient(120deg, #06231D 0%, #0C342C 52%, #076653 100%)',
-  glow: 'rgba(0,193,106,0.22)',
-  progress: '#00C16A',
-  money: 'linear-gradient(160deg, #FFFDEE 10%, #E2FBCE 55%, #E3EF26 100%)',
-  chip: '#047857',
+  /* Stops are chosen for contrast, not just for looks: the lightest one
+   * (#0A7049, rel. luminance .121) keeps plain white small text at 6.1:1, and
+   * the greeting/agent-code lines — which render at reduced opacity — still
+   * clear 4.5:1 against it. An earlier, prettier #0E8F5B sat at 4.1:1 and
+   * would have made this band LESS readable than the graphite it replaced. */
+  band: 'linear-gradient(165deg, #0A7049 0%, #05553A 54%, #033626 100%)',
+  card: 'linear-gradient(120deg, #10131A 0%, #23272E 52%, #3A4150 100%)',
+  glow: 'rgba(0,224,122,0.26)',
+  progress: '#9CA3AF',
+  money: 'linear-gradient(160deg, #F8FAFC 10%, #CBD5E1 55%, #94A3B8 100%)',
+  chip: '#475569',
 };
 
 /** The default-tier graphite swatch in `sp_agent_tiers.color` (#6b7280) is
@@ -113,7 +124,7 @@ const hexToRgba = (hex: string, alpha: number): string => {
 
 /** Keyword match first (tier codes are free-form rows in sp_agent_tiers), so a
  *  row literally named "Digital Gold" reads GOLD even without rank metadata.
- *  A tier flagged is_default is the STANDARD member tier: corporate green. */
+ *  A tier flagged is_default is the STANDARD member tier and always graphite. */
 const KEYWORD_PALETTES: [needle: string, palette: TierPalette][] = [
   ['GOLD', GOLD], ['EMERALD', GOLD],
   ['SILVER', SILVER],
@@ -137,12 +148,17 @@ export function resolveTierPalette(tier?: SpAgentTier | null): TierPalette {
 }
 
 function standardWith(color: string): TierPalette {
+  const hex = color.startsWith('#') ? color : `#${color}`;
+  // `band` sengaja tetap hijau merek: puncaknya memuat teks putih, dan warna
+  // tier kustom di produksi (ELITE ungu, STAR kuning) tidak lolos kontras
+  // sebagai latar teks. Identitas tier dibawa `chip`/`progress`, dan di
+  // Beranda juga oleh cahaya aksen pada AgentHeroBackdrop.
   return {
     ...STANDARD,
     key: 'CUSTOM',
-    progress: color,
-    glow: hexToRgba(color, 0.22),
-    chip: color,
+    progress: hex,
+    glow: hexToRgba(hex, 0.22),
+    chip: hex,
   };
 }
 

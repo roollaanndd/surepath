@@ -1,6 +1,6 @@
 # SurePath — Changelog
 
-## v2.7.40 — 2026-11-01
+## v2.7.43 — 2026-11-01
 
 ### Pita sapaan Mitra: hijau korporat dengan latar bergambar
 
@@ -27,25 +27,27 @@ menghapus pita itu dari Beranda; rilis ini mengerjakan sisanya.
   dari token hijau yang sudah ada — bukan lapisan `--ds-admin-*`, yang
   sengaja dibatasi untuk CMS admin yang tidak punya mode gelap. Teks putih di
   atas `#003B2F` terukur 14,8:1. Avatar dan lencana tier ikut menyesuaikan.
-- **Kartu tier `STANDARD` tidak lagi arang.** `#10131A → #3A4150` diganti
-  `#06231D → #0C342C → #076653`. Tier bawaan bukan logam, jadi ia tidak
-  mewarisi abu-abu seperti SILVER atau PLATINUM; keempat tier logam itu
-  **tidak diubah**, karena keabuannya memang identitas tiernya.
-- Field `band` pada `TierPalette` dihapus: sejak v2.7.39 tidak ada yang
-  membacanya lagi.
+
+`AgentPartnerCard.tsx` **tidak disentuh** di rilis ini. v2.7.41 dari thread
+lain sudah menghijaukan `TierPalette.band` dan sengaja membiarkan `card`
+tetap arang; mengubahnya lagi dari sini hanya akan saling menimpa. Satu
+catatan untuk nanti: sejak v2.7.39 **tidak ada kode produk yang membaca
+`band`** — satu-satunya pembacanya adalah tes kontras di
+`services/__tests__/agentHomeHero.test.tsx`, jadi penghijauan itu tidak
+terlihat di layar mana pun. Kartu tier `STANDARD` di layar Profil juga masih
+arang `#10131A → #3A4150`, menunggu keputusan pemilik.
 
 ### Tes pengunci
 
-`services/__tests__/superAppBackdrop.test.tsx` (baru, 8 tes): tidak ada URL
+`services/__tests__/superAppBackdrop.test.tsx` (baru, 5 tes): tidak ada URL
 jauh, `<img>`, atau `url()` non-fragment di latarnya; pemetaan jam ke empat
-adegan; keempat adegan benar-benar merender markup yang berbeda, bukan beda
-di konfigurasi saja; bintang hanya muncul malam hari; latarnya `aria-hidden`;
-tier `STANDARD` tidak lagi memuat stop arang; tier logam tidak ikut berubah;
-dan `band` benar-benar hilang dari palet.
+adegan di setiap batasnya; keempat adegan benar-benar merender markup yang
+berbeda, bukan beda di konfigurasi saja; bintang hanya muncul malam hari;
+dan latarnya `aria-hidden`.
 
 ### Verifikasi
 
-`tsc --noEmit` bersih, ESLint 0 error, 477 unit test lulus, `npm run
+`tsc --noEmit` bersih, ESLint 0 error, seluruh unit test lulus, `npm run
 build` hijau. Keempat variasi waktu dan mode gelap **dilihat sendiri** di
 Chromium 414px lewat harness sementara yang dihapus sebelum commit. Dua
 komposisi sebelumnya dibuang setelah dilihat: cakram lime pekat di kanan atas
@@ -53,6 +55,90 @@ bertabrakan dengan tombol bel dan avatar, dan terbaca sebagai tombol bundar
 ketiga.
 
 ## v2.7.39 — 2026-11-01
+## v2.7.42 — 2026-11-01
+
+Fase 1 pemisahan paket unduhan per role (`docs/APP_SEPARATION_PLAN.md`) — nol
+perubahan kode komponen: semua flavor membangun bundle web (`dist`) dan sumber
+Java yang sama persis, hanya identitas paket yang berbeda.
+
+### Android: Gradle flavors per role
+`flavorDimensions "app"` dengan `base / nasabah / mitra / operator / admin`.
+`base` mempertahankan `applicationId` `com.myinsurepath.os` dan perilaku rilis
+hari ini; flavor role hanya menambah `applicationIdSuffix` (`.nasabah`, `.mitra`,
+`.operator`, `.admin`) sehingga tiap role punya simpul paket Play Store sendiri
+dan bisa terpasang berdampingan. Label per flavor lewat override
+`src/<flavor>/res/values/strings.xml` (SurePath Nasabah/Mitra/Operator/Admin).
+`custom_url_scheme` / `package_name` sengaja **tidak** dioverride — deep-link
+pembayaran/OAuth tetap menuju `com.myinsurepath.os` di semua paket.
+
+### Vercel: alias path per role (redirect 302)
+`/nasabah → /custapp`, `/mitra → /agapps`, `/operator → /operatorapp` beserta
+sub-path-nya. Labelink berbentuk **redirect**, bukan rewrite — SPA membaca
+`window.location.pathname`, jadi router tetap melihat jalur asli yang sudah ada
+(`/custapp` dst. tidak berubah). `/admin` tak perlu alias (jalurnya sudah itu).
+
+### CI Android flavor-aware
+`android-native-build.yml` kini membangun `assembleBaseRelease
+bundleBaseRelease` (artefak `app-base-release.apk/aab`) plus build **debug**
+murah keempat flavor role — pecah di resource flavor mana pun tetap menggagalkan
+workflow, tanpa menaikkan biaya build signifikan.
+
+Versi: `src/version.ts` 2.7.42 · android `versionName "2.7.42"` / `versionCode 54`
+(sinkron via `scripts/sync-android-version.mjs`).
+
+## v2.7.41 — 2026-11-01
+
+Integrasi PR App Mitra (`project-thread-vdfjye`): kode produk order yang salah
+sejak awal, biaya kirim yang dulu cuma tampil tanpa ikut ditagih, banner promo
+berslide dengan kesenian sendiri, dan layar pendaftaran berilustrasi.
+
+### Kode produk order kendaraan — diperbaiki + tes penjaga
+`productInfo()` merangkai `MRKB${typeCode}` dengan `typeCode = 'B5'`… begitu
+seterusnya sampai `MRKBB4-COMP`, yang tidak ada di `sp_product_configs` —
+plafon diskon & tarif komisi CMS tak tersambung. Kini memakai `MRKB4-COMP`
+(MRKB + angka, tanpa huruf B dobel) dan `MRKB2-COMP` untuk roda dua.
+`services/__tests__/agentVehicleProductCode.test.ts` mengunci dua kode itu.
+
+### Biaya kirim polis ikut ditagih & tersimpan
+Pilihan `DIGITAL / POS_STANDARD / POS_OVERNIGHT` beserta region dulu hanya
+digambar di step 6b — fee-nya tidak pernah masuk `total_premium` dan tidak
+dikirim ke server. Sekarang: kolom `delivery_method`, `delivery_region`,
+`delivery_fee` masuk payload order, divalidasi nama kolom di edge action
+(create_policy_order), sistem penjumlahan premi memasukkan fee, dan skema
+terkunci lewat migrasi `20261101100000_delivery_fields_policy_orders.sql`.
+
+### Beranda Mitra: banner promo berslide bergambar
+`AgentPromoBanner` diganti banner bertema kartu besar per slide:
+kesenian vektor sendiri (`AgentPromoArt`, keyframes animasi slide), kontrol
+geser sendiri, sumber slide dari CMS (`fetchWebsiteSection`) dengan slide
+bawaan sebagai fallback — logo tidak hilang bila CMS kosong. Seluruh slide
+adalah tombol 44px-target wajib WCAG.
+
+### Layar pendaftaran Mitra berilustrasi
+`AgentOnboarding` didesain ulang: font Sora, kartu input border kontras,
+keyframes masuk-langkah sadar `prefers-reduced-motion`, dan panel ilustrasi
+`PromoArtSignup` dari set `AgentPromoArt`.
+
+### Beranda Mitra tetap super app, pita tier tetap v2.7.40
+Redesign "pita hero" dari thread ini dibuat sebelum beranda super app
+(v2.7.39) — tidak dipasangkan; arah band tetap versi ter-shipped v2.7.40
+(pita STANDARD hijau brand 6,1:1). `standardWith()` kini menormalisasi warna
+tier kustom DB (chip/progress/glow ikut warna tier, band tetap hijau merek).
+
+## v2.7.40 — 2026-11-01
+
+Pita tier `AgentPartnerCard`: perbaikan kontras WCAG AA pada tiga tier.
+
+### Perbaikan kontras pita tier
+
+- **STANDARD** — gradien grafit `#46505F → #23272E` diganti hijau brand
+  `#0A7049 → #05553A → #033626`. Kontras teks putih kecil naik dari ~4 kali
+  (mendekati batas) ke 6,1:1. STANDARD.card tidak diubah supaya identitas
+  tier awal tetap netral.
+- **Gold** — `#00B268` diganti `#007543`: 2,8:1 → 5,8:1.
+- **Platinum** — `#3D8FB0` diganti `#2B6E8C`: 3,7:1 → 5,7:1.
+- `services/__tests__/agentHomeHero.test.tsx` baru: mengunci **setiap** pita
+  tier ke ≥ 4,5:1, termasuk kasus dua baris teks di opacity 90%.
 
 ### Beranda Mitra dibangun ulang dalam bahasa super app
 
@@ -115,7 +201,6 @@ Logic bisnis, login, dan jalur uang tidak disentuh: saldo hanya dibaca
 `tsc --noEmit` bersih, ESLint bersih (satu peringatan lama tidak terkait),
 461 unit test lulus, `npm run build` hijau, dan layarnya dilihat sendiri di
 Chromium 390×844 pada mode terang dan gelap.
-
 ## v2.7.38 — 2026-10-31
 
 Onboarding: foto stok dari luar diganti ilustrasi SurePath sendiri, plus satu

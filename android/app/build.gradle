@@ -11,8 +11,8 @@ android {
         // (run as part of `npm run build:android`). This drifted to 1.0.1 while
         // the app shipped 2.5.11 — a Play upload carrying the wrong version is
         // impossible to correlate with a crash report or a changelog entry.
-        versionCode 53
-        versionName "2.7.37"
+        versionCode 54
+        versionName "2.7.42"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
@@ -59,6 +59,39 @@ android {
         language { enableSplit = false }
         density { enableSplit = false }
         abi { enableSplit = true }
+    }
+
+    // ── Per-role download packages (docs/APP_SEPARATION_PLAN.md, Fase 1) ────
+    // Zero component-code changes: every flavor builds the very same web
+    // bundle (webDir 'dist') and the same Java sources — only the package
+    // identity differs, so each role installs/updates its own listing.
+    // `base` keeps the original applicationId and the original behaviour as
+    // shipped today. Role flavors add an applicationId suffix and an app label
+    // override (src/<flavor>/res/values/strings.xml).
+    // Deliberately NOT overridden per flavor: custom_url_scheme /
+    // package_name (strings.xml) — payment/OAuth deep links must keep
+    // resolving to com.myinsurepath.os inside every install.
+    flavorDimensions "app"
+    productFlavors {
+        base {
+            dimension "app"
+        }
+        nasabah {
+            dimension "app"
+            applicationIdSuffix ".nasabah"
+        }
+        mitra {
+            dimension "app"
+            applicationIdSuffix ".mitra"
+        }
+        operator {
+            dimension "app"
+            applicationIdSuffix ".operator"
+        }
+        admin {
+            dimension "app"
+            applicationIdSuffix ".admin"
+        }
     }
 }
 

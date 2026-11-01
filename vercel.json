@@ -52,6 +52,14 @@
       ]
     }
   ],
+  "redirects": [
+    { "source": "/nasabah", "destination": "/custapp", "statusCode": 302 },
+    { "source": "/nasabah/:path*", "destination": "/custapp/:path*", "statusCode": 302 },
+    { "source": "/mitra", "destination": "/agapps", "statusCode": 302 },
+    { "source": "/mitra/:path*", "destination": "/agapps/:path*", "statusCode": 302 },
+    { "source": "/operator", "destination": "/operatorapp", "statusCode": 302 },
+    { "source": "/operator/:path*", "destination": "/operatorapp/:path*", "statusCode": 302 }
+  ],
   "rewrites": [
     { "source": "/.well-known/(.*)", "destination": "/.well-known/$1" },
     { "source": "/llms.txt", "destination": "/llms.txt" },

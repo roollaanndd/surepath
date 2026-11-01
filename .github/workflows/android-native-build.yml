@@ -118,15 +118,13 @@ jobs:
       - name: Verify native package contains current UI assets
         shell: bash
         run: |
-          echo 'Android build output tree:'
-          find android/app/build/outputs -type f \( -name '*.apk' -o -name '*.aab' \) -print
-          # AGP names an un-signed release APK app-base-release-unsigned.apk. Normalize the artifact name
-          # so the upload step remains stable for both signed and unsigned builds.
+          # AGP puts the flavored bundle in bundle/<flavor><TypeName>/ (e.g. baseRelease),
+          # while APK outputs live in apk/<flavor>/<typeName>/.
           if [[ ! -s android/app/build/outputs/apk/base/release/app-base-release.apk && -s android/app/build/outputs/apk/base/release/app-base-release-unsigned.apk ]]; then
             cp android/app/build/outputs/apk/base/release/app-base-release-unsigned.apk android/app/build/outputs/apk/base/release/app-base-release.apk
           fi
           test -s android/app/build/outputs/apk/base/release/app-base-release.apk
-          test -s android/app/build/outputs/bundle/base/release/app-base-release.aab
+          test -s android/app/build/outputs/bundle/baseRelease/app-base-release.aab
           for flavor in nasabah mitra operator admin; do
             test -s "android/app/build/outputs/apk/${flavor}/debug/app-${flavor}-debug.apk"
           done
@@ -159,6 +157,6 @@ jobs:
           name: surepath-android-${{ github.sha }}
           path: |
             android/app/build/outputs/apk/base/release/app-base-release.apk
-            android/app/build/outputs/bundle/base/release/app-base-release.aab
+            android/app/build/outputs/bundle/baseRelease/app-base-release.aab
           if-no-files-found: error
           retention-days: 14

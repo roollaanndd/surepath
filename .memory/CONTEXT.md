@@ -1,7 +1,17 @@
 # SurePath Session Context
-**Updated:** 2026-11-01 (v2.7.39 — pita Beranda Mitra + kontras pita tier)
+**Updated:** 2026-11-01 (v2.7.40 — kontras WCAG AA pita tier Mitra)
 
-## Sesi 31 Okt – 1 Nov 2026 (v2.7.38 & v2.7.39)
+## Sesi 31 Okt – 1 Nov 2026 (v2.7.38–v2.7.40)
+
+### Kontras pita tier AgentPartnerCard diperbaiki (v2.7.40, PR #352, merged)
+Pita STANDARD (grafit) diganti gradien hijau brand `#0A7049→#05553A→#033626`
+(kontras 6,1:1). Gold diperdalam ke ~`#007543` (5,8:1 dari 2,8:1). Platinum ke
+~`#2B6E8C` (5,7:1 dari 3,7:1). Empat tes baru di
+`services/__tests__/agentHomeHero.test.tsx` mengunci setiap pita tier ke ≥ 4,5:1
+WCAG AA. `AgentHomeHeroArt.tsx` dihapus sebagai dead code (digantikan oleh
+`SuperAppHeader` dari PR #346).
+
+
 
 ### Onboarding tidak lagi memakai foto stok (v2.7.38, PR #351)
 `OnboardingFlow.tsx` dulu hotlink tujuh foto Unsplash untuk slide AGENT /

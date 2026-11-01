@@ -1,82 +1,193 @@
 # SurePath — Changelog
 
-## v2.7.38 — 2026-11-01
+## v2.7.42 — 2026-11-01
 
-App Mitra: audit alur beli asuransi mobil + biaya kirim mengikuti pilihan,
-banner promo beranda, pita hero beranimasi, dan layar pendaftaran.
+Fase 1 pemisahan paket unduhan per role (`docs/APP_SEPARATION_PLAN.md`) — nol
+perubahan kode komponen: semua flavor membangun bundle web (`dist`) dan sumber
+Java yang sama persis, hanya identitas paket yang berbeda.
 
-### Biaya kirim polis mengikuti pilihan mitra
-- Sebelumnya total tagihan **selalu** `breakdown.total + 26000` (aplikasi
-  Rp 6.000 + kirim Rp 20.000 flat), termasuk untuk "Polis Digital — GRATIS".
-  Mitra yang memilih pengiriman digital ditagih Rp 20.000 tanpa peringatan.
-- Diperbaiki: `total_premium = breakdown.total + Rp 6.000 + deliveryFee`,
-  di mana `deliveryFee` = 0 (Digital) / Rp 10k–15k (Pos Reguler) / Rp 20k–25k
-  (One Night Service) sesuai pilihan dan area. Tiga titik (`create_policy_order`,
-  tampilan total, invoice Xendit) diselaraskan.
-- Rincian biaya kirim kini muncul di tabel ringkasan step 6 bila > 0.
-- `delivery_method`, `delivery_region`, `delivery_fee` disimpan di order
-  (gateway + tipe `SpPolicyOrder` diperbarui).
-- Migrasi `20261101100000_delivery_fields_policy_orders.sql` — perlu diterapkan
-  manual sebelum order baru menggunakan kolom ini.
+### Android: Gradle flavors per role
+`flavorDimensions "app"` dengan `base / nasabah / mitra / operator / admin`.
+`base` mempertahankan `applicationId` `com.myinsurepath.os` dan perilaku rilis
+hari ini; flavor role hanya menambah `applicationIdSuffix` (`.nasabah`, `.mitra`,
+`.operator`, `.admin`) sehingga tiap role punya simpul paket Play Store sendiri
+dan bisa terpasang berdampingan. Label per flavor lewat override
+`src/<flavor>/res/values/strings.xml` (SurePath Nasabah/Mitra/Operator/Admin).
+`custom_url_scheme` / `package_name` sengaja **tidak** dioverride — deep-link
+pembayaran/OAuth tetap menuju `com.myinsurepath.os` di semua paket.
 
-### Beranda Mitra: pita hero tidak lagi polos hitam
-- Penyebab akarnya: `sp_agent_tiers` hanya berisi STANDARD (is_default,
-  #6b7280 grafite), ELITE (#8b5cf6), STAR (#f59e0b). Tak satu pun cocok
-  dengan `KEYWORD_PALETTES`, jadi setiap mitra mendapatkan pita grafite polos.
-- Pita hero kini diisi komponen `AgentHeroBackdrop`: langit gradien yang
-  berganti mengikuti waktu setempat (pagi/siang/sore/malam), siluet kota
-  beraksen warna tier, cahaya diagonal, dan garis jalan samar. Vektor murni.
-- Warna band tier STANDARD diubah dari grafite ke gradien brand forest green.
-- Kartu aksi cepat berubah dari transparan (kelas `bg-white/92` tidak dikenal
-  Tailwind) ke `bg-white/95`.
-- Dot navigasi carousel tidak lagi membengkak jadi batang tinggi (portal-
-  modernization.css `min-height:44px` dikalahkan dengan `h-6 min-h-0`).
+### Vercel: alias path per role (redirect 302)
+`/nasabah → /custapp`, `/mitra → /agapps`, `/operator → /operatorapp` beserta
+sub-path-nya. Labelink berbentuk **redirect**, bukan rewrite — SPA membaca
+`window.location.pathname`, jadi router tetap melihat jalur asli yang sudah ada
+(`/custapp` dst. tidak berubah). `/admin` tak perlu alias (jalurnya sudah itu).
 
-### Beranda Mitra: banner promo bergambar
+### CI Android flavor-aware
+`android-native-build.yml` kini membangun `assembleBaseRelease
+bundleBaseRelease` (artefak `app-base-release.apk/aab`) plus build **debug**
+murah keempat flavor role — pecah di resource flavor mana pun tetap menggagalkan
+workflow, tanpa menaikkan biaya build signifikan.
 
-### Kode produk order kendaraan salah sejak awal
-- `productInfo()` di `VehicleUnderwritingWizard` merangkai `MRKB` + `B4`
-  sehingga menghasilkan **`MRKBB4-COMP`**. Tidak satu pun baris
-  `sp_product_configs` memakai kode itu (yang ada `MRKB4-COMP`,
-  `MRKB4-TLO`, `MRKB2-COMP`, `MRKB2-TLO`), jadi `getProductConfig()`
-  selalu null — plafon diskon dan tarif komisi tampilan jatuh ke nilai
-  cadangan, dan **kelima order di produksi tersimpan dengan kode produk
-  yang tidak dikenali laporan mana pun**. Diperbaiki menjadi `MRKB4-…` /
-  `MRKB2-…`, dengan tes penjaga
-  `services/__tests__/agentVehicleProductCode.test.ts`.
+Versi: `src/version.ts` 2.7.42 · android `versionName "2.7.42"` / `versionCode 54`
+(sinkron via `scripts/sync-android-version.mjs`).
 
-### Slider diskon yang tidak pernah berlaku dicabut
-- `create_policy_order` menimpa `discount_rate` dengan 0 untuk setiap
-  pengajuan tanpa kode promo tervalidasi, dan tagihan Xendit selalu
-  dibuat dari premi penuh. Slider "Diskon untuk Klien" di step 6 karena
-  itu menjanjikan potongan kepada nasabah yang tidak pernah tersimpan di
-  order maupun dipotong dari tagihan. Slider diganti catatan yang
-  menyebut plafon produk dan menjelaskan bahwa potongan hanya berlaku
-  lewat kode promo resmi.
+## v2.7.41 — 2026-11-01
 
-### Beranda Mitra: banner promo bergambar
-- `components/agent/AgentPromoCarousel.tsx` — carousel ilustratif
-  (berputar otomatis, bisa digeser, berhenti saat disentuh/hover, diam
-  pada `prefers-reduced-motion`) menggantikan strip teks `PromoBanner`
-  yang dirancang untuk pita atas situs publik dan tidak pernah
-  menampilkan gambar. Promo CMS (`sp_website_config.promo_banner`) tetap
-  tampil sebagai kartu pertama dan memakai `extra_json.image_url` bila
-  admin mengunggah gambar; tiga kartu bawaan menautkan ke layar nyata.
-- `components/agent/AgentPromoArt.tsx` — empat adegan vektor 16:7 baru
-  (mobil, komisi, survei AI, pendaftaran) dalam gaya ilustrasi SurePath.
-  Vektor, bukan raster: tidak ada permintaan jaringan tambahan dan tidak
-  ada foto stok tertaut dari luar.
+Integrasi PR App Mitra (`project-thread-vdfjye`): kode produk order yang salah
+sejak awal, biaya kirim yang dulu cuma tampil tanpa ikut ditagih, banner promo
+berslide dengan kesenian sendiri, dan layar pendaftaran berilustrasi.
 
-### Layar pendaftaran Mitra: teks putih di atas latar terang
-- `AgentOnboarding` pernah dipindah ke latar krem terang dengan kartu
-  putih, tetapi seluruh kelas teksnya tetap `text-white` / `text-gray-400`
-  dari desain gelap sebelumnya. Judul "Daftar Mitra", "Informasi
-  Pribadi", "Informasi Profesional" dan "Cek Email Kamu" karenanya
-  **putih di atas putih — tidak terbaca sama sekali**. Layar ditulis
-  ulang pada palet terang AuthGate (kontras AA), ditambah pita hero
-  berilustrasi, transisi antar-langkah yang halus (dinonaktifkan pada
-  `prefers-reduced-motion`), label aria pada tombol lihat-sandi, dan
-  `role="alert"` pada pesan galat. Logika pendaftaran tidak disentuh.
+### Kode produk order kendaraan — diperbaiki + tes penjaga
+`productInfo()` merangkai `MRKB${typeCode}` dengan `typeCode = 'B5'`… begitu
+seterusnya sampai `MRKBB4-COMP`, yang tidak ada di `sp_product_configs` —
+plafon diskon & tarif komisi CMS tak tersambung. Kini memakai `MRKB4-COMP`
+(MRKB + angka, tanpa huruf B dobel) dan `MRKB2-COMP` untuk roda dua.
+`services/__tests__/agentVehicleProductCode.test.ts` mengunci dua kode itu.
+
+### Biaya kirim polis ikut ditagih & tersimpan
+Pilihan `DIGITAL / POS_STANDARD / POS_OVERNIGHT` beserta region dulu hanya
+digambar di step 6b — fee-nya tidak pernah masuk `total_premium` dan tidak
+dikirim ke server. Sekarang: kolom `delivery_method`, `delivery_region`,
+`delivery_fee` masuk payload order, divalidasi nama kolom di edge action
+(create_policy_order), sistem penjumlahan premi memasukkan fee, dan skema
+terkunci lewat migrasi `20261101100000_delivery_fields_policy_orders.sql`.
+
+### Beranda Mitra: banner promo berslide bergambar
+`AgentPromoBanner` diganti banner bertema kartu besar per slide:
+kesenian vektor sendiri (`AgentPromoArt`, keyframes animasi slide), kontrol
+geser sendiri, sumber slide dari CMS (`fetchWebsiteSection`) dengan slide
+bawaan sebagai fallback — logo tidak hilang bila CMS kosong. Seluruh slide
+adalah tombol 44px-target wajib WCAG.
+
+### Layar pendaftaran Mitra berilustrasi
+`AgentOnboarding` didesain ulang: font Sora, kartu input border kontras,
+keyframes masuk-langkah sadar `prefers-reduced-motion`, dan panel ilustrasi
+`PromoArtSignup` dari set `AgentPromoArt`.
+
+### Beranda Mitra tetap super app, pita tier tetap v2.7.40
+Redesign "pita hero" dari thread ini dibuat sebelum beranda super app
+(v2.7.39) — tidak dipasangkan; arah band tetap versi ter-shipped v2.7.40
+(pita STANDARD hijau brand 6,1:1). `standardWith()` kini menormalisasi warna
+tier kustom DB (chip/progress/glow ikut warna tier, band tetap hijau merek).
+
+## v2.7.40 — 2026-11-01
+
+Pita tier `AgentPartnerCard`: perbaikan kontras WCAG AA pada tiga tier.
+
+### Perbaikan kontras pita tier
+
+- **STANDARD** — gradien grafit `#46505F → #23272E` diganti hijau brand
+  `#0A7049 → #05553A → #033626`. Kontras teks putih kecil naik dari ~4 kali
+  (mendekati batas) ke 6,1:1. STANDARD.card tidak diubah supaya identitas
+  tier awal tetap netral.
+- **Gold** — `#00B268` diganti `#007543`: 2,8:1 → 5,8:1.
+- **Platinum** — `#3D8FB0` diganti `#2B6E8C`: 3,7:1 → 5,7:1.
+- `services/__tests__/agentHomeHero.test.tsx` baru: mengunci **setiap** pita
+  tier ke ≥ 4,5:1, termasuk kasus dua baris teks di opacity 90%.
+
+### Beranda Mitra dibangun ulang dalam bahasa super app
+
+Roland memberi satu tangkapan layar super app sebagai acuan dan minta app
+Mitra dibentuk seperti itu: tata letak, ikon, navigasi, header, submenu.
+Lima bagian acuan dipetakan ke produk ini, bukan disalin — tidak ada aset,
+warna, atau merek dari gambar acuan yang ikut, dan seluruh nilai berasal
+dari token `--ds-*` yang sudah ada.
+
+| Acuan | Di SurePath |
+|---|---|
+| pita sapaan bergradasi | `shared/superapp/SuperAppHeader.tsx` — sapaan menurut jam, kode mitra, lencana tier, bel, tema, avatar |
+| kartu "Balance" + 4 aksi | `shared/superapp/ProtectionSummaryCard.tsx` — saldo dompet komisi asli dari `sp_agent_wallets`, lalu Tarik Dana / Komisi / Quotation / Peringkat |
+| grid layanan 2×4 | `shared/superapp/ServiceGrid.tsx` — delapan tujuan "Fitur Mitra" yang sama persis, plus baris "Lainnya" |
+| rail konten mendatar | `shared/superapp/ContentRail.tsx` — "Produk untuk Dijual" |
+| nav 5 tab rata | `PortalTabBar` varian baru `flat` |
+
+**Tidak ada tujuan, alat, atau angka yang hilang.** Banner draf penawaran,
+PromoBanner, kedelapan tujuan Fitur Mitra, keempat Lainnya, GWP & konversi,
+pelatih Pathy, RenewalAlerts, dan daftar komisi terbaru semuanya tetap ada.
+Logic bisnis, login, dan jalur uang tidak disentuh: saldo hanya dibaca
+(`getMyWallet`), tidak pernah ditulis dari klien.
+
+### Perubahan perilaku yang perlu disadari
+
+- **Tombol tengah "Buat" tidak lagi menonjol.** Acuan memakai lima tab
+  sederajat, jadi `PortalTabBar` mendapat varian `flat`: tab aktif ditandai
+  lingkaran terisi, bukan tonjolan. Tujuan dan urutan tab tidak berubah.
+  Pathy tetap punya tombol mengambang sendiri, seperti sebelumnya.
+- **Beranda tidak lagi memakai `PortalHeader` yang menempel di atas layar**,
+  karena membawa pita sapaannya sendiri yang ikut menggulung. Layar lain
+  tetap memakainya. Bel, tema, dan avatar ada di kedua bentuk.
+- Lingkaran tab aktif memakai tint + cincin hijau, bukan hijau pekat seperti
+  acuan: ikon navigasi SurePath adalah ilustrasi berwarna, dan isian mint
+  serta pale-nya hampir hilang di atas `#00C16A` pekat. Cincinnya memakai
+  `--ds-green-text` (#047857, 5,1:1), bukan hijau isian `#00C16A` yang hanya
+  2,18:1 di atas bar putih — di bawah ambang 3:1 WCAG 1.4.11 untuk komponen
+  antarmuka. Token itu kini juga terdaftar di palet Tailwind, sehingga
+  `ring-`/`border-ds-green-text` tersedia di tempat lain yang butuh garis
+  hijau yang terbaca.
+
+### Tiga cacat lama yang ikut terbetulkan
+
+- Titik carousel di `AgentPromoBanner` dan `OnboardingFlow` terbit sebagai
+  **batang tegak setinggi 44px**, bukan titik. Penyebabnya bukan kelas
+  tingginya: shell portal (`.sp-modern-app`) memasang `min-height: 44px` pada
+  setiap `button`, dan `min-height` menang atas `height` berapa pun. Titiknya
+  kini `<span>` di dalam tombol, jadi sasaran sentuh tetap 44px sesuai
+  WCAG 2.5.8 sementara yang terlihat kembali setinggi 6px.
+- `AgentIcons.tsx` diam-diam membuang prop `style`, sehingga setiap pemanggil
+  yang mewarnai ikon mitra lewat `style={{ color }}` mendapat tinta warisan.
+  `shared/duotone.tsx`, kembarannya, selalu meneruskannya.
+- `CircularActionGrid` menyusun tint-nya dengan menyambung alpha heksadesimal
+  (`${color}1F`), jadi sebuah token desain (`var(--ds-primary)`) menghasilkan
+  warna tidak sah dan petaknya kehilangan latar. Sekarang memakai
+  `color-mix`, sehingga token bekerja.
+
+### Verifikasi
+
+`tsc --noEmit` bersih, ESLint bersih (satu peringatan lama tidak terkait),
+461 unit test lulus, `npm run build` hijau, dan layarnya dilihat sendiri di
+Chromium 390×844 pada mode terang dan gelap.
+## v2.7.38 — 2026-10-31
+
+Onboarding: foto stok dari luar diganti ilustrasi SurePath sendiri, plus satu
+temuan audit pembelian mobil yang terlewat.
+
+### Onboarding memakai ilustrasi sendiri, bukan foto stok
+- `components/OnboardingFlow.tsx` tidak lagi menarik tujuh foto Unsplash
+  lewat hotlink. Ketujuhnya **menutupi** lapisan ilustrasi: scene vektor
+  hanya dirender ketika fotonya sudah gagal dimuat, jadi karya yang
+  digambar untuk tur ini di `AgentArt.tsx` praktis tak pernah terlihat
+  mitra, operator, maupun penanggung.
+- Tiga alasan menggantinya, bukan sekadar selera: layar ini yang pertama
+  ditemui mitra baru dan ia bergantung pada host pihak ketiga (di dalam
+  APK Android, di koneksi lemah, atau di balik CSP produksi yang tampil
+  hanya kotak hijau kosong); lisensi foto stok berisi orang yang dapat
+  dikenali bukan sesuatu yang layak disandarkan pada permukaan jasa
+  keuangan; dan ilustrasi sendiri konsisten dengan keenam portal lain.
+- Tiap slide kini punya nuansa latarnya sendiri (`TONE`: dawn, teal, gold,
+  moss), sehingga empat slide mitra terbaca sebagai empat adegan berbeda,
+  bukan satu kartu yang diulang.
+- Transisi sadar-arah, swipe, dan dot dari v2.7.37 **tidak diubah**; yang
+  dicopot hanya lapisan foto beserta preload gambar jauhnya.
+- Tes pengunci baru di `services/__tests__/onboardingIllustrations.test.tsx`:
+  tidak ada URL jauh di sumbernya, `<img>` satu-satunya adalah wordmark
+  dari origin sendiri untuk keempat peran, tiap slide punya latar berbeda,
+  dan blok `prefers-reduced-motion` benar-benar menyebut semua kelas
+  animasi yang dipakai.
+
+### Audit pembelian asuransi mobil — satu temuan tambahan
+- `docs/CAR_INSURANCE_FLOW_AUDIT_2026-10-31.md` ditambah bagian "sesi kedua".
+  Audit sebelumnya menyimpulkan tidak ada blocker; satu hal terlewat dan ia
+  menyentuh uang yang ditagih.
+- `breakdown.total` sudah memuat biaya admin Rp 50.000 dan materai
+  Rp 10.000, lalu wizard menambah **Rp 26.000** lagi di tiga tempat
+  (`total_premium` yang disimpan, angka "Total Premi" di layar, dan nominal
+  yang dikirim ke invoice Xendit) — sementara rincian di layar yang sama
+  hanya menyebut "Biaya Aplikasi SurePath Rp 6.000". **Rp 20.000 ditagih
+  tanpa pernah muncul sebagai baris rincian apa pun.**
+- Ikutannya: `net_premium` disimpan tanpa Rp 26.000 itu, jadi pada tiap baris
+  order `total_premium - discount_amount ≠ net_premium`.
+- **Belum diperbaiki.** Memilih angka mana yang benar mengubah pendapatan
+  atau mengubah harga ke nasabah, jadi keputusannya ada pada pemilik.
 
 ## v2.7.37 — 2026-10-31
 

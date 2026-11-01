@@ -127,6 +127,9 @@ Ditambahkan oleh rangkaian rilis Operator App + Insurer App + rate limiting. Sem
 | `sp_policy_orders` | `insurer_decision_notes` (`text`) | v1.22.0 | Catatan insurer saat decision |
 | `sp_policy_orders` | `insurer_decision_at` (`timestamptz`) | v1.22.0 | Waktu decision insurer |
 | `sp_policy_orders` | `insurer_review_token_id` (`uuid` FK → `sp_review_tokens`) | v1.22.0 | Link ke review token yang dipakai untuk decision ini |
+| `sp_policy_orders` | `delivery_method` (`text default 'DIGITAL'`) | v2.7.41 | Metode pengiriman polis: `DIGITAL`, `POS_STANDARD`, `POS_OVERNIGHT` |
+| `sp_policy_orders` | `delivery_region` (`text default null`) | v2.7.41 | Wilayah pengiriman: `JABODETABEK` / luar — hanya untuk non-DIGITAL |
+| `sp_policy_orders` | `delivery_fee` (`integer default 0`) | v2.7.41 | Biaya kirim dalam Rupiah (0 untuk DIGITAL, 10k–25k sesuai metode+wilayah) |
 | `sp_review_tokens` | `reminder_count` (`int default 0`) | v1.22.0 | Counter email pengingat yang sudah dikirim |
 | `sp_review_tokens` | `last_reminded_at` (`timestamptz`) | v1.22.0 | Timestamp email pengingat terakhir (anti-spam, 24h cooldown) |
 | `sp_insurers` | `pic_email` (`text`) | v1.21.1 | Email PIC insurer — penerima default review-link + reminder |

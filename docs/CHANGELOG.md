@@ -1,44 +1,81 @@
 # SurePath — Changelog
 
-## v2.7.39 — 2026-11-01
+## v2.7.40 — 2026-11-01
 
-Beranda Mitra: pita sapaan tidak lagi hitam polos, plus perbaikan kontras pita
-tier yang ikut ketemu.
+Pita tier `AgentPartnerCard`: perbaikan kontras WCAG AA pada tiga tier.
 
-### Pita sapaan Beranda Mitra
-- Pemilik melaporkan "ada bagian yg berwarna hitam jelek banget dan terlalu
-  polos". Itu pita sapaan di puncak Beranda: `palette.band` untuk tier default
-  adalah gradien grafit `#46505F → #23272E`, dua stop, tanpa tekstur apa pun —
-  dan ia duduk tepat di atas kartu promo hijau, sehingga terbaca rusak alih-alih
-  kalem. Mayoritas mitra ada di tier default, jadi inilah yang mereka lihat
-  tiap pagi.
-- `STANDARD.band` kini hijau brand (`#0A7049 → #05553A → #033626`). STANDARD
-  bukan identitas tier melainkan "belum punya tier", jadi tidak ada warna yang
-  hilang maknanya; `STANDARD.card` tidak diubah, sehingga Partner Card tetap
-  terbaca sebagai tier awal yang netral.
-- `components/agent/AgentHomeHeroArt.tsx` baru: lapisan latar berilustrasi
-  berisi medan titik yang memudar ke bawah, busur konsentris, garis horizon,
-  dan watermark perisai SurePath. Semuanya putih ber-opacity rendah sehingga
-  bekerja di atas gradien tier mana pun tanpa perlu varian per tier; satu-satunya
-  bagian yang sadar-tier adalah kilau aksen, yang memakai `palette.glow`.
-  Dekoratif penuh: `aria-hidden`, tanpa pointer-event, dan geraknya mati di
-  `prefers-reduced-motion`.
+### Perbaikan kontras pita tier
 
-### Kontras pita tier — tiga perbaikan
-- Hijau pertama yang dipilih untuk pita (`#0E8F5B`) tampak bagus tapi menaruh
-  teks putih kecil di **4,1:1** — artinya lebih sulit dibaca daripada grafit
-  yang digantikannya. Ketahuan karena dihitung, bukan karena dilihat. Stop
-  diperdalam ke `#0A7049` (6,1:1), dan dua baris ber-opacity rendah (sapaan dan
-  kode mitra) dinaikkan dari 80%/75% ke 90% agar keduanya lolos 4,5:1.
-- Tes kontras yang sama lalu menemukan cacat lama di dua tier lain:
-  **Gold `#00B268` di 2,8:1** dan **Platinum `#3D8FB0` di 3,7:1** — keduanya
-  gagal AA, dan Gold adalah tier yang paling diperjuangkan mitra. Diperdalam ke
-  `#007543` (5,8:1) dan `#2B6E8C` (5,7:1). Gradien `card`, `glow`, dan `money`
-  tidak disentuh, jadi identitas warna tiap tier tetap.
-- `services/__tests__/agentHomeHero.test.tsx` mengunci semuanya: pita default
-  wajib hijau dan bukan grafit, dan **setiap** pita tier — termasuk stop
-  paling terang beserta kasus opacity 90% — wajib ≥ 4,5:1 untuk teks putih.
+- **STANDARD** — gradien grafit `#46505F → #23272E` diganti hijau brand
+  `#0A7049 → #05553A → #033626`. Kontras teks putih kecil naik dari ~4 kali
+  (mendekati batas) ke 6,1:1. STANDARD.card tidak diubah supaya identitas
+  tier awal tetap netral.
+- **Gold** — `#00B268` diganti `#007543`: 2,8:1 → 5,8:1.
+- **Platinum** — `#3D8FB0` diganti `#2B6E8C`: 3,7:1 → 5,7:1.
+- `services/__tests__/agentHomeHero.test.tsx` baru: mengunci **setiap** pita
+  tier ke ≥ 4,5:1, termasuk kasus dua baris teks di opacity 90%.
 
+### Beranda Mitra dibangun ulang dalam bahasa super app
+
+Roland memberi satu tangkapan layar super app sebagai acuan dan minta app
+Mitra dibentuk seperti itu: tata letak, ikon, navigasi, header, submenu.
+Lima bagian acuan dipetakan ke produk ini, bukan disalin — tidak ada aset,
+warna, atau merek dari gambar acuan yang ikut, dan seluruh nilai berasal
+dari token `--ds-*` yang sudah ada.
+
+| Acuan | Di SurePath |
+|---|---|
+| pita sapaan bergradasi | `shared/superapp/SuperAppHeader.tsx` — sapaan menurut jam, kode mitra, lencana tier, bel, tema, avatar |
+| kartu "Balance" + 4 aksi | `shared/superapp/ProtectionSummaryCard.tsx` — saldo dompet komisi asli dari `sp_agent_wallets`, lalu Tarik Dana / Komisi / Quotation / Peringkat |
+| grid layanan 2×4 | `shared/superapp/ServiceGrid.tsx` — delapan tujuan "Fitur Mitra" yang sama persis, plus baris "Lainnya" |
+| rail konten mendatar | `shared/superapp/ContentRail.tsx` — "Produk untuk Dijual" |
+| nav 5 tab rata | `PortalTabBar` varian baru `flat` |
+
+**Tidak ada tujuan, alat, atau angka yang hilang.** Banner draf penawaran,
+PromoBanner, kedelapan tujuan Fitur Mitra, keempat Lainnya, GWP & konversi,
+pelatih Pathy, RenewalAlerts, dan daftar komisi terbaru semuanya tetap ada.
+Logic bisnis, login, dan jalur uang tidak disentuh: saldo hanya dibaca
+(`getMyWallet`), tidak pernah ditulis dari klien.
+
+### Perubahan perilaku yang perlu disadari
+
+- **Tombol tengah "Buat" tidak lagi menonjol.** Acuan memakai lima tab
+  sederajat, jadi `PortalTabBar` mendapat varian `flat`: tab aktif ditandai
+  lingkaran terisi, bukan tonjolan. Tujuan dan urutan tab tidak berubah.
+  Pathy tetap punya tombol mengambang sendiri, seperti sebelumnya.
+- **Beranda tidak lagi memakai `PortalHeader` yang menempel di atas layar**,
+  karena membawa pita sapaannya sendiri yang ikut menggulung. Layar lain
+  tetap memakainya. Bel, tema, dan avatar ada di kedua bentuk.
+- Lingkaran tab aktif memakai tint + cincin hijau, bukan hijau pekat seperti
+  acuan: ikon navigasi SurePath adalah ilustrasi berwarna, dan isian mint
+  serta pale-nya hampir hilang di atas `#00C16A` pekat. Cincinnya memakai
+  `--ds-green-text` (#047857, 5,1:1), bukan hijau isian `#00C16A` yang hanya
+  2,18:1 di atas bar putih — di bawah ambang 3:1 WCAG 1.4.11 untuk komponen
+  antarmuka. Token itu kini juga terdaftar di palet Tailwind, sehingga
+  `ring-`/`border-ds-green-text` tersedia di tempat lain yang butuh garis
+  hijau yang terbaca.
+
+### Tiga cacat lama yang ikut terbetulkan
+
+- Titik carousel di `AgentPromoBanner` dan `OnboardingFlow` terbit sebagai
+  **batang tegak setinggi 44px**, bukan titik. Penyebabnya bukan kelas
+  tingginya: shell portal (`.sp-modern-app`) memasang `min-height: 44px` pada
+  setiap `button`, dan `min-height` menang atas `height` berapa pun. Titiknya
+  kini `<span>` di dalam tombol, jadi sasaran sentuh tetap 44px sesuai
+  WCAG 2.5.8 sementara yang terlihat kembali setinggi 6px.
+- `AgentIcons.tsx` diam-diam membuang prop `style`, sehingga setiap pemanggil
+  yang mewarnai ikon mitra lewat `style={{ color }}` mendapat tinta warisan.
+  `shared/duotone.tsx`, kembarannya, selalu meneruskannya.
+- `CircularActionGrid` menyusun tint-nya dengan menyambung alpha heksadesimal
+  (`${color}1F`), jadi sebuah token desain (`var(--ds-primary)`) menghasilkan
+  warna tidak sah dan petaknya kehilangan latar. Sekarang memakai
+  `color-mix`, sehingga token bekerja.
+
+### Verifikasi
+
+`tsc --noEmit` bersih, ESLint bersih (satu peringatan lama tidak terkait),
+461 unit test lulus, `npm run build` hijau, dan layarnya dilihat sendiri di
+Chromium 390×844 pada mode terang dan gelap.
 ## v2.7.38 — 2026-10-31
 
 Onboarding: foto stok dari luar diganti ilustrasi SurePath sendiri, plus satu

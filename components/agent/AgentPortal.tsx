@@ -13,6 +13,7 @@ import {
   getNotifications,
   getMyAgreement,
   getMyAccountTrust,
+  getMyWallet,
   type SpCommission,
   type SpClient,
   type AgentStats,
@@ -45,10 +46,14 @@ interface Props {
   lang: Language;
 }
 
+// Lima tab sederajat, tanpa tombol tengah yang menonjol — bahasa navigasi
+// super app pada acuan (v2.7.35). Pathy, yang dulu tidak ada di bar ini, kini
+// punya tombol mengambang sendiri di atas bar, sehingga tidak ada tujuan yang
+// hilang. Tujuan dan urutan tabnya sendiri tidak berubah.
 const TABS: PortalTab[] = [
   { id: 'home',       label: 'Beranda', Icon: House },
   { id: 'policy',     label: 'Polis',   Icon: FileText },
-  { id: 'quotes',     label: 'Buat',    Icon: Plus, center: true },
+  { id: 'quotes',     label: 'Buat',    Icon: Plus },
   { id: 'commission', label: 'Dompet',  Icon: Wallet },
   { id: 'profile',    label: 'Profil',  Icon: UserRound },
 ];
@@ -125,6 +130,9 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
     pendingCommission: 0,
   });
   const [commissions, setCommissions] = useState<SpCommission[]>([]);
+  // Saldo dompet komisi untuk kartu ringkasan di beranda. null = belum terbaca;
+  // kartunya menampilkan "—" dan mengatakannya, tidak pernah menebak angka nol.
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [clients, setClients] = useState<SpClient[]>([]);
   const [loading, setLoading] = useState(true);
   const [dataLoadError, setDataLoadError] = useState(false);
@@ -160,8 +168,9 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
         getAgentCommissions(agent.id, true),
         getAgentClients(agent.id, true),
         getNotifications(agent.id, true),
+        getMyWallet(true),
       ]);
-      const [statsResult, commissionsResult, clientsResult, notificationsResult] = results;
+      const [statsResult, commissionsResult, clientsResult, notificationsResult, walletResult] = results;
       const hasError = results.some(result => result.status === 'rejected');
 
       if (statsResult.status === 'fulfilled') setStats(statsResult.value);
@@ -178,6 +187,9 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
       } else {
         console.error('Error loading agent notifications:', notificationsResult.reason);
       }
+
+      if (walletResult.status === 'fulfilled') setWalletBalance(walletResult.value?.balance ?? 0);
+      else console.error('Error loading agent wallet:', walletResult.reason);
 
       // Tier is optional metadata; a failure here should not break the dashboard.
       try {
@@ -309,6 +321,11 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
             onNavigate={handleTabChange}
             lang={lang}
             agentTier={agentTier}
+            walletBalance={walletBalance}
+            unreadCount={unreadCount}
+            darkMode={darkMode}
+            onToggleDark={() => setDarkMode(!darkMode)}
+            onBellClick={() => { setNotificationPopup(null); setShowNotifications(true); }}
           />
         );
       case 'policy':
@@ -406,6 +423,12 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
         }
       `}</style>
 
+      {/* Beranda membawa pita sapaannya sendiri yang ikut menggulung
+          (SuperAppHeader), sesuai acuan super app; bar tetap di atas layar
+          hanya dipasang di layar selain beranda supaya tidak ada dua header
+          bertumpuk. Semua tombolnya — bel, tema, avatar — ada di kedua
+          bentuk, jadi tidak ada aksi yang hilang di beranda. */}
+      {activeTab !== 'home' && (
       <PortalHeader
         portalLabel={t('Agent', 'Mitra')}
         userName={agent?.name ?? 'Agent'}
@@ -426,9 +449,13 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
           profile: t('Profile', 'Profil'),
         }}
       />
+      )}
 
       {/* Main Content */}
-      <main className="relative z-10 pb-48 min-h-screen" style={{ paddingTop: "calc(4rem + env(safe-area-inset-top, 0px))" }}>
+      <main
+        className="relative z-10 pb-48 min-h-screen"
+        style={{ paddingTop: activeTab === 'home' ? 0 : 'calc(4rem + env(safe-area-inset-top, 0px))' }}
+      >
         {loading && activeTab === 'home' ? (
           <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
             <div className="w-12 h-12 rounded-full border-4 border-ds-green/20 border-t-ds-green animate-spin motion-reduce:animate-none" />
@@ -437,7 +464,12 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
         ) : (
           <>
             {dataLoadError && (
-              <div role="alert" aria-live="polite" className="mx-5 mb-4 rounded-2xl border border-ds-amber/30 bg-ds-amber/10 p-4">
+              <div
+                role="alert"
+                aria-live="polite"
+                className="mx-5 mb-4 rounded-2xl border border-ds-amber/30 bg-ds-amber/10 p-4"
+                style={activeTab === 'home' ? { marginTop: 'calc(1rem + env(safe-area-inset-top, 0px))' } : undefined}
+              >
                 <p className="text-sm font-bold text-ds-ink">{t('Some dashboard data could not be refreshed.', 'Sebagian data dashboard belum berhasil dimuat.')}</p>
                 <p className="mt-1 text-xs text-ds-ink3">{t('You can keep using available sections or retry the refresh.', 'Kamu tetap bisa menggunakan bagian yang tersedia atau mencoba memuat ulang.')}</p>
                 <button type="button" onClick={() => void loadData()} disabled={loading} className="mt-3 min-h-10 rounded-xl bg-ds-green px-4 py-2 text-xs font-black text-ds-on-green disabled:opacity-50">
@@ -446,10 +478,12 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
               </div>
             )}
             {pendingVerification && (
-              <AgentVerificationBanner
-                lang={lang}
-                onOpenProfile={activeTab === 'profile' ? undefined : () => handleTabChange('profile')}
-              />
+              <div style={activeTab === 'home' && !dataLoadError ? { paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))' } : undefined}>
+                <AgentVerificationBanner
+                  lang={lang}
+                  onOpenProfile={activeTab === 'profile' ? undefined : () => handleTabChange('profile')}
+                />
+              </div>
             )}
             <div key={tabKey} data-sp-anim className="sp-page-enter">
               {renderTab()}
@@ -463,6 +497,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
         activeId={activeTab}
         onSelect={handleTabChange}
         modernIcons
+        variant="flat"
         lockedIds={pendingVerification ? Object.keys(LOCKED_WHILE_PENDING) : undefined}
         lockedHint={t('awaiting verification', 'menunggu verifikasi')}
       />

@@ -31,7 +31,11 @@ export interface CircularAction {
   id: string;
   label: string;
   icon: ActionIcon;
-  /** Background color of the circle (hex) */
+  /**
+   * Glyph colour. A hex value or any CSS colour, including a design token
+   * such as `var(--ds-primary)` — the tile derives its tint and shadow with
+   * `color-mix`, not by appending a hex alpha, so tokens work here.
+   */
   color: string;
   /** Optional badge count (e.g. unread notifications) */
   badge?: number;
@@ -53,8 +57,12 @@ export const CircularActionGrid: React.FC<CircularActionGridProps> = ({
     <div className={`grid grid-cols-4 gap-2 ${className}`}>
       {actions.map((action) => {
         const Icon = action.icon;
-        // Tint = color at 12% opacity for the circle background
-        const tintBg = `${action.color}1F`;  // hex alpha 0x1F = ~12%
+        // Tint = the glyph colour at 12%. `color-mix` keeps this correct for a
+        // CSS variable; the old `${color}1F` concatenation only worked for a
+        // 6-digit hex and produced an invalid colour (so: no tile) for a token.
+        const tintBg = `color-mix(in srgb, ${action.color} 12%, transparent)`;
+        const glowShadow = `color-mix(in srgb, ${action.color} 25%, transparent)`;
+        const glyphTint = `color-mix(in srgb, ${action.color} 18%, transparent)`;
         return (
           <button
             key={action.id}
@@ -69,10 +77,10 @@ export const CircularActionGrid: React.FC<CircularActionGridProps> = ({
               className="relative w-14 h-14 rounded-2xl flex items-center justify-center transition-all group-hover:scale-105"
               style={{
                 backgroundColor: tintBg,
-                boxShadow: `inset 0 1px 0 0 rgba(255,255,255,0.4), 0 4px 12px -4px ${action.color}40`,
+                boxShadow: `inset 0 1px 0 0 rgba(255,255,255,0.4), 0 4px 12px -4px ${glowShadow}`,
                 // duotone icons read their fill from this var, so the glyph's
                 // tint layer always matches its tile
-                ['--ic-tint' as string]: `${action.color}2E`,
+                ['--ic-tint' as string]: glyphTint,
               }}
             >
               <Icon size={36} style={{ color: action.color }} strokeWidth={2} />

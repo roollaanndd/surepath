@@ -107,20 +107,27 @@ jobs:
           fi
 
       - name: Build release APK and Play Store bundle
+        # Fase 1 app separation: flavors rename gradle tasks. The shippable
+        # package stays the `base` flavor (identical to pre-flavor builds);
+        # role flavors compile as cheap debug builds so a break in any
+        # <flavor> res source set still fails the workflow.
         working-directory: android
         run: |
-          gradle --no-daemon assembleRelease bundleRelease
+          gradle --no-daemon assembleBaseRelease bundleBaseRelease assembleNasabahDebug assembleMitraDebug assembleOperatorDebug assembleAdminDebug
 
       - name: Verify native package contains current UI assets
         shell: bash
         run: |
-          # AGP names an un-signed release APK app-release-unsigned.apk. Normalize the artifact name
-          # so the upload step remains stable for both signed and unsigned builds.
-          if [[ ! -s android/app/build/outputs/apk/release/app-release.apk && -s android/app/build/outputs/apk/release/app-release-unsigned.apk ]]; then
-            cp android/app/build/outputs/apk/release/app-release-unsigned.apk android/app/build/outputs/apk/release/app-release.apk
+          # AGP puts the flavored bundle in bundle/<flavor><TypeName>/ (e.g. baseRelease),
+          # while APK outputs live in apk/<flavor>/<typeName>/.
+          if [[ ! -s android/app/build/outputs/apk/base/release/app-base-release.apk && -s android/app/build/outputs/apk/base/release/app-base-release-unsigned.apk ]]; then
+            cp android/app/build/outputs/apk/base/release/app-base-release-unsigned.apk android/app/build/outputs/apk/base/release/app-base-release.apk
           fi
-          test -s android/app/build/outputs/apk/release/app-release.apk
-          test -s android/app/build/outputs/bundle/release/app-release.aab
+          test -s android/app/build/outputs/apk/base/release/app-base-release.apk
+          test -s android/app/build/outputs/bundle/baseRelease/app-base-release.aab
+          for flavor in nasabah mitra operator admin; do
+            test -s "android/app/build/outputs/apk/${flavor}/debug/app-${flavor}-debug.apk"
+          done
           test -s android/app/src/main/assets/public/index.html
           grep -q 'assets/index-' android/app/src/main/assets/public/index.html
           echo 'Android APK/AAB and bundled web entrypoint exist.'
@@ -149,7 +156,7 @@ jobs:
         with:
           name: surepath-android-${{ github.sha }}
           path: |
-            android/app/build/outputs/apk/release/app-release.apk
-            android/app/build/outputs/bundle/release/app-release.aab
+            android/app/build/outputs/apk/base/release/app-base-release.apk
+            android/app/build/outputs/bundle/baseRelease/app-base-release.aab
           if-no-files-found: error
           retention-days: 14

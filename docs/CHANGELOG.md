@@ -1,5 +1,60 @@
 # SurePath — Changelog
 
+## v2.7.43 — 2026-11-01
+
+### Pita sapaan Mitra: hijau korporat dengan latar bergambar
+
+roland melaporkan ada "bagian yang berwarna hitam, jelek banget dan terlalu
+polos" di Beranda Mitra, dan minta warnanya diganti warna korporat, boleh
+dengan gambar sebagai latar yang bervariasi.
+
+Sumbernya ketemu: pita hero Beranda diwarnai **menurut tier mitra**
+(`AgentPartnerCard.tsx`), dan tier bawaan `STANDARD` gradasinya
+`#46505F → #23272E` — arang, tanpa isi apa pun. Mitra yang belum punya tier
+melihat blok gelap polos menutupi bagian atas layar. v2.7.39 sudah
+menghapus pita itu dari Beranda; rilis ini mengerjakan sisanya.
+
+- **`components/shared/superapp/SuperAppBackdrop.tsx` (baru).** Satu adegan
+  SVG inline sebagai latar pita sapaan: punggung bukit berlapis dengan rute
+  putus-putus yang mendaki — motif "jalan yang pasti", bukan dekorasi acak.
+  Digambar sendiri, bukan foto dan bukan hotlink; alasannya sama dengan yang
+  membuat tujuh foto Unsplash dicopot dari onboarding di v2.7.38.
+- **Empat variasi menurut jam** — pagi, siang, sore, malam — mengikuti sapaan
+  yang memang sudah berubah per jam. Letak dan kuat cahayanya bergeser, dan
+  malam hari membawa bintang. Nol aset tambahan diunduh.
+- **`SuperAppHeader` kini pita hijau korporat**, bukan sapuan mint pucat:
+  `#003B2F → #04543F → #0A7A52` (dan ujung yang lebih dalam di mode gelap),
+  dari token hijau yang sudah ada — bukan lapisan `--ds-admin-*`, yang
+  sengaja dibatasi untuk CMS admin yang tidak punya mode gelap. Teks putih di
+  atas `#003B2F` terukur 14,8:1. Avatar dan lencana tier ikut menyesuaikan.
+
+`AgentPartnerCard.tsx` **tidak disentuh** di rilis ini. v2.7.41 dari thread
+lain sudah menghijaukan `TierPalette.band` dan sengaja membiarkan `card`
+tetap arang; mengubahnya lagi dari sini hanya akan saling menimpa. Satu
+catatan untuk nanti: sejak v2.7.39 **tidak ada kode produk yang membaca
+`band`** — satu-satunya pembacanya adalah tes kontras di
+`services/__tests__/agentHomeHero.test.tsx`, jadi penghijauan itu tidak
+terlihat di layar mana pun. Kartu tier `STANDARD` di layar Profil juga masih
+arang `#10131A → #3A4150`, menunggu keputusan pemilik.
+
+### Tes pengunci
+
+`services/__tests__/superAppBackdrop.test.tsx` (baru, 5 tes): tidak ada URL
+jauh, `<img>`, atau `url()` non-fragment di latarnya; pemetaan jam ke empat
+adegan di setiap batasnya; keempat adegan benar-benar merender markup yang
+berbeda, bukan beda di konfigurasi saja; bintang hanya muncul malam hari;
+dan latarnya `aria-hidden`.
+
+### Verifikasi
+
+`tsc --noEmit` bersih, ESLint 0 error, seluruh unit test lulus, `npm run
+build` hijau. Keempat variasi waktu dan mode gelap **dilihat sendiri** di
+Chromium 414px lewat harness sementara yang dihapus sebelum commit. Dua
+komposisi sebelumnya dibuang setelah dilihat: cakram lime pekat di kanan atas
+bertabrakan dengan tombol bel dan avatar, dan terbaca sebagai tombol bundar
+ketiga.
+
+## v2.7.39 — 2026-11-01
 ## v2.7.42 — 2026-11-01
 
 Fase 1 pemisahan paket unduhan per role (`docs/APP_SEPARATION_PLAN.md`) — nol

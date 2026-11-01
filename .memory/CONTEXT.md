@@ -1,5 +1,51 @@
 # SurePath Session Context
-**Updated:** 2026-11-01 (v2.7.41 — app Mitra: kode produk order, persistensi delivery fee, banner promo bergambar, onboarding berilustrasi)
+**Updated:** 2026-11-01 (v2.7.43 — Beranda Mitra super app + pita hijau korporat berlatar gambar)
+
+## Terakhir dikerjakan (1 Nov 2026)
+
+**Beranda Mitra dibangun ulang dalam bahasa super app** (v2.7.39, PR #346),
+lalu pita sapaannya diberi warna korporat + latar bergambar (v2.7.40).
+
+- Empat komponen baru di `components/shared/superapp/` — `SuperAppHeader`,
+  `SuperAppBackdrop`, `ProtectionSummaryCard`, `ServiceGrid`, `ContentRail`.
+  Sengaja generik: portal Nasabah bisa memakainya tanpa menyalin.
+- `PortalTabBar` punya varian `flat` (lima tab sederajat). Varian `raised`
+  tetap bawaan, jadi lima portal lain tidak tersentuh.
+- **Pita hero lama yang diwarnai per tier sudah tidak ada di Beranda.** Tier
+  bawaan `STANDARD` dulu `#46505F → #23272E` — itu "bagian hitam" yang
+  dilaporkan pemilik. Kartu tier `STANDARD` di Profil juga diganti ke hijau
+  korporat; empat tier logam (SILVER/PLATINUM/DIAMOND/BRONZE) tidak diubah.
+- Latar pita adalah **SVG inline yang digambar sendiri**, bukan foto dan
+  bukan hotlink, dengan empat variasi menurut jam. Jangan menggantinya dengan
+  foto stok: tujuh foto Unsplash baru saja dicopot dari onboarding di v2.7.38
+  karena gagal di APK dan menutupi ilustrasi sendiri.
+
+### Jebakan yang baru ketemu, jangan diulang
+- `.sp-modern-app :where(button, [role="button"]) { min-height: 44px }` di
+  `src/styles/portal-modernization.css` **mengalahkan `height` berapa pun**
+  (properti berbeda, bukan soal spesifisitas). Setiap kontrol tipis yang
+  dibuat sebagai `<button>` — titik carousel, pil indikator — terbit setinggi
+  44px. Taruh bentuk yang terlihat di `<span>` di dalam tombolnya.
+- `AgentIcons.tsx` dulu membuang prop `style`; `CircularActionGrid` dulu
+  menyusun tint dengan `` `${color}1F` `` sehingga token CSS jadi warna tidak
+  sah. Keduanya sudah diperbaiki — tapi polanya mungkin ada di tempat lain.
+
+### Koreksi penting: dua thread menggarap pita yang sama
+
+Catatan v2.7.39 di bawah ditulis thread lain dan **sudah tidak berlaku pada
+kode**. Beranda Mitra dibangun ulang dalam PR #346, yang mencopot pita hero
+itu sama sekali, jadi:
+
+- `components/agent/AgentHomeHeroArt.tsx` **tidak ada lagi di repo**.
+- `TierPalette.band` **tidak dibaca kode produk mana pun**. Satu-satunya
+  pembacanya adalah `services/__tests__/agentHomeHero.test.tsx`, jadi tesnya
+  tetap hijau sementara yang dijaganya sudah tidak tampil di layar.
+- Pita sapaan yang sebenarnya tampil sekarang:
+  `components/shared/superapp/SuperAppHeader.tsx` +
+  `SuperAppBackdrop.tsx`.
+
+Pelajaran kontrasnya tetap berlaku dan sudah dipakai di pita baru.
+**Sebelum menggarap satu layar, cek thread lain sedang di mana.**
 
 ## Sesi 31 Okt – 1 Nov 2026 (v2.7.38 & v2.7.39)
 

@@ -1,233 +1,291 @@
-// AgentPromoBanner.tsx — illustrated promo card for the agent Beranda.
+// AgentPromoBanner.tsx — kartu promo bergambar untuk Beranda Mitra.
 //
-// Replaces the text-only strip <PromoBanner /> on the agent home with a rich
-// card that pairs a Pathy / growth illustration with the CMS promo headline,
-// subtitle and optional CTA. Agents open Beranda more than any other screen,
-// so the banner needs to carry a visual, not just a line of text.
+// Menggantikan strip teks `components/PromoBanner.tsx`, yang dirancang untuk
+// pita atas situs publik dan tidak pernah menampilkan gambar.
 //
-// Data path: reads sp_website_config for the `promo_banner_agent` section_key
-// (admin-editable). If that key is missing or `is_visible = false`, falls back
-// to a built-in "Pathy tips" rotator so the slot is never visually empty.
-// Dismissal is remembered per section_id in localStorage. CMS image_url (if
-// provided via extra_json) is rendered as the background; otherwise the
-// built-in illustration is used.
+// Jalur data: membaca `sp_website_config` pada section_key `promo_banner_agent`
+// (bisa disunting admin), lalu `promo_banner` sebagai cadangan. Kartu CMS
+// memakai `extra_json.image_url` sebagai latar bila diisi, `cta_text` dan
+// `extra_json.cta_url` sebagai tombolnya, dan dapat ditutup (diingat per
+// section id di localStorage). Tiga kartu bawaan selalu melengkapinya sehingga
+// slot ini tidak pernah kosong dan selalu menautkan ke layar nyata.
+//
+// Versi 2026-11-01 menyatukan dua rancangan yang sempat berjalan paralel: rel
+// geser carousel dengan adegan vektor 16:7 dari `AgentPromoArt` (sebelumnya
+// `AgentPromoCarousel`) menggantikan adegan onboarding 300×300 yang terpotong
+// di dalam kotak 96px.
 
-import React, { useEffect, useMemo, useState } from 'react';
-import { X, Sparkles, ArrowRight } from 'lucide-react';
-import { fetchWebsiteSection, SpWebsiteConfig } from '../../services/supabaseService';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ChevronRight, X } from 'lucide-react';
+import { fetchWebsiteSection, type SpWebsiteConfig } from '../../services/supabaseService';
 import { Language } from '../../types';
-import { ObQuote, ObWallet, ObGrowth, AgentArtKeyframes } from './AgentArt';
+import { PROMO_ART, PromoArtKeyframes, type PromoArtKey } from './AgentPromoArt';
 
 const STORAGE_KEY = (id: number | string) => `sp_banner_agent_dismissed_${id}`;
+const AUTOPLAY_MS = 6500;
+
+interface PromoSlide {
+  id: string;
+  art: PromoArtKey;
+  /** Hanya untuk kartu CMS yang punya extra_json.image_url. */
+  imageUrl?: string;
+  eyebrow: string;
+  headline: string;
+  body: string;
+  cta: string;
+  /** Tab portal tujuan, atau null bila kartu memakai ctaUrl. */
+  target: string | null;
+  ctaUrl?: string;
+}
+
+const builtIn = (en: boolean): PromoSlide[] => [
+  {
+    id: 'builtin-car',
+    art: 'car',
+    eyebrow: en ? 'Featured product' : 'Produk unggulan',
+    headline: en ? 'Sell car insurance faster' : 'Jual asuransi mobil lebih cepat',
+    body: en
+      ? 'Official OJK rates, pick the insurer, submit from your phone.'
+      : 'Tarif resmi OJK, pilih mitra asuransi, ajukan dari HP.',
+    cta: en ? 'Start selling' : 'Mulai jual',
+    target: 'quotes',
+  },
+  {
+    id: 'builtin-commission',
+    art: 'commission',
+    eyebrow: en ? 'Partner commission' : 'Komisi mitra',
+    headline: en ? 'Commission lands in your wallet' : 'Komisi masuk dompet Anda',
+    body: en
+      ? 'Track per-policy commission in real time, then withdraw to your bank.'
+      : 'Pantau komisi per polis secara real-time, lalu cairkan ke rekening Anda.',
+    cta: en ? 'Open wallet' : 'Buka dompet',
+    target: 'wallet',
+  },
+  {
+    id: 'builtin-ai',
+    art: 'ai',
+    eyebrow: en ? 'AI survey' : 'Survei AI',
+    headline: en ? 'Photograph the car, score is automatic' : 'Foto kendaraan, skor otomatis',
+    body: en
+      ? 'Five photos are enough — AI rates the vehicle before the order goes in.'
+      : 'Lima foto cukup — AI menilai kelayakan kendaraan sebelum order diajukan.',
+    cta: en ? 'Try it now' : 'Coba sekarang',
+    target: 'quotes',
+  },
+];
 
 interface Props {
   lang: Language;
   onCta?: () => void;
+  /** Dipakai Beranda untuk membuka tab portal yang ditunjuk kartu. */
+  onNavigate?: (tab: string) => void;
+  className?: string;
 }
 
-const BUILTIN_SLIDES = [
-  {
-    id: 'quote-fast',
-    Art: ObQuote,
-    bg: 'linear-gradient(135deg, #065f46 0%, #047857 55%, #0d9488 100%)',
-    id_: ['Buat penawaran dalam hitungan detik', 'Tarif resmi OJK, PDF profesional, langsung ke WhatsApp klien.'] as const,
-    en: ['Quotes in seconds', 'Official OJK rates, pro PDF, straight to your client on WhatsApp.'] as const,
-  },
-  {
-    id: 'wallet-fast',
-    Art: ObWallet,
-    bg: 'linear-gradient(135deg, #0f766e 0%, #0b5739 55%, #166534 100%)',
-    id_: ['Komisi transparan, cair cepat', 'Pantau komisi per polis real-time dan tarik ke rekening bank Anda.'] as const,
-    en: ['Transparent commission', 'Track per-policy commission in real time and withdraw to your bank.'] as const,
-  },
-  {
-    id: 'tier-grow',
-    Art: ObGrowth,
-    bg: 'linear-gradient(135deg, #047857 0%, #065f46 55%, #064e3b 100%)',
-    id_: ['Naik level ke tier Elite', 'Tutup lebih banyak polis bulan ini, buka benefit tier eksklusif.'] as const,
-    en: ['Climb to Elite tier', 'Close more policies this month to unlock exclusive partner benefits.'] as const,
-  },
-];
+const AgentPromoBanner: React.FC<Props> = ({ lang, onCta, onNavigate, className = '' }) => {
+  const en = lang === Language.EN;
+  const t = (eng: string, id: string) => (en ? eng : id);
 
-const AgentPromoBanner: React.FC<Props> = ({ lang, onCta }) => {
-  const t = (en: string, id: string) => (lang === Language.EN ? en : id);
-  const [cmsConfig, setCmsConfig] = useState<SpWebsiteConfig | null>(null);
-  const [dismissed, setDismissed] = useState(false);
-  const [slideIdx, setSlideIdx] = useState(0);
-  const [entered, setEntered] = useState(false);
+  const [cmsSlide, setCmsSlide] = useState<PromoSlide | null>(null);
+  const [cmsKey, setCmsKey] = useState<string | number | null>(null);
+  const [cmsDismissed, setCmsDismissed] = useState(false);
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const touchStartX = useRef<number | null>(null);
 
-  // Try the dedicated agent-promo section first; silently ignore errors so a
-  // network blip never breaks Beranda.
+  const reduceMotion = useMemo(
+    () => typeof window !== 'undefined'
+      && typeof window.matchMedia === 'function'
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    [],
+  );
+
   useEffect(() => {
     let cancelled = false;
-    fetchWebsiteSection('promo_banner_agent')
-      .then((data) => {
-        if (cancelled) return;
-        if (data && data.is_visible && data.headline) {
-          const key = STORAGE_KEY(data.id ?? data.section_key);
-          if (typeof window !== 'undefined' && localStorage.getItem(key) === 'true') {
-            setDismissed(true);
-          }
-          setCmsConfig(data);
-        }
-      })
-      .catch(() => {});
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      if (!cancelled) setEntered(true);
-    }));
-    return () => { cancelled = true; };
-  }, []);
-
-  // Rotate the built-in slides every 7s when CMS copy is not configured.
-  useEffect(() => {
-    if (cmsConfig) return;
-    const id = setInterval(() => setSlideIdx((n) => (n + 1) % BUILTIN_SLIDES.length), 7000);
-    return () => clearInterval(id);
-  }, [cmsConfig]);
-
-  const slide = useMemo(() => BUILTIN_SLIDES[slideIdx], [slideIdx]);
-
-  const handleDismiss = () => {
-    setDismissed(true);
-    if (cmsConfig) {
+    const adopt = (data: SpWebsiteConfig | null): boolean => {
+      if (cancelled || !data || !data.is_visible || !data.headline) return false;
+      const key = data.id ?? data.section_key;
+      let alreadyDismissed = false;
       try {
-        localStorage.setItem(STORAGE_KEY(cmsConfig.id ?? cmsConfig.section_key), 'true');
-      } catch {
-        /* storage disabled — in-session dismiss is enough */
-      }
+        alreadyDismissed = localStorage.getItem(STORAGE_KEY(key)) === 'true';
+      } catch { /* penyimpanan dimatikan — anggap belum ditutup */ }
+      setCmsKey(key);
+      setCmsDismissed(alreadyDismissed);
+      setCmsSlide({
+        id: `cms-${key}`,
+        art: 'car',
+        imageUrl: (data.extra_json?.image_url as string | undefined) || undefined,
+        eyebrow: t('Promo', 'Promo'),
+        headline: data.headline,
+        body: data.subtitle || t('Running for all SurePath partners.', 'Berlaku untuk seluruh mitra SurePath.'),
+        cta: data.cta_text || t('See products', 'Lihat produk'),
+        target: 'quotes',
+        ctaUrl: (data.extra_json?.cta_url as string | undefined) || undefined,
+      });
+      return true;
+    };
+
+    fetchWebsiteSection('promo_banner_agent')
+      .then(data => (adopt(data) ? null : fetchWebsiteSection('promo_banner')))
+      .then(fallback => { if (fallback) adopt(fallback); })
+      .catch(() => { /* promo bersifat opsional — diam saja bila gagal */ });
+
+    return () => { cancelled = true; };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const slides = useMemo(() => {
+    const base = builtIn(en);
+    return cmsSlide && !cmsDismissed ? [cmsSlide, ...base] : base;
+  }, [cmsSlide, cmsDismissed, en]);
+
+  // Kartu CMS menyisip di depan; jaga indeks tetap berada dalam rentang.
+  useEffect(() => { setIndex(i => (i < slides.length ? i : 0)); }, [slides.length]);
+
+  const go = useCallback((next: number) => {
+    setIndex(((next % slides.length) + slides.length) % slides.length);
+  }, [slides.length]);
+
+  useEffect(() => {
+    if (paused || reduceMotion || slides.length < 2) return;
+    const timer = window.setInterval(() => setIndex(i => (i + 1) % slides.length), AUTOPLAY_MS);
+    return () => window.clearInterval(timer);
+  }, [paused, reduceMotion, slides.length]);
+
+  const dismissCms = () => {
+    setCmsDismissed(true);
+    setIndex(0);
+    if (cmsKey != null) {
+      try { localStorage.setItem(STORAGE_KEY(cmsKey), 'true'); } catch { /* abaikan */ }
     }
   };
 
-  if (dismissed) return null;
+  const activate = (slide: PromoSlide) => {
+    if (slide.ctaUrl) {
+      window.open(slide.ctaUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    if (slide.target && onNavigate) { onNavigate(slide.target); return; }
+    onCta?.();
+  };
 
-  // ─── CMS variant: honor the admin's headline / subtitle / CTA / image ────
-  if (cmsConfig) {
-    const imgUrl = cmsConfig.extra_json?.image_url as string | undefined;
-    const ctaLabel = cmsConfig.cta_text ?? '';
-    const ctaUrl = cmsConfig.extra_json?.cta_url as string | undefined;
-    return (
-      <article
-        className="sp-agent-promo relative overflow-hidden rounded-[1.75rem] shadow-[0_14px_32px_-20px_rgba(5,46,22,0.45)] ring-1 ring-emerald-900/10"
-        style={{
-          background: cmsConfig.bg_value || 'linear-gradient(135deg, #065f46 0%, #047857 55%, #0d9488 100%)',
-          transform: entered ? 'translateY(0)' : 'translateY(10px)',
-          opacity: entered ? 1 : 0,
-          transition: 'transform .4s cubic-bezier(.16,1,.3,1), opacity .4s ease',
-        }}
-      >
-        {imgUrl && (
-          <img
-            src={imgUrl}
-            alt=""
-            aria-hidden
-            className="absolute inset-0 h-full w-full object-cover opacity-60 motion-safe:transition-transform motion-safe:duration-[12000ms] motion-safe:hover:scale-105"
-            loading="lazy"
-            referrerPolicy="no-referrer"
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-r from-emerald-950/80 via-emerald-900/50 to-transparent" aria-hidden />
-        <button
-          type="button"
-          onClick={handleDismiss}
-          aria-label={t('Dismiss banner', 'Tutup banner')}
-          className="absolute top-3 right-3 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/15 text-white hover:bg-white/25 active:scale-90 transition-all"
-        >
-          <X size={13} />
-        </button>
-        <div className="relative z-[1] p-5 text-white">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-100 mb-2.5">
-            <Sparkles size={11} /> {t('Promo', 'Promo')}
-          </div>
-          <h3 className="text-base sm:text-lg font-black leading-snug tracking-tight max-w-[26ch]">
-            {cmsConfig.headline}
-          </h3>
-          {cmsConfig.subtitle && (
-            <p className="mt-1.5 text-xs sm:text-sm font-medium opacity-90 leading-relaxed max-w-[36ch]">
-              {cmsConfig.subtitle}
-            </p>
-          )}
-          {ctaLabel && (
-            <a
-              href={ctaUrl || '#'}
-              target={ctaUrl ? '_blank' : undefined}
-              rel={ctaUrl ? 'noreferrer' : undefined}
-              onClick={(e) => {
-                if (!ctaUrl && onCta) { e.preventDefault(); onCta(); }
-              }}
-              className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-xs font-black text-emerald-900 shadow hover:brightness-105 active:scale-95 transition-all"
-            >
-              {ctaLabel} <ArrowRight size={13} />
-            </a>
-          )}
-        </div>
-      </article>
-    );
-  }
-
-  // ─── Built-in rotator: no CMS copy configured ────────────────────────────
-  const copy = lang === Language.EN ? slide.en : slide.id_;
   return (
-    <article
-      className="sp-agent-promo relative overflow-hidden rounded-[1.75rem] shadow-[0_14px_32px_-20px_rgba(5,46,22,0.45)] ring-1 ring-emerald-900/10"
-      style={{
-        background: slide.bg,
-        transform: entered ? 'translateY(0)' : 'translateY(10px)',
-        opacity: entered ? 1 : 0,
-        transition: 'transform .4s cubic-bezier(.16,1,.3,1), opacity .4s ease, background .6s ease',
+    <section
+      className={`sp-agent-promo relative ${className}`}
+      aria-label={t('Partner promos & tips', 'Promo & info mitra')}
+      aria-roledescription="carousel"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
+      onTouchStart={(e) => { setPaused(true); touchStartX.current = e.touches[0]?.clientX ?? null; }}
+      onTouchEnd={(e) => {
+        const start = touchStartX.current;
+        touchStartX.current = null;
+        setPaused(false);
+        if (start == null) return;
+        const delta = (e.changedTouches[0]?.clientX ?? start) - start;
+        if (Math.abs(delta) > 40) go(index + (delta < 0 ? 1 : -1));
       }}
-      aria-label={copy[0]}
     >
-      <AgentArtKeyframes />
-      {/* Decorative glow */}
-      <div className="pointer-events-none absolute -top-10 -right-10 h-40 w-40 rounded-full bg-emerald-200/25 blur-3xl" aria-hidden />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_120%,rgba(255,255,255,.14),transparent_55%)]" aria-hidden />
+      <PromoArtKeyframes />
 
-      <div className="relative z-[1] flex items-center gap-3 p-5 text-white">
-        <div className="flex-1 min-w-0">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-100 mb-2.5">
-            <Sparkles size={11} /> {t('Partner tip', 'Tips Mitra')}
-          </div>
-          <h3 className="text-base sm:text-lg font-black leading-snug tracking-tight">
-            {copy[0]}
-          </h3>
-          <p className="mt-1.5 text-xs sm:text-sm font-medium opacity-90 leading-relaxed">
-            {copy[1]}
-          </p>
-          {/* Dots.
-              Titiknya adalah <span> di dalam tombol, bukan tombolnya sendiri:
-              shell portal memasang `min-height: 44px` pada setiap button
-              (.sp-modern-app, portal-modernization.css) dan min-height menang
-              atas height berapa pun, jadi tombol setinggi 6px tetap terbit
-              setinggi 44px dan titiknya terbaca sebagai batang tegak. Dengan
-              pemisahan ini sasaran sentuh tetap 44px sesuai WCAG 2.5.8
-              sementara yang terlihat tetap satu garis tipis; margin negatif
-              menyerap tinggi sasaran itu agar kartunya tidak melar. */}
-          <div className="mt-0.5 -mb-3 flex items-center gap-1.5" aria-hidden>
-            {BUILTIN_SLIDES.map((_, i) => (
+      <div className="relative overflow-hidden rounded-[1.75rem] shadow-[0_18px_40px_-26px_rgba(4,53,36,0.55)] ring-1 ring-emerald-900/10">
+        {/* Rel geser: satu transform, transisi halus, diam saat reduced-motion. */}
+        <div
+          className="flex motion-reduce:transition-none"
+          style={{
+            transform: `translate3d(-${index * 100}%, 0, 0)`,
+            transition: reduceMotion ? 'none' : 'transform .55s cubic-bezier(.22,1,.36,1)',
+          }}
+        >
+          {slides.map((slide, i) => {
+            const Art = PROMO_ART[slide.art];
+            return (
               <button
-                key={i}
+                key={slide.id}
                 type="button"
-                onClick={() => setSlideIdx(i)}
-                className="flex h-11 items-center"
-                aria-label={`Slide ${i + 1}`}
+                onClick={() => activate(slide)}
+                tabIndex={i === index ? 0 : -1}
+                aria-hidden={i === index ? undefined : true}
+                aria-label={`${slide.headline}. ${slide.cta}`}
+                className="relative w-full shrink-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green focus-visible:ring-inset"
+              >
+                <div className="relative h-[150px] w-full overflow-hidden bg-[#063A2B]">
+                  {slide.imageUrl ? (
+                    <img
+                      src={slide.imageUrl}
+                      alt=""
+                      aria-hidden="true"
+                      loading={i === 0 ? 'eager' : 'lazy'}
+                      referrerPolicy="no-referrer"
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                  ) : (
+                    <Art />
+                  )}
+                  {/* Lapis gelap agar teks tetap terbaca di atas gambar apa pun. */}
+                  <div
+                    className="absolute inset-0"
+                    style={{ background: 'linear-gradient(100deg, rgba(4,32,24,.92) 0%, rgba(4,32,24,.72) 42%, rgba(4,32,24,.05) 78%)' }}
+                    aria-hidden="true"
+                  />
+                  <div className="relative z-10 flex h-full max-w-[62%] flex-col justify-center gap-1.5 px-5">
+                    <span className="text-2xs font-black uppercase tracking-[.16em] text-white/70">
+                      {slide.eyebrow}
+                    </span>
+                    <p className="text-[15px] font-black leading-tight text-white">{slide.headline}</p>
+                    <p className="text-2xs font-medium leading-snug text-white/75 line-clamp-2">{slide.body}</p>
+                    <span className="mt-1 inline-flex w-fit items-center gap-1 rounded-full bg-white px-3 py-1.5 text-2xs font-black text-[#0B4935]">
+                      {slide.cta}
+                      <ChevronRight size={12} />
+                    </span>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Tutup hanya ditawarkan untuk kartu CMS — kartu bawaan adalah navigasi,
+            bukan iklan, jadi menutupnya akan mengosongkan slot selamanya. */}
+        {cmsSlide && !cmsDismissed && index === 0 && (
+          <button
+            type="button"
+            onClick={dismissCms}
+            aria-label={t('Dismiss promo', 'Tutup promo')}
+            className="absolute right-3 top-3 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-black/30 text-white transition hover:bg-black/45 active:scale-90 motion-reduce:transition-none"
+          >
+            <X size={13} />
+          </button>
+        )}
+
+        {slides.length > 1 && (
+          <div className="absolute bottom-3 right-4 z-20 flex items-center gap-1.5">
+            {slides.map((slide, i) => (
+              <button
+                key={slide.id}
+                type="button"
+                onClick={() => go(i)}
+                aria-label={`${t('Promo', 'Promo')} ${i + 1} ${t('of', 'dari')} ${slides.length}`}
+                aria-current={i === index ? 'true' : undefined}
+                /* h-6 + min-h-0: portal-modernization.css memberi setiap
+                   <button> tinggi minimum 44px lewat :where(), yang akan
+                   membengkakkan dot 6px menjadi batang tinggi. */
+                className="flex h-6 min-h-0 items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
               >
                 <span
-                  className="block h-1.5 rounded-full transition-all"
+                  className="block h-1.5 rounded-full transition-all duration-300 motion-reduce:transition-none"
                   style={{
-                    width: i === slideIdx ? 20 : 6,
-                    background: i === slideIdx ? '#ffffff' : 'rgba(255,255,255,0.35)',
+                    width: i === index ? 20 : 7,
+                    background: i === index ? '#FFFFFF' : 'rgba(255,255,255,0.45)',
                   }}
                 />
               </button>
             ))}
           </div>
-        </div>
-        {/* Illustration */}
-        <div className="flex-shrink-0 w-[96px] h-[96px] sm:w-[108px] sm:h-[108px] -my-2 flex items-center justify-center pointer-events-none">
-          <slide.Art />
-        </div>
+        )}
       </div>
-    </article>
+    </section>
   );
 };
 

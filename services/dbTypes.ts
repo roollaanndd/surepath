@@ -103,6 +103,10 @@ export interface SpPolicyOrder {
   addon_premium: number;
   admin_fee: number;
   stamp_duty: number;
+  application_fee?: number;
+  delivery_method?: 'DIGITAL' | 'POS_STANDARD' | 'POS_OVERNIGHT';
+  delivery_region?: string | null;
+  delivery_fee?: number;
   total_premium: number;
   ojk_rate?: number;
   discount_rate?: number;

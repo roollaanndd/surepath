@@ -440,6 +440,10 @@ export async function handleOrdersAction(action: string, ctx: GatewayContext): P
           admin_fee:         Number(p.admin_fee ?? 0),
           stamp_duty:        Number(p.stamp_duty ?? 0),
           application_fee:   Number(p.application_fee ?? 0),
+          delivery_method:   ['DIGITAL','POS_STANDARD','POS_OVERNIGHT'].includes(String(p.delivery_method ?? ''))
+                             ? String(p.delivery_method) : 'DIGITAL',
+          delivery_region:   p.delivery_region ? String(p.delivery_region).slice(0, 30) : null,
+          delivery_fee:      Number(p.delivery_fee ?? 0),
           zone:              p.zone != null ? Number(p.zone) : null,
           insurer_id:        p.insurer_id        ? String(p.insurer_id)                    : null,
           addons:            p.addons            ? p.addons                                : null,

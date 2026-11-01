@@ -18,6 +18,7 @@ import {
 import { resolveTierPalette } from './AgentPartnerCard';
 import { useTierDefinitions, getTierByCode } from '../../hooks/useTierDefinitions';
 import ModuleIcon from '../shared/ModuleIcon';
+import AgentHomeHeroArt, { HeroArtKeyframes } from './AgentHomeHeroArt';
 import '../../src/styles/portal-modernization.css';
 
 interface Props {
@@ -141,8 +142,13 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
   return (
     <div className="sp-agent-home">
       {/* ─── Saturated brand hero band — tier palette (matches Partner Card) ─ */}
-      <div className="w-full text-white rounded-b-[2.25rem] pb-10" style={{ background: palette.band }}>
-        <motion.div className="sp-agent-home__greeting px-5 pt-6 sm:pt-8" {...reveal(0)}>
+      <div
+        className="relative w-full overflow-hidden text-white rounded-b-[2.25rem] pb-10"
+        style={{ background: palette.band }}
+      >
+        <HeroArtKeyframes />
+        <AgentHomeHeroArt glow={palette.glow} />
+        <motion.div className="sp-agent-home__greeting relative z-10 px-5 pt-6 sm:pt-8" {...reveal(0)}>
           <div className="flex items-center gap-3.5">
             <div className="relative shrink-0">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-sp-emerald text-white text-xl font-black ring-[3px] ring-white/40">
@@ -158,11 +164,11 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium opacity-80">{greeting()},</p>
+              <p className="text-xs font-medium opacity-90">{greeting()},</p>
               <h2 className="text-[22px] leading-tight font-black tracking-tight truncate">
                 {agent?.name?.split(' ')[0] ?? 'Mitra'}
               </h2>
-              <p className="text-2xs font-bold uppercase tracking-wider opacity-75 truncate">
+              <p className="text-2xs font-bold uppercase tracking-wider opacity-90 truncate">
                 {agent?.agent_code ?? 'SP-AGT'}
               </p>
             </div>
@@ -186,7 +192,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
 
         {/* Four round quick actions sit ON the band (ref: Send/Draft/Deleted/Backup) */}
         <motion.nav
-          className="sp-agent-home__quick-actions mt-5 px-5"
+          className="sp-agent-home__quick-actions relative z-10 mt-5 px-5"
           aria-label={t('Quick actions', 'Aksi cepat')}
           {...reveal(1)}
         >

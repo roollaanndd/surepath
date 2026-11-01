@@ -1,5 +1,44 @@
 # SurePath — Changelog
 
+## v2.7.39 — 2026-11-01
+
+Beranda Mitra: pita sapaan tidak lagi hitam polos, plus perbaikan kontras pita
+tier yang ikut ketemu.
+
+### Pita sapaan Beranda Mitra
+- Pemilik melaporkan "ada bagian yg berwarna hitam jelek banget dan terlalu
+  polos". Itu pita sapaan di puncak Beranda: `palette.band` untuk tier default
+  adalah gradien grafit `#46505F → #23272E`, dua stop, tanpa tekstur apa pun —
+  dan ia duduk tepat di atas kartu promo hijau, sehingga terbaca rusak alih-alih
+  kalem. Mayoritas mitra ada di tier default, jadi inilah yang mereka lihat
+  tiap pagi.
+- `STANDARD.band` kini hijau brand (`#0A7049 → #05553A → #033626`). STANDARD
+  bukan identitas tier melainkan "belum punya tier", jadi tidak ada warna yang
+  hilang maknanya; `STANDARD.card` tidak diubah, sehingga Partner Card tetap
+  terbaca sebagai tier awal yang netral.
+- `components/agent/AgentHomeHeroArt.tsx` baru: lapisan latar berilustrasi
+  berisi medan titik yang memudar ke bawah, busur konsentris, garis horizon,
+  dan watermark perisai SurePath. Semuanya putih ber-opacity rendah sehingga
+  bekerja di atas gradien tier mana pun tanpa perlu varian per tier; satu-satunya
+  bagian yang sadar-tier adalah kilau aksen, yang memakai `palette.glow`.
+  Dekoratif penuh: `aria-hidden`, tanpa pointer-event, dan geraknya mati di
+  `prefers-reduced-motion`.
+
+### Kontras pita tier — tiga perbaikan
+- Hijau pertama yang dipilih untuk pita (`#0E8F5B`) tampak bagus tapi menaruh
+  teks putih kecil di **4,1:1** — artinya lebih sulit dibaca daripada grafit
+  yang digantikannya. Ketahuan karena dihitung, bukan karena dilihat. Stop
+  diperdalam ke `#0A7049` (6,1:1), dan dua baris ber-opacity rendah (sapaan dan
+  kode mitra) dinaikkan dari 80%/75% ke 90% agar keduanya lolos 4,5:1.
+- Tes kontras yang sama lalu menemukan cacat lama di dua tier lain:
+  **Gold `#00B268` di 2,8:1** dan **Platinum `#3D8FB0` di 3,7:1** — keduanya
+  gagal AA, dan Gold adalah tier yang paling diperjuangkan mitra. Diperdalam ke
+  `#007543` (5,8:1) dan `#2B6E8C` (5,7:1). Gradien `card`, `glow`, dan `money`
+  tidak disentuh, jadi identitas warna tiap tier tetap.
+- `services/__tests__/agentHomeHero.test.tsx` mengunci semuanya: pita default
+  wajib hijau dan bukan grafit, dan **setiap** pita tier — termasuk stop
+  paling terang beserta kasus opacity 90% — wajib ≥ 4,5:1 untuk teks putih.
+
 ## v2.7.38 — 2026-10-31
 
 Onboarding: foto stok dari luar diganti ilustrasi SurePath sendiri, plus satu

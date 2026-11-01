@@ -118,6 +118,8 @@ jobs:
       - name: Verify native package contains current UI assets
         shell: bash
         run: |
+          echo 'Android build output tree:'
+          find android/app/build/outputs -type f \( -name '*.apk' -o -name '*.aab' \) -print
           # AGP names an un-signed release APK app-base-release-unsigned.apk. Normalize the artifact name
           # so the upload step remains stable for both signed and unsigned builds.
           if [[ ! -s android/app/build/outputs/apk/base/release/app-base-release.apk && -s android/app/build/outputs/apk/base/release/app-base-release-unsigned.apk ]]; then

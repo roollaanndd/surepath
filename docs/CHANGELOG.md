@@ -1,5 +1,36 @@
 # SurePath — Changelog
 
+## v2.7.42 — 2026-11-01
+
+Fase 1 pemisahan paket unduhan per role (`docs/APP_SEPARATION_PLAN.md`) — nol
+perubahan kode komponen: semua flavor membangun bundle web (`dist`) dan sumber
+Java yang sama persis, hanya identitas paket yang berbeda.
+
+### Android: Gradle flavors per role
+`flavorDimensions "app"` dengan `base / nasabah / mitra / operator / admin`.
+`base` mempertahankan `applicationId` `com.myinsurepath.os` dan perilaku rilis
+hari ini; flavor role hanya menambah `applicationIdSuffix` (`.nasabah`, `.mitra`,
+`.operator`, `.admin`) sehingga tiap role punya simpul paket Play Store sendiri
+dan bisa terpasang berdampingan. Label per flavor lewat override
+`src/<flavor>/res/values/strings.xml` (SurePath Nasabah/Mitra/Operator/Admin).
+`custom_url_scheme` / `package_name` sengaja **tidak** dioverride — deep-link
+pembayaran/OAuth tetap menuju `com.myinsurepath.os` di semua paket.
+
+### Vercel: alias path per role (redirect 302)
+`/nasabah → /custapp`, `/mitra → /agapps`, `/operator → /operatorapp` beserta
+sub-path-nya. Labelink berbentuk **redirect**, bukan rewrite — SPA membaca
+`window.location.pathname`, jadi router tetap melihat jalur asli yang sudah ada
+(`/custapp` dst. tidak berubah). `/admin` tak perlu alias (jalurnya sudah itu).
+
+### CI Android flavor-aware
+`android-native-build.yml` kini membangun `assembleBaseRelease
+bundleBaseRelease` (artefak `app-base-release.apk/aab`) plus build **debug**
+murah keempat flavor role — pecah di resource flavor mana pun tetap menggagalkan
+workflow, tanpa menaikkan biaya build signifikan.
+
+Versi: `src/version.ts` 2.7.42 · android `versionName "2.7.42"` / `versionCode 54`
+(sinkron via `scripts/sync-android-version.mjs`).
+
 ## v2.7.41 — 2026-11-01
 
 Integrasi PR App Mitra (`project-thread-vdfjye`): kode produk order yang salah

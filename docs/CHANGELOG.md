@@ -1,6 +1,19 @@
 # SurePath — Changelog
 
-## v2.7.39 — 2026-11-01
+## v2.7.40 — 2026-11-01
+
+Pita tier `AgentPartnerCard`: perbaikan kontras WCAG AA pada tiga tier.
+
+### Perbaikan kontras pita tier
+
+- **STANDARD** — gradien grafit `#46505F → #23272E` diganti hijau brand
+  `#0A7049 → #05553A → #033626`. Kontras teks putih kecil naik dari ~4 kali
+  (mendekati batas) ke 6,1:1. STANDARD.card tidak diubah supaya identitas
+  tier awal tetap netral.
+- **Gold** — `#00B268` diganti `#007543`: 2,8:1 → 5,8:1.
+- **Platinum** — `#3D8FB0` diganti `#2B6E8C`: 3,7:1 → 5,7:1.
+- `services/__tests__/agentHomeHero.test.tsx` baru: mengunci **setiap** pita
+  tier ke ≥ 4,5:1, termasuk kasus dua baris teks di opacity 90%.
 
 ### Beranda Mitra dibangun ulang dalam bahasa super app
 
@@ -63,7 +76,6 @@ Logic bisnis, login, dan jalur uang tidak disentuh: saldo hanya dibaca
 `tsc --noEmit` bersih, ESLint bersih (satu peringatan lama tidak terkait),
 461 unit test lulus, `npm run build` hijau, dan layarnya dilihat sendiri di
 Chromium 390×844 pada mode terang dan gelap.
-
 ## v2.7.38 — 2026-10-31
 
 Onboarding: foto stok dari luar diganti ilustrasi SurePath sendiri, plus satu

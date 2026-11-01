@@ -2,8 +2,37 @@
 
 ## v2.7.38 — 2026-11-01
 
-App Mitra: audit alur beli asuransi mobil, banner promo beranda, dan
-layar pendaftaran.
+App Mitra: audit alur beli asuransi mobil + biaya kirim mengikuti pilihan,
+banner promo beranda, pita hero beranimasi, dan layar pendaftaran.
+
+### Biaya kirim polis mengikuti pilihan mitra
+- Sebelumnya total tagihan **selalu** `breakdown.total + 26000` (aplikasi
+  Rp 6.000 + kirim Rp 20.000 flat), termasuk untuk "Polis Digital — GRATIS".
+  Mitra yang memilih pengiriman digital ditagih Rp 20.000 tanpa peringatan.
+- Diperbaiki: `total_premium = breakdown.total + Rp 6.000 + deliveryFee`,
+  di mana `deliveryFee` = 0 (Digital) / Rp 10k–15k (Pos Reguler) / Rp 20k–25k
+  (One Night Service) sesuai pilihan dan area. Tiga titik (`create_policy_order`,
+  tampilan total, invoice Xendit) diselaraskan.
+- Rincian biaya kirim kini muncul di tabel ringkasan step 6 bila > 0.
+- `delivery_method`, `delivery_region`, `delivery_fee` disimpan di order
+  (gateway + tipe `SpPolicyOrder` diperbarui).
+- Migrasi `20261101100000_delivery_fields_policy_orders.sql` — perlu diterapkan
+  manual sebelum order baru menggunakan kolom ini.
+
+### Beranda Mitra: pita hero tidak lagi polos hitam
+- Penyebab akarnya: `sp_agent_tiers` hanya berisi STANDARD (is_default,
+  #6b7280 grafite), ELITE (#8b5cf6), STAR (#f59e0b). Tak satu pun cocok
+  dengan `KEYWORD_PALETTES`, jadi setiap mitra mendapatkan pita grafite polos.
+- Pita hero kini diisi komponen `AgentHeroBackdrop`: langit gradien yang
+  berganti mengikuti waktu setempat (pagi/siang/sore/malam), siluet kota
+  beraksen warna tier, cahaya diagonal, dan garis jalan samar. Vektor murni.
+- Warna band tier STANDARD diubah dari grafite ke gradien brand forest green.
+- Kartu aksi cepat berubah dari transparan (kelas `bg-white/92` tidak dikenal
+  Tailwind) ke `bg-white/95`.
+- Dot navigasi carousel tidak lagi membengkak jadi batang tinggi (portal-
+  modernization.css `min-height:44px` dikalahkan dengan `h-6 min-h-0`).
+
+### Beranda Mitra: banner promo bergambar
 
 ### Kode produk order kendaraan salah sejak awal
 - `productInfo()` di `VehicleUnderwritingWizard` merangkai `MRKB` + `B4`

@@ -85,7 +85,12 @@ const BRONZE: TierPalette = {
 
 const STANDARD: TierPalette = {
   key: 'STANDARD',
-  band: 'linear-gradient(165deg, #46505F 0%, #23272E 100%)',
+  // FIX 2026-11-01: dulu grafit (#46505F → #23272E). Satu-satunya tier
+  // `is_default` di produksi adalah STANDARD, dan dua tier lainnya jatuh ke
+  // `standardWith()` yang juga memakai band ini — jadi SETIAP mitra melihat
+  // pita hitam keabuan di puncak Beranda. Kini memakai hijau merek; identitas
+  // tier tetap terbaca lewat `chip`, `progress`, dan cahaya aksen latarnya.
+  band: 'linear-gradient(165deg, #0B6844 0%, #05362A 100%)',
   card: 'linear-gradient(120deg, #10131A 0%, #23272E 52%, #3A4150 100%)',
   glow: 'rgba(148,163,184,0.22)',
   progress: '#9CA3AF',
@@ -132,12 +137,17 @@ export function resolveTierPalette(tier?: SpAgentTier | null): TierPalette {
 }
 
 function standardWith(color: string): TierPalette {
+  const hex = color.startsWith('#') ? color : `#${color}`;
+  // `band` sengaja tetap hijau merek: puncaknya memuat teks putih, dan warna
+  // tier kustom di produksi (ELITE ungu, STAR kuning) tidak lolos kontras
+  // sebagai latar teks. Identitas tier dibawa `chip`/`progress`, dan di
+  // Beranda juga oleh cahaya aksen pada AgentHeroBackdrop.
   return {
     ...STANDARD,
     key: 'CUSTOM',
-    progress: color,
-    glow: hexToRgba(color, 0.22),
-    chip: color,
+    progress: hex,
+    glow: hexToRgba(hex, 0.22),
+    chip: hex,
   };
 }
 

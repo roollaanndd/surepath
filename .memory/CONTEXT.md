@@ -1,5 +1,5 @@
 # SurePath Session Context
-**Updated:** 2026-10-23 (v2.6.9 — revamp jadi 4 portal + scroll reset lintas portal)
+**Updated:** 2026-11-01 (v2.7.38 — Mitra beranda hero, banner promo, wizard delivery fee)
 
 ## Status revamp UI/UX (23 Okt 2026)
 

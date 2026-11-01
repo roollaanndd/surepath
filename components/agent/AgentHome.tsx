@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, ChevronRight, Target, Star } from 'lucide-react';
 import AgentPromoBanner from './AgentPromoBanner';
+import AgentHeroBackdrop from './AgentHeroBackdrop';
 import { motion, useReducedMotion } from 'motion/react';
 import { Language } from '../../types';
 import ManagedPortalIcon from '../shared/ManagedPortalIcon';
@@ -109,7 +110,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
       key={target + label}
       type="button"
       onClick={() => onNavigate(target)}
-      className="flex flex-col items-center gap-2 rounded-2xl bg-white/90 py-3 px-1 shadow-[0_4px_14px_-4px_rgba(0,59,47,0.30)] group cursor-pointer active:scale-95 transition-transform duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+      className="flex flex-col items-center gap-2 rounded-2xl border border-white/70 bg-white/95 py-3 px-1 shadow-[0_10px_24px_-12px_rgba(0,36,27,0.65)] backdrop-blur-sm group cursor-pointer active:scale-95 hover:-translate-y-0.5 transition-all duration-200 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
       aria-label={label}
     >
       <span className="flex h-12 w-12 items-center justify-center rounded-full bg-ds-green-tint transition-transform duration-200 group-hover:scale-105 motion-reduce:transition-none" style={{ color: palette.chip }}>
@@ -140,9 +141,25 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
 
   return (
     <div className="sp-agent-home">
-      {/* ─── Saturated brand hero band — tier palette (matches Partner Card) ─ */}
-      <div className="w-full text-white rounded-b-[2.25rem] pb-10" style={{ background: palette.band }}>
-        <motion.div className="sp-agent-home__greeting px-5 pt-6 sm:pt-8" {...reveal(0)}>
+      {/* ─── Pita hero berlapis ──────────────────────────────────────────────
+          Dulu satu gradien rata dari `palette.band`; karena tier default di
+          produksi memakai swatch grafit, setiap mitra membuka Beranda dan
+          melihat blok abu-abu gelap yang kosong. Kini gradien merek menjadi
+          alas bagi AgentHeroBackdrop — adegan vektor berlapis yang berganti
+          menurut waktu setempat dan mengambil warna aksen tier. */}
+      <div
+        className="relative w-full overflow-hidden text-white rounded-b-[2.25rem] pb-10"
+        style={{ background: palette.band }}
+      >
+        <AgentHeroBackdrop accent={palette.chip} />
+        {/* Peredam di bawah teks: menjaga sapaan tetap lolos kontras betapa pun
+            terangnya adegan di belakangnya. */}
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{ background: 'linear-gradient(180deg, rgba(3,26,20,.58) 0%, rgba(3,26,20,.22) 46%, rgba(3,26,20,.42) 100%)' }}
+          aria-hidden="true"
+        />
+        <motion.div className="sp-agent-home__greeting relative z-10 px-5 pt-6 sm:pt-8" {...reveal(0)}>
           <div className="flex items-center gap-3.5">
             <div className="relative shrink-0">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-sp-emerald text-white text-xl font-black ring-[3px] ring-white/40">
@@ -186,7 +203,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
 
         {/* Four round quick actions sit ON the band (ref: Send/Draft/Deleted/Backup) */}
         <motion.nav
-          className="sp-agent-home__quick-actions mt-5 px-5"
+          className="sp-agent-home__quick-actions relative z-10 mt-5 px-5"
           aria-label={t('Quick actions', 'Aksi cepat')}
           {...reveal(1)}
         >
@@ -213,7 +230,7 @@ const AgentHome: React.FC<Props> = ({ agent, agentId, stats, recentCommissions, 
         )}
 
         <div className="px-5 pt-4">
-          <AgentPromoBanner lang={lang} onCta={() => onNavigate('quotes')} />
+          <AgentPromoBanner lang={lang} onNavigate={onNavigate} onCta={() => onNavigate('quotes')} />
         </div>
 
         {/* Fitur Mitra — every tile is a real portal destination */}

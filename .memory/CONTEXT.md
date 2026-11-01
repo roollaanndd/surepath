@@ -1,5 +1,46 @@
 # SurePath Session Context
-**Updated:** 2026-11-01 (v2.7.38 — Mitra beranda hero, banner promo, wizard delivery fee)
+**Updated:** 2026-11-01 (v2.7.41 — app Mitra: kode produk order, persistensi delivery fee, banner promo bergambar, onboarding berilustrasi)
+
+## Sesi 31 Okt – 1 Nov 2026 (v2.7.38 & v2.7.39)
+
+### Onboarding tidak lagi memakai foto stok (v2.7.38, PR #351)
+`OnboardingFlow.tsx` dulu hotlink tujuh foto Unsplash untuk slide AGENT /
+OPERATOR / INSURER, dan foto itu **menutupi** lapisan ilustrasi: scene vektor
+hanya dirender kalau fotonya sudah gagal dimuat. Artinya karya di
+`AgentArt.tsx` praktis tak pernah terlihat. Sekarang ilustrasi selalu digambar,
+tiap slide punya nuansa latar sendiri (`TONE`: dawn/teal/gold/moss). Transisi
+sadar-arah dan swipe dari v2.7.37 tetap utuh.
+
+### Pita sapaan Beranda Mitra (v2.7.39)
+Keluhan pemilik "ada bagian hitam jelek dan terlalu polos" = `palette.band`
+tier default, gradien grafit dua stop tanpa tekstur. Kini hijau brand +
+`components/agent/AgentHomeHeroArt.tsx` (medan titik, busur, watermark perisai,
+semua putih ber-opacity rendah supaya jalan di atas gradien tier mana pun).
+
+**Pelajaran yang jangan diulang:** hijau pertama (`#0E8F5B`) *tampak* bagus tapi
+kontras teks putih kecilnya 4,1:1 — lebih buruk daripada grafit yang diganti.
+Ketahuan karena dihitung. Tes yang sama lalu menemukan cacat lama: pita Gold
+2,8:1 dan Platinum 3,7:1, keduanya gagal AA. Ketiganya diperdalam.
+`services/__tests__/agentHomeHero.test.tsx` mengunci **setiap** pita tier ke
+≥ 4,5:1, termasuk kasus opacity 90%.
+
+### Terbuka, menunggu pemilik
+**Biaya Rp 26.000 di pembelian mobil.** `breakdown.total` sudah memuat admin
+Rp 50.000 + materai Rp 10.000, lalu `VehicleUnderwritingWizard` menambah
+Rp 26.000 lagi di tiga tempat (baris 651, 1740, 1943) sementara rincian di
+layar hanya menyebut Rp 6.000 — **Rp 20.000 ditagih tanpa baris rincian**, dan
+ikut terbayar karena invoice Xendit mengambil nominal dari DB. Turunannya:
+`net_premium` disimpan tanpa Rp 26.000 itu, jadi `total_premium -
+discount_amount ≠ net_premium`. **Belum diperbaiki** — memilih angkanya
+mengubah pendapatan atau harga ke nasabah. Detail di
+`docs/CAR_INSURANCE_FLOW_AUDIT_2026-10-31.md` bagian "sesi kedua".
+
+### Catatan harness verifikasi
+Potret layar portal **wajib** dibungkus kelas shell `sp-modern-app`. Tanpa itu
+aturan ber-scope shell tidak ikut — misalnya
+`.sp-modern-app :where(button,[role="button"]) { min-height: 44px }` yang
+membuat titik carousel jadi batang tegak 44px. Potret tanpa shell hanya
+membuktikan komponennya, bukan layarnya.
 
 ## Status revamp UI/UX (23 Okt 2026)
 

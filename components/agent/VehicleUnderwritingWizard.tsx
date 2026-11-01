@@ -654,8 +654,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
           addon_premium: breakdown.addonPremium,
           admin_fee: breakdown.adminFee,
           stamp_duty: breakdown.stampDuty,
-          total_premium: breakdown.total + 6_000 + deliveryFee,
-          application_fee: 6_000,
+          total_premium: breakdown.total + 26000 + deliveryFee,
           delivery_method: deliveryMethod,
           delivery_region: deliveryMethod !== 'DIGITAL' ? deliveryRegion : undefined,
           delivery_fee: deliveryFee,
@@ -1760,7 +1759,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
             <span className="font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest text-sm">
               Total Premi
             </span>
-            <span className="font-black text-slate-600 dark:text-slate-300 text-xl">{formatIDR(breakdown.total + 6_000 + deliveryFee)}</span>
+            <span className="font-black text-slate-600 dark:text-slate-300 text-xl">{formatIDR(breakdown.total + 26000 + deliveryFee)}</span>
           </div>
 
           {/* Dates */}
@@ -1956,7 +1955,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
       client_email: clientEmail,
       client_phone: clientPhone || undefined,
       product_name: productName,
-      total_premium: breakdown.total + 6_000 + deliveryFee,
+      total_premium: breakdown.total + 26000 + deliveryFee,
     });
     setPayLoading(false);
     if (!result?.invoice_url) {

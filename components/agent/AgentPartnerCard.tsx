@@ -35,7 +35,10 @@ export interface TierPalette {
 
 const GOLD: TierPalette = {
   key: 'GOLD',
-  band: 'linear-gradient(165deg, #00B268 0%, #00583A 100%)',
+  /* #00B268 put white small text at 2.8:1 — the worst band in the set, on the
+   * tier partners work hardest to reach. Darkened to 5.8:1; the card, glow and
+   * money gradients below are untouched, so Gold still reads as Gold. */
+  band: 'linear-gradient(165deg, #007543 0%, #00583A 100%)',
   card: 'linear-gradient(120deg, #0B1120 0%, #0E3B2E 52%, #0B5E3B 100%)',
   glow: 'rgba(0,193,106,0.22)',
   progress: '#00C16A',
@@ -55,7 +58,8 @@ const SILVER: TierPalette = {
 
 const PLATINUM: TierPalette = {
   key: 'PLATINUM',
-  band: 'linear-gradient(165deg, #3D8FB0 0%, #123049 100%)',
+  /* #3D8FB0 sat at 3.7:1 for white small text; darkened to 5.7:1. */
+  band: 'linear-gradient(165deg, #2B6E8C 0%, #123049 100%)',
   card: 'linear-gradient(120deg, #0A1220 0%, #123A52 52%, #1E6E8E 100%)',
   glow: 'rgba(125,211,252,0.22)',
   progress: '#7DD3FC',
@@ -83,16 +87,23 @@ const BRONZE: TierPalette = {
   chip: '#C2410C',
 };
 
+/* STANDARD is not a tier identity — it is "no tier yet", which is what most
+ * partners are. Its band used to be graphite (#46505F → #23272E), so the
+ * default partner's Beranda opened on a flat black slab directly above the
+ * green promo card. The metal tiers below keep their own colour because that
+ * colour means something; this one only ever meant "nothing earned yet", so it
+ * now carries the brand instead. The card gradient is unchanged — the Partner
+ * Card still reads as the neutral starting tier. */
 const STANDARD: TierPalette = {
   key: 'STANDARD',
-  // FIX 2026-11-01: dulu grafit (#46505F → #23272E). Satu-satunya tier
-  // `is_default` di produksi adalah STANDARD, dan dua tier lainnya jatuh ke
-  // `standardWith()` yang juga memakai band ini — jadi SETIAP mitra melihat
-  // pita hitam keabuan di puncak Beranda. Kini memakai hijau merek; identitas
-  // tier tetap terbaca lewat `chip`, `progress`, dan cahaya aksen latarnya.
-  band: 'linear-gradient(165deg, #0B6844 0%, #05362A 100%)',
+  /* Stops are chosen for contrast, not just for looks: the lightest one
+   * (#0A7049, rel. luminance .121) keeps plain white small text at 6.1:1, and
+   * the greeting/agent-code lines — which render at reduced opacity — still
+   * clear 4.5:1 against it. An earlier, prettier #0E8F5B sat at 4.1:1 and
+   * would have made this band LESS readable than the graphite it replaced. */
+  band: 'linear-gradient(165deg, #0A7049 0%, #05553A 54%, #033626 100%)',
   card: 'linear-gradient(120deg, #10131A 0%, #23272E 52%, #3A4150 100%)',
-  glow: 'rgba(148,163,184,0.22)',
+  glow: 'rgba(0,224,122,0.26)',
   progress: '#9CA3AF',
   money: 'linear-gradient(160deg, #F8FAFC 10%, #CBD5E1 55%, #94A3B8 100%)',
   chip: '#475569',

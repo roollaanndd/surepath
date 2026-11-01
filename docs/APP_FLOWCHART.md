@@ -219,7 +219,7 @@ flowchart TD
     AP([AgentPortal\ncomponents/agent/AgentPortal.tsx])
     AP --> AT{bottom tab}
 
-    AT -- home --> AH[AgentHome:\nstats, commissions snapshot,\ntier badge, quick actions]
+    AT -- home --> AH[AgentHome super app v2.7.39:\npita sapaan + latar bergambar,\nsaldo dompet + 4 aksi cepat,\ngrid layanan, rail produk,\nstats, komisi terbaru]
     AT -- policy PolicyAndQuotes --> PQ[AgentOrderStatus\n+ toggle AgentQuoteBuilder]
     AT -- quotes --> ABM[AgentBuyMarketplace\nproduct picker]
     AT -- commission dompet --> AWALLET[AgentCommission\nwallet balance, ledger, withdrawals]

@@ -1,5 +1,34 @@
 # SurePath Session Context
-**Updated:** 2026-10-23 (v2.6.9 — revamp jadi 4 portal + scroll reset lintas portal)
+**Updated:** 2026-11-01 (v2.7.40 — Beranda Mitra jadi super app, pita hijau korporat)
+
+## Terakhir dikerjakan (1 Nov 2026)
+
+**Beranda Mitra dibangun ulang dalam bahasa super app** (v2.7.39, PR #346),
+lalu pita sapaannya diberi warna korporat + latar bergambar (v2.7.40).
+
+- Empat komponen baru di `components/shared/superapp/` — `SuperAppHeader`,
+  `SuperAppBackdrop`, `ProtectionSummaryCard`, `ServiceGrid`, `ContentRail`.
+  Sengaja generik: portal Nasabah bisa memakainya tanpa menyalin.
+- `PortalTabBar` punya varian `flat` (lima tab sederajat). Varian `raised`
+  tetap bawaan, jadi lima portal lain tidak tersentuh.
+- **Pita hero lama yang diwarnai per tier sudah tidak ada di Beranda.** Tier
+  bawaan `STANDARD` dulu `#46505F → #23272E` — itu "bagian hitam" yang
+  dilaporkan pemilik. Kartu tier `STANDARD` di Profil juga diganti ke hijau
+  korporat; empat tier logam (SILVER/PLATINUM/DIAMOND/BRONZE) tidak diubah.
+- Latar pita adalah **SVG inline yang digambar sendiri**, bukan foto dan
+  bukan hotlink, dengan empat variasi menurut jam. Jangan menggantinya dengan
+  foto stok: tujuh foto Unsplash baru saja dicopot dari onboarding di v2.7.38
+  karena gagal di APK dan menutupi ilustrasi sendiri.
+
+### Jebakan yang baru ketemu, jangan diulang
+- `.sp-modern-app :where(button, [role="button"]) { min-height: 44px }` di
+  `src/styles/portal-modernization.css` **mengalahkan `height` berapa pun**
+  (properti berbeda, bukan soal spesifisitas). Setiap kontrol tipis yang
+  dibuat sebagai `<button>` — titik carousel, pil indikator — terbit setinggi
+  44px. Taruh bentuk yang terlihat di `<span>` di dalam tombolnya.
+- `AgentIcons.tsx` dulu membuang prop `style`; `CircularActionGrid` dulu
+  menyusun tint dengan `` `${color}1F` `` sehingga token CSS jadi warna tidak
+  sah. Keduanya sudah diperbaiki — tapi polanya mungkin ada di tempat lain.
 
 ## Status revamp UI/UX (23 Okt 2026)
 

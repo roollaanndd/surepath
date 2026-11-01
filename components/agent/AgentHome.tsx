@@ -157,7 +157,9 @@ const AgentHome: React.FC<Props> = ({
         name={agent?.name?.split(' ')[0] ?? 'Mitra'}
         subtitle={agent?.agent_code ?? 'SP-AGT'}
         badge={myTierDef && !myTierDef.is_default ? (
-          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-ds-card px-2 py-0.5 text-2xs font-black uppercase tracking-wider text-ds-ink2 ring-1 ring-ds-border">
+          // Lencana ini sekarang duduk di atas pita hijau korporat, jadi
+          // warnanya kaca putih, bukan kartu terang di atas latar terang.
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-2xs font-black uppercase tracking-wider text-white ring-1 ring-white/25">
             <span aria-hidden="true">{myTierDef.emoji}</span> {myTierDef.name}
           </span>
         ) : undefined}

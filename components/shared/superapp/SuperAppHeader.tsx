@@ -1,19 +1,25 @@
 import React from 'react';
 import { Bell, Moon, Sun } from 'lucide-react';
+import SuperAppBackdrop, { dayPartOf, type DayPart } from './SuperAppBackdrop';
 
 /**
- * Pita sapaan portal Nasabah — baris paling atas bahasa super app.
+ * Pita sapaan super app — baris paling atas Beranda.
  *
- * Bentuknya mengikuti acuan yang diberikan roland (31 Okt 2026): satu pita
- * gradasi hijau lembut yang memuat sapaan menurut waktu dan nama depan, dengan
- * bel notifikasi dan avatar di sisi kanan. Pita ini ikut menggulung bersama
- * isi halaman — ia bukan `PortalHeader` yang menempel di atas layar — karena
- * kartu ringkasan di bawahnya sengaja menindih tepi bawah pita, dan tindihan
- * itu hanya bekerja bila keduanya berada di aliran yang sama.
+ * Bentuknya mengikuti acuan yang diberikan roland (31 Okt 2026), dan warnanya
+ * mengikuti permintaannya berikutnya (1 Nov 2026): pita hijau korporat dengan
+ * latar bergambar yang bervariasi, menggantikan pita tier lama yang untuk
+ * tier bawaan tercat arang `#46505F → #23272E` — "hitam dan terlalu polos".
  *
- * Warna seluruhnya dari token: gradasi --ds-primary-tint → --ds-bg, teks
- * --ds-ink (sapaan) dan --ds-green (nama). Tidak ada nilai mentah dari
- * gambar acuan.
+ * Pita ini ikut menggulung bersama isi halaman — ia bukan `PortalHeader` yang
+ * menempel di atas layar — karena kartu ringkasan di bawahnya sengaja
+ * menindih tepi bawahnya, dan tindihan itu hanya bekerja bila keduanya berada
+ * di aliran yang sama.
+ *
+ * Warnanya dari token hijau korporat yang sudah ada (`--ds-primary-hero`,
+ * `--ds-primary-hover`, `--ds-primary`), bukan dari lapisan `--ds-admin-*`:
+ * lapisan itu sengaja dibatasi untuk CMS admin yang tidak punya mode gelap,
+ * sedangkan portal Mitra punya. Aksen lime-nya dibawa oleh ilustrasinya.
+ * Teksnya putih di atas `#003B2F` → 14,8:1, jauh di atas ambang AA.
  */
 export interface SuperAppHeaderProps {
   /** Sapaan menurut jam, mis. "Selamat Pagi". */
@@ -30,13 +36,18 @@ export interface SuperAppHeaderProps {
   onToggleDark: () => void;
   onAvatarClick: () => void;
   labels: { notifications: string; theme: string; profile: string };
+  /**
+   * Bagian hari untuk adegan latarnya. Diisi pemanggil supaya satu jam bisa
+   * dipaksa dalam tes dan tangkapan layar; bawaannya jam setempat.
+   */
+  dayPart?: DayPart;
 }
 
 const ICON_BUTTON =
-  'relative flex h-10 w-10 items-center justify-center rounded-full bg-ds-card/80 text-ds-ink2 ' +
-  'shadow-ds-sm ring-1 ring-ds-border transition-transform active:scale-95 ' +
+  'relative flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-white ' +
+  'ring-1 ring-white/25 backdrop-blur-sm transition-transform active:scale-95 ' +
   'motion-reduce:transition-none motion-reduce:active:scale-100 ' +
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green focus-visible:ring-offset-2 focus-visible:ring-offset-ds-bg';
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent';
 
 export const SuperAppHeader: React.FC<SuperAppHeaderProps> = ({
   greeting,
@@ -49,79 +60,73 @@ export const SuperAppHeader: React.FC<SuperAppHeaderProps> = ({
   onToggleDark,
   onAvatarClick,
   labels,
-}) => (
-  <header
-    className="relative overflow-hidden px-5 pb-20"
-    style={{
-      paddingTop: 'calc(1.25rem + env(safe-area-inset-top, 0px))',
-      // Berakhir transparan, bukan pada --ds-bg. Shell portal (.sp-modern-app)
-      // sudah membawa wash ambient hangat di pojok kiri atas; bila pita ini
-      // ditutup warna solid, wash itu terpotong tepat di tepi bawah pita dan
-      // meninggalkan garis sambung yang terlihat. Transparan membuat keduanya
-      // menyatu.
-      background:
-        'linear-gradient(180deg, var(--ds-primary-tint) 0%, color-mix(in srgb, var(--ds-primary-tint) 42%, transparent) 58%, transparent 100%)',
-    }}
-  >
-    {/* Dua lingkaran samar — kedalaman pita, sama seperti awan tipis di acuan.
-        Murni dekoratif, karena itu aria-hidden. */}
-    <div
-      aria-hidden="true"
-      className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full"
-      style={{ background: 'color-mix(in srgb, var(--ds-primary) 10%, transparent)' }}
-    />
-    <div
-      aria-hidden="true"
-      className="pointer-events-none absolute -left-20 top-6 h-44 w-44 rounded-full"
-      style={{ background: 'color-mix(in srgb, var(--ds-primary) 7%, transparent)' }}
-    />
+  dayPart,
+}) => {
+  const part = dayPart ?? dayPartOf(new Date().getHours());
+  // Mode gelap memakai ujung yang lebih dalam supaya pita tidak menyala di
+  // layar yang sudah gelap; terang memakai hijau korporat penuh.
+  const band = darkMode
+    ? 'linear-gradient(160deg, #04241C 0%, #063025 48%, #0A5741 100%)'
+    : 'linear-gradient(160deg, #003B2F 0%, #04543F 46%, #0A7A52 100%)';
 
-    <div className="relative z-10 flex items-start justify-between gap-3">
-      <div className="min-w-0">
-        <p className="text-sm font-semibold text-ds-ink2">{greeting},</p>
-        <h1 className="mt-0.5 truncate text-[1.6rem] font-black leading-tight tracking-tight text-ds-ink">
-          {name}
-          <span className="text-ds-green">!</span>
-        </h1>
-        {(subtitle || badge) && (
-          <div className="mt-1.5 flex items-center gap-2">
-            {subtitle && (
-              <span className="truncate text-2xs font-black uppercase tracking-widest text-ds-ink3">{subtitle}</span>
-            )}
-            {badge}
-          </div>
-        )}
-      </div>
+  return (
+    <header
+      className="relative isolate overflow-hidden rounded-b-[2.25rem] px-5 pb-20 text-white"
+      style={{
+        paddingTop: 'calc(1.25rem + env(safe-area-inset-top, 0px))',
+        background: band,
+      }}
+    >
+      <SuperAppBackdrop part={part} />
 
-      <div className="flex shrink-0 items-center gap-2">
-        <button type="button" onClick={onToggleDark} aria-label={labels.theme} className={ICON_BUTTON}>
-          {darkMode ? <Sun size={18} strokeWidth={2} /> : <Moon size={18} strokeWidth={2} />}
-        </button>
-
-        <button type="button" onClick={onBellClick} aria-label={labels.notifications} className={ICON_BUTTON}>
-          <Bell size={18} strokeWidth={2} />
-          {unreadCount > 0 && (
-            <span
-              className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-ds-red px-1 text-2xs font-black text-white"
-              aria-hidden="true"
-            >
-              {unreadCount > 99 ? '99+' : unreadCount}
-            </span>
+      <div className="relative z-10 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-white/80">{greeting},</p>
+          <h1 className="mt-0.5 truncate text-[1.6rem] font-black leading-tight tracking-tight text-white">
+            {name}
+            <span style={{ color: '#E3EF26' }}>!</span>
+          </h1>
+          {(subtitle || badge) && (
+            <div className="mt-1.5 flex items-center gap-2">
+              {subtitle && (
+                <span className="truncate text-2xs font-black uppercase tracking-widest text-white/70">{subtitle}</span>
+              )}
+              {badge}
+            </div>
           )}
-          <span className="sr-only">{unreadCount > 0 ? String(unreadCount) : ''}</span>
-        </button>
+        </div>
 
-        <button
-          type="button"
-          onClick={onAvatarClick}
-          aria-label={labels.profile}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-ds-green text-base font-black text-ds-on-green shadow-ds-green ring-2 ring-ds-card transition-transform active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green focus-visible:ring-offset-2 focus-visible:ring-offset-ds-bg"
-        >
-          {name?.[0]?.toUpperCase() ?? '?'}
-        </button>
+        <div className="flex shrink-0 items-center gap-2">
+          <button type="button" onClick={onToggleDark} aria-label={labels.theme} className={ICON_BUTTON}>
+            {darkMode ? <Sun size={18} strokeWidth={2} /> : <Moon size={18} strokeWidth={2} />}
+          </button>
+
+          <button type="button" onClick={onBellClick} aria-label={labels.notifications} className={ICON_BUTTON}>
+            <Bell size={18} strokeWidth={2} />
+            {unreadCount > 0 && (
+              <span
+                className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-ds-red px-1 text-2xs font-black text-white"
+                aria-hidden="true"
+              >
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
+            <span className="sr-only">{unreadCount > 0 ? String(unreadCount) : ''}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onAvatarClick}
+            aria-label={labels.profile}
+            className="flex h-10 w-10 items-center justify-center rounded-full text-base font-black transition-transform active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+            style={{ background: '#E3EF26', color: '#06231D', boxShadow: '0 6px 16px -8px rgba(0,0,0,.6)' }}
+          >
+            {name?.[0]?.toUpperCase() ?? '?'}
+          </button>
+        </div>
       </div>
-    </div>
-  </header>
-);
+    </header>
+  );
+};
 
 export default SuperAppHeader;

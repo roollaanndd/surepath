@@ -1,6 +1,6 @@
 # SurePath — Changelog
 
-## v2.7.37 — 2026-10-31
+## v2.7.38 — 2026-11-01
 
 App Mitra: audit alur beli asuransi mobil, banner promo beranda, dan
 layar pendaftaran.
@@ -48,6 +48,45 @@ layar pendaftaran.
   berilustrasi, transisi antar-langkah yang halus (dinonaktifkan pada
   `prefers-reduced-motion`), label aria pada tombol lihat-sandi, dan
   `role="alert"` pada pesan galat. Logika pendaftaran tidak disentuh.
+
+## v2.7.37 — 2026-10-31
+
+Agent app: promo banner bergambar di Beranda, transisi onboarding yang lebih halus.
+
+### Beranda Mitra: banner promo bergambar
+- `components/PromoBanner.tsx` yang strip teks saja diganti dengan
+  `components/agent/AgentPromoBanner.tsx` khusus untuk Beranda agent —
+  kartu ber-ilustrasi (gradient hijau + ObQuote/ObWallet/ObGrowth)
+  dengan headline, subcopy, dots, dan tombol tutup.
+- CMS section baru `promo_banner_agent`: admin bisa isi `headline`,
+  `subtitle`, `cta_text`, `bg_value`, dan `extra_json.image_url` +
+  `extra_json.cta_url`. Jika kosong atau `is_visible=false`, komponen
+  menampilkan rotator built-in tiga slide (quote cepat, komisi
+  transparan, tier Elite) agar slot tidak pernah terlihat kosong.
+- Dismiss di-remember per section_id di localStorage; built-in rotator
+  bergilir 7 detik dan dot-nya bisa diklik manual.
+
+### Onboarding mitra: transisi slide yang lebih halus
+- Transisi slide di `components/OnboardingFlow.tsx` yang sebelumnya
+  hanya fade+translate-Y kini sadar arah: maju → masuk dari kanan,
+  mundur → masuk dari kiri, dengan scale subtle pada ilustrasi.
+- Preload gambar slide berikutnya (role non-CUSTOMER) agar transisi
+  tidak frame kosong saat Unsplash lambat.
+- Swipe horizontal di area konten untuk maju/mundur antar slide (≥40px).
+- Dot progress indicator transisi 500ms (sebelumnya 300ms) agar sinkron
+  dengan slide copy.
+- `prefers-reduced-motion` menonaktifkan semua animasi baru.
+
+### Audit flow Pembelian Asuransi Mobil
+- Peta alur dicatat di `docs/CAR_INSURANCE_FLOW_AUDIT_2026-10-31.md`:
+  `AgentQuoteBuilder` → `VehicleUnderwritingWizard` 7 langkah
+  (Jenis → Klien → Detail → Coverage+Insurer → Foto+AI → Diskon+Delivery
+  → Order+Xendit). Draft tersimpan di sessionStorage per-agent.
+- Logika premi OJK sudah benar: `calcOjkPremium` dipanggil dengan
+  rate band berdasarkan harga, zona dari provinsi, dan add-ons (banjir,
+  gempa, huru-hara, TPL, PA driver, PA passenger).
+- Tidak ada perubahan logika dalam rilis ini — hanya pemetaan dan
+  verifikasi.
 
 ## v2.7.36 — 2026-10-31
 

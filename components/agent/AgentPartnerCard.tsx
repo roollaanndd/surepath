@@ -148,12 +148,17 @@ export function resolveTierPalette(tier?: SpAgentTier | null): TierPalette {
 }
 
 function standardWith(color: string): TierPalette {
+  const hex = color.startsWith('#') ? color : `#${color}`;
+  // `band` sengaja tetap hijau merek: puncaknya memuat teks putih, dan warna
+  // tier kustom di produksi (ELITE ungu, STAR kuning) tidak lolos kontras
+  // sebagai latar teks. Identitas tier dibawa `chip`/`progress`, dan di
+  // Beranda juga oleh cahaya aksen pada AgentHeroBackdrop.
   return {
     ...STANDARD,
     key: 'CUSTOM',
-    progress: color,
-    glow: hexToRgba(color, 0.22),
-    chip: color,
+    progress: hex,
+    glow: hexToRgba(hex, 0.22),
+    chip: hex,
   };
 }
 

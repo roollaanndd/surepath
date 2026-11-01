@@ -1,5 +1,44 @@
 # SurePath — Changelog
 
+## v2.7.41 — 2026-11-01
+
+Integrasi PR App Mitra (`project-thread-vdfjye`): kode produk order yang salah
+sejak awal, biaya kirim yang dulu cuma tampil tanpa ikut ditagih, banner promo
+berslide dengan kesenian sendiri, dan layar pendaftaran berilustrasi.
+
+### Kode produk order kendaraan — diperbaiki + tes penjaga
+`productInfo()` merangkai `MRKB${typeCode}` dengan `typeCode = 'B5'`… begitu
+seterusnya sampai `MRKBB4-COMP`, yang tidak ada di `sp_product_configs` —
+plafon diskon & tarif komisi CMS tak tersambung. Kini memakai `MRKB4-COMP`
+(MRKB + angka, tanpa huruf B dobel) dan `MRKB2-COMP` untuk roda dua.
+`services/__tests__/agentVehicleProductCode.test.ts` mengunci dua kode itu.
+
+### Biaya kirim polis ikut ditagih & tersimpan
+Pilihan `DIGITAL / POS_STANDARD / POS_OVERNIGHT` beserta region dulu hanya
+digambar di step 6b — fee-nya tidak pernah masuk `total_premium` dan tidak
+dikirim ke server. Sekarang: kolom `delivery_method`, `delivery_region`,
+`delivery_fee` masuk payload order, divalidasi nama kolom di edge action
+(create_policy_order), sistem penjumlahan premi memasukkan fee, dan skema
+terkunci lewat migrasi `20261101100000_delivery_fields_policy_orders.sql`.
+
+### Beranda Mitra: banner promo berslide bergambar
+`AgentPromoBanner` diganti banner bertema kartu besar per slide:
+kesenian vektor sendiri (`AgentPromoArt`, keyframes animasi slide), kontrol
+geser sendiri, sumber slide dari CMS (`fetchWebsiteSection`) dengan slide
+bawaan sebagai fallback — logo tidak hilang bila CMS kosong. Seluruh slide
+adalah tombol 44px-target wajib WCAG.
+
+### Layar pendaftaran Mitra berilustrasi
+`AgentOnboarding` didesain ulang: font Sora, kartu input border kontras,
+keyframes masuk-langkah sadar `prefers-reduced-motion`, dan panel ilustrasi
+`PromoArtSignup` dari set `AgentPromoArt`.
+
+### Beranda Mitra tetap super app, pita tier tetap v2.7.40
+Redesign "pita hero" dari thread ini dibuat sebelum beranda super app
+(v2.7.39) — tidak dipasangkan; arah band tetap versi ter-shipped v2.7.40
+(pita STANDARD hijau brand 6,1:1). `standardWith()` kini menormalisasi warna
+tier kustom DB (chip/progress/glow ikut warna tier, band tetap hijau merek).
+
 ## v2.7.40 — 2026-11-01
 
 Pita tier `AgentPartnerCard`: perbaikan kontras WCAG AA pada tiga tier.

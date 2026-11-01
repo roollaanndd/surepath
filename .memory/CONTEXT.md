@@ -1,5 +1,5 @@
 # SurePath Session Context
-**Updated:** 2026-11-01 (v2.7.39 — pita Beranda Mitra + kontras pita tier)
+**Updated:** 2026-11-01 (v2.7.41 — app Mitra: kode produk order, persistensi delivery fee, banner promo bergambar, onboarding berilustrasi)
 
 ## Sesi 31 Okt – 1 Nov 2026 (v2.7.38 & v2.7.39)
 
@@ -41,7 +41,6 @@ aturan ber-scope shell tidak ikut — misalnya
 `.sp-modern-app :where(button,[role="button"]) { min-height: 44px }` yang
 membuat titik carousel jadi batang tegak 44px. Potret tanpa shell hanya
 membuktikan komponennya, bukan layarnya.
-
 
 ## Status revamp UI/UX (23 Okt 2026)
 

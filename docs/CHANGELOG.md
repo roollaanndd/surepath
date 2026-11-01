@@ -34,9 +34,18 @@ menghapus pita itu dari Beranda; rilis ini mengerjakan sisanya.
 - Field `band` pada `TierPalette` dihapus: sejak v2.7.39 tidak ada yang
   membacanya lagi.
 
+### Tes pengunci
+
+`services/__tests__/superAppBackdrop.test.tsx` (baru, 8 tes): tidak ada URL
+jauh, `<img>`, atau `url()` non-fragment di latarnya; pemetaan jam ke empat
+adegan; keempat adegan benar-benar merender markup yang berbeda, bukan beda
+di konfigurasi saja; bintang hanya muncul malam hari; latarnya `aria-hidden`;
+tier `STANDARD` tidak lagi memuat stop arang; tier logam tidak ikut berubah;
+dan `band` benar-benar hilang dari palet.
+
 ### Verifikasi
 
-`tsc --noEmit` bersih, ESLint 0 error, seluruh unit test lulus, `npm run
+`tsc --noEmit` bersih, ESLint 0 error, 477 unit test lulus, `npm run
 build` hijau. Keempat variasi waktu dan mode gelap **dilihat sendiri** di
 Chromium 414px lewat harness sementara yang dihapus sebelum commit. Dua
 komposisi sebelumnya dibuang setelah dilihat: cakram lime pekat di kanan atas

@@ -1,5 +1,48 @@
 # SurePath — Changelog
 
+## v2.7.38 — 2026-10-31
+
+Onboarding: foto stok dari luar diganti ilustrasi SurePath sendiri, plus satu
+temuan audit pembelian mobil yang terlewat.
+
+### Onboarding memakai ilustrasi sendiri, bukan foto stok
+- `components/OnboardingFlow.tsx` tidak lagi menarik tujuh foto Unsplash
+  lewat hotlink. Ketujuhnya **menutupi** lapisan ilustrasi: scene vektor
+  hanya dirender ketika fotonya sudah gagal dimuat, jadi karya yang
+  digambar untuk tur ini di `AgentArt.tsx` praktis tak pernah terlihat
+  mitra, operator, maupun penanggung.
+- Tiga alasan menggantinya, bukan sekadar selera: layar ini yang pertama
+  ditemui mitra baru dan ia bergantung pada host pihak ketiga (di dalam
+  APK Android, di koneksi lemah, atau di balik CSP produksi yang tampil
+  hanya kotak hijau kosong); lisensi foto stok berisi orang yang dapat
+  dikenali bukan sesuatu yang layak disandarkan pada permukaan jasa
+  keuangan; dan ilustrasi sendiri konsisten dengan keenam portal lain.
+- Tiap slide kini punya nuansa latarnya sendiri (`TONE`: dawn, teal, gold,
+  moss), sehingga empat slide mitra terbaca sebagai empat adegan berbeda,
+  bukan satu kartu yang diulang.
+- Transisi sadar-arah, swipe, dan dot dari v2.7.37 **tidak diubah**; yang
+  dicopot hanya lapisan foto beserta preload gambar jauhnya.
+- Tes pengunci baru di `services/__tests__/onboardingIllustrations.test.tsx`:
+  tidak ada URL jauh di sumbernya, `<img>` satu-satunya adalah wordmark
+  dari origin sendiri untuk keempat peran, tiap slide punya latar berbeda,
+  dan blok `prefers-reduced-motion` benar-benar menyebut semua kelas
+  animasi yang dipakai.
+
+### Audit pembelian asuransi mobil — satu temuan tambahan
+- `docs/CAR_INSURANCE_FLOW_AUDIT_2026-10-31.md` ditambah bagian "sesi kedua".
+  Audit sebelumnya menyimpulkan tidak ada blocker; satu hal terlewat dan ia
+  menyentuh uang yang ditagih.
+- `breakdown.total` sudah memuat biaya admin Rp 50.000 dan materai
+  Rp 10.000, lalu wizard menambah **Rp 26.000** lagi di tiga tempat
+  (`total_premium` yang disimpan, angka "Total Premi" di layar, dan nominal
+  yang dikirim ke invoice Xendit) — sementara rincian di layar yang sama
+  hanya menyebut "Biaya Aplikasi SurePath Rp 6.000". **Rp 20.000 ditagih
+  tanpa pernah muncul sebagai baris rincian apa pun.**
+- Ikutannya: `net_premium` disimpan tanpa Rp 26.000 itu, jadi pada tiap baris
+  order `total_premium - discount_amount ≠ net_premium`.
+- **Belum diperbaiki.** Memilih angka mana yang benar mengubah pendapatan
+  atau mengubah harga ke nasabah, jadi keputusannya ada pada pemilik.
+
 ## v2.7.37 — 2026-10-31
 
 Agent app: promo banner bergambar di Beranda, transisi onboarding yang lebih halus.

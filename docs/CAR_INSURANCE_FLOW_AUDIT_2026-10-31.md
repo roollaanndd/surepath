@@ -106,3 +106,56 @@ peningkatan UX:
 
 Semua rekomendasi di atas adalah peningkatan, bukan perbaikan bug. Status
 flow sekarang: **berfungsi sesuai logika yang dirancang**.
+
+---
+
+## Tambahan audit — 31 Okt 2026 (sesi kedua)
+
+Audit di atas menyimpulkan "tidak ada bug blocker". Satu temuan terlewat, dan
+temuan ini menyentuh uang yang ditagih ke nasabah.
+
+### Biaya Rp 26.000 yang tidak dirinci
+
+`calcPremium()` (`services/ojkRates.ts:390`) sudah memasukkan biaya admin
+Rp 50.000 dan bea materai Rp 10.000 ke dalam `breakdown.total`. Di atas angka
+itu, `VehicleUnderwritingWizard` menambahkan **Rp 26.000** lagi di tiga tempat:
+
+| Lokasi | Baris | Dipakai untuk |
+|---|---|---|
+| `VehicleUnderwritingWizard.tsx` | 651 | `total_premium` yang disimpan ke `sp_policy_orders` |
+| `VehicleUnderwritingWizard.tsx` | 1740 | angka "Total Premi" yang dilihat agen & nasabah |
+| `VehicleUnderwritingWizard.tsx` | 1943 | `total_premium` yang dikirim ke `create-xendit-invoice` |
+
+Sementara rincian yang ditampilkan di layar yang sama (baris 1727–1731) hanya
+menyebut **"Biaya Aplikasi SurePath — Rp 6.000"**.
+
+Jadi: jumlah seluruh baris rincian adalah `breakdown.total + 6.000`, tetapi
+baris Total — dan invoice Xendit yang benar-benar dibayar nasabah — adalah
+`breakdown.total + 26.000`. **Rp 20.000 ditagih tanpa pernah muncul sebagai
+baris apa pun.** Untuk perantara produk keuangan, biaya yang tidak dirinci
+bukan sekadar cacat tampilan.
+
+Catatan: `create-xendit-invoice` mengambil nominal dari DB, bukan dari klien
+(perbaikan keamanan lama), jadi yang ditagih persis sama dengan `total_premium`
+yang ditulis wizard — selisihnya ikut terbawa ke pembayaran.
+
+### Ketidakkonsistenan turunan
+
+`net_premium` disimpan sebagai `breakdown.total - discountAmount`
+(`VehicleUnderwritingWizard.tsx:607`) — tanpa Rp 26.000. Akibatnya pada baris
+order mana pun `total_premium - discount_amount ≠ net_premium`. Setiap laporan
+atau rekonsiliasi yang memakai kedua kolom itu akan selisih Rp 26.000.
+
+### Status
+
+**Belum diperbaiki — menunggu keputusan pemilik.** Memilih angka mana yang
+benar mengubah pendapatan atau mengubah harga ke nasabah, jadi bukan keputusan
+teknis:
+
+1. Tagih Rp 26.000 dan perbaiki rinciannya (harga ke nasabah tetap), atau
+2. Tagih Rp 6.000 sesuai rincian (nasabah bayar Rp 20.000 lebih murah).
+
+Apa pun pilihannya, angka itu sebaiknya menjadi satu konstanta bernama yang
+dipakai ketiga lokasi di atas sekaligus `net_premium`, bukan literal `26000`
+yang diketik ulang tiga kali — pengulangan inilah yang membuat rincian dan
+total bisa menyimpang tanpa ada tes yang gagal.

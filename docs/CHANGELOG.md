@@ -1,5 +1,11 @@
 # SurePath — Changelog
 
+## v2.7.50 — 2026-11-04
+
+Hapus field `band` dari `TierPalette` — field itu tidak pernah dibaca kode
+produksi setelah Beranda Mitra dibangun ulang sebagai super app (v2.7.39). Tes
+yang menjaganya (`agentHomeHero.test.tsx`) ikut dicopot.
+
 ## v2.7.49 — 2026-11-04
 
 ### Pathy Gelombang 1: wujud yang hidup, mode percakapan suara, kartu yang lebih kaya
@@ -292,6 +298,7 @@ bertabrakan dengan tombol bel dan avatar, dan terbaca sebagai tombol bundar
 ketiga.
 
 ## v2.7.39 — 2026-11-01
+
 ## v2.7.42 — 2026-11-01
 
 Fase 1 pemisahan paket unduhan per role (`docs/APP_SEPARATION_PLAN.md`) — nol

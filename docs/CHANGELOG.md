@@ -1,5 +1,35 @@
 # SurePath — Changelog
 
+## v2.7.46 — 2026-11-03
+
+### Ilustrasi status kosong ikut palet terang
+
+Lanjutan directive ikon terang (v2.7.44): `SpEmptyState` — keluarga ilustrasi
+status kosong / sukses / offline — ternyata memakai isian hampir-hitam yang
+sama (`#06231D`/`#0C342C`/`#076653`) untuk badan objeknya (shield klaim,
+dompet, bel notifikasi, papan tugas operator, lensa pencarian, kado, kartu
+dokumen, awan offline). Ikon modul sudah terang sejak v2.7.44, tetapi
+ilustrasi kosong-kosong ini tampak di sampingnya tetap gelap.
+
+- **Recolor 43 elemen** pada 12 ilustrasi: badan gelap dipindah ke palet
+  set ilustrasi (mint `#BDEFD7`, pale `#F0FBF4`, hijau `#28A96B`, teal
+  `#0B8F78`; deep `#075E55` untuk detail kecil). Bentuk, outline ink
+  (`stroke #06231D`, bahasa "sticker" yang sama dengan set ilustrasi),
+  bayangan tanah (`opacity 0.08`), dan aksen (lime/oranye/krem) tidak
+  diubah — hanya kecerahan yang diseragamkan.
+- **Warna UI komponen tidak disentuh**: tombol CTA `bg-[#076653]`, teks
+  ink `text-[#06231D]`, dan kartu dark-mode `dark:bg-[#0C342C]/60` adalah
+  warna antarmuka, bukan artwork — dipakai serentak lewat satu komponen.
+- **Test penjaga baru** `services/__tests__/emptyStatePalette.test.ts`
+  (28 test): melarang isian gelap solid kembali (kecuali bayangan tanah
+  `fillOpacity 0.08`), menuntut setiap ilustrasi menyimpan minimal satu
+  isian terang, mengunci 12 kunci variant di `ILLUSTRATION_MAP`, dan
+  menandai jalan tunggu ke dashboard (`adminUI.tsx` → `SpEmptyState`)
+  agar recolor menyebar ke semua titik yang memakai komponen ini.
+
+Versi: `src/version.ts` 2.7.46 · Android `versionName "2.7.46"` /
+`versionCode 57` (`sync-android-version.mjs`).
+
 ## v2.7.45 — 2026-11-03
 
 ### Fase 2 APP_SEPARATION: entry per role (masih dormant)

@@ -1,5 +1,52 @@
 # SurePath — Changelog
 
+## v2.7.44 — 2026-11-03
+
+### Ikon modul yang gelap disamakan dengan yang terang
+
+roland mengapresiasi desain UI, tetapi mencatat **beberapa ikon tampil gelap
+dan sebagian terang**, dan meminta yang gelap dibikin sama terangnya —
+sekaligus memeriksa korelasinya ke dashboard.
+
+Sumbernya terpetakan dari fakta kode: dua keluarga artwork memuati ikon
+modul di semua dashboard dan bottom-nav melalui satu pintu
+(`ManagedPortalIcon` / `PathyNavIcon`) — **set ilustrasi** teal-mint-lime
+(semua terang), dan **set artwork brand** (`SurePathBrandIcon`) yang isian
+utamanya hampir hitam (`#06231D`, `#0C342C`, `#076653`) — mengisi produk
+dari `car_protection` sampai `vehicle_pricelist`, `quotes`, `claims`,
+`commission`. Yang tampil bersebelahan akhirnya berbeda kecerahan.
+
+- **Recolor 66 elemen** pada 19 artwork: isian gelap dipindah ke palet
+  terang set ilustrasi (mint `#BDEFD7`, pale `#F0FBF4`, lime `#C7EE57`,
+  hijau `#28A96B`, teal `#0B8F78`; deep `#075E55` untuk detail pekecil
+  seperti roda, lubang kunci dan titik mata. Bentuk & aksen (lime
+  elektronik `#E3EF26`, oranye `#FF6B2C`) tidak diubah — hanya kecerahan
+  yang diseragamkan.
+- **Logo shield `SpShieldBrandIcon` tidak disentuh** — logotype gelap itu
+  identitas brand, bukan ikon modul, dan tidak dipakai di dashboard.
+- **Test penjaga baru** `services/__tests__/brandIconPalette.test.ts`
+  (42 test): melarang heksa gelap itu muncul kembali di 19 artwork,
+  menuntut setiap artwork menyimpan minimal satu isian terang, dan
+  mengunci **rute satu-pintu** ke dashboard — `ManagedPortalIcon`,
+  `PathyNavIcon`, dan `PortalIconManager` wajib memakai
+  `SurePathBrandIcon` + `hasBrandArt`, sehingga satu recolor menyebar
+  serentak ke seluruh dashboard.
+- **Korelasi ke dashboard diverifikasi dari rute**: grid modul di semua
+  peran (nasabah `CustomerPortal`, mitra `AgentHome`, operator
+  `OperatorDashboard`, admin `AdminDashboard`, B2B, marketing, insurer
+  semuanya memuat ikon lewat `ModuleIcon`/`ManagedPortalIcon`) → perubahan
+  warna ikut serentak tanpa edit per-portal. Upload admin (PNG via Icon
+  Manager) menang atas artwork kode; kalau ada ikon upload yang tampak
+  gelap, gantinya di Icon Manager.
+- Catatan lingkup: garis/area grafik `#076653` pada dashboard admin adalah
+  warna **chart**, bukan ikon — dibiarkan; `SpEmptyState` memakai palet
+  gelap untuk status kosong (bukan ikon) dan bisa jadi pekerjaan lanjutan
+  kalau dianggap perlu.
+
+Versi: `src/version.ts` 2.7.44 · Android `versionName "2.7.44"` /
+`versionCode 55` (sebelumnya 2.7.42/54 — drift kecil pada v2.7.43 ikut
+terekonsiliasi oleh `scripts/sync-android-version.mjs`).
+
 ## v2.7.43 — 2026-11-01
 
 ### Pita sapaan Mitra: hijau korporat dengan latar bergambar

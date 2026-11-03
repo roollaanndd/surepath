@@ -1,10 +1,15 @@
 # APP SEPARATION — Pemisahan Apps per Role (CUSTOMER / AGENT / OPERATOR / ADMIN / dsb.)
 
-> Status: **Fase 1 DIEKSEKUSI** (branch `feat/app-packages-phase1`). Owner directive 2026-11-01: pisahkan
+> Status terkini (v2.7.45, 2026-11-03):
+> - **Fase 1 TERPASANG** (v2.7.42, PR #353): Gradle flavors `base/nasabah/mitra/operator/admin` +
+>   alias redirect Vercel `/nasabah|/mitra|/operator` → route portal. 
+> - **Fase 2 TERPASANG (dormant)** (PR ini): 4 entry HTML per role + boot `initialRoute`
+>   opsional. Belum dipromosikan — menunggu smoke test kredensial per role lalu
+>   rewrite host baru (lihat §3 Fase 2 langkah 4–5).
+> Owner directive 2026-11-01: pisahkan
 > coding antar apps supaya setiap user mengunduh sesuai role-nya — **tanpa
 > mengubah coding yang ada**, hanya re-routing / cloning sesuai apps masing-masing.
-> Prioritas: tidak boleh crash, tidak boleh mengganggu pipeline rilis yang berjalan
-> (#352, #350 → v2.7.41).
+> Prioritas: tidak boleh crash, tidak boleh mengganggu pipeline rilis.
 
 ---
 

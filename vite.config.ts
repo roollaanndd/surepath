@@ -145,6 +145,16 @@ export default defineConfig(() => {
           },
         },
         rollupOptions: {
+          // APP_SEPARATION_PLAN Fase 2: role entries alongside the universal
+          // main entry. They share the same chunk graph (manualChunks below)
+          // and stay dormant until a host rewrite serves them.
+          input: {
+            main: path.resolve(__dirname, 'index.html'),
+            customer: path.resolve(__dirname, 'customer.html'),
+            agent: path.resolve(__dirname, 'agent.html'),
+            operator: path.resolve(__dirname, 'operator.html'),
+            admin: path.resolve(__dirname, 'admin.html'),
+          },
           output: {
             manualChunks: {
               'react-vendor': ['react', 'react-dom'],

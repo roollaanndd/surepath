@@ -5,14 +5,14 @@
 // entries until a SW-scope smoke test passes (plan §Fase2 step 4). Everything
 // else (appViewport lock, Sentry, stale-chunk recovery, ErrorBoundary) is kept
 // byte-equal in intent so an entry behaves exactly like the universal SPA.
-import '../services/appViewport';
+import '../../services/appViewport';
 
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import * as Sentry from '@sentry/react';
 import App from '../../App';
-import '../styles.css';
-import './styles/portal-modernization.css';
+import '../../styles.css';
+import '../styles/portal-modernization.css';
 
 // Error monitoring — no-op unless VITE_SENTRY_DSN is configured in the env.
 const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN as string | undefined;

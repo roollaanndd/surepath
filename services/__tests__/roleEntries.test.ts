@@ -53,6 +53,10 @@ describe('phase-2 App pinning stays optional', () => {
     const app = read('App.tsx');
     expect(app).toContain('initialRoute ?? window.location.pathname');
     expect(app).toContain("({ initialRoute }: AppProps = {}) => {");
+    // The default export wraps App inside context providers; it must forward
+    // the prop or role entries bind to IntrinsicAttributes and CI fails tsc.
+    expect(app).toContain('<App initialRoute={initialRoute} />');
+    expect(app).toContain('React.FC<AppProps>');
   });
 
   it('vite list all four role inputs plus the main one', () => {
@@ -67,5 +71,12 @@ describe('phase-2 App pinning stays optional', () => {
     const boot = read('src/entries/boot.tsx');
     expect(boot).not.toContain('virtual:pwa-register');
     expect(boot).not.toContain('registerSW(');
+  });
+
+  it('boot shell imports resolve from src/entries (services/styles live at repo root)', () => {
+    const boot = read('src/entries/boot.tsx');
+    expect(boot).toContain("'../../services/appViewport'");
+    expect(boot).toContain("'../../styles.css'");
+    expect(boot).toContain("'../styles/portal-modernization.css'");
   });
 });

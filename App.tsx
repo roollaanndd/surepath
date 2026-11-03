@@ -590,11 +590,11 @@ const App = ({ initialRoute }: AppProps = {}) => {
 
 import { ToastProvider, ConfirmDialogProvider } from './components/ui';
 
-const AppWithProviders: React.FC = () => (
+const AppWithProviders: React.FC<AppProps> = ({ initialRoute }) => (
   <ToastProvider>
     <ConfirmDialogProvider>
       <>
-        <App />
+        <App initialRoute={initialRoute} />
         <AppUpdateNotification />
       </>
     </ConfirmDialogProvider>

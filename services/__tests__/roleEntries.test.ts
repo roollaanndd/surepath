@@ -59,9 +59,12 @@ describe('phase-2 App pinning stays optional', () => {
     expect(app).toContain('React.FC<AppProps>');
   });
 
-  it('vite list all four role inputs plus the main one', () => {
+  it('vite lists the main input as `index` plus all four role inputs', () => {
     const config = read('vite.config.ts');
-    expect(config).toContain("main: path.resolve(__dirname, 'index.html')");
+    // Android CI verifies the bundled index.html contains `assets/index-`;
+    // rollup names entry chunks after the input keys, so the main key must
+    // stay `index` or the native verify step fails.
+    expect(config).toContain("index: path.resolve(__dirname, 'index.html')");
     for (const key of ['customer', 'agent', 'operator', 'admin']) {
       expect(config).toContain(`${key}: path.resolve(__dirname, '${key}.html')`);
     }

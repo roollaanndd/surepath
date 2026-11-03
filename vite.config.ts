@@ -149,7 +149,10 @@ export default defineConfig(() => {
           // main entry. They share the same chunk graph (manualChunks below)
           // and stay dormant until a host rewrite serves them.
           input: {
-            main: path.resolve(__dirname, 'index.html'),
+            // The main key must remain `index`: the Android CI "Verify native
+            // package" step greps assets/index- in the bundled index.html, and
+            // rollup names entry chunks after these input keys.
+            index: path.resolve(__dirname, 'index.html'),
             customer: path.resolve(__dirname, 'customer.html'),
             agent: path.resolve(__dirname, 'agent.html'),
             operator: path.resolve(__dirname, 'operator.html'),

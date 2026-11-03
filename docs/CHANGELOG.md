@@ -24,8 +24,10 @@ produksi yang berubah di rilis ini.
   `index.html` dengan tiga perubahan terkontrol: src script entry, `robots`
   **noindex, nofollow**, dan judul per aplikasi. Konten SEO tidak ditulis
   ulang — shell aplikasi ini tidak untuk mesin pencarian.
-- **Vite input multi-entry**: `main` + 4 entry baru berbagi chunk graph yang
-  sama, jadi tak ada duplikasi vendor; `check:dist` (larangan sourcemap &
+- **Vite input multi-entry**: `index` (utama) + 4 entry baru berbagi chunk
+  graph yang sama, jadi tak ada duplikasi vendor; penamaan entry utama tetap
+  `assets/index-*.js` supaya verifikasi aset web di CI Android (grep
+  `assets/index-`) tidak bergeser; `check:dist` (larangan sourcemap &
   server bundle) tetap lulus dan prerender SEO tetap hanya memproses
   `dist/index.html`.
 - **Test penjaga baru** `roleEntries.test.ts` (12 test): mengunci invarian —

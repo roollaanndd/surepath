@@ -1,5 +1,49 @@
 # SurePath — Changelog
 
+## v2.7.45 — 2026-11-03
+
+### Fase 2 APP_SEPARATION: entry per role (masih dormant)
+
+Lanjutan Fase 1 (v2.7.42): fondasi **multi-entry Vite** — satu bundle induk
+utuh tetap jadi gerbang tunggal, plus empat entry HTML baru yang nanti akan
+dijadikan gerbang khusus per aplikasi role. Merancang supaya baru (additive):
+`index.html` dan `index.tsx` induk **tidak tersentuh**, entry baru **belum
+disajikan** (dormant) sampai smoke test per role lulus — jadi tidak ada jalur
+produksi yang berubah di rilis ini.
+
+- **`App` menerima `initialRoute?` opsional** — dipakai entry role untuk
+  menancap route beranda role-nya (`/custapp`, `/agapps`, `/operatorapp`,
+  `/admin`) alih-alih membaca `window.location.pathname`. Tanpa prop itu,
+  `App` berperilaku persis seperti sebelumnya (panggilan lama tak berubah).
+- **Boot shell per entry** `src/entries/boot.tsx`: mirror `index.tsx` yang
+  sama — viewport lock, Sentry, pemulihan chunk usang, ErrorBoundary —
+  **tanpa registrasi Service Worker** (ditunda sampai smoke test pengaruh
+  scope SW selesai, agar instalasi PWA induk tidak tersentuh). Empat entry
+  kecil memanggil `boot('/custapp'|…|'/admin')`.
+- **4 HTML entry** (`customer|agent|operator|admin.html`) dikloning dari
+  `index.html` dengan tiga perubahan terkontrol: src script entry, `robots`
+  **noindex, nofollow**, dan judul per aplikasi. Konten SEO tidak ditulis
+  ulang — shell aplikasi ini tidak untuk mesin pencarian.
+- **Vite input multi-entry**: `index` (utama) + 4 entry baru berbagi chunk
+  graph yang sama, jadi tak ada duplikasi vendor; penamaan entry utama tetap
+  `assets/index-*.js` supaya verifikasi aset web di CI Android (grep
+  `assets/index-`) tidak bergeser; `check:dist` (larangan sourcemap &
+  server bundle) tetap lulus dan prerender SEO tetap hanya memproses
+  `dist/index.html`.
+- **Test penjaga baru** `roleEntries.test.ts` (12 test): mengunci invarian —
+  shell induk tetap registrasi SW seperti semula, tiap entry noindex dan
+  menancap route persis, entry boot tidak menyentuh SW, dan input Vite
+  memuat 5 entry. Benchmark sesi lint: eslint 0 error atas file baru/ubah
+  (1 peringatan `no-console` yang sudah ada sebelumnya di `App.tsx`).
+
+Sesuai rencana `docs/APP_SEPARATION_PLAN.md`, langkah berikutnya: smoke test
+per role (kredensial owner) → promosi rewrites Vercel agar `/` tiap role
+menyajikan shell role-nya → SW per entry dievaluasi, dan flavor Android
+bisa diarahkan ke entry per-app bila owner lanjut ke sana.
+
+Versi: `src/version.ts` 2.7.45 · Android `versionName "2.7.45"` /
+`versionCode 56` (`sync-android-version.mjs`).
+
 ## v2.7.44 — 2026-11-03
 
 ### Ikon modul yang gelap disamakan dengan yang terang

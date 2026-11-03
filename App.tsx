@@ -126,7 +126,14 @@ function cacheTcLocally(userId: string): void {
   } catch {}
 }
 
-const App = () => {
+type AppProps = {
+  /** Phase-2 role entries: pin the boot route (e.g. '/custapp') instead of
+   *  seeding it from window.location.pathname. Omitted by the universal
+   *  shell — behaviour is then byte-identical to the pre-phase-2 app. */
+  initialRoute?: string;
+};
+
+const App = ({ initialRoute }: AppProps = {}) => {
   const [isLoaded, setIsLoaded]       = useState(() => sessionStorage.getItem('sp_splash_done_v2') === '1');
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [darkMode, setDarkMode]       = useDarkMode();
@@ -149,7 +156,7 @@ const App = () => {
   const [products, setProducts]   = useState<any[]>(INITIAL_PRODUCTS);
   const [lang, setLang]           = useState<Language>(detectLang);
   const [entryUser, setEntryUser] = useState<{ name: string } | null>(null);
-  const [currentPath, setCurrentPath] = useState(() => window.location.pathname);
+  const [currentPath, setCurrentPath] = useState(() => initialRoute ?? window.location.pathname);
   // An authenticated user with no profile yet, waiting to pick an account
   // type. Reached from Google OAuth, email OTP, or any other sign-in that
   // carries no role — not OAuth-only, hence the name.
@@ -321,7 +328,7 @@ const App = () => {
                   // their server-side role/app access changes. Reconcile portal
                   // routes with the freshly verified profile instead of rendering
                   // CustomerPortal as the catch-all for a stale /custapp path.
-                  const activePath = window.location.pathname.replace(/\/+$/, '') || '/';
+                  const activePath = (initialRoute ?? window.location.pathname).replace(/\/+$/, '') || '/';
                   const desiredPath = rolePath(refreshedUser);
                   if (['/custapp', '/agapps', '/agentapp', '/select-app'].includes(activePath) && activePath !== desiredPath) {
                     window.history.replaceState({}, '', desiredPath);
@@ -442,7 +449,9 @@ const App = () => {
       }, 10000);
       return () => { subscription.unsubscribe(); clearTimeout(oauthTimeout); };
     }
-  }, [handleAuthSuccess]);
+    // initialRoute is a boot-only constant (a phase-2 role entry pins it once
+    // at mount); including it keeps the exhaustive-deps contract honest.
+  }, [handleAuthSuccess, initialRoute]);
 
   const handleSetLang = useCallback((l: Language) => {
     setLang(l);
@@ -581,11 +590,11 @@ const App = () => {
 
 import { ToastProvider, ConfirmDialogProvider } from './components/ui';
 
-const AppWithProviders: React.FC = () => (
+const AppWithProviders: React.FC<AppProps> = ({ initialRoute }) => (
   <ToastProvider>
     <ConfirmDialogProvider>
       <>
-        <App />
+        <App initialRoute={initialRoute} />
         <AppUpdateNotification />
       </>
     </ConfirmDialogProvider>

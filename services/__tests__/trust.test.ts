@@ -96,10 +96,10 @@ describe('domain email tidak tepercaya', () => {
 // ─── 3. Gerbang harus tetap sempit ───────────────────────────────────────────
 
 describe('cakupan gerbang', () => {
-  it('hanya enam aksi yang digerbang', () => {
+  it('hanya tujuh aksi yang digerbang', () => {
     expect(Object.keys(ACTION_MIN_TIER).sort()).toEqual([
       'accept_agreement', 'agent_request_withdrawal', 'apply_referral',
-      'create_policy_order', 'redeem_coins', 'submit_claim',
+      'b2b_bulk_create_batch', 'create_policy_order', 'redeem_coins', 'submit_claim',
     ]);
   });
 

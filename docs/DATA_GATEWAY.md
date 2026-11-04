@@ -40,6 +40,17 @@ Origin yang diizinkan:
 | `get_my_orders` / `get_my_claims` / `get_my_payments` | Data customer sendiri (scoped client_id / user_id / order milik sendiri) |
 | `cancel_my_order` | Batalkan order sendiri (status SUBMITTED/UNDER_REVIEW); kepemilikan diverifikasi server-side via `client_id` |
 
+### B2B Bulk Fleet TLO (v2.7.51 — `actions/b2bBulk.ts`)
+| Action | Fungsi |
+|---|---|
+| `b2b_bulk_create_batch` | B2B_CLIENT (atau admin) submit baris hasil review; **premi dihitung ulang server-side** dari `services/b2bFleetRating.ts` (mirror Deno) — angka uang tidak pernah dipercaya dari klien, hanya input kategorikal (zona/jenis kendaraan/pickup). Masuk `ACTION_MIN_TIER` (akun harus terverifikasi) |
+| `b2b_bulk_list_batches` | Batch milik klien sendiri; admin + `params.all` lihat semua |
+| `b2b_bulk_get_batch` | Header + items + ringkasan payment terakhir (untuk link invoice) — kepemilikan diverifikasi via `client_id` |
+| `admin_b2b_bulk_issue` | Admin unggah polis induk asli (nomor + URL dokumen di bucket `b2b-documents`) untuk batch PAID → set ISSUED, tandai semua item ISSUED |
+| `admin_b2b_bulk_list_batches` | Semua batch, admin only |
+
+Invoice-nya sendiri dibuat oleh edge function terpisah **`create-b2b-bulk-invoice`** (bukan data-gateway) — pola yang sama dengan `create-xendit-invoice` untuk `sp_policy_orders`, tapi untuk `sp_b2b_batches`. `xendit-webhook` menangani `sp_payments.batch_id` secara paralel dengan `order_id`.
+
 ### E-Quotation (v1.51.0 — runtime kanonik: edge function `quotations-gateway`)
 | Action | Fungsi |
 |---|---|

@@ -466,3 +466,105 @@ export async function generateQuotePDF(data: QuotePDFData): Promise<void> {
 
   doc.save(`SurePath-Quote-${data.quoteNumber}.pdf`);
 }
+
+// ─── B2B Bulk Policy Schedule (Lampiran Daftar Kendaraan) ──────────────────
+// A block/fleet TLO policy is one master policy issued by the insurer, with
+// a schedule listing every covered unit — not 253 separate certificates.
+// This generates that schedule from the batch + its line items, referencing
+// the master policy number the insurer actually issued (never fabricating
+// one). It is a convenience document for the finance company to hand to
+// each nasabah, not the legal policy itself.
+
+export interface B2BBulkScheduleRow {
+  rowNo: number;
+  nasabahName: string;
+  make: string | null;
+  model: string | null;
+  plateNo: string | null;
+  totalPremium: number;
+}
+
+export interface B2BBulkScheduleData {
+  batchNumber: string;
+  companyName: string;
+  masterPolicyNumber: string;
+  insurerName?: string | null;
+  issuedAt: string;
+  totalAmount: number;
+  rows: B2BBulkScheduleRow[];
+}
+
+export async function generateB2BBulkSchedulePDF(data: B2BBulkScheduleData): Promise<void> {
+  const doc = new (await getJsPDF())({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 36;
+  const fmt = (n: number) => 'Rp ' + Math.round(n).toLocaleString('id-ID');
+
+  const drawHeader = () => {
+    doc.setFillColor(6, 78, 59);
+    doc.rect(0, 0, pageW, 56, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.setTextColor(255, 255, 255);
+    doc.text('SUREPATH', margin, 34);
+    doc.setFontSize(10);
+    doc.setTextColor(52, 211, 153);
+    doc.text('LAMPIRAN DAFTAR KENDARAAN — TLO MASSAL', pageW - margin, 34, { align: 'right' });
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(60, 60, 60);
+    let y = 74;
+    doc.text(`Batch: ${data.batchNumber}`, margin, y);
+    doc.text(`Perusahaan: ${data.companyName}`, margin, y + 14);
+    doc.text(`No. Polis Induk: ${data.masterPolicyNumber}`, margin, y + 28);
+    if (data.insurerName) doc.text(`Penanggung: ${data.insurerName}`, pageW / 2, y);
+    doc.text(`Tanggal Terbit: ${new Date(data.issuedAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}`, pageW / 2, y + 14);
+    doc.text(`Total Premi: ${fmt(data.totalAmount)}`, pageW / 2, y + 28);
+    return y + 48;
+  };
+
+  const colX = [margin, margin + 40, margin + 220, margin + 340, margin + 460, pageW - margin - 110];
+  const headers = ['No', 'Nama Nasabah', 'Kendaraan', 'No. Polisi', 'Premi', ''];
+
+  const drawTableHeader = (y: number) => {
+    doc.setFillColor(240, 253, 244);
+    doc.rect(margin, y, pageW - margin * 2, 20, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(6, 78, 59);
+    headers.forEach((h, i) => { if (h) doc.text(h, colX[i] + 4, y + 14); });
+    return y + 24;
+  };
+
+  let y = drawHeader();
+  y = drawTableHeader(y);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(30, 30, 30);
+
+  const rowH = 16;
+  for (const row of data.rows) {
+    if (y > pageH - 48) {
+      doc.addPage();
+      y = margin;
+      y = drawTableHeader(y);
+    }
+    doc.text(String(row.rowNo), colX[0] + 4, y + 11);
+    doc.text((row.nasabahName || '—').slice(0, 32), colX[1] + 4, y + 11);
+    doc.text(`${row.make ?? ''} ${row.model ?? ''}`.trim().slice(0, 28) || '—', colX[2] + 4, y + 11);
+    doc.text(row.plateNo || '—', colX[3] + 4, y + 11);
+    doc.text(fmt(row.totalPremium), colX[4] + 4, y + 11);
+    doc.setDrawColor(230, 230, 230);
+    doc.line(margin, y + rowH, pageW - margin, y + rowH);
+    y += rowH;
+  }
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(140, 140, 140);
+  doc.text('Lampiran ini dibuat secara digital oleh SurePath berdasarkan polis induk di atas.', margin, pageH - 20);
+
+  doc.save(`SurePath-Lampiran-${data.batchNumber}.pdf`);
+}

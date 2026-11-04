@@ -1,7 +1,47 @@
 # SurePath Session Context
-**Updated:** 2026-11-04 (v2.7.50 — hapus field `band` mati dari TierPalette)
+**Updated:** 2026-11-04 (v2.7.51 — B2B Bulk Fleet TLO Import, pilot: Mutiara Finance)
 
 ## Terakhir dikerjakan (4 Nov 2026)
+
+**v2.7.51 — B2B Bulk Fleet TLO Import (belum di-deploy/apply — lihat backlog)**
+
+Mutiara Finance (PT MMF) perlu mengajukan ratusan kendaraan TLO sekaligus lewat
+upload spreadsheet. `/b2bapps` sebelumnya tidak punya jalur ini — "Terima
+Penawaran" di `B2BQuotes.tsx` adalah jalan buntu (tidak ada invoice/polis).
+Dibangun end-to-end: upload → mapping kolom → grid review (premi dihitung
+server-side dari `services/b2bFleetRating.ts`, diuji terhadap 253 baris file
+referensi mitra) → submit batch → invoice Xendit → admin unggah polis induk
+asli → klien unduh polis + lampiran kendaraan (PDF). Detail lengkap di
+`docs/CHANGELOG.md` v2.7.51 dan `docs/DATA_GATEWAY.md` § B2B Bulk Fleet TLO.
+
+**BELUM SELESAI saat sesi berakhir — perlu tindakan manual sebelum bisa ditest:**
+1. **Migrasi DB belum di-apply ke production** (`supabase/migrations/20261104_b2b_bulk_fleet.sql`
+   — tabel `sp_b2b_batches`/`sp_b2b_batch_items` + kolom `sp_payments.batch_id`).
+   Dua percobaan apply via Supabase MCP timeout menunggu konfirmasi pemilik.
+2. **Edge functions belum di-deploy**: `data-gateway` (aksi `b2bBulk.ts` baru +
+   gerbang kepercayaan `b2b_bulk_create_batch`), `create-b2b-bulk-invoice`
+   (baru), `xendit-webhook` (diperluas untuk `batch_id`).
+Tanpa ketiganya, UI yang sudah ada di `/b2bapps` dan admin akan gagal memanggil
+gateway (tabel belum ada / aksi belum terdeploy). Jalankan ketiganya dulu
+sebelum Mutiara Finance mencoba fitur ini.
+
+### Jebakan yang ditemukan sepanjang jalan
+- **ExcelJS gagal membaca file referensi mitra sendiri** (komentar sel VML
+  legacy memicu bug `reconcile` di library). Dipakai `xlsx` (SheetJS) sebagai
+  gantinya — tahu ada advisory prototype-pollution/ReDoS di versi npm-nya,
+  tapi parsing hanya berjalan di browser klien atas file yang mereka pilih
+  sendiri (tidak pernah server-side), jadi blast radius-nya sendiri.
+- Tabel baru deny-all RLS (gateway only) — **beda** dari pola `sp_b2b_submissions`
+  (RLS terbatas-klien) karena batch membawa PII + uang dalam skala besar,
+  sama seperti `sp_policy_orders`.
+- Polis induk (dan dokumen yang diunggah admin) selalu dokumen asli dari
+  penanggung, tidak pernah dibuat otomatis — sama seperti `insurer_upload_policy`
+  pada order retail. SurePath hanya membuat lampiran daftar kendaraan sebagai
+  pelengkap, bukan pengganti.
+
+---
+
+## Sebelumnya (4 Nov 2026)
 
 **v2.7.50 — Hapus `TierPalette.band` (PR #355, merged)**
 

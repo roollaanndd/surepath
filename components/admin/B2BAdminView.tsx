@@ -1,14 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, ChevronDown, ChevronUp, Plus, Trash2, CheckCircle2, AlertTriangle, FileText, Heart } from 'lucide-react';
+import { RefreshCw, ChevronDown, ChevronUp, Plus, Trash2, CheckCircle2, AlertTriangle, FileText, Heart, Upload, Loader2 } from 'lucide-react';
 import {
   getAllB2BSubmissions,
   updateB2BSubmissionStatus,
   createB2BQuote,
   getAllLifeApplications,
   updateLifeApplicationStatus,
+  adminGetAllB2BBulkBatches,
+  adminIssueB2BBulkBatch,
+  uploadB2BBulkMasterPolicy,
   type SpB2BSubmission,
   type SpB2BQuote,
   type SpLifeApplication,
+  type SpB2BBatch,
 } from '../../services/supabaseService';
 import ModuleIcon from '../shared/ModuleIcon';
 
@@ -372,15 +376,121 @@ const LifeCard: React.FC<{ app: SpLifeApplication; onUpdated: () => void; onToas
   );
 };
 
+// ─── Bulk Batch Card ──────────────────────────────────────────────────────────
+
+const BULK_STATUS_CLS: Record<string, string> = {
+  DRAFT:     'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-ds-ink3',
+  SUBMITTED: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  INVOICED:  'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  PAID:      'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+  ISSUED:    'bg-emerald-500 text-white',
+  CANCELLED: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
+};
+
+const fmtIDRBulk = (n: number) => 'Rp ' + Math.round(n).toLocaleString('id-ID');
+
+const BulkBatchCard: React.FC<{ batch: SpB2BBatch; onUpdated: () => void; onToast: (m: string) => void }> = ({ batch, onUpdated, onToast }) => {
+  const [showIssueForm, setShowIssueForm] = useState(false);
+  const [policyNumber, setPolicyNumber] = useState(batch.master_policy_number ?? '');
+  const [insurerName, setInsurerName] = useState(batch.insurer_name ?? '');
+  const [docUrl, setDocUrl] = useState(batch.master_policy_document_url ?? '');
+  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState('');
+
+  const handleUpload = async (file: File) => {
+    setUploading(true);
+    const url = await uploadB2BBulkMasterPolicy(batch.id, file);
+    setUploading(false);
+    if (url) setDocUrl(url);
+    else setErr('Gagal mengunggah dokumen polis.');
+  };
+
+  const handleIssue = async () => {
+    if (!policyNumber.trim() || !docUrl.trim()) { setErr('Nomor polis dan dokumen polis wajib diisi.'); return; }
+    setSaving(true);
+    const result = await adminIssueB2BBulkBatch({ batchId: batch.id, masterPolicyNumber: policyNumber.trim(), masterPolicyDocumentUrl: docUrl.trim(), insurerName: insurerName.trim() || undefined });
+    setSaving(false);
+    if (result) { onToast('Polis batch diterbitkan'); setShowIssueForm(false); onUpdated(); }
+    else setErr('Gagal menerbitkan polis. Periksa URL dokumen.');
+  };
+
+  return (
+    <div className="p-4 bg-white dark:bg-ds-card2 border border-ds-border dark:border-ds-border rounded-2xl space-y-3">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <span className="font-mono text-2xs font-black px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-ds-ink2">{batch.batch_number}</span>
+            <Badge cls={BULK_STATUS_CLS[batch.status] ?? ''} label={batch.status} />
+          </div>
+          <p className="font-bold text-ds-ink dark:text-white text-sm">{batch.company_name}</p>
+          <p className="text-xs text-ds-ink3">{batch.item_count} unit · {fmtIDRBulk(batch.total_amount)}</p>
+          <p className="text-xs text-ds-ink3">{fmtDate(batch.created_at)}</p>
+        </div>
+      </div>
+
+      {batch.status === 'ISSUED' && (
+        <div className="text-xs text-ds-green dark:text-emerald-400 font-semibold">
+          Polis: {batch.master_policy_number} {batch.insurer_name ? `· ${batch.insurer_name}` : ''}
+        </div>
+      )}
+
+      {(batch.status === 'PAID' || batch.status === 'ISSUED') && (
+        <button
+          onClick={() => setShowIssueForm(v => !v)}
+          className="flex items-center gap-2 text-xs font-semibold text-ds-green hover:underline"
+        >
+          {showIssueForm ? <ChevronUp size={14} /> : <Plus size={14} />}
+          {batch.status === 'ISSUED' ? 'Perbarui Polis' : 'Terbitkan Polis'}
+        </button>
+      )}
+
+      {showIssueForm && (
+        <div className="mt-1 p-4 bg-slate-50 dark:bg-ds-card2 border border-ds-border dark:border-ds-border rounded-2xl space-y-3">
+          {err && <p className="text-xs text-rose-700 dark:text-rose-200 flex items-center gap-1"><AlertTriangle size={12} />{err}</p>}
+          <div>
+            <label className="block text-xs font-semibold text-ds-ink3 mb-1">Nomor Polis Induk</label>
+            <input value={policyNumber} onChange={e => setPolicyNumber(e.target.value)} className={INPUT} placeholder="e.g. POL-TLO-2026-XXXXX" />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-ds-ink3 mb-1">Nama Penanggung</label>
+            <input value={insurerName} onChange={e => setInsurerName(e.target.value)} className={INPUT} placeholder="e.g. Asuransi ABC" />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-ds-ink3 mb-1">Dokumen Polis Induk (PDF)</label>
+            {docUrl && <p className="text-2xs text-ds-green break-all mb-1">{docUrl}</p>}
+            <label className="flex items-center gap-2 px-3 py-2 rounded-xl bg-ds-green text-ds-on-green text-xs font-bold cursor-pointer w-fit">
+              {uploading ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
+              {docUrl ? 'Ganti Dokumen' : 'Unggah Dokumen'}
+              <input type="file" accept=".pdf" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleUpload(f); }} />
+            </label>
+          </div>
+          <button
+            onClick={handleIssue} disabled={saving || uploading}
+            className="w-full py-2.5 rounded-xl bg-emerald-500 text-white font-semibold text-sm disabled:opacity-40 flex items-center justify-center gap-2"
+          >
+            {saving ? <RefreshCw size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+            Terbitkan Polis Batch
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
+const BULK_STATUSES = ['SUBMITTED', 'INVOICED', 'PAID', 'ISSUED', 'CANCELLED'];
+
 const B2BAdminView: React.FC = () => {
-  const [tab, setTab] = useState<'b2b' | 'life'>('b2b');
+  const [tab, setTab] = useState<'b2b' | 'bulk' | 'life'>('b2b');
   const [b2bSubs, setB2bSubs] = useState<SpB2BSubmission[]>([]);
+  const [bulkBatches, setBulkBatches] = useState<SpB2BBatch[]>([]);
   const [lifeApps, setLifeApps] = useState<SpLifeApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [b2bFilter, setB2bFilter] = useState('ALL');
+  const [bulkFilter, setBulkFilter] = useState('ALL');
   const [lifeFilter, setLifeFilter] = useState('ALL');
   const [toast, setToast] = useState('');
 
@@ -388,8 +498,9 @@ const B2BAdminView: React.FC = () => {
     setLoading(true);
     setLoadError(null);
     try {
-      const [subs, apps] = await Promise.all([getAllB2BSubmissions(), getAllLifeApplications()]);
+      const [subs, batches, apps] = await Promise.all([getAllB2BSubmissions(), adminGetAllB2BBulkBatches(), getAllLifeApplications()]);
       setB2bSubs(subs);
+      setBulkBatches(batches);
       setLifeApps(apps);
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : 'Gagal memuat pengajuan B2B dan aplikasi jiwa.');
@@ -403,6 +514,7 @@ const B2BAdminView: React.FC = () => {
   const showToast = (msg: string) => setToast(msg);
 
   const visibleB2b = b2bFilter === 'ALL' ? b2bSubs : b2bSubs.filter(s => s.status === b2bFilter);
+  const visibleBulk = bulkFilter === 'ALL' ? bulkBatches : bulkBatches.filter(b => b.status === bulkFilter);
   const visibleLife = lifeFilter === 'ALL' ? lifeApps : lifeApps.filter(a => a.status === lifeFilter);
 
   return (
@@ -412,6 +524,7 @@ const B2BAdminView: React.FC = () => {
       {/* Sub-tabs */}
       <div className="flex items-center gap-1 px-5 pt-5 pb-3">
         <TabBtn active={tab === 'b2b'} onClick={() => setTab('b2b')} icon={<ModuleIcon id="b2b" size={22} />} label="B2B Submissions" />
+        <TabBtn active={tab === 'bulk'} onClick={() => setTab('bulk')} icon={<ModuleIcon id="documents" size={22} />} label="Bulk Batches" />
         <TabBtn active={tab === 'life'} onClick={() => setTab('life')} icon={<ModuleIcon id="family_health" size={22} />} label="Life Applications" />
         <button onClick={load} className="ml-auto p-2 rounded-xl text-ds-ink3 hover:text-ds-ink2 dark:hover:text-ds-ink">
           <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
@@ -420,13 +533,15 @@ const B2BAdminView: React.FC = () => {
 
       {/* Filter Pills */}
       <div className="flex gap-2 px-5 pb-3 overflow-x-auto">
-        {tab === 'b2b'
-          ? ['ALL', ...B2B_STATUSES].map(f => (
-              <FilterPill key={f} label={f} active={b2bFilter === f} onClick={() => setB2bFilter(f)} />
-            ))
-          : ['ALL', ...LIFE_STATUSES].map(f => (
-              <FilterPill key={f} label={f} active={lifeFilter === f} onClick={() => setLifeFilter(f)} />
-            ))}
+        {tab === 'b2b' && ['ALL', ...B2B_STATUSES].map(f => (
+          <FilterPill key={f} label={f} active={b2bFilter === f} onClick={() => setB2bFilter(f)} />
+        ))}
+        {tab === 'bulk' && ['ALL', ...BULK_STATUSES].map(f => (
+          <FilterPill key={f} label={f} active={bulkFilter === f} onClick={() => setBulkFilter(f)} />
+        ))}
+        {tab === 'life' && ['ALL', ...LIFE_STATUSES].map(f => (
+          <FilterPill key={f} label={f} active={lifeFilter === f} onClick={() => setLifeFilter(f)} />
+        ))}
       </div>
 
       {/* Content */}
@@ -449,6 +564,14 @@ const B2BAdminView: React.FC = () => {
           ) : (
             visibleB2b.map(sub => (
               <B2BCard key={sub.id} sub={sub} onUpdated={load} onToast={showToast} />
+            ))
+          )
+        ) : tab === 'bulk' ? (
+          visibleBulk.length === 0 ? (
+            <Empty />
+          ) : (
+            visibleBulk.map(batch => (
+              <BulkBatchCard key={batch.id} batch={batch} onUpdated={load} onToast={showToast} />
             ))
           )
         ) : (

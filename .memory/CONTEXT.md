@@ -1,7 +1,18 @@
 # SurePath Session Context
-**Updated:** 2026-11-01 (v2.7.43 — Beranda Mitra super app + pita hijau korporat berlatar gambar)
+**Updated:** 2026-11-04 (v2.7.50 — hapus field `band` mati dari TierPalette)
 
-## Terakhir dikerjakan (1 Nov 2026)
+## Terakhir dikerjakan (4 Nov 2026)
+
+**v2.7.50 — Hapus `TierPalette.band` (PR #355, merged)**
+
+Field `band` di `TierPalette` (`components/agent/AgentPartnerCard.tsx`) tidak
+pernah dibaca setelah Beranda Mitra dibangun ulang sebagai super app (v2.7.39).
+Tesnya (`services/__tests__/agentHomeHero.test.tsx`) ikut dicopot. Semua 11
+check CI hijau.
+
+---
+
+## Sebelumnya (1 Nov 2026)
 
 **Beranda Mitra dibangun ulang dalam bahasa super app** (v2.7.39, PR #346),
 lalu pita sapaannya diberi warna korporat + latar bergambar (v2.7.40).

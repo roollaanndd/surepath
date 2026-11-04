@@ -290,6 +290,9 @@ Gerbang ada di data-gateway yang **belum pernah ter-deploy**. Baru berlaku setel
 **Tidak ada:** `RESEND_API_KEY`, `ADMIN_DIGEST_EMAIL`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ADMIN_CHAT_ID`, `FONNTE_TOKEN`, `XENDIT_SECRET_KEY`.
 Precision penting: RESEND dibaca **hanya dari env edge** (4 jalur: `daily-report`, `insurer-reminder-cron`, `send-insurer-email`, `data-gateway` orders) tanpa fallback DB → email send definitif belum bisa jalan; FONNTE/XENDIT/OPENROUTER punya fallback `get_app_secret` (tabel `app_secrets`) → absen di edge ≠ mati.
 **Penghubung siap:** `.github/workflows/sync-email-secrets.yml` (dispatch-only) — owner taruh `RESEND_API_KEY` (+ `ADMIN_DIGEST_EMAIL`) sebagai GitHub secret, jalankan workflow → POST batch ke edge. Opsi `include_daily_report_test=true` me-rotate `CRON_SECRET` + invoke `daily-report` di tempat (⚠️ membatalkan header Authorization yang tersimpan di jadwal cron Dashboard).
+### ⏸️ DITAHAN owner (2026-10-30) — "kita keep ini dl, ingatkan saya lg nanti"
+Resume email/Resend ketika owner bilang lagi atau sudah menaruh `RESEND_API_KEY` (+ `ADMIN_DIGEST_EMAIL`) sebagai GitHub secret. Antrean saat resume: (1) jalankan `sync-email-secrets.yml`; (2) uji kirim Resend sungguhan via test-invocation `daily-report` (`include_daily_report_test=true`); (3) pasang log kegagalan pada fetch Resend di `data-gateway/actions/orders.ts` (~167–171) — `deno check` di dalam `supabase/functions/` + deploy edge; (4) putuskan Fonnte (butuh pairing WhatsApp owner). Dependsabot low vuln (#88) ikut dikerjakan saat itu.
+
 
 ## v2.5.5 — Kode sumber server terpublikasi lewat sourcemap (2026-09-11)
 ### Cacatnya

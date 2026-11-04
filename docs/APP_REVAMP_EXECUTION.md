@@ -169,6 +169,23 @@ This record intentionally distinguishes incremental work from the full target.
 
 Append a new entry after each meaningful implementation/verification milestone.
 
+### 2026-11-04 (v2.7.47) — Konvergensi CSS admin-a + wiring class + skin operator dipulihkan
+
+- **Melanjutkan WIP parkir** di `redesign/uiux-all-apps` (surgery
+  `portal-modernization.css` 1950 → ~1100 baris): lima pass override admin
+  2026-10 digulung jadi satu blok `sp-admin-root` mengikuti mockup admin-a.
+- **Audit rule-level** (bukan cuma class-level) menemukan kebocoran yang
+  luput: kanvas ambient gabungan agent+operator dan 32 rule skin operator
+  ikut terhapus. Dipulihkan verbatim dari main; 6 class mati + duplikat
+  utility Tailwind sengaja tidak dikembalikan (orphan check post-op bersih).
+- **Wiring:** section admin-a menarget `.sp-admin-root` yang belum pernah
+  dirender komponen — ditambahkan ke root AdminPortal + kedua aside sidebar
+  (`sp-admin-sidebar`) + tombol logout sidebar (`sp-admin-logout`); 4
+  penambahan className, nol perubahan perilaku.
+- **Uji:** vitest fokus 85/85 (adminThemeMode, roleEntries, emptyStatePalette,
+  brandIconPalette), eslint `AdminPortal.tsx` bersih; verifikasi statis brace
+  273/273, darkHints 32, orphan check nol class kustom hidup.
+
 ### 2026-10-30 (v2.7.17) — Admin light-first theme (design.md §4 execution)
 
 - **Direktif pemilik:** "kerjakan yg bisa dan baik untuk dikerjakan… rencanakan

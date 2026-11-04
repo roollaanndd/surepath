@@ -1275,15 +1275,6 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, loading]);
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { closePanel(); }
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [open, closePanel]);
-
   const pushMessage = useCallback((
     from: 'bot' | 'user',
     text: string,
@@ -1632,6 +1623,17 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
     setOpen(false);
     buttonRef.current?.focus();
   }, []);
+
+  // Escape closes the panel through the same path as the close button, so
+  // voice state never outlives the visible panel.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { closePanel(); }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open, closePanel]);
 
   const beginDictation = useCallback((mode: 'toggle' | 'hold') => {
     setScanError(null);

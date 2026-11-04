@@ -10,15 +10,34 @@ import {
   isSpeechSupported, startDictation, type DictationHandle,
   isTtsSupported, speakAnswer, stopSpeaking,
 } from '../../services/speech';
+import { dayPartOf } from './superapp/SuperAppBackdrop';
 
 type Lang = Language | 'EN' | 'ID';
 const isEN = (lang: Lang) => lang === Language.EN;
 
 // ─── Pathy mascot (self-contained, animated) ──────────────────────────────────
-const PathyFace: React.FC<{ size?: number; animate?: boolean }> = ({ size = 44, animate = true }) => {
+// v2.7.49 — mood: the face answers the conversation state, so the user can
+// read what Pathy is doing from across the room. idle = the old face;
+// listening = an emerald halo pulses around the shield; thinking = the eyes
+// drift up and a bubble of dots floats above; speaking = the mouth moves.
+// Mood animations live in classes (not inline styles) so the injected
+// stylesheet can switch them off under prefers-reduced-motion.
+export type PathyMood = 'idle' | 'listening' | 'thinking' | 'speaking';
+
+const PathyFace: React.FC<{ size?: number; animate?: boolean; mood?: PathyMood }> = ({ size = 44, animate = true, mood = 'idle' }) => {
   const W = size, H = Math.round(size * 1.16);
   return (
     <div style={{ position: 'relative', width: W, height: H, animation: animate ? 'pathy-bob 3.2s ease-in-out infinite' : 'none' }}>
+      {mood === 'listening' && (
+        <div className="pathy-listen-ring" style={{ position: 'absolute', inset: -W * 0.09, borderRadius: '40%' }} />
+      )}
+      {mood === 'thinking' && (
+        <div className="pathy-think-dots" style={{ position: 'absolute', left: '50%', top: -H * 0.16, transform: 'translateX(-50%)', display: 'flex', gap: W * 0.05 }}>
+          {[0, 1, 2].map(i => (
+            <span key={i} style={{ width: W * 0.07, height: W * 0.07, borderRadius: '50%', background: '#0E9D57', display: 'block', animationDelay: `${i * 0.18}s` }} />
+          ))}
+        </div>
+      )}
       <svg viewBox="0 0 120 140" width={W} height={H} style={{ position: 'absolute', inset: 0 }}>
         <defs>
           <linearGradient id="pathychat-body" x1="0" y1="0" x2="0" y2="1">
@@ -31,12 +50,14 @@ const PathyFace: React.FC<{ size?: number; animate?: boolean }> = ({ size = 44, 
         <path d="M60 14 L100 30 V46 C84 36 70 33 60 33 C50 33 36 36 20 46 V30 Z" fill="rgba(255,255,255,0.16)" />
       </svg>
       {[W * 0.345, W * 0.525].map((lx, i) => (
-        <div key={i} style={{ position: 'absolute', left: lx, top: H * 0.40, width: W * 0.13, height: W * 0.17, animation: animate ? `pathy-blink 4.2s ease-in-out ${i * 0.05}s infinite` : 'none', transformOrigin: 'center' }}>
+        <div key={i} style={{ position: 'absolute', left: lx, top: H * (mood === 'thinking' ? 0.33 : 0.40), width: W * 0.13, height: W * 0.17, animation: animate ? `pathy-blink 4.2s ease-in-out ${i * 0.05}s infinite` : 'none', transformOrigin: 'center' }}>
           <div style={{ position: 'absolute', inset: 0, background: '#0b3d24', borderRadius: '50%' }} />
           <div style={{ position: 'absolute', left: '52%', top: '18%', width: '34%', height: '30%', background: '#fff', borderRadius: '50%' }} />
         </div>
       ))}
-      <svg viewBox="0 0 40 20" width={W * 0.30} height={W * 0.15} style={{ position: 'absolute', left: '50%', top: H * 0.55, transform: 'translateX(-50%)' }}>
+      <svg viewBox="0 0 40 20" width={W * 0.30} height={W * 0.15}
+        className={mood === 'speaking' ? 'pathy-speak-mouth' : undefined}
+        style={{ position: 'absolute', left: '50%', top: H * 0.55, transform: 'translateX(-50%)', transformOrigin: 'center' }}>
         <path d="M4 4 Q20 20 36 4" fill="none" stroke="#0b3d24" strokeWidth="3.5" strokeLinecap="round" />
       </svg>
       <div style={{ position: 'absolute', left: '50%', top: H * 0.70, transform: 'translateX(-50%)', width: W * 0.24, height: W * 0.24, borderRadius: '50%', background: '#fff', boxShadow: '0 2px 6px rgba(0,0,0,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -64,6 +85,16 @@ function ensurePathyChatKeyframes() {
     @keyframes pathychat-pop { 0% { opacity:0; transform: translateY(12px) scale(0.96); } 100% { opacity:1; transform: translateY(0) scale(1); } }
     @keyframes pathy-typing { 0%,80%,100% { transform: translateY(0); opacity:0.4; } 40% { transform: translateY(-5px); opacity:1; } }
     @keyframes pathy-mic    { 0%,100% { box-shadow: 0 0 0 0 rgba(244,63,94,0.55); } 70% { box-shadow: 0 0 0 7px rgba(244,63,94,0); } }
+    /* v2.7.49 mood animations — class-scoped so reduced-motion can switch
+       them off without touching the mascot's base idle motion. */
+    @keyframes pathy-listen { 0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.45); } 70% { box-shadow: 0 0 0 9px rgba(16,185,129,0); } }
+    @keyframes pathy-talk   { 0%,100% { transform: translateX(-50%) scaleY(1); } 50% { transform: translateX(-50%) scaleY(1.55); } }
+    .pathy-listen-ring { animation: pathy-listen 1.5s ease-in-out infinite; }
+    .pathy-speak-mouth { animation: pathy-talk 0.8s ease-in-out infinite; }
+    .pathy-think-dots span { animation: pathy-typing 1.2s ease-in-out infinite; }
+    @media (prefers-reduced-motion: reduce) {
+      .pathy-listen-ring, .pathy-speak-mouth, .pathy-think-dots span { animation: none !important; }
+    }
     @media (prefers-reduced-motion: reduce) { [data-pathychat-anim] { animation: none !important; } }
   `;
   document.head.appendChild(style);
@@ -166,6 +197,17 @@ const Pill: React.FC<{ value?: string | null }> = ({ value }) => {
       {key || '—'}
     </span>
   );
+};
+
+// v2.7.49 — claim progress tracker. The linear happy path only: PENDING is a
+// side-state of IN_REVIEW (missing documents, already flagged separately), and
+// REJECTED/CLOSED are terminal outcomes a progress bar would lie about.
+const CLAIM_STEP_ORDER = ['DRAFT', 'SUBMITTED', 'IN_REVIEW', 'SURVEY', 'APPROVED', 'PAID'];
+const stageIndex = (status?: string | null): number => {
+  const key = String(status ?? '').toUpperCase();
+  if (key === 'PENDING') return CLAIM_STEP_ORDER.indexOf('IN_REVIEW');
+  const i = CLAIM_STEP_ORDER.indexOf(key);
+  return i < 0 ? -1 : i;
 };
 
 /**
@@ -843,19 +885,42 @@ const PathyCardView: React.FC<{
       }
       return (
         <CardShell title={t('Status klaim', 'Claim status')}>
-          {list.map((c, i) => (
-            <div key={c.claim_number ?? i} className="pb-1.5 border-b border-slate-100 dark:border-white/5 last:border-0 last:pb-0">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[0.68rem] font-black text-slate-800 dark:text-slate-100">{c.claim_number}</span>
-                <Pill value={c.status} />
+          {list.map((c, i) => {
+            const si = stageIndex(c.status);
+            return (
+              <div key={c.claim_number ?? i} className="pb-1.5 border-b border-slate-100 dark:border-white/5 last:border-0 last:pb-0">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[0.68rem] font-black text-slate-800 dark:text-slate-100">{c.claim_number}</span>
+                  <Pill value={c.status} />
+                </div>
+                {/* v2.7.49 — where the claim stands, readable at a glance. */}
+                {si >= 0 && (
+                  <div className="flex items-center gap-1 pt-1.5">
+                    {CLAIM_STEP_ORDER.map((step, j) => (
+                      <React.Fragment key={step}>
+                        {j > 0 && (
+                          <span className={`flex-1 h-0.5 rounded-full ${j <= si ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700'}`} />
+                        )}
+                        <span
+                          title={step}
+                          className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
+                            j < si ? 'bg-emerald-500'
+                              : j === si ? 'bg-emerald-500 ring-2 ring-emerald-500/30'
+                                : 'bg-slate-200 dark:bg-slate-700'
+                          }`}
+                        />
+                      </React.Fragment>
+                    ))}
+                  </div>
+                )}
+                <p className="text-[0.65rem] text-slate-600 dark:text-slate-300 leading-snug">{c.stage}</p>
+                <p className="text-[0.62rem] text-emerald-700 dark:text-emerald-400 leading-snug">{c.next_step}</p>
+                {((c.missing ?? []) as string[]).map((m, j) => (
+                  <p key={j} className="text-[0.6rem] text-ds-amber dark:text-amber-400 leading-snug">⚠ {m}</p>
+                ))}
               </div>
-              <p className="text-[0.65rem] text-slate-600 dark:text-slate-300 leading-snug">{c.stage}</p>
-              <p className="text-[0.62rem] text-emerald-700 dark:text-emerald-400 leading-snug">{c.next_step}</p>
-              {((c.missing ?? []) as string[]).map((m, j) => (
-                <p key={j} className="text-[0.6rem] text-ds-amber dark:text-amber-400 leading-snug">⚠ {m}</p>
-              ))}
-            </div>
-          ))}
+            );
+          })}
         </CardShell>
       );
     }
@@ -868,7 +933,10 @@ const PathyCardView: React.FC<{
       return (
         <CardShell title={t('Akan jatuh tempo', 'Coming up for renewal')}>
           {list.map((r, i) => (
-            <div key={r.order_number ?? i} className="pb-1.5 border-b border-slate-100 dark:border-white/5 last:border-0 last:pb-0">
+            <div key={r.order_number ?? i}
+              className={`pb-1.5 pl-2 border-l-2 ${
+                Number(r.days_left) <= 14 ? 'border-rose-400 dark:border-rose-500' : 'border-amber-400 dark:border-amber-500'
+              } border-b border-slate-100 dark:border-white/5 last:border-0 last:pb-0`}>
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[0.68rem] font-black text-slate-800 dark:text-slate-100 truncate">{r.client_name || r.product}</span>
                 <span className={`text-[0.6rem] font-black ${Number(r.days_left) <= 14 ? 'text-rose-600' : 'text-ds-amber'}`}>
@@ -923,7 +991,7 @@ const PathyCardView: React.FC<{
               <p className="text-[0.62rem] text-slate-500">{o.product}</p>
               {o.invoice_url ? (
                 <a href={o.invoice_url} target="_blank" rel="noopener noreferrer"
-                  className="inline-block mt-1 px-3 py-1.5 rounded-lg text-[0.62rem] font-black uppercase tracking-wider text-white"
+                  className="block w-full mt-1.5 py-2 rounded-xl text-center text-[0.64rem] font-black uppercase tracking-wider text-white active:scale-[0.98] transition-transform"
                   style={{ background: 'linear-gradient(135deg, #059669, #047857)' }}>
                   {t('Bayar sekarang', 'Pay now')}
                 </a>
@@ -1090,11 +1158,38 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
     setTtsOn(on => {
       const next = !on;
       try { localStorage.setItem(TTS_KEY, next ? '1' : '0'); } catch { /* private mode */ }
-      if (!next) stopSpeaking();
+      if (!next) { stopSpeaking(); setTtsSpeaking(false); }
       else speakAnswer(t('Suara Pathy dinyalakan.', 'Pathy voice is on.'), en ? 'en' : 'id');
       return next;
     });
   }, [t, en]);
+
+  // ── v2.7.49: hands-free conversation loop ────────────────────────────────
+  // While the loop is on, Pathy reopens the mic by itself after each answer —
+  // after the TTS finishes when voice output is on (listening to your own
+  // reply would transcribe garbage), shortly after the text otherwise. The
+  // loop is an explicit opt-in, stops with the panel/unmount, and stops
+  // itself on failure or a silent capture so it can never churn the mic.
+  const [voiceLoop, setVoiceLoop] = useState(false);
+  const voiceLoopRef = useRef(false);
+  const [ttsSpeaking, setTtsSpeaking] = useState(false);
+  const toggleVoiceLoop = useCallback(() => {
+    setVoiceLoop(on => {
+      const next = !on;
+      voiceLoopRef.current = next;
+      if (!next) {
+        dictationRef.current?.stop();
+        setListening(false);
+        stopSpeaking();
+        setTtsSpeaking(false);
+      } else if (!loadingRef.current) {
+        beginDictationRef.current?.('hold');
+      }
+      return next;
+    });
+  }, []);
+  /** Late-declared helpers reach the loop through refs (same pattern as askRef). */
+  const beginDictationRef = useRef<(mode: 'toggle' | 'hold') => void>(() => {});
 
   // Session resume storage key, per user, on-device only.
   const threadKey = `sp_pathy_thread_${currentUser?.id || 'anon'}`;
@@ -1131,14 +1226,21 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
 
   useEffect(() => { ensurePathyChatKeyframes(); }, []);
 
+  // v2.7.49 — the greeting follows the clock. The same dayPartOf that drives
+  // the SuperAppBackdrop scene (pagi/siang/sore/malam) picks the salutation, so
+  // opening Pathy at 21:00 does not greet you with "good morning".
+  const dayPart = dayPartOf(new Date().getHours());
+  const salutation = en
+    ? { pagi: 'Good morning', siang: 'Good afternoon', sore: 'Good evening', malam: 'Good evening' }[dayPart]
+    : { pagi: 'Selamat pagi', siang: 'Selamat siang', sore: 'Selamat sore', malam: 'Selamat malam' }[dayPart];
   const greeting = currentUser?.name
     ? t(
-        `Halo, ${currentUser.name}! Aku Pathy. ${isAgent ? 'Mau mulai dari mana?' : 'Ada yang bisa kubantu?'}`,
-        `Hi, ${currentUser.name}! I'm Pathy. ${isAgent ? 'Where shall we start?' : 'How can I help?'}`,
+        `${salutation}, ${currentUser.name}! Aku Pathy. ${isAgent ? 'Mau mulai dari mana?' : 'Ada yang bisa kubantu?'}`,
+        `${salutation}, ${currentUser.name}! I'm Pathy. ${isAgent ? 'Where shall we start?' : 'How can I help?'}`,
       )
     : t(
-        'Halo! Aku Pathy, asisten SurePath. Pilih salah satu di bawah atau ketik langsung ya.',
-        "Hi! I'm Pathy, your SurePath assistant. Pick an option below or just type.",
+        `${salutation}! Aku Pathy, asisten SurePath. Pilih salah satu di bawah atau ketik langsung ya.`,
+        `${salutation}! I'm Pathy, your SurePath assistant. Pick an option below or just type.`,
       );
 
   useEffect(() => {
@@ -1172,15 +1274,6 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
     messagesRef.current = messages;
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, loading]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { setOpen(false); buttonRef.current?.focus(); }
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [open]);
 
   const pushMessage = useCallback((
     from: 'bot' | 'user',
@@ -1412,6 +1505,22 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
 
   // Shared by the composer, the quick-action chips and the client cards so a
   // tap answer is the real, data-backed one rather than a canned paragraph.
+  // v2.7.49 — after a successful answer the conversation loop (if on) reopens
+  // the mic: after the TTS finishes when voice output is on, shortly after
+  // the text lands otherwise. A failed ask turns the loop off — a rate limit
+  // or outage must never leave a microphone hot in a loop.
+  const reopenMicAfterAnswer = useCallback(() => {
+    if (!voiceLoopRef.current) return;
+    window.setTimeout(() => {
+      if (voiceLoopRef.current && !loadingRef.current) beginDictationRef.current?.('hold');
+    }, 450);
+  }, []);
+
+  const stopVoiceLoop = useCallback(() => {
+    voiceLoopRef.current = false;
+    setVoiceLoop(false);
+  }, []);
+
   const ask = useCallback(async (msg: string, overrideAttachments?: Attachment[]) => {
     if (!msg || loadingRef.current) return;
     loadingRef.current = true;
@@ -1442,7 +1551,15 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
       // go stale.
       let speakNow = false;
       try { speakNow = localStorage.getItem(TTS_KEY) === '1'; } catch { /* private mode */ }
-      if (speakNow) speakAnswer(res.reply, en ? 'en' : 'id');
+      if (speakNow) {
+        setTtsSpeaking(true);
+        speakAnswer(res.reply, en ? 'en' : 'id', () => {
+          setTtsSpeaking(false);
+          reopenMicAfterAnswer();
+        });
+      } else {
+        reopenMicAfterAnswer();
+      }
     } catch (e: any) {
       // FIX: every failure used to collapse into "Pathy AI is coming soon",
       // which hid expired sessions, rate limits and outages alike.
@@ -1460,11 +1577,16 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
           : t('Maaf, aku lagi ada gangguan. Coba lagi sebentar lagi ya 🙏',
               'Sorry, I am having trouble right now. Please try again shortly 🙏');
       pushMessage('bot', text);
+      // A failure must not leave the hands-free loop hot: stop it and say so.
+      if (voiceLoopRef.current) {
+        stopVoiceLoop();
+        setScanError(t('Mode percakapan dihentikan — Pathy lagi tidak bisa menjawab.', 'Conversation mode stopped — Pathy cannot answer right now.'));
+      }
     } finally {
       loadingRef.current = false;
       setLoading(false);
     }
-  }, [pushMessage, t, pending, en]);
+  }, [pushMessage, t, pending, en, reopenMicAfterAnswer, stopVoiceLoop]);
 
   // Early callbacks (attachment auto-send, hold-to-talk) call `ask` through
   // this ref so none of them needs to be declared after it.
@@ -1485,9 +1607,33 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
   const holdFinalRef = useRef('');
 
   useEffect(() => () => {
+    voiceLoopRef.current = false;
     dictationRef.current?.stop();
     stopSpeaking();
   }, []);
+
+  /** Close the panel AND every voice state that belongs to it (v2.7.49). */
+  const closePanel = useCallback(() => {
+    voiceLoopRef.current = false;
+    setVoiceLoop(false);
+    setTtsSpeaking(false);
+    dictationRef.current?.stop();
+    setListening(false);
+    stopSpeaking();
+    setOpen(false);
+    buttonRef.current?.focus();
+  }, []);
+
+  // Escape closes the panel through the same path as the close button, so
+  // voice state never outlives the visible panel.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { closePanel(); }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open, closePanel]);
 
   const beginDictation = useCallback((mode: 'toggle' | 'hold') => {
     setScanError(null);
@@ -1510,6 +1656,12 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
           const said = holdFinalRef.current;
           holdFinalRef.current = '';
           if (said) askRef.current(said);
+          else if (voiceLoopRef.current) {
+            // A silent capture inside the hands-free loop would otherwise sit
+            // mute forever — say why the loop stopped instead.
+            stopVoiceLoop();
+            setScanError(t('Mode percakapan dihentikan — tidak ada suara terdeteksi.', 'Conversation mode stopped — nothing was captured.'));
+          }
           else setScanError(t('Suara tidak menangkap kalimat. Coba lagi ya.', 'Nothing was captured. Try again.'));
         }
       },
@@ -1517,7 +1669,9 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
     if (!handle) { setScanError(t('Mikrofon belum didukung browser ini.', 'This browser has no microphone input.')); return; }
     dictationRef.current = handle;
     setListening(true);
-  }, [en, input, t]);
+  }, [en, input, t, stopVoiceLoop]);
+
+  useEffect(() => { beginDictationRef.current = beginDictation; }, [beginDictation]);
 
   const handleSend = useCallback(() => {
     // An attachment on its own is a complete request — nobody should have to
@@ -1552,6 +1706,21 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
   const handleInputKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
+
+  // v2.7.49 — the mascot mirrors the conversation state, and the header says
+  // the same thing in words for anyone who reads faster than they parse faces.
+  const mood: PathyMood = listening
+    ? 'listening'
+    : loading
+      ? 'thinking'
+      : ttsSpeaking ? 'speaking' : 'idle';
+  const statusText = listening
+    ? t('Mendengarkan…', 'Listening…')
+    : loading
+      ? t('Sedang berpikir…', 'Thinking…')
+      : ttsSpeaking
+        ? t('Membacakan jawaban…', 'Reading the answer…')
+        : t('AI Asisten · SurePath', 'AI Assistant · SurePath');
 
   return (
     <>
@@ -1597,15 +1766,37 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
           {/* Header */}
           <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex-shrink-0">
             <span data-pathychat-anim className="flex-shrink-0">
-              <PathyFace size={34} />
+              <PathyFace size={34} mood={mood} />
             </span>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-black tracking-tight leading-none">Pathy</p>
               <p className="text-[0.6rem] font-bold uppercase tracking-widest opacity-90 mt-1 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-200 animate-pulse motion-reduce:animate-none" />
-                {t('AI Asisten · SurePath', 'AI Assistant · SurePath')}
+                <span className={`w-1.5 h-1.5 rounded-full ${listening ? 'bg-rose-300 animate-pulse motion-reduce:animate-none' : 'bg-emerald-200 animate-pulse motion-reduce:animate-none'}`} />
+                {statusText}
               </p>
             </div>
+            {/* v2.7.49 — hands-free conversation mode: Pathy reopens the mic
+                after each answer so a chat can run without touching the phone.
+                Explicit opt-in, off with the panel, off on failure. */}
+            {speechOk && (
+              <button
+                type="button"
+                onClick={toggleVoiceLoop}
+                aria-label={voiceLoop
+                  ? t('Matikan mode percakapan suara', 'Turn off voice conversation mode')
+                  : t('Nyalakan mode percakapan suara', 'Turn on voice conversation mode')}
+                aria-pressed={voiceLoop}
+                className={`w-9 h-9 rounded-full flex items-center justify-center active:scale-90 transition-all duration-200 motion-reduce:transition-none focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 ${
+                  voiceLoop ? 'bg-white/25' : 'bg-white/10 hover:bg-white/20'
+                }`}
+              >
+                <svg viewBox="0 0 24 24" width={17} height={17} fill="none" stroke="currentColor" strokeWidth={2.1} strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="9" y="3" width="6" height="11" rx="3" />
+                  <path d="M5 11a7 7 0 0 0 14 0" />
+                  <path d="M12 18v3" />
+                </svg>
+              </button>
+            )}
             {/* P2 — voice output toggle. OFF by default; the user flips it,
                 the state is remembered per device, and closing the panel stops
                 any playback immediately. */}
@@ -1635,7 +1826,7 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
             <button
               type="button"
               aria-label={t('Tutup', 'Close')}
-              onClick={() => { setOpen(false); buttonRef.current?.focus(); }}
+              onClick={closePanel}
               className="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center active:scale-90 transition-all duration-200 motion-reduce:transition-none focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
             >
               <svg viewBox="0 0 24 24" width={16} height={16} fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round">

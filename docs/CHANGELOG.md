@@ -1,5 +1,42 @@
 # SurePath — Changelog
 
+## v2.7.49 — 2026-11-04
+
+### Pathy Gelombang 1: wujud yang hidup, mode percakapan suara, kartu yang lebih kaya
+
+Gelombang pertama penyempurnaan Pathy yang disetujui pemilik — semuanya
+client-side, tanpa perubahan edge function.
+
+- **Wujud Pathy yang hidup.** Maskot kini punya empat ekspresi yang mengikuti
+  keadaan percakapan: `idle` (wajah lama), `listening` (halo hijau berdenyut
+  saat mic terbuka), `thinking` (mata melirik ke atas + gelembung titik saat
+  menjawab), dan `speaking` (mulut bergerak saat membacakan jawaban). Teks
+  status di header mengikuti ("Mendengarkan… / Sedang berpikir… / Membacakan
+  jawaban…"). Animasi mood kelas-scoped dan mati di `prefers-reduced-motion`.
+- **Sapaan mengikuti jam.** Pembuka chat kini "Selamat pagi/siang/sore/malam"
+  memakai `dayPartOf` yang sama dengan adegan Beranda — buka jam 21:00 tidak
+  lagi disapa "selamat pagi".
+- **Mode percakapan suara (hands-free).** Toggle baru di header: setelah Pathy
+  menjawab, mic terbuka lagi sendiri — menunggu TTS selesai bila suara aktif
+  (`speakAnswer` dapat hook `onEnd` dengan token agar utterance lama yang
+  di-cancel tidak memicu lanjutan), segera setelah teks bila tidak. Loop
+  berhenti saat panel ditutup/unmount, dan **berhenti sendiri saat gagal**
+  (rate limit, gangguan) atau saat tangkapan senyap — mic tidak pernah
+  berputar tanpa kendali.
+- **Kartu layanan lebih kaya.** Status klaim kini memakai **pelacak tahap**
+  (DRAFT→SUBMITTED→IN_REVIEW→SURVEY→APPROVED→PAID sebagai titik progres;
+  PENDING dipetakan ke IN_REVIEW, REJECTED/CLOSED tidak dipakai progres bar
+  karena akan menyesatkan). CTA "Bayar sekarang" jadi tombol penuh yang
+  konsisten dengan CTA klaim. Baris perpanjangan diberi aksen urgensi
+  (merah ≤14 hari, kuning sisanya).
+- **Uji:** guard baru `pathyWave1.test.ts` (10 assertion, merah dulu) —
+  vitest penuh 551 pass; 32 kegagalan di 3 file (`onboardingIllustrations`,
+  `pwaInstall`, `theme`) terverifikasi **pre-existing di origin/main bersih**
+  via stash, bukan dari rilis ini.
+
+Versi: `src/version.ts` 2.7.49 · Android `versionName "2.7.49"` /
+`versionCode 60` (`sync-android-version.mjs`).
+
 ## v2.7.48 — 2026-11-04
 
 ### App Mitra terasa premium: motion, Profil Saya selaras, kanvas bergambar — + perbaikan regresi dark mode

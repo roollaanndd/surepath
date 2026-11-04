@@ -169,6 +169,31 @@ This record intentionally distinguishes incremental work from the full target.
 
 Append a new entry after each meaningful implementation/verification milestone.
 
+### 2026-11-04 (v2.7.49) — Pathy Gelombang 1: mood, suara hands-free, kartu kaya
+
+- **Direktif pemilik:** "lets enhance pathy capabilities, make her more rich".
+  Riset penuh menghasilkan 8 celah dalam 3 gelombang; pemilik menyetujui
+  **Gelombang 1** (wujud + suara + kartu — semua client-side, tanpa deploy
+  edge). Gelombang 2 (memori jangka panjang + upgrade model) dan Gelombang 3
+  (vision, proaktif, analitik transkrip) menunggu giliran.
+- **Fakta riset yang mengikat:** PathyFace sudah ada (bob/wave/blink); TTS
+  sudah membacakan jawaban saat toggle aktif; dikte punya dua mode (tap &
+  hold); `pathy-agent` TIDAK bisa melihat gambar (desain sengaja) — jadi
+  "wujud" berarti ekspresi, bukan maskot baru, dan "suara" berarti loop
+  percakapan, bukan TTS baru.
+- **Mood:** `PathyMood = idle|listening|thinking|speaking`; animasi via kelas
+  di stylesheet ter-inject (bukan inline) supaya `prefers-reduced-motion`
+  bisa mematikan; status header ikut berubah teks.
+- **Loop suara:** `speakAnswer(text, lang, onEnd?)` dengan token generasi —
+  utterance lama yang di-cancel tidak boleh memicu `onEnd`. Mic dibuka ulang
+  450ms setelah jawaban (atau setelah TTS selesai); gagal/tangkapan senyap =
+  loop mati dengan pesan, bukan mic yang berputar terus.
+- **Kartu:** tracker tahap klaim hanya untuk jalur linier; REJECTED/CLOSED
+  sengaja tanpa bar progres (bar progres akan membohongi).
+- **Uji:** `pathyWave1.test.ts` merah dulu (10 assertion) → hijau; vitest
+  penuh 551 pass; 32 gagal di 3 file terverifikasi pre-existing di
+  origin/main via stash (bukan regresi rilis ini). eslint file terubah bersih.
+
 ### 2026-11-04 (v2.7.48) — Motion premium agent + Profil Saya selaras + kanvas bergambar + fix regresi dark
 
 - **Direktif pemilik:** "buatkan clicking animation, smooth motion transition

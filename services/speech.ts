@@ -167,9 +167,19 @@ export function isSpeaking(): boolean {
  * voice, never a broken chat. Indonesian is preferred; on engines with no
  * Indonesian voice the platform default speaks, which is still preferable to
  * nothing for an answer the user is simultaneously reading.
+ *
+ * `onEnd` (v2.7.49) fires once when this utterance is done speaking — or
+ * immediately when synthesis is unavailable/failed, so a caller that waits for
+ * the voice before its next step (the hands-free conversation loop reopening
+ * the mic) can never hang. Only the LATEST utterance may fire it: cancel()
+ * drops the previous queue, and a stale onend from a cancelled utterance must
+ * not trigger the caller's follow-up.
  */
-export function speakAnswer(text: string, lang: 'id' | 'en' = 'id'): void {
-  if (!isTtsSupported() || !text) return;
+let speakToken = 0;
+export function speakAnswer(text: string, lang: 'id' | 'en' = 'id', onEnd?: () => void): void {
+  if (!isTtsSupported() || !text) { onEnd?.(); return; }
+  const token = ++speakToken;
+  const done = () => { if (token === speakToken) onEnd?.(); };
   try {
     // Reading one answer replaces the previous queue — overlapping speech of
     // two replies reads as a bug, not a feature.
@@ -180,9 +190,14 @@ export function speakAnswer(text: string, lang: 'id' | 'en' = 'id'): void {
     u.pitch = 1;
     const voice = pickVoice();
     if (voice) u.voice = voice;
+    if (onEnd) {
+      u.onend = done;
+      u.onerror = done;
+    }
     window.speechSynthesis.speak(u);
   } catch {
     /* synthesis is best-effort — the text is already on screen */
+    done();
   }
 }
 

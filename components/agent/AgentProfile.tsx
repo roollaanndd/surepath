@@ -11,6 +11,7 @@ import { formatIDR } from '../car-wizard/WizardUI';
 import { SecureDocLink } from '../shared/SecureDoc';
 import AgentHandlerCard from './AgentHandlerCard';
 import AgentPartnerCard from './AgentPartnerCard';
+import SuperAppBackdrop, { dayPartOf } from '../shared/superapp/SuperAppBackdrop';
 import { getMyAgreement, type SpAgentAgreement } from '../../services/agreements';
 import { generateAgreementPDF } from '../../services/agreementPdf';
 import { useTierDefinitions, getTierByCode } from '../../hooks/useTierDefinitions';
@@ -25,12 +26,14 @@ interface Props {
   onNavigate?: (tab: string) => void;
   stats?: AgentStats | null;
   agentTier?: string | null;
+  /** Mode gelap app — menentukan varian pita hero, selaras Beranda. */
+  darkMode?: boolean;
 }
 
 const inputCls =
   'w-full rounded-xl border border-ds-border bg-ds-card2 px-4 py-3 text-ds-ink text-sm focus:outline-none focus:ring-2 focus:ring-ds-green transition';
 
-const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavigate, stats: statsProp, agentTier }) => {
+const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavigate, stats: statsProp, agentTier, darkMode = false }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
 
   const [profile, setProfile] = useState<SpUser | null>(null);
@@ -188,14 +191,14 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
     <div className="bg-ds-bg min-h-screen pb-28 font-sora">
       {showChangePassword && <ChangePasswordModal email={profile?.email ?? agent?.email ?? ""} lang={lang} onClose={() => setShowChangePassword(false)} />}
 
-      {/* Avatar + Name hero — bank-style gradient banner */}
+      {/* Avatar + Name hero — pita hijau korporat + adegan super app, selaras
+          Beranda (SuperAppHeader). Adegan digambar sendiri (SVG inline), bukan
+          foto; motifnya "jalan yang pasti" dan ikut berganti menurut jam. */}
       <div className="relative overflow-hidden px-5 pt-12 pb-7 text-center text-white"
-        style={{ background: 'linear-gradient(150deg, #0B1120 0%, #0E3B2E 60%, #0B5E3B 100%)' }}>
-        <div aria-hidden className="absolute -top-16 -right-12 w-56 h-56 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(0,193,106,0.25), transparent 70%)' }} />
-        <svg aria-hidden className="absolute left-0 bottom-0 h-3/4 opacity-[0.10] pointer-events-none" viewBox="0 0 200 140" fill="none">
-          <circle cx="10" cy="130" r="80" stroke="#fff" strokeWidth="1.2" />
-          <circle cx="10" cy="130" r="52" stroke="#fff" strokeWidth="1.2" />
-        </svg>
+        style={{ background: darkMode
+          ? 'linear-gradient(160deg, #04241C 0%, #063025 48%, #0A5741 100%)'
+          : 'linear-gradient(160deg, #003B2F 0%, #04543F 46%, #0A7A52 100%)' }}>
+        <SuperAppBackdrop part={dayPartOf(new Date().getHours())} />
         <div className="relative z-10">
         <div className="relative w-20 h-20 mx-auto mb-3">
           <button
@@ -405,7 +408,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
               <span className="text-sm font-semibold text-ds-ink">{doc.label}</span>
               {doc.done
                 ? <span className="flex items-center gap-1 text-xs font-black text-ds-green bg-ds-green-tint px-2.5 py-1 rounded-full"><CheckCircle className="w-3.5 h-3.5" /> Lengkap</span>
-                : <span className="flex items-center gap-1 text-xs font-black text-ds-amber bg-amber-50 px-2.5 py-1 rounded-full"><AlertCircle className="w-3.5 h-3.5" /> Belum</span>}
+                : <span className="flex items-center gap-1 text-xs font-black text-ds-amber bg-ds-amber-lt px-2.5 py-1 rounded-full"><AlertCircle className="w-3.5 h-3.5" /> Belum</span>}
             </div>
           ))}
         </div>
@@ -598,7 +601,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
                 className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
                   (profile as any)?.ktp_document_url
                     ? 'bg-ds-card2 border border-ds-border text-ds-ink3'
-                    : 'bg-rose-50 text-ds-red border border-rose-200'
+                    : 'bg-ds-red-lt text-ds-red border border-ds-red-lt'
                 }`}
               >
                 {ktpUploading ? '...' : (profile as any)?.ktp_document_url ? 'Ganti' : 'Upload'}
@@ -610,7 +613,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
       </div>
 
       {/* Info Grid */}
-      <div className="mx-5 mt-4 grid grid-cols-2 gap-3">
+      <div className="mx-5 mt-4 grid grid-cols-2 gap-3 sp-stagger-cards">
         <div className="sp-glass rounded-2xl p-4">
           <p className="text-[9px] font-bold uppercase tracking-widest text-ds-ink3 mb-1">Bergabung</p>
           <p className="text-sm font-black text-ds-ink">
@@ -619,7 +622,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
         </div>
         <div className="sp-glass rounded-2xl p-4">
           <p className="text-[9px] font-bold uppercase tracking-widest text-ds-ink3 mb-1">Status</p>
-          <span className={`text-xs font-black px-2.5 py-1 rounded-full ${(profile as any)?.verified ? 'bg-ds-green-tint text-ds-green' : 'bg-amber-50 text-ds-amber'}`}>
+          <span className={`text-xs font-black px-2.5 py-1 rounded-full ${(profile as any)?.verified ? 'bg-ds-green-tint text-ds-green' : 'bg-ds-amber-lt text-ds-amber'}`}>
             {(profile as any)?.verified ? 'Terverifikasi' : 'Pending'}
           </span>
         </div>
@@ -641,7 +644,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
       {/* Performance Summary */}
       <div className="mx-5 mt-4">
         <p className="text-[10px] font-bold uppercase tracking-widest text-ds-ink3 mb-3">Performa</p>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 sp-stagger-cards">
           <div className="sp-glass rounded-2xl p-4 text-center">
             <p className="text-[9px] font-bold uppercase tracking-widest text-ds-ink3 mb-1">Komisi Bulan Ini</p>
             <p className="text-base font-black text-ds-green">
@@ -742,7 +745,7 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
       {/* Logout */}
       <button
         onClick={onLogout}
-        className="mx-5 mt-4 w-full h-12 rounded-xl border border-rose-200 bg-rose-50 text-ds-red font-semibold text-sm active:bg-rose-100 transition-all flex items-center justify-center gap-2"
+        className="mx-5 mt-4 w-full h-12 rounded-xl border border-ds-red-lt bg-ds-red-lt text-ds-red font-semibold text-sm active:bg-ds-red active:text-white transition-all flex items-center justify-center gap-2"
       >
         <LogOut className="w-4 h-4" />
         {t('Sign Out', 'Keluar')}

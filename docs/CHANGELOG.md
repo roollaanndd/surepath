@@ -1,5 +1,44 @@
 # SurePath — Changelog
 
+## v2.7.48 — 2026-11-04
+
+### App Mitra terasa premium: motion, Profil Saya selaras, kanvas bergambar — + perbaikan regresi dark mode
+
+Tiga direktif pemilik untuk app Mitra (agent) dieksekusi dalam satu rilis,
+plus satu perbaikan regresi yang ditemukan saat riset.
+
+- **⚠️ Regresi dark mode dari v2.7.47 diperbaiki.** Surgery admin-a kemarin
+  ikut menghapus blok koreksi dark-mode **shared** (`.dark .sp-modern-app …`,
+  15 rule hidup — berlaku semua portal yang memakai shell `sp-modern-app`) dan
+  blok dark twin agent (`.dark .sp-agent-premium …`). Tanpa itu, kartu dan
+  kontrol form memakai utilitas terang tetap menyala putih di dark mode.
+  Keduanya dipulihkan verbatim; 4 rule ber-attribute selector (`data-status`
+  dsb.) tetap terhapus karena memang tak dipakai komponen mana pun. Guard
+  baru `portalDarkGuard.test.ts` mengunci semua keluarga rule lintas-portal
+  (dark shared, dark agent, skin operator, kanvas ambient) agar surgery CSS
+  berikutnya tidak bisa menjatuhkannya diam-diam lagi.
+- **Motion premium (agent-scoped).** Tekanan seragam untuk semua elemen
+  interaktif di shell agent: turun cepat (`scale(.97)`, 90ms), kembali dengan
+  pegas halus (200ms, `cubic-bezier(.2,.8,.2,1)`); `:where()` menjamin
+  utilitas Tailwind yang punya aturan sendiri tetap menang; `:disabled`
+  dikecualikan; `prefers-reduced-motion` mematikan transform-nya. Grid
+  Informasi Pribadi & Performa di Profil memakai stagger entrance shared
+  (`sp-stagger-cards`, sistem v2.7.13).
+- **Profil Saya selaras bahasa super app.** Pita hero yang mulai dari navy
+  `#0B1120` — pola "hitam dan terlalu polos" yang dikeluhkan pemilik di
+  Beranda — diganti band hijau korporat yang sama dengan `SuperAppHeader`
+  (`#003B2F→#04543F→#0A7A52`, varian gelap `#04241C→#0A5741`) dengan adegan
+  `SuperAppBackdrop` yang sama (motif "jalan yang pasti", berubah menurut
+  jam). Chip status memakai token (`bg-ds-amber-lt`, `bg-ds-red-lt`) yang
+  punya dark twin, menggantikan `bg-amber-50`/`bg-rose-50` mentah.
+- **Kanvas agent bergambar.** Tile kontur Topography (Hero Patterns,
+  CC BY 4.0 — pola sama dengan sidebar admin, di-tint emerald agent 4% /
+  putih 3% di dark) dilapis di atas kanvas ambient mint agent dengan
+  `background-attachment: fixed`. Ultra-halus: konten tetap pembaca utama.
+
+Versi: `src/version.ts` 2.7.48 · Android `versionName "2.7.48"` /
+`versionCode 59` (`sync-android-version.mjs`).
+
 ## v2.7.47 — 2026-11-04
 
 ### Konvergensi CSS admin ke mockup admin-a + skin operator dipulihkan

@@ -631,7 +631,7 @@ const AdminPortal = ({
         <button
           onClick={onLogout}
           title="Keluar"
-          className={`transition-all font-black uppercase tracking-widest flex items-center justify-center border border-ds-border bg-ds-card2 text-ds-ink2 hover:bg-rose-500 hover:text-white hover:border-rose-400/40 ${
+          className={`sp-admin-logout transition-all font-black uppercase tracking-widest flex items-center justify-center border border-ds-border bg-ds-card2 text-ds-ink2 hover:bg-rose-500 hover:text-white hover:border-rose-400/40 ${
             isRail ? 'w-9 h-9 rounded-xl' : 'w-full py-2.5 rounded-xl text-2xs gap-2'
           }`}
         >
@@ -763,7 +763,7 @@ const AdminPortal = ({
   ) : null;
 
   return (
-    <div className={`sp-modern-app flex h-[100dvh] overflow-hidden font-sans ${rootBg}`}>
+    <div className={`sp-modern-app sp-admin-root flex h-[100dvh] overflow-hidden font-sans ${rootBg}`}>
       {/* ── Animated background ───────────────────────────────────────────── */}
       <style>{`
         @keyframes orb1 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(60px,-40px) scale(1.15)} }
@@ -801,7 +801,7 @@ const AdminPortal = ({
 
       {/* ── Desktop sidebar ────────────────────────────────────────────────── */}
       {!isMobile && (
-        <aside className={`border-r flex flex-col flex-shrink-0 z-20 sp-glass-strong transition-[width,padding] duration-300 ease-out ${isRail ? 'w-[76px] p-3' : 'w-64 p-6'} ${sidebarBg}`}>
+        <aside className={`sp-admin-sidebar border-r flex flex-col flex-shrink-0 z-20 sp-glass-strong transition-[width,padding] duration-300 ease-out ${isRail ? 'w-[76px] p-3' : 'w-64 p-6'} ${sidebarBg}`}>
           {SidebarContent()}
         </aside>
       )}
@@ -810,7 +810,7 @@ const AdminPortal = ({
       {isMobile && mobileMenuOpen && (
         <div className="fixed inset-0 z-[1000]">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md sp-fade-in" onClick={() => setMobileOpen(false)} />
-          <aside className={`absolute top-0 left-0 bottom-0 w-64 border-r flex flex-col p-6 z-10 sp-glass-strong ${sidebarBg} shadow-ds-sm sp-drawer-in`} style={{ paddingTop: "calc(1.5rem + env(safe-area-inset-top, 0px))" }}>
+          <aside className={`sp-admin-sidebar absolute top-0 left-0 bottom-0 w-64 border-r flex flex-col p-6 z-10 sp-glass-strong ${sidebarBg} shadow-ds-sm sp-drawer-in`} style={{ paddingTop: "calc(1.5rem + env(safe-area-inset-top, 0px))" }}>
             {SidebarContent()}
           </aside>
         </div>

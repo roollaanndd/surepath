@@ -1,5 +1,45 @@
 # SurePath — Changelog
 
+## v2.7.47 — 2026-11-04
+
+### Konvergensi CSS admin ke mockup admin-a + skin operator dipulihkan
+
+Melanjutkan WIP surgery `portal-modernization.css`: lima pass override admin
+2026-10 yang bertumpuk digulung menjadi SATU blok single-source mengikuti
+mockup `design-proposals/2026-10-admin-agent/admin-a.html`, plus perbaikan
+atas dua kehilangan gaya yang ditemukan audit rule-level.
+
+- **Section admin-a** (`sp-admin-root`): token identik JSON `:root` mockup
+  (forest/emerald/mint, ink 3 tingkat dengan ink-3 digelapkan ke 4.68:1),
+  pemetaan token `ds-*` ke keluarga warna admin-a, sidebar forest dengan
+  tekstur Hero Patterns "Topography" (CC BY 4.0, diwarnai ulang mint 5%),
+  topbar kartu putih, kontrol & tabel, AA override tombol emerald, interaksi
+  & focus-visible, media query, reduced-motion. Light-only sesuai design.md §4.
+- **Wiring class di `AdminPortal.tsx`** (4 penambahan className, nol perubahan
+  perilaku): root `sp-admin-root`, kedua aside sidebar `sp-admin-sidebar`
+  (desktop + drawer mobile), tombol logout sidebar `sp-admin-logout`. Tanpa
+  ini section admin-a tidak pernah terpasang — audit menemukan class CSS
+  tidak dirender komponen mana pun.
+- **Alias `--sp-admin-green:#08784E`** di token block: wordmark AdminPortal
+  memakai `var(--sp-admin-green,#08784E)`; alias menghubungkannya ke palet
+  admin-a tanpa menyentuh komponen.
+- **Skin operator dipulihkan verbatim** (32 rule): audit rule-level menemukan
+  blok `.sp-operator-premium` (hero putih-first, queue card, dashboard tint,
+  dark twins, media query 420px) ikut terhapus padahal masih dipakai
+  `OperatorPortal`/`OperatorDashboard` — termasuk kanvas ambient gabungan
+  `.sp-modern-app.sp-agent-premium, .sp-modern-app.sp-operator-premium`
+  (gradient mint `background-attachment: fixed`) yang juga dipakai portal
+  agent, dan blok reduced-motion dark premium.
+- **Dedup yang disengaja tetap**: 6 class mati (`sp-primary-action`,
+  `sp-secondary-action`, `sp-kpi`, `sp-section-eyebrow`, `sp-status-pending`,
+  `sp-status-success` — nol pemakaian di kode) dan duplikat hand-written
+  utility/`ds-*` yang sudah digenerate Tailwind (config `.cjs` aktif, content
+  scan semua tsx/ts) tidak dikembalikan. Orphan check post-op: nol class
+  kustom hidup tanpa definisi.
+
+Versi: `src/version.ts` 2.7.47 · Android `versionName "2.7.47"` /
+`versionCode 58` (`sync-android-version.mjs`).
+
 ## v2.7.46 — 2026-11-03
 
 ### Ilustrasi status kosong ikut palet terang

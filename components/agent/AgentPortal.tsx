@@ -395,6 +395,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
             onNavigate={handleTabChange}
             stats={stats}
             agentTier={agentTier}
+            darkMode={darkMode}
           />
         );
       default:

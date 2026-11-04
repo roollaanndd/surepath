@@ -242,6 +242,24 @@
   outline: 2px solid var(--sp-agent-emerald);
   outline-offset: 3px;
 }
+/* agent press feedback (v2.7.48): tekanan seragam untuk semua elemen
+   interaktif — turun cepat, kembali dengan sedikit pegas. :where menjaga
+   utilitas Tailwind tetap menang bila ia punya aturan sendiri. */
+.sp-agent-premium :where(button, a, [role="button"]) {
+  transition-property: transform, box-shadow, border-color, background-color, color, opacity;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(.2, .8, .2, 1);
+}
+.sp-agent-premium :where(button, a, [role="button"]):not(:disabled):active {
+  transform: scale(.97);
+  transition-duration: 90ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-agent-premium :where(button, a, [role="button"]):not(:disabled):active {
+    transform: none;
+  }
+}
+
 .sp-agent-premium :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),select,textarea) {
   min-height: 2.75rem;
   border-color: var(--sp-agent-outline);
@@ -979,6 +997,94 @@ html.dark .sp-modern-app .sp-bottom-nav[data-nav-variant="flat"] button[aria-cur
 }
 
 
+/* ── Dark-mode correction (dipulihkan saat converge admin-a) ────────────────
+   Beberapa rule polish memakai permukaan putih tetap di luar cakupan tema
+   terang, membuat kartu dan kontrol form menyala putih di dark mode. Blok
+   ini shared untuk semua portal sp-modern-app; hero yang memang selalu gelap
+   dan aksi putih-di-atas-brand sengaja dibiarkan. */
+.dark .sp-modern-app {
+  color: var(--ds-text-primary, #F8FAFC);
+  background-color: var(--ds-bg, #1A1D29);
+  color-scheme: dark;
+}
+.dark .sp-modern-app :where(.bg-ds-bg) {
+  background-color: var(--ds-bg, #1A1D29) !important;
+}
+.dark .sp-modern-app :where(.bg-ds-card) {
+  background-color: var(--ds-card, #242836) !important;
+}
+.dark .sp-modern-app :where(.bg-ds-card2) {
+  background-color: var(--ds-card2, #2C3142) !important;
+}
+.dark .sp-modern-app :where(.bg-white:not(.text-white):not([data-sp-preserve-light])) {
+  background-color: var(--ds-card, #242836) !important;
+}
+.dark .sp-modern-app :where(.bg-slate-50, .bg-gray-50, .bg-neutral-50, .bg-zinc-50, .bg-ds-surface) {
+  background-color: var(--ds-card2, #2C3142) !important;
+}
+.dark .sp-modern-app :where(.border-slate-100, .border-gray-100, .border-slate-200, .border-gray-200, .border-white\/60) {
+  border-color: var(--ds-border, #3A3F52) !important;
+}
+.dark .sp-modern-app :where(.text-slate-950, .text-slate-900, .text-gray-950, .text-gray-900, .text-neutral-900, .text-zinc-900, .text-slate-800, .text-gray-800) {
+  color: var(--ds-text-primary, #F8FAFC) !important;
+}
+.dark .sp-modern-app :where(.text-slate-700, .text-gray-700, .text-neutral-700, .text-zinc-700, .text-slate-600, .text-gray-600) {
+  color: var(--ds-text-secondary, #B8BFD0) !important;
+}
+.dark .sp-modern-app :where(.text-slate-500, .text-gray-500, .text-neutral-500, .text-zinc-500, .text-slate-400, .text-gray-400) {
+  color: var(--ds-text-muted, #99A0B2) !important;
+}
+.dark .sp-modern-app :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]), select, textarea) {
+  color: var(--ds-text-primary, #F8FAFC);
+  background-color: var(--ds-card2, #2C3142) !important;
+  border-color: var(--ds-border-strong, #4A5066) !important;
+}
+.dark .sp-modern-app :where(input, select, textarea)::placeholder {
+  color: var(--ds-text-muted, #99A0B2) !important;
+  opacity: 1;
+}
+.dark .sp-modern-app :where(table thead, .divide-y > :not([hidden]) ~ :not([hidden])) {
+  border-color: var(--ds-border, #3A3F52);
+}
+.dark .sp-modern-app :where(table thead) {
+  background-color: var(--ds-card2, #2C3142) !important;
+}
+.dark .sp-modern-app :where(tr:hover, .hover\:bg-gray-50:hover, .hover\:bg-slate-50:hover) {
+  background-color: color-mix(in srgb, var(--ds-card2, #2C3142) 84%, var(--ds-primary, #00E07A) 16%);
+}
+
+/* Agent portal: lepas kanvas putih hard-coded dan panel glass di dark mode.
+   Kanvasnya ikut membawa tile kontur ilustratif (putih ultra-halus). */
+.dark .sp-agent-premium {
+  --sp-ui-canvas: #1A1D29;
+  --sp-ui-orange: #FF9B54;
+  background-color: var(--ds-bg, #1A1D29) !important;
+  background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='192' height='192' viewBox='0 0 192 192'%3E%3Cpath fill='%23FFFFFF' fill-opacity='0.03' d='M192 15v2a11 11 0 0 0-11 11c0 1.94 1.16 4.75 2.53 6.11l2.36 2.36a6.93 6.93 0 0 1 1.22 7.56l-.43.84a8.08 8.08 0 0 1-6.66 4.13H145v35.02a6.1 6.1 0 0 0 3.03 4.87l.84.43c1.58.79 4 .4 5.24-.85l2.36-2.36a12.04 12.04 0 0 1 7.51-3.11 13 13 0 1 1 .02 26 12 12 0 0 1-7.53-3.11l-2.36-2.36a4.93 4.93 0 0 0-5.24-.85l-.84.43a6.1 6.1 0 0 0-3.03 4.87V143h35.02a8.08 8.08 0 0 1 6.66 4.13l.43.84a6.91 6.91 0 0 1-1.22 7.56l-2.36 2.36A10.06 10.06 0 0 0 181 164a11 11 0 0 0 11 11v2a13 13 0 0 1-13-13 12 12 0 0 1 3.11-7.53l2.36-2.36a4.93 4.93 0 0 0 .85-5.24l-.43-.84a6.1 6.1 0 0 0-4.87-3.03H145v35.02a8.08 8.08 0 0 1-4.13 6.66l-.84.43a6.91 6.91 0 0 1-7.56-1.22l-2.36-2.36A10.06 10.06 0 0 0 124 181a11 11 0 0 0-11 11h-2a13 13 0 0 1 13-13c2.47 0 5.79 1.37 7.53 3.11l2.36 2.36a4.94 4.94 0 0 0 5.24.85l.84-.43a6.1 6.1 0 0 0 3.03-4.87V145h-35.02a8.08 8.08 0 0 1-6.66-4.13l-.43-.84a6.91 6.91 0 0 1 1.22-7.56l2.36-2.36A10.06 10.06 0 0 0 107 124a11 11 0 0 0-22 0c0 1.94 1.16 4.75 2.53 6.11l2.36 2.36a6.93 6.93 0 0 1 1.22 7.56l-.43.84a8.08 8.08 0 0 1-6.66 4.13H49v35.02a6.1 6.1 0 0 0 3.03 4.87l.84.43c1.58.79 4 .4 5.24-.85l2.36-2.36a12.04 12.04 0 0 1 7.51-3.11A13 13 0 0 1 81 192h-2a11 11 0 0 0-11-11c-1.94 0-4.75 1.16-6.11 2.53l-2.36 2.36a6.93 6.93 0 0 1-7.56 1.22l-.84-.43a8.08 8.08 0 0 1-4.13-6.66V145H11.98a6.1 6.1 0 0 0-4.87 3.03l-.43.84c-.79 1.58-.4 4 .85 5.24l2.36 2.36a12.04 12.04 0 0 1 3.11 7.51A13 13 0 0 1 0 177v-2a11 11 0 0 0 11-11c0-1.94-1.16-4.75-2.53-6.11l-2.36-2.36a6.93 6.93 0 0 1-1.22-7.56l.43-.84a8.08 8.08 0 0 1 6.66-4.13H47v-35.02a6.1 6.1 0 0 0-3.03-4.87l-.84-.43c-1.59-.8-4-.4-5.24.85l-2.36 2.36A12 12 0 0 1 28 109a13 13 0 1 1 0-26c2.47 0 5.79 1.37 7.53 3.11l2.36 2.36a4.94 4.94 0 0 0 5.24.85l.84-.43A6.1 6.1 0 0 0 47 84.02V49H11.98a8.08 8.08 0 0 1-6.66-4.13l-.43-.84a6.91 6.91 0 0 1 1.22-7.56l2.36-2.36A10.06 10.06 0 0 0 11 28 11 11 0 0 0 0 17v-2a13 13 0 0 1 13 13c0 2.47-1.37 5.79-3.11 7.53l-2.36 2.36a4.94 4.94 0 0 0-.85 5.24l.43.84A6.1 6.1 0 0 0 11.98 47H47V11.98a8.08 8.08 0 0 1 4.13-6.66l.84-.43a6.91 6.91 0 0 1 7.56 1.22l2.36 2.36A10.06 10.06 0 0 0 68 11 11 11 0 0 0 79 0h2a13 13 0 0 1-13 13 12 12 0 0 1-7.53-3.11l-2.36-2.36a4.93 4.93 0 0 0-5.24-.85l-.84.43A6.1 6.1 0 0 0 49 11.98V47h35.02a8.08 8.08 0 0 1 6.66 4.13l.43.84a6.91 6.91 0 0 1-1.22 7.56l-2.36 2.36A10.06 10.06 0 0 0 85 68a11 11 0 0 0 22 0c0-1.94-1.16-4.75-2.53-6.11l-2.36-2.36a6.93 6.93 0 0 1-1.22-7.56l.43-.84a8.08 8.08 0 0 1 6.66-4.13H143V11.98a6.1 6.1 0 0 0-3.03-4.87l-.84-.43c-1.59-.8-4-.4-5.24.85l-2.36 2.36A12 12 0 0 1 124 13a13 13 0 0 1-13-13h2a11 11 0 0 0 11 11c1.94 0 4.75-1.16 6.11-2.53l2.36-2.36a6.93 6.93 0 0 1 7.56-1.22l.84.43a8.08 8.08 0 0 1 4.13 6.66V47h35.02a6.1 6.1 0 0 0 4.87-3.03l.43-.84c.8-1.59.4-4-.85-5.24l-2.36-2.36A12 12 0 0 1 179 28a13 13 0 0 1 13-13zM84.02 143a6.1 6.1 0 0 0 4.87-3.03l.43-.84c.8-1.59.4-4-.85-5.24l-2.36-2.36A12 12 0 0 1 83 124a13 13 0 1 1 26 0c0 2.47-1.37 5.79-3.11 7.53l-2.36 2.36a4.94 4.94 0 0 0-.85 5.24l.43.84a6.1 6.1 0 0 0 4.87 3.03H143v-35.02a8.08 8.08 0 0 1 4.13-6.66l.84-.43a6.91 6.91 0 0 1 7.56 1.22l2.36 2.36A10.06 10.06 0 0 0 164 107a11 11 0 0 0 0-22c-1.94 0-4.75 1.16-6.11 2.53l-2.36 2.36a6.93 6.93 0 0 1-7.56 1.22l-.84-.43a8.08 8.08 0 0 1-4.13-6.66V49h-35.02a6.1 6.1 0 0 0-4.87 3.03l-.43.84c-.79 1.58-.4 4 .85 5.24l2.36 2.36a12.04 12.04 0 0 1 3.11 7.51A13 13 0 1 1 83 68a12 12 0 0 1 3.11-7.53l2.36-2.36a4.93 4.93 0 0 0 .85-5.24l-.43-.84A6.1 6.1 0 0 0 84.02 49H49v35.02a8.08 8.08 0 0 1-4.13 6.66l-.84.43a6.91 6.91 0 0 1-7.56-1.22l-2.36-2.36A10.06 10.06 0 0 0 28 85a11 11 0 0 0 0 22c1.94 0 4.75-1.16 6.11-2.53l2.36-2.36a6.93 6.93 0 0 1 7.56-1.22l.84.43a8.08 8.08 0 0 1 4.13 6.66V143h35.02z'%3E%3C/path%3E%3C/svg%3E"),
+    radial-gradient(ellipse at 92% 4%, rgba(255, 155, 84, .07), transparent 27rem),
+    linear-gradient(180deg, #1A1D29 0%, #202735 46%, #1A1D29 100%) !important;
+}
+.dark .sp-agent-premium .sp-ambient {
+  background:
+    radial-gradient(ellipse at 8% 10%, rgba(0, 224, 122, .08), transparent 26rem),
+    radial-gradient(ellipse at 94% 34%, rgba(255, 155, 84, .06), transparent 22rem) !important;
+}
+.dark .sp-agent-premium .sp-glass-strong {
+  background-color: color-mix(in srgb, var(--ds-card, #242836) 90%, transparent) !important;
+  border-color: var(--ds-border, #3A3F52) !important;
+  box-shadow: 0 12px 34px -24px rgba(0, 0, 0, .7) !important;
+}
+.dark .sp-agent-premium .sp-agent-home__quick-actions .grid > button {
+  background: var(--ds-card, #242836);
+  color: var(--ds-text-primary, #F8FAFC);
+  border-color: var(--ds-border, #3A3F52);
+  box-shadow: 0 8px 24px -18px rgba(0, 0, 0, .7);
+}
+.dark .sp-agent-premium .sp-agent-home__quick-actions .grid > button:hover {
+  border-color: color-mix(in srgb, var(--ds-primary, #00E07A) 42%, var(--ds-border, #3A3F52));
+}
+
+
 /* ── Operator app redesign (dipulihkan saat converge admin-a) ────────────────
    Skin "operator premium" masih dipakai OperatorPortal/OperatorDashboard;
    penghapusan blok lama ikut menjatuhkan skin ini. Dipulihkan verbatim dari
@@ -1095,3 +1201,16 @@ html.dark .sp-modern-app .sp-bottom-nav[data-nav-variant="flat"] button[aria-cur
     linear-gradient(160deg, #F0FAF5, #FFFFFF 48%, #EAF8F1);
   background-attachment: fixed;
 }
+
+/* Latar bergambar agent (v2.7.48): tile kontur Topography (Hero Patterns,
+   CC BY 4.0 — pola sama dengan sidebar admin, di-tint emerald agent) di atas
+   kanvas ambient mint. Ultra-halus supaya konten tetap pembaca utama. */
+.sp-modern-app.sp-agent-premium {
+  background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='192' height='192' viewBox='0 0 192 192'%3E%3Cpath fill='%23087A58' fill-opacity='0.04' d='M192 15v2a11 11 0 0 0-11 11c0 1.94 1.16 4.75 2.53 6.11l2.36 2.36a6.93 6.93 0 0 1 1.22 7.56l-.43.84a8.08 8.08 0 0 1-6.66 4.13H145v35.02a6.1 6.1 0 0 0 3.03 4.87l.84.43c1.58.79 4 .4 5.24-.85l2.36-2.36a12.04 12.04 0 0 1 7.51-3.11 13 13 0 1 1 .02 26 12 12 0 0 1-7.53-3.11l-2.36-2.36a4.93 4.93 0 0 0-5.24-.85l-.84.43a6.1 6.1 0 0 0-3.03 4.87V143h35.02a8.08 8.08 0 0 1 6.66 4.13l.43.84a6.91 6.91 0 0 1-1.22 7.56l-2.36 2.36A10.06 10.06 0 0 0 181 164a11 11 0 0 0 11 11v2a13 13 0 0 1-13-13 12 12 0 0 1 3.11-7.53l2.36-2.36a4.93 4.93 0 0 0 .85-5.24l-.43-.84a6.1 6.1 0 0 0-4.87-3.03H145v35.02a8.08 8.08 0 0 1-4.13 6.66l-.84.43a6.91 6.91 0 0 1-7.56-1.22l-2.36-2.36A10.06 10.06 0 0 0 124 181a11 11 0 0 0-11 11h-2a13 13 0 0 1 13-13c2.47 0 5.79 1.37 7.53 3.11l2.36 2.36a4.94 4.94 0 0 0 5.24.85l.84-.43a6.1 6.1 0 0 0 3.03-4.87V145h-35.02a8.08 8.08 0 0 1-6.66-4.13l-.43-.84a6.91 6.91 0 0 1 1.22-7.56l2.36-2.36A10.06 10.06 0 0 0 107 124a11 11 0 0 0-22 0c0 1.94 1.16 4.75 2.53 6.11l2.36 2.36a6.93 6.93 0 0 1 1.22 7.56l-.43.84a8.08 8.08 0 0 1-6.66 4.13H49v35.02a6.1 6.1 0 0 0 3.03 4.87l.84.43c1.58.79 4 .4 5.24-.85l2.36-2.36a12.04 12.04 0 0 1 7.51-3.11A13 13 0 0 1 81 192h-2a11 11 0 0 0-11-11c-1.94 0-4.75 1.16-6.11 2.53l-2.36 2.36a6.93 6.93 0 0 1-7.56 1.22l-.84-.43a8.08 8.08 0 0 1-4.13-6.66V145H11.98a6.1 6.1 0 0 0-4.87 3.03l-.43.84c-.79 1.58-.4 4 .85 5.24l2.36 2.36a12.04 12.04 0 0 1 3.11 7.51A13 13 0 0 1 0 177v-2a11 11 0 0 0 11-11c0-1.94-1.16-4.75-2.53-6.11l-2.36-2.36a6.93 6.93 0 0 1-1.22-7.56l.43-.84a8.08 8.08 0 0 1 6.66-4.13H47v-35.02a6.1 6.1 0 0 0-3.03-4.87l-.84-.43c-1.59-.8-4-.4-5.24.85l-2.36 2.36A12 12 0 0 1 28 109a13 13 0 1 1 0-26c2.47 0 5.79 1.37 7.53 3.11l2.36 2.36a4.94 4.94 0 0 0 5.24.85l.84-.43A6.1 6.1 0 0 0 47 84.02V49H11.98a8.08 8.08 0 0 1-6.66-4.13l-.43-.84a6.91 6.91 0 0 1 1.22-7.56l2.36-2.36A10.06 10.06 0 0 0 11 28 11 11 0 0 0 0 17v-2a13 13 0 0 1 13 13c0 2.47-1.37 5.79-3.11 7.53l-2.36 2.36a4.94 4.94 0 0 0-.85 5.24l.43.84A6.1 6.1 0 0 0 11.98 47H47V11.98a8.08 8.08 0 0 1 4.13-6.66l.84-.43a6.91 6.91 0 0 1 7.56 1.22l2.36 2.36A10.06 10.06 0 0 0 68 11 11 11 0 0 0 79 0h2a13 13 0 0 1-13 13 12 12 0 0 1-7.53-3.11l-2.36-2.36a4.93 4.93 0 0 0-5.24-.85l-.84.43A6.1 6.1 0 0 0 49 11.98V47h35.02a8.08 8.08 0 0 1 6.66 4.13l.43.84a6.91 6.91 0 0 1-1.22 7.56l-2.36 2.36A10.06 10.06 0 0 0 85 68a11 11 0 0 0 22 0c0-1.94-1.16-4.75-2.53-6.11l-2.36-2.36a6.93 6.93 0 0 1-1.22-7.56l.43-.84a8.08 8.08 0 0 1 6.66-4.13H143V11.98a6.1 6.1 0 0 0-3.03-4.87l-.84-.43c-1.59-.8-4-.4-5.24.85l-2.36 2.36A12 12 0 0 1 124 13a13 13 0 0 1-13-13h2a11 11 0 0 0 11 11c1.94 0 4.75-1.16 6.11-2.53l2.36-2.36a6.93 6.93 0 0 1 7.56-1.22l.84.43a8.08 8.08 0 0 1 4.13 6.66V47h35.02a6.1 6.1 0 0 0 4.87-3.03l.43-.84c.8-1.59.4-4-.85-5.24l-2.36-2.36A12 12 0 0 1 179 28a13 13 0 0 1 13-13zM84.02 143a6.1 6.1 0 0 0 4.87-3.03l.43-.84c.8-1.59.4-4-.85-5.24l-2.36-2.36A12 12 0 0 1 83 124a13 13 0 1 1 26 0c0 2.47-1.37 5.79-3.11 7.53l-2.36 2.36a4.94 4.94 0 0 0-.85 5.24l.43.84a6.1 6.1 0 0 0 4.87 3.03H143v-35.02a8.08 8.08 0 0 1 4.13-6.66l.84-.43a6.91 6.91 0 0 1 7.56 1.22l2.36 2.36A10.06 10.06 0 0 0 164 107a11 11 0 0 0 0-22c-1.94 0-4.75 1.16-6.11 2.53l-2.36 2.36a6.93 6.93 0 0 1-7.56 1.22l-.84-.43a8.08 8.08 0 0 1-4.13-6.66V49h-35.02a6.1 6.1 0 0 0-4.87 3.03l-.43.84c-.79 1.58-.4 4 .85 5.24l2.36 2.36a12.04 12.04 0 0 1 3.11 7.51A13 13 0 1 1 83 68a12 12 0 0 1 3.11-7.53l2.36-2.36a4.93 4.93 0 0 0 .85-5.24l-.43-.84A6.1 6.1 0 0 0 84.02 49H49v35.02a8.08 8.08 0 0 1-4.13 6.66l-.84.43a6.91 6.91 0 0 1-7.56-1.22l-2.36-2.36A10.06 10.06 0 0 0 28 85a11 11 0 0 0 0 22c1.94 0 4.75-1.16 6.11-2.53l2.36-2.36a6.93 6.93 0 0 1 7.56-1.22l.84.43a8.08 8.08 0 0 1 4.13 6.66V143h35.02z'%3E%3C/path%3E%3C/svg%3E"),
+    radial-gradient(ellipse at 8% 0%, rgba(184,233,134,.16), transparent 32rem),
+    radial-gradient(ellipse at 100% 18%, rgba(8,122,88,.07), transparent 28rem),
+    linear-gradient(160deg, #F0FAF5, #FFFFFF 48%, #EAF8F1);
+  background-attachment: fixed;
+}
+

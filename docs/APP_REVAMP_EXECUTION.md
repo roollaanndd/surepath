@@ -169,6 +169,28 @@ This record intentionally distinguishes incremental work from the full target.
 
 Append a new entry after each meaningful implementation/verification milestone.
 
+### 2026-11-04 (v2.7.48) — Motion premium agent + Profil Saya selaras + kanvas bergambar + fix regresi dark
+
+- **Direktif pemilik:** "buatkan clicking animation, smooth motion transition
+  and other to make the apps feels premium. fix the my profile ui on the
+  agent app to be align with the current app theme. and also add some
+  illustrative on the agent app background so its not plain."
+- **Regresi ditemukan lebih dulu:** riset awal menemukan v2.7.47 menghapus
+  blok koreksi dark-mode shared + dark twin agent (korban surgery admin-a
+  yang sama dengan skin operator). Dipulihkan; guard `portalDarkGuard.test.ts`
+  mengunci keluarga rule lintas-portal di level sumber.
+- **Motion:** press feedback seragam agent-scoped (scale .97, 90ms turun /
+  200ms pegas), stagger shared di grid Profil; reduced-motion aman. Sengaja
+  TIDAK global ke 6 portal — menunggu verifikasi visual per portal.
+- **Profil Saya:** hero navy `#0B1120` → band hijau korporat + adegan
+  `SuperAppBackdrop` (komponen yang sama dengan Beranda, ikut jam); chip
+  amber/rose mentah → token `ds-*-lt` yang punya dark twin.
+- **Kanvas:** tile Topography re-tint (emerald 4% light, putih 3% dark) di
+  atas ambient mint, attachment fixed.
+- **Uji:** guard baru 2 file (portalDarkGuard, agentPremiumPolish) — merah
+  dulu 8 assertion, hijau setelah implementasi; vitest fokus 42/42; eslint
+  file terubah bersih (1 warning pre-existing di AgentPortal:218).
+
 ### 2026-11-04 (v2.7.47) — Konvergensi CSS admin-a + wiring class + skin operator dipulihkan
 
 - **Melanjutkan WIP parkir** di `redesign/uiux-all-apps` (surgery

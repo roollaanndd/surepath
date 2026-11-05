@@ -1,5 +1,36 @@
 # SurePath — Changelog
 
+## v2.7.59 — 2026-11-05
+
+### Insurer Portal: redesign Dashboard + Login (hybrid "Brand hero + Mercury data")
+
+Dua layar paling impactful dari Insurer Portal di-redesign dengan arahan
+yang dipilih owner setelah review dua opsi di figcraft: **hero branded
+emerald (Option B) + KPI/list enterprise Mercury-style (Option A)**.
+
+- **Shared `InsurerHero`** component baru (`components/insurer/InsurerHero.tsx`):
+  gradient emerald-900→700 dengan concentric rings dekoratif, pulsing
+  status dot, ExtraBold insurer name, chip row (`InsurerHeroChip` helper).
+  Reusable di tab lain yang butuh "command center" feel.
+- **Dashboard** (`InsurerDashboard.tsx`): hero branded di atas, KPI 2x2
+  flat white dengan mono JetBrains numerals + status dot semantik, Total
+  Premi sebagai dark-navy block (#0F172A) dengan mono white, recent orders
+  sebagai divider-separated rows (bukan card individual lagi) dengan mono
+  order# dan semantic pill — data-forward, cepat scan.
+- **Login** (`InsurerLogin.tsx`): split-screen di desktop (branded panel
+  kiri dengan feature bullets + white card login kanan), compact branded
+  header di mobile. Gradient emerald button, mono input, enter-to-submit,
+  Kembali + Insurer Session chips konsisten. Mengganti palette ungu-oranye
+  yang lama ke emerald-only agar sejalan dengan brand SurePath.
+
+Data fetching, handlers, dan auth flow TIDAK berubah — hanya presentasi.
+Verifikasi: tsc 0 error, eslint bersih, vite build sukses, screenshot
+mobile+desktop confirmed.
+
+**Follow-up v2.7.60** (akan menyusul di PR terpisah): Orders, Claims,
+Payments, Profile, BulkBatches, Notifications — menerapkan pola Mercury
+list yang sama agar seluruh portal konsisten dengan arahan baru.
+
 ## v2.7.58 — 2026-11-05
 
 ### Tambah user password manual + Kredit manual komisi/koin (four-eyes) + UX modal

@@ -1,14 +1,19 @@
-// InsurerDashboard.tsx — Beranda tab. KPI cards + recent activity.
-
+// InsurerDashboard.tsx — Beranda tab (v2.7.59 redesign).
+//
+// Hybrid pattern:
+//  - Hero: emerald gradient command-center (dari InsurerHero shared)
+//  - KPI 2x2: flat white cards, mono numerals, status dot — Mercury-style
+//  - Total Premi: dark-navy block dengan angka mono putih
+//  - Recent orders: divider-separated rows, mono order number, semantic pill
+//
+// Data fetching & handlers tidak berubah — hanya presentasi.
 import React, { useEffect, useState, useCallback } from 'react';
-import { CheckCircle2, AlertTriangle, XCircle, ShieldCheck, Clock, TrendingUp, Eye } from 'lucide-react';
+import { TrendingUp, ShieldCheck, Clock, ChevronRight } from 'lucide-react';
 import { Language } from '../../types';
-import { SectionLabel } from '../shared/cards';
 import { SkeletonCard, useToast } from '../ui';
 import { useT } from '../../src/i18n';
-import { AgentArtKeyframes, SpotOrders } from '../agent/AgentArt';
 import { getInsurerDashboard, type InsurerDashboard as InsurerDashboardData } from '../../services/insurerService';
-import ModuleIcon from '../shared/ModuleIcon';
+import InsurerHero, { InsurerHeroChip } from './InsurerHero';
 
 interface Props {
   authToken: string;
@@ -17,11 +22,21 @@ interface Props {
   refreshTick: number;
 }
 
-const fmtIdr = (n: number | null) => n != null ? 'Rp ' + n.toLocaleString('id-ID') : '-';
+const fmtIdr = (n: number | null) =>
+  n != null ? 'Rp ' + n.toLocaleString('id-ID') : '-';
+
+// Status pill meta — warna lembut semantik (bukan solid heavy).
+const STATUS_PILL: Record<string, { cls: string; label: string }> = {
+  SUBMITTED:    { cls: 'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300', label: 'SUBMITTED' },
+  UNDER_REVIEW: { cls: 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300', label: 'REVIEW' },
+  APPROVED:     { cls: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300', label: 'APPROVED' },
+  ISSUED:       { cls: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300', label: 'ISSUED' },
+  REJECTED:     { cls: 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300', label: 'REJECTED' },
+};
 
 const InsurerDashboard: React.FC<Props> = ({ authToken, lang, onNavigate, refreshTick }) => {
   const t = useT(lang);
-  void t; // i18n helper — strings will be translated incrementally
+  void t;
   const toast = useToast();
   const [data, setData] = useState<InsurerDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -50,14 +65,14 @@ const InsurerDashboard: React.FC<Props> = ({ authToken, lang, onNavigate, refres
       </div>
     );
   }
-
   if (!data) return null;
 
-  const kpiCards = [
-    { label: 'Menunggu Review', value: data.kpi.pending,      icon: Clock,         color: 'text-ds-amber',   bg: 'bg-amber-50 dark:bg-amber-950/30',     tab: 'orders' },
-    { label: 'Disetujui',        value: data.kpi.approved,     icon: CheckCircle2,  color: 'text-ds-green', bg: 'bg-emerald-50 dark:bg-emerald-950/30', tab: 'orders' },
-    { label: 'Perlu Info',       value: data.kpi.request_info, icon: AlertTriangle, color: 'text-blue-500',    bg: 'bg-blue-50 dark:bg-blue-950/30',      tab: 'orders' },
-    { label: 'Ditolak',          value: data.kpi.declined,     icon: XCircle,       color: 'text-rose-500',    bg: 'bg-rose-50 dark:bg-rose-950/30',      tab: 'orders' },
+  // KPI rows — dot color menandai sentimen tanpa membesarkan ikon.
+  const kpis: Array<{ label: string; value: number; dot: string; tab: string }> = [
+    { label: 'PENDING',    value: data.kpi.pending,      dot: 'bg-amber-500',   tab: 'orders' },
+    { label: 'APPROVED',   value: data.kpi.approved,     dot: 'bg-emerald-500', tab: 'orders' },
+    { label: 'PERLU INFO', value: data.kpi.request_info, dot: 'bg-blue-500',    tab: 'orders' },
+    { label: 'DECLINED',   value: data.kpi.declined,     dot: 'bg-rose-500',    tab: 'orders' },
   ];
 
   const recentOrders = data.orders.slice(0, 5);
@@ -65,121 +80,122 @@ const InsurerDashboard: React.FC<Props> = ({ authToken, lang, onNavigate, refres
 
   return (
     <div className="px-5 pt-5 space-y-6 pb-4">
-      {/* Hero — bank-grade command card (emerald identity) */}
-      <AgentArtKeyframes />
-      <div className="relative overflow-hidden rounded-[1.75rem] p-5 sm:p-6 text-white"
-        style={{ background: 'linear-gradient(120deg, #0B1120 0%, #0E3B2E 55%, #065f46 100%)', boxShadow: '0 18px 50px -16px rgba(6,78,59,0.6)' }}>
-        <div aria-hidden className="absolute -top-16 -right-16 w-64 h-64 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(0,193,106,0.28), transparent 70%)' }} />
-        <svg aria-hidden className="absolute right-0 top-0 h-full opacity-[0.10] pointer-events-none" viewBox="0 0 200 140" fill="none">
-          <circle cx="176" cy="16" r="74" stroke="#fff" strokeWidth="1.2" />
-          <circle cx="176" cy="16" r="48" stroke="#fff" strokeWidth="1.2" />
-          <circle cx="176" cy="16" r="26" stroke="#fff" strokeWidth="1.2" />
-        </svg>
-        <div className="relative z-10 flex items-center gap-4">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <p className="text-2xs font-black uppercase tracking-[0.22em] text-emerald-300">Insurer Command Center</p>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight mt-1">{data.insurer.name}</h1>
-            <p className="text-xs sm:text-sm text-white/80 mt-1.5 leading-relaxed">
-              {data.kpi.pending > 0
-                ? `Ada ${data.kpi.pending} pengajuan menunggu review Anda.`
-                : 'Semua pengajuan tertangani. Riwayat tetap siap ditinjau.'}
-            </p>
-          </div>
-          <div className="hidden sm:block flex-shrink-0 -my-2"><SpotOrders size={86} /></div>
-        </div>
-        <div className="relative z-10 flex flex-wrap items-center gap-2 mt-4 pt-3.5 border-t border-white/10">
-          <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur px-2.5 py-1 rounded-full">
-            <TrendingUp size={11} className="text-emerald-300" />
-            <span className="text-2xs font-bold">{data.kpi.total} total order</span>
-          </div>
-          <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur px-2.5 py-1 rounded-full">
-            <ShieldCheck size={11} className="text-emerald-300" />
-            <span className="text-2xs font-bold">{data.kpi.issued} polis terbit</span>
-          </div>
-          <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur px-2.5 py-1 rounded-full">
-            <Clock size={11} className="text-amber-300" />
-            <span className="text-2xs font-bold">{data.kpi.pending} menunggu</span>
-          </div>
-        </div>
-      </div>
+      {/* Hero — gradient command center (Option B) */}
+      <InsurerHero
+        eyebrow="Insurer Command Center"
+        title={data.insurer.name}
+        description={
+          data.kpi.pending > 0
+            ? `Ada ${data.kpi.pending} pengajuan menunggu review Anda.`
+            : 'Semua pengajuan tertangani. Riwayat tetap siap ditinjau.'
+        }
+        chips={
+          <>
+            <InsurerHeroChip>
+              <TrendingUp size={11} /> {data.kpi.total} total order
+            </InsurerHeroChip>
+            <InsurerHeroChip tone="emerald">
+              <ShieldCheck size={11} /> {data.kpi.issued} polis terbit
+            </InsurerHeroChip>
+            {data.kpi.pending > 0 && (
+              <InsurerHeroChip tone="amber">
+                <Clock size={11} /> {data.kpi.pending} menunggu
+              </InsurerHeroChip>
+            )}
+          </>
+        }
+      />
 
-      {/* KPI grid */}
-      <div>
-        <SectionLabel>Ringkasan Pengajuan</SectionLabel>
-        <div className="sp-stagger-cards grid grid-cols-2 gap-3">
-          {kpiCards.map(c => (
+      {/* KPI grid — Mercury-style: flat, mono numerals, status dot */}
+      <section>
+        <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 mb-3">
+          Ringkasan Pengajuan
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          {kpis.map(k => (
             <button
-              key={c.label}
-              onClick={() => onNavigate(c.tab)}
-              className={`group text-left p-4 rounded-3xl border border-ds-border bg-ds-card hover:shadow-ds-md hover:border-ds-green/40 active:scale-[0.98] transition-all duration-200 ${c.bg}`}
+              key={k.label}
+              onClick={() => onNavigate(k.tab)}
+              className="group text-left p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-ds-card hover:border-emerald-500/40 hover:shadow-sm active:scale-[0.98] transition-all"
             >
               <div className="flex items-center justify-between">
-                <c.icon size={20} className={c.color} />
-                <span className="text-2xs font-bold text-ds-green opacity-0 group-hover:opacity-100 transition-opacity">Lihat →</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                  {k.label}
+                </span>
+                <span className={`inline-block w-2 h-2 rounded-full ${k.dot}`} />
               </div>
-              <p className="text-2xl font-black tracking-tight mt-2 text-ds-ink tabular-nums">{c.value}</p>
-              <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-wider mt-0.5 leading-tight">{c.label}</p>
+              <p className="mt-3 text-[32px] leading-none font-mono font-medium tracking-tight text-slate-900 dark:text-white tabular-nums">
+                {k.value}
+              </p>
             </button>
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* Total premium */}
-      <div className="p-4 rounded-2xl border border-ds-border bg-ds-card flex items-center justify-between gap-3">
+      {/* Total Premi — dark navy block dengan angka mono putih */}
+      <div
+        className="rounded-2xl p-5 flex items-center justify-between gap-4"
+        style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)' }}
+      >
         <div className="min-w-0">
-          <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-wider">Total Premi (semua order)</p>
-          <p className="text-2xl font-black text-ds-green mt-1 truncate">{fmtIdr(totalPremium)}</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400">
+            Total Premi
+          </p>
+          <p className="mt-1.5 text-xl sm:text-2xl font-mono font-medium text-white tracking-tight tabular-nums truncate">
+            {fmtIdr(totalPremium)}
+          </p>
         </div>
-        <span className="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center text-ds-green">
-          <ModuleIcon id="payments" size={32} />
-        </span>
+        <span className="text-[11px] text-slate-400 shrink-0">semua order</span>
       </div>
 
-      {/* Recent orders */}
+      {/* Recent orders — divider-separated rows, mono order# */}
       {recentOrders.length > 0 && (
-        <div>
-          <SectionLabel action={{ label: 'Lihat semua', onClick: () => onNavigate('orders') }}>
-            Pengajuan Terbaru
-          </SectionLabel>
-          <div className="sp-stagger-cards space-y-2">
-            {recentOrders.map(o => (
-              <button
-                key={o.id}
-                onClick={() => onNavigate('orders')}
-                className="w-full p-3 rounded-3xl border border-ds-border bg-ds-card flex items-center gap-3 text-left hover:shadow-ds-md hover:border-ds-green/40 active:scale-[0.98] transition-all"
-              >
-                <div className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center font-black text-ds-green shrink-0">
-                  <ModuleIcon id="policy" size={30} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-ds-ink truncate">{o.client_name}</p>
-                  <p className="text-xs text-ds-ink3 truncate">{o.order_number} · {o.product_name}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className={`text-2xs font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full whitespace-nowrap ${
-                      o.status === 'SUBMITTED' ? 'bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400'
-                      : o.status === 'APPROVED' ? 'bg-emerald-50 text-ds-green dark:bg-emerald-950/30 dark:text-emerald-400'
-                      : o.status === 'UNDER_REVIEW' ? 'bg-amber-50 text-ds-amber dark:bg-amber-950/30 dark:text-amber-400'
-                      : o.status === 'ISSUED' ? 'bg-emerald-50 text-ds-green dark:bg-emerald-950/30 dark:text-emerald-400'
-                      : o.status === 'REJECTED' ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400'
-                      : 'bg-ds-card2 text-ds-ink3'
-                    }`}>
-                      {o.status.replace('_', ' ')}
-                    </span>
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">
+              Pengajuan Terbaru
+            </p>
+            <button
+              onClick={() => onNavigate('orders')}
+              className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-0.5 hover:underline"
+            >
+              Lihat semua <ChevronRight size={13} />
+            </button>
+          </div>
+          <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-ds-card overflow-hidden">
+            {recentOrders.map((o, i) => {
+              const pill = STATUS_PILL[o.status] ?? { cls: 'bg-slate-100 text-slate-600 dark:bg-white/5 dark:text-slate-300', label: o.status };
+              return (
+                <button
+                  key={o.id}
+                  onClick={() => onNavigate('orders')}
+                  className={`w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-slate-50/70 dark:hover:bg-white/[0.02] transition-colors ${
+                    i !== 0 ? 'border-t border-slate-100 dark:border-white/5' : ''
+                  }`}
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                      {o.client_name}
+                    </p>
+                    <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate">
+                      {o.order_number} · {o.product_name}
+                    </p>
                     {o.insurer_decision && (
-                      <span className="text-2xs font-bold text-ds-ink3">
-                        · {o.insurer_decision === 'APPROVED' ? '✓ Anda setujui' : o.insurer_decision === 'REQUEST_INFO' ? '? Anda minta info' : '✗ Anda tolak'}
-                      </span>
+                      <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                        {o.insurer_decision === 'APPROVED'     ? '✓ Anda setujui'
+                         : o.insurer_decision === 'REQUEST_INFO' ? '? Anda minta info'
+                         : '✗ Anda tolak'}
+                      </p>
                     )}
                   </div>
-                </div>
-                <Eye size={14} className="text-ds-ink3 shrink-0" />
-              </button>
-            ))}
+                  <span className={`shrink-0 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full ${pill.cls}`}>
+                    {pill.label}
+                  </span>
+                </button>
+              );
+            })}
           </div>
-        </div>
+        </section>
       )}
     </div>
   );

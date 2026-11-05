@@ -369,7 +369,13 @@ Deno.serve(async (req) => {
           ai = {
             authenticityScore: typeof parsed.authenticityScore === 'number' ? Math.max(0, Math.min(100, parsed.authenticityScore)) : 70,
             tamperIndicators: Array.isArray(parsed.tamperIndicators) ? parsed.tamperIndicators.slice(0, 10).map((s: unknown) => String(s).slice(0, 200)) : [],
-            damageAssessment: clampDamage(parsed.damageAssessment),
+            // clampDamage mengembalikan bentuk record generic; isi kuncinya
+            // berasal dari JSON model dan tidak dipaksa match struct ketat
+            // DamageAssessmentItem. Audit v2.7.56 sudah memastikan cap byte;
+            // cast di sini menyelaraskan tipe dengan apa yang sebenarnya
+            // diterima konsumen (runtime: shape = {part,condition,action,
+            // estimasiBiaya} dari prompt OpenRouter).
+            damageAssessment: clampDamage(parsed.damageAssessment) as unknown as DamageAssessmentItem[],
             isScreenPhoto: Boolean(parsed.isScreenPhoto),
             isStockOrDownloaded: Boolean(parsed.isStockOrDownloaded),
             plateVisible: Boolean(parsed.plateVisible),

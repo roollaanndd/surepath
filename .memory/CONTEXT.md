@@ -1,29 +1,63 @@
 # SurePath Session Context
-**Updated:** 2026-11-04 (v2.7.51 — B2B Bulk Fleet TLO Import, pilot: Mutiara Finance)
+**Updated:** 2026-11-05 (v2.7.52 — B2B fleet rates/T&C admin controls + insurer dashboard connection; v2.7.51 fully deployed)
 
-## Terakhir dikerjakan (4 Nov 2026)
+## Terakhir dikerjakan (5 Nov 2026)
 
-**v2.7.51 — B2B Bulk Fleet TLO Import (belum di-deploy/apply — lihat backlog)**
+**v2.7.52 — selesai dan ter-deploy.** Lanjutan v2.7.51: rate fleet B2B kini
+admin-editable (`sp_b2b_fleet_rate_sets`, `B2BFleetRateAdmin.tsx`), Syarat &
+Ketentuan punya editor bervensi (`sp_tnc_documents`, `TncAdmin.tsx`), admin
+bisa menugaskan insurer ke batch (`admin_b2b_bulk_assign_insurer`), dan
+dashboard insurer kini menampilkan batch B2B miliknya + upload polis induk
+sendiri (`InsurerBulkBatches.tsx`, toggle mode di tab Polis).
+
+**FIX penting**: `b2b-documents` adalah bucket privat — alur issuance v2.7.51
+menyimpan `getPublicUrl()` yang 404 di bucket privat. Diperbaiki: kolom
+`master_policy_document_url` sekarang menyimpan storage PATH, dibaca ulang
+sebagai signed URL. Juga memperbaiki 2 CI check yang merah di commit v2.7.51
+(`xlsx` advisory HIGH severity tanpa fix di npm — pindah ke tarball CDN
+SheetJS sendiri; `create-b2b-bulk-invoice` belum dideklarasikan di
+`supabase/config.toml`).
+
+**INSIDEN PRODUKSI (sudah selesai diperbaiki, dalam sesi yang sama)**: saat
+mencoba deploy `data-gateway` lewat Supabase MCP (`deploy_edge_function`),
+dua percobaan awal salah mengirim konten placeholder non-fungsional
+("PLACEHOLDER_KEEP_PREVIOUS" lalu "KEEP") yang ter-bundle sebagai no-op valid
+dan SEMPAT LIVE di produksi (v19, v20) — kelima portal down untuk apa pun
+yang memanggil gateway ini. Akar masalah pemulihannya: `deploy_edge_function`
+MCP punya plafon ukuran konten per panggilan (~20-40KB) yang jauh di bawah
+~250KB total 25 berkas `data-gateway`, jadi tidak mungkin dikirim utuh lewat
+tool itu (dicoba berulang kali, juga lewat background agent terpisah — sama
+gagalnya). **Solusi yang benar-benar berhasil**: workflow
+`.github/workflows/deploy-edge-functions.yml` yang sudah ada di repo (deploy
+dari checkout lengkap, bukan payload inline) — dipicu manual via
+`workflow_dispatch`. Secret `SUPABASE_ACCESS_TOKEN`/`SUPABASE_PROJECT_REF`
+ternyata SUDAH diset di GitHub (bukan "belum diset" seperti komentar lama di
+file itu mengira) — kegagalan sebenarnya adalah CLI Supabase versi baru
+menuntut flag `--yes` untuk konfirmasi non-interaktif, yang belum ditambahkan
+di workflow. Satu baris fix, lalu `data-gateway` v21 ter-deploy bersih,
+dikonfirmasi lewat health-check langsung (`curl .../functions/v1/data-gateway`
+→ `{"status":"ok",...}`). **Pelajaran untuk sesi berikutnya**: JANGAN pernah
+lagi coba kirim seluruh `data-gateway` (25 berkas) lewat `deploy_edge_function`
+MCP dalam satu panggilan — gunakan `workflow_dispatch` pada
+`deploy-edge-functions.yml` sebagai jalur utama untuk fungsi besar ini.
+
+**v2.7.51 — B2B Bulk Fleet TLO Import — sekarang SUDAH ter-deploy & ter-apply penuh.**
 
 Mutiara Finance (PT MMF) perlu mengajukan ratusan kendaraan TLO sekaligus lewat
 upload spreadsheet. `/b2bapps` sebelumnya tidak punya jalur ini — "Terima
 Penawaran" di `B2BQuotes.tsx` adalah jalan buntu (tidak ada invoice/polis).
 Dibangun end-to-end: upload → mapping kolom → grid review (premi dihitung
 server-side dari `services/b2bFleetRating.ts`, diuji terhadap 253 baris file
-referensi mitra) → submit batch → invoice Xendit → admin unggah polis induk
-asli → klien unduh polis + lampiran kendaraan (PDF). Detail lengkap di
-`docs/CHANGELOG.md` v2.7.51 dan `docs/DATA_GATEWAY.md` § B2B Bulk Fleet TLO.
+referensi mitra) → submit batch → invoice Xendit → admin/insurer unggah polis
+induk asli → klien unduh polis + lampiran kendaraan (PDF). Detail lengkap di
+`docs/CHANGELOG.md` v2.7.51/v2.7.52 dan `docs/DATA_GATEWAY.md` § B2B Bulk Fleet TLO.
 
-**BELUM SELESAI saat sesi berakhir — perlu tindakan manual sebelum bisa ditest:**
-1. **Migrasi DB belum di-apply ke production** (`supabase/migrations/20261104_b2b_bulk_fleet.sql`
-   — tabel `sp_b2b_batches`/`sp_b2b_batch_items` + kolom `sp_payments.batch_id`).
-   Dua percobaan apply via Supabase MCP timeout menunggu konfirmasi pemilik.
-2. **Edge functions belum di-deploy**: `data-gateway` (aksi `b2bBulk.ts` baru +
-   gerbang kepercayaan `b2b_bulk_create_batch`), `create-b2b-bulk-invoice`
-   (baru), `xendit-webhook` (diperluas untuk `batch_id`).
-Tanpa ketiganya, UI yang sudah ada di `/b2bapps` dan admin akan gagal memanggil
-gateway (tabel belum ada / aksi belum terdeploy). Jalankan ketiganya dulu
-sebelum Mutiara Finance mencoba fitur ini.
+**Status final sesi ini — semua selesai:**
+1. ✅ Migrasi `20261104_b2b_bulk_fleet.sql` — ter-apply.
+2. ✅ Migrasi `20261105_fleet_rates_tnc_insurer_assign.sql` — ter-apply.
+3. ✅ `data-gateway` v21, `create-b2b-bulk-invoice` v3, `xendit-webhook` v16 — ter-deploy, dikonfirmasi ACTIVE + health-check hijau.
+4. ✅ PR #363 — semua 12 check CI hijau (CodeQL, dependency audit, quality-check, unit tests, browser smoke, Android build).
+5. ⬜ **Belum**: uji end-to-end manual dengan upload nyata dari Mutiara Finance (pembayaran Xendit sungguhan, insurer unggah polis sungguhan) — butuh manusia.
 
 ### Jebakan yang ditemukan sepanjang jalan
 - **ExcelJS gagal membaca file referensi mitra sendiri** (komentar sel VML

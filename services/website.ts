@@ -682,6 +682,18 @@ export async function getB2BQuotes(clientId: string): Promise<SpB2BQuote[]> {
   return (data ?? []) as SpB2BQuote[];
 }
 
+// v2.8.1 — Mode pantau MASTER_ADMIN di portal B2B: ambil penawaran SEMUA
+// klien korporat. Aman untuk role lain juga: RLS sp_b2b_quotes (client_sel /
+// admin_all) yang membatasi hasil sesuai pemanggil, bukan query ini.
+export async function getAllB2BQuotes(): Promise<SpB2BQuote[]> {
+  const { data, error } = await supabase
+    .from('sp_b2b_quotes')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) { console.error('getAllB2BQuotes:', error); return []; }
+  return (data ?? []) as SpB2BQuote[];
+}
+
 export async function createB2BQuote(
   data: Omit<SpB2BQuote, 'id' | 'created_at' | 'updated_at'>,
 ): Promise<boolean> {

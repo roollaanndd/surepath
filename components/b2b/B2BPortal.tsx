@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Home, FilePlus, ClipboardList, FileCheck, UserCircle, Sparkles } from 'lucide-react';
-import { Language } from '../../types';
+import { Home, FilePlus, ClipboardList, FileCheck, UserCircle, Sparkles, ShieldCheck } from 'lucide-react';
+import { Language, UserRole } from '../../types';
 import PortalTabBar, { type PortalTab } from '../shared/PortalTabBar';
 import PortalHeader from '../shared/PortalHeader';
 import { scrollPortalToTop } from '../shared/scrollReset';
 import PathyChat, { PATHY_OPEN_EVENT } from '../shared/PathyChat';
 import {
   getB2BSubmissions,
+  getAllB2BSubmissions,
   getB2BQuotes,
+  getAllB2BQuotes,
   getB2BBulkBatches,
+  adminListB2BUsers,
   type SpB2BSubmission,
   type SpB2BQuote,
   type SpB2BBatch,
@@ -43,11 +46,20 @@ const TABS: { id: string; labelEn: string; labelId: string; Icon: PortalTab['Ico
 const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
 
+  // v2.8.1 — MASTER_ADMIN masuk portal B2B dalam MODE PANTAU: melihat ajuan,
+  // penawaran dan batch massal milik SEMUA klien korporat (RLS/gateway sudah
+  // mengizinkan admin), tanpa bisa membuat pengajuan atau bertindak atas
+  // penawaran milik klien. Klien B2B biasa tidak melihat perubahan apa pun.
+  const isMaster = client?.role === UserRole.MASTER_ADMIN;
+
   const [activeTab, setActiveTab] = useState('home');
   const [darkMode, setDarkMode] = useDarkMode();
   const [submissions, setSubmissions] = useState<SpB2BSubmission[]>([]);
   const [quotes, setQuotes] = useState<SpB2BQuote[]>([]);
   const [bulkBatches, setBulkBatches] = useState<SpB2BBatch[]>([]);
+  // Mode pantau: peta client_id → nama perusahaan (dari admin_list_b2b_users)
+  // untuk melabeli kartu penawaran, yang tidak membawa company_name sendiri.
+  const [companyByClient, setCompanyByClient] = useState<Record<string, string>>({});
   // "Buat"/"Ajuan" each hold two flows (single submission vs. bulk fleet
   // import). A 6th tab would reopen the width bug the comment below the TABS
   // array describes (5 short labels already fill PortalTabBar's budget), so
@@ -56,6 +68,21 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
 
   const loadData = async () => {
     if (!client?.id) return;
+    if (isMaster) {
+      const [subs, qs, batches, clients] = await Promise.all([
+        getAllB2BSubmissions(),
+        getAllB2BQuotes(),
+        getB2BBulkBatches({ all: true }),
+        adminListB2BUsers(),
+      ]);
+      setSubmissions(subs);
+      setQuotes(qs);
+      setBulkBatches(batches);
+      setCompanyByClient(Object.fromEntries(
+        clients.map(c => [c.id, c.company_name || c.name || '—']),
+      ));
+      return;
+    }
     const [subs, qs, batches] = await Promise.all([
       getB2BSubmissions(client.id),
       getB2BQuotes(client.id),
@@ -66,7 +93,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
     setBulkBatches(batches);
   };
 
-  useEffect(() => { loadData(); }, [client?.id]);
+  useEffect(() => { loadData(); }, [client?.id, isMaster]);
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
@@ -105,6 +132,22 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
           />
         );
       case 'new':
+        if (isMaster) {
+          return (
+            <div className="px-4 py-6 max-w-lg mx-auto space-y-4">
+              <div className="rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 p-5 text-center space-y-2">
+                <ShieldCheck size={28} className="mx-auto text-indigo-500" />
+                <p className="font-black text-sm">{t('Monitor Mode', 'Mode Pantau')}</p>
+                <p className="text-xs text-ds-ink2 leading-relaxed">
+                  {t(
+                    'Submissions are created by B2B client accounts. As Master Admin you can review all client submissions in the Requests and Quotes tabs.',
+                    'Pengajuan dibuat oleh akun klien B2B. Sebagai Master Admin, Anda dapat memantau seluruh ajuan klien pada tab Ajuan dan Tawaran.',
+                  )}
+                </p>
+              </div>
+            </div>
+          );
+        }
         return (
           <>
             {modeToggle(t('Bulk Import', 'Impor Massal'), t('Single Submission', 'Pengajuan Satuan'))}
@@ -128,20 +171,29 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
       case 'submissions':
         return (
           <>
-            {modeToggle(t('Bulk Batches', 'Batch Massal'), t('Single Submissions', 'Pengajuan Satuan'))}
+            {!isMaster && modeToggle(t('Bulk Batches', 'Batch Massal'), t('Single Submissions', 'Pengajuan Satuan'))}
             {bulkMode ? (
-              <B2BBulkBatches clientId={client?.id ?? ''} lang={lang} />
+              <B2BBulkBatches clientId={client?.id ?? ''} lang={lang} allClients={isMaster} />
             ) : (
               <B2BSubmissions
                 clientId={client?.id ?? ''}
                 lang={lang}
                 onNavigate={handleTabChange}
+                allClients={isMaster}
               />
             )}
           </>
         );
       case 'quotes':
-        return <B2BQuotes clientId={client?.id ?? ''} lang={lang} companyName={client?.company_name} />;
+        return (
+          <B2BQuotes
+            clientId={client?.id ?? ''}
+            lang={lang}
+            companyName={client?.company_name}
+            allClients={isMaster}
+            companyByClient={companyByClient}
+          />
+        );
       case 'profile':
         return (
           <B2BProfile
@@ -149,6 +201,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
             clientId={client?.id ?? ''}
             lang={lang}
             onLogout={onLogout}
+            masterView={isMaster}
           />
         );
       default:
@@ -156,7 +209,8 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
     }
   };
 
-  const companyInitials = (client?.company_name ?? 'B2B')
+  const masterName = client?.name || 'Master Admin';
+  const companyInitials = (isMaster ? masterName : (client?.company_name ?? 'B2B'))
     .split(' ').slice(0, 2).map((w: string) => w[0] ?? '').join('').toUpperCase();
 
   return (
@@ -168,8 +222,10 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
           controls had no focus ring and the avatar no accessible name. */}
       <PortalHeader
         portalLabel="B2B"
-        userName={client?.company_name ?? 'Company'}
-        userCode={t('B2B Client', 'Klien B2B')}
+        userName={isMaster ? masterName : (client?.company_name ?? 'Company')}
+        userCode={isMaster
+          ? t('Master Admin · Monitor', 'Master Admin · Mode Pantau')
+          : t('B2B Client', 'Klien B2B')}
         avatarInitial={companyInitials}
         onBellClick={() => {}}
         darkMode={darkMode}

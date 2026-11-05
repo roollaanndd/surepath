@@ -81,7 +81,10 @@ const B2BLogin: React.FC<B2BLoginProps> = ({ onLoginSuccess, onBack }) => {
         setLoading(false);
         return;
       }
-      if (res.profile.role !== UserRole.B2B_CLIENT) {
+      // v2.8.1 — MASTER_ADMIN juga diterima di sini: ia boleh masuk SEMUA app
+      // (hasAppAccess superuser), termasuk portal B2B dalam mode pantau.
+      // Role lain tetap ditolak dan di-signOut seperti sebelumnya.
+      if (res.profile.role !== UserRole.B2B_CLIENT && res.profile.role !== UserRole.MASTER_ADMIN) {
         await supabase.auth.signOut();
         setError('Akun ini bukan akun korporat B2B. Masuk lewat portal yang sesuai dengan peran Anda.');
         setLoading(false);

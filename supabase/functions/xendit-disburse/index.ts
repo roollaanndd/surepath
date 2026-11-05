@@ -1,7 +1,7 @@
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
-import { verifyAuth, adminOnly } from '../_shared/auth.ts';
+import { verifyAuth } from '../_shared/auth.ts';
 
 Deno.serve(async (req) => {
   const CORS = corsHeaders(req.headers.get('origin'));
@@ -13,11 +13,18 @@ Deno.serve(async (req) => {
     const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
     const ANON_KEY             = Deno.env.get('SUPABASE_ANON_KEY')         ?? '';
 
-    // ── Auth: require a verified admin JWT ────────────────────────────────
+    // ── Auth: require a verified finance-role JWT ──────────────────────────
+    // FIX v2.7.56 (audit): adminOnly memakai ADMIN_ROLES yang memuat
+    // INSURANCE_ADMIN — padahal README menugaskan pencairan khusus ke
+    // peran finance. Gerbang per-kapabilitas, bukan kelas-admin.
+    const DISBURSE_ROLES = ['MASTER_ADMIN', 'ADMIN', 'FINANCE', 'FINANCE_MANAGER', 'FINANCE_DIRECTOR'];
     const { caller, errorResponse } = await verifyAuth(req, SUPABASE_URL, ANON_KEY, SUPABASE_SERVICE_KEY, CORS);
     if (errorResponse) return errorResponse;
-    const denied = adminOnly(caller!, CORS);
-    if (denied) return denied;
+    if (!DISBURSE_ROLES.includes(caller!.role ?? '')) {
+      return new Response(JSON.stringify({ error: 'Forbidden: pencairan memerlukan peran finance' }), {
+        status: 403, headers: { ...CORS, 'Content-Type': 'application/json' }
+      });
+    }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
@@ -56,6 +63,14 @@ Deno.serve(async (req) => {
     if (wd.status !== 'APPROVED') {
       return new Response(JSON.stringify({ error: 'Withdrawal not in APPROVED state' }), {
         status: 400, headers: { ...CORS, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // FIX v2.7.56 (audit): jadwal 24-jam untuk >= Rp 25jt kini ditegakkan di
+    // titik eksekusi pembayaran (sebelumnya hanya teks di UI admin).
+    if (wd.scheduled_disburse_at && new Date(wd.scheduled_disburse_at).getTime() > Date.now()) {
+      return new Response(JSON.stringify({ error: 'Pencairan dijadwalkan lebih lambat (delay 24 jam untuk >= Rp 25 juta)' }), {
+        status: 409, headers: { ...CORS, 'Content-Type': 'application/json' }
       });
     }
 

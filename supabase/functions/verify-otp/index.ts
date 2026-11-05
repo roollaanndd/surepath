@@ -86,11 +86,41 @@ Deno.serve(async (req) => {
     }
 
     if (row.code !== code) {
-      // Increment attempts counter
-      await supabase
-        .from('sp_otp_codes')
-        .update({ attempts: attempts + 1 })
-        .eq('id', row.id)
+      // FIX v2.7.56 (audit): counter percobaan kini compare-and-swap. Sebelumnya
+      // dua request salah yang bersamaan sama-sama membaca attempts=0 lalu
+      // menulis 1 — kunci 5-percobaan bisa dilewati dengan konkurensi.
+      // .eq('attempts', attempts) membuat Postgres menolak tulisan kedua; yang
+      // kalah membaca ulang dan mencoba lagi (maks 3x) sebelum menyerah.
+      let locked = false;
+      let swapped = false;
+      for (let i = 0; i < 3 && !swapped; i++) {
+        const { data: bumped, error: bumpErr } = await supabase
+          .from('sp_otp_codes')
+          .update({ attempts: Number(row.attempts ?? 0) + 1 })
+          .eq('id', row.id)
+          .eq('attempts', Number(row.attempts ?? 0))
+          .select('attempts')
+          .maybeSingle();
+        if (bumpErr) throw bumpErr;
+        if (bumped) { swapped = true; break; }
+        const { data: refreshed } = await supabase
+          .from('sp_otp_codes')
+          .select('attempts, used_at')
+          .eq('id', row.id)
+          .single();
+        if (!refreshed || refreshed.used_at) break;
+        if (Number(refreshed.attempts ?? 0) >= MAX_ATTEMPTS) { locked = true; break; }
+        row.attempts = refreshed.attempts;
+      }
+      if (locked) {
+        await supabase
+          .from('sp_otp_codes')
+          .update({ used_at: new Date().toISOString() })
+          .eq('id', row.id);
+        return new Response(JSON.stringify({ ok: false, error: 'Terlalu banyak percobaan. Silakan minta kode baru.' }), {
+          status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
       return new Response(JSON.stringify({ ok: false, error: 'Kode otp salah' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })

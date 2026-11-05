@@ -209,6 +209,169 @@ export async function handleMitraAccountsAction(
       });
     }
 
+    // ── B2B korporat: pendaftaran pengguna oleh admin (v2.7.56) ────────────
+    //
+    // User B2B_CLIENT butuh akun auth (email + kata sandi) dan profil
+    // sp_users dengan pengikatan perusahaan — dipakai b2b_bulk_* untuk
+    // mengikat batch ke client_id. Dua mode, mengikuti konvensi
+    // admin_create_mitra:
+    //   'password' → admin menyetel kata sandi secara manual (hanya
+    //                MASTER_ADMIN); wajib diganti saat login pertama.
+    //   'invite'   → email undangan; user menyetel sandinya sendiri.
+    case 'admin_create_b2b_user': {
+      if (!CAN_MANAGE_MITRA_ACCOUNT.includes(caller.role ?? '')) {
+        return json({ error: 'Forbidden: hanya ADMIN atau MASTER_ADMIN' }, 403);
+      }
+
+      const name = String(params.name ?? '').trim();
+      const email = String(params.email ?? '').trim().toLowerCase();
+      const phone = String(params.phone ?? '').trim();
+      const companyName = String(params.company_name ?? '').trim();
+      const companyRegNo = String(params.company_reg_no ?? '').trim();
+      const companyIndustry = String(params.company_industry ?? '').trim();
+      if (!name || !email || !phone || !companyName) {
+        return json({ error: 'name, email, phone, company_name wajib diisi' }, 400);
+      }
+      if (!EMAIL_RE.test(email)) return json({ error: 'Format email tidak valid' }, 400);
+      if (isUntrustedEmail(email) && caller.role !== 'MASTER_ADMIN') {
+        return json({
+          error: 'Domain email tersebut tidak bisa menerima email. Minta MASTER_ADMIN bila memang disengaja.',
+          code: 'UNTRUSTED_EMAIL_DOMAIN',
+        }, 403);
+      }
+
+      const mode = params.mode === 'invite' ? 'invite' : 'password';
+      let manualPassword: string | null = null;
+      if (mode === 'password') {
+        // Kata sandi manual hanya oleh MASTER_ADMIN — ADMIN memakai invite.
+        if (!CAN_SET_MITRA_PASSWORD.includes(caller.role ?? '')) {
+          return json({ error: 'Forbidden: kata sandi manual hanya MASTER_ADMIN (ADMIN memakai mode undangan)' }, 403);
+        }
+        manualPassword = String(params.password ?? '');
+        // Kebijakan kata sandi: panjang + keragaman kelas karakter.
+        if (manualPassword.length < 10) {
+          return json({ error: 'Kata sandi minimal 10 karakter' }, 400);
+        }
+        const classes = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^A-Za-z0-9]/].filter((re) => re.test(manualPassword!)).length;
+        if (classes < 3) {
+          return json({ error: 'Kata sandi harus memuat minimal 3 dari 4 kelas karakter (huruf kecil, huruf besar, angka, simbol)' }, 400);
+        }
+      }
+
+      const { data: existing } = await db.from('sp_users')
+        .select('id, email, role').eq('email', email).maybeSingle();
+      if (existing) {
+        return json({
+          error: `Email ${email} sudah terdaftar sebagai ${existing.role ?? 'pengguna'}.`,
+          code: 'EMAIL_TAKEN',
+        }, 409);
+      }
+
+      const authMeta = { name, phone, role: 'B2B_CLIENT', company_name: companyName, created_by_admin: caller.email };
+
+      let authUserId: string | null = null;
+      if (mode === 'password') {
+        const { data: created, error: createErr } = await db.auth.admin.createUser({
+          email,
+          password: manualPassword!,
+          email_confirm: true,
+          user_metadata: { ...authMeta, must_change_password: true },
+        });
+        if (createErr) return json({ error: createErr.message }, 400);
+        authUserId = created.user?.id ?? null;
+      } else {
+        const { data: invited, error: inviteErr } = await db.auth.admin.inviteUserByEmail(email, {
+          redirectTo: `${APP_ORIGIN}/b2bapps`,
+          data: authMeta,
+        });
+        if (inviteErr) return json({ error: inviteErr.message }, 400);
+        authUserId = invited.user?.id ?? null;
+      }
+      if (!authUserId) return json({ error: 'Gagal membuat akun auth' }, 500);
+
+      const insertRow: Record<string, unknown> = {
+        id: authUserId,
+        email,
+        name,
+        phone,
+        role: 'B2B_CLIENT',
+        // B2B bukan mitra agen — tidak melalui verifikasi agen.
+        verified: true,
+      };
+      let profileErr: { message: string } | null = null;
+      // Kolom company_* hidup di database produksi (drift yang didokumentasikan
+      // DATABASE_STATE.md) — bila belum ada, simpan profil tanpanya agar
+      // pendaftaran tetap berhasil dan bisa dilengkapi dari portal B2B.
+      const withCompany = await db.from('sp_users').insert({
+        ...insertRow,
+        company_name: companyName,
+        ...(companyRegNo ? { company_reg_no: companyRegNo } : {}),
+        ...(companyIndustry ? { company_industry: companyIndustry } : {}),
+      }).select().single();
+      let profile = withCompany.data;
+      profileErr = withCompany.error;
+      if (profileErr && /company_/i.test(profileErr.message)) {
+        const retry = await db.from('sp_users').insert(insertRow).select().single();
+        profile = retry.data;
+        profileErr = retry.error;
+      }
+      if (profileErr || !profile) {
+        // Pengguna auth tanpa profil akan di-addBack ensure_profile sebagai
+        // CUSTOMER — hapus agar tidak ada akun setengah jadi.
+        await db.auth.admin.deleteUser(authUserId).catch(() => {});
+        return json({ error: profileErr?.message ?? 'Gagal membuat profil' }, 400);
+      }
+
+      db.from('sp_admin_notifications').insert({
+        type: 'B2B_USER_CREATED',
+        title: 'Pengguna B2B Baru',
+        body: `${companyName} — ${name} (${email}) didaftarkan oleh ${caller.email}.`,
+        read: false,
+        metadata: { user_id: profile.id, role: 'B2B_CLIENT', email, company_name: companyName, created_by: caller.email, mode },
+      }).then(() => {}, () => {});
+
+      sendTelegram(
+        `Pengguna B2B Baru - SurePath\n\n` +
+        `Perusahaan: ${companyName}\nNama: ${name}\nEmail: ${email}\nHP: ${phone || '-'}\n` +
+        `Ditambahkan oleh: ${caller.email}\n` +
+        `Mode: ${mode === 'password' ? 'kata sandi manual' : 'email undangan'}`,
+      );
+
+      return json({
+        data: profile,
+        mode,
+        // Kata sandi manual ditampilkan SEKALI di CMS dan tidak pernah
+        // disimpan di tabel mana pun; user wajib menggantinya saat login
+        // pertama (must_change_password).
+        temp_password: mode === 'password' ? manualPassword : null,
+      });
+    }
+
+    case 'admin_list_b2b_users': {
+      if (!CAN_MANAGE_MITRA_ACCOUNT.includes(caller.role ?? '')) {
+        return json({ error: 'Forbidden: hanya ADMIN atau MASTER_ADMIN' }, 403);
+      }
+      const { data, error } = await db.from('sp_users')
+        .select('*')
+        .eq('role', 'B2B_CLIENT')
+        .order('created_at', { ascending: false })
+        .limit(500);
+      if (error) return json({ error: error.message }, 400);
+      // Proyeksi eksplisit — jangan bocorkan kolom sensitif ke CMS.
+      const users = (data ?? []).map((u: Record<string, any>) => ({
+        id: u.id,
+        email: u.email,
+        name: u.name ?? null,
+        phone: u.phone ?? null,
+        company_name: u.company_name ?? null,
+        company_reg_no: u.company_reg_no ?? null,
+        company_industry: u.company_industry ?? null,
+        verified: u.verified ?? null,
+        created_at: u.created_at ?? null,
+      }));
+      return json({ data: users });
+    }
+
     // ── Dorong setel ulang kata sandi ─────────────────────────────────────
     case 'admin_send_mitra_reset': {
       if (!CAN_MANAGE_MITRA_ACCOUNT.includes(caller.role ?? '')) {

@@ -578,6 +578,31 @@ export async function handleOrdersAction(action: string, ctx: GatewayContext): P
           insertRow.discount_amount = 0;
         }
 
+        // FIX v2.7.56 (audit): server otoritatif atas harga. Sebelumnya
+        // total_premium dan net_premium ditulis apa adanya dari klien — order
+        // dengan premi Rp 1.000 bisa dibuat, diverifikasi, dibayar, dan
+        // diterbitkan. Kini payable dihitung ulang dari komponen yang sama
+        // yang dikirim klien (base + addon + fee − diskon otoritatif).
+        // Selisih dikoreksi (bukan ditolak) supaya drift pembulatan klien
+        // tidak mematahkan order yang jujur.
+        const premiumParts = ['base_premium', 'addon_premium', 'admin_fee', 'stamp_duty', 'application_fee', 'delivery_fee']
+          .map((k) => Math.max(0, Math.round(Number(insertRow[k] ?? 0)) || 0));
+        const grossTotal = premiumParts.reduce((a, b) => a + b, 0);
+        const serverDiscount = Math.min(
+          Math.max(0, Math.round(Number(insertRow.discount_amount ?? 0)) || 0),
+          grossTotal,
+        );
+        const serverTotal = Math.max(grossTotal - serverDiscount, 0);
+        const clientTotal = Math.round(Number(insertRow.total_premium ?? 0));
+        if (clientTotal > 0 && Math.abs(clientTotal - serverTotal) > 2) {
+          console.warn(`[data-gateway] create_policy_order: corrected total_premium client=${clientTotal} -> server=${serverTotal} (gross=${grossTotal}, discount=${serverDiscount}) caller=${caller.authId}`);
+        }
+        if (serverTotal <= 0) {
+          return json({ error: 'Total premi tidak valid setelah perhitungan server' }, 400);
+        }
+        insertRow.total_premium = serverTotal;
+        insertRow.net_premium = serverTotal;
+
         const { data, error } = await db.from('sp_policy_orders').insert(insertRow).select().single();
         if (error) return json({ error: error.message }, 400);
 

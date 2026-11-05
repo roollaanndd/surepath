@@ -415,9 +415,19 @@ export async function handleAdminAction(action: string, ctx: GatewayContext): Pr
     // ─── New: admin_backup_export (fixes broken backup system) ──────────────
     // Previously backupService.ts used anon-key client which returned empty results
     // after RLS tightening. This action uses service_role to export ALL rows from
-    // ~35 critical tables. Admin-only. Returns JSON payload for client-side encryption.
+    // ~35 critical tables.
+    //
+    // FIX v2.7.56 (audit): gerbang per-kapabilitas MASTER_ADMIN — bukan
+    // caller.isAdmin. ADMIN_ROLES sengaja memuat peran staf berotoritas rendah
+    // (OPERATOR, FINANCE, INSURANCE_ADMIN); dump seluruh tenant tidak boleh
+    // sampai ke mereka (invarian yang sama dengan mitraAccounts.ts). Tabel
+    // kredensial/sesi hidup dikeluarkan dari dump — token bisa di-mint ulang,
+    // isi arsip backup tidak boleh jadi salinan kredensial. Setiap ekspor
+    // menulis jejak audit yang di-await (bukan fire-and-forget).
     case 'admin_backup_export': {
-        if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+        if (caller.role !== 'MASTER_ADMIN') {
+          return json({ error: 'Forbidden: backup export hanya MASTER_ADMIN' }, 403);
+        }
         const tables = [
           // Core entities
           'sp_users', 'sp_clients', 'sp_insurers', 'sp_insurer_products',
@@ -436,14 +446,13 @@ export async function handleAdminAction(action: string, ctx: GatewayContext): Pr
           'sp_insurer_api_configs', 'sp_insurer_activity_log',
           'sp_ojk_rate_sets', 'sp_promo_codes', 'sp_vehicle_overrides',
           'sp_product_configs',
-          // Review tokens (expiring)
-          'sp_review_tokens', 'sp_insurer_auth_tokens',
           // Audit & compliance
           'sp_audit_log', 'sp_tnc_records',
           // B2B & Life
           'sp_b2b_submissions', 'sp_b2b_quotes', 'sp_life_applications',
-          // Sessions (for forensic analysis)
-          'sp_user_sessions',
+          // Dikeluarkan (FIX v2.7.56): sp_review_tokens, sp_insurer_auth_tokens,
+          // sp_user_sessions — kredensial/sesi hidup; mint ulang token jauh
+          // lebih murah daripada bocor lewat arsip backup.
         ];
         const result: Record<string, any[]> = {};
         for (const t of tables) {
@@ -456,7 +465,16 @@ export async function handleAdminAction(action: string, ctx: GatewayContext): Pr
             result[t] = [];
           }
         }
-        return json({ data: { tables: result, exportedAt: new Date().toISOString() } });
+        const exportedAt = new Date().toISOString();
+        // Jejak audit eksplisit: aktor, tabel, jumlah baris per tabel.
+        const rowCounts = Object.fromEntries(Object.entries(result).map(([k, v]) => [k, v.length]));
+        await db.from('sp_insurer_activity_log').insert({
+          insurer_id: null,
+          order_id: null,
+          action: 'ADMIN_BACKUP_EXPORT',
+          details: { actor_email: caller.email, tables: Object.keys(result), row_counts: rowCounts, exported_at: exportedAt },
+        }).then(() => {}, (e) => console.warn('backup_export: audit write failed:', e?.message ?? e));
+        return json({ data: { tables: result, exportedAt } });
       }
 
     default:

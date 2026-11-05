@@ -5,6 +5,33 @@ import type { GatewayContext, ActionResult } from './types.ts';
 // json() helper — returns ActionResult (main index.ts converts to Response)
 const json = (body: unknown, status = 200): ActionResult => ({ status, body });
 
+// FIX v2.7.56 (audit): token disimpan sebagai hash SHA-256, bukan plaintext.
+// Kolom token_hash diisi migration 20261106; lookup hash-first dengan fallback
+// kolom lama supaya deploy kode dan migration bisa berurutan tanpa downtime.
+async function sha256Hex(s: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Validasi token insurer: hash-first, fallback plaintext bila kolom hash belum
+// ada di database produksi (migration belum jalan). Semua filter .or() hanya
+// menerima nilai yang lolos validasi UUID/hex — tidak ada input mentah.
+async function findInsurerAuthToken(db: GatewayContext['db'], token: string) {
+  if (!UUID_RE.test(token)) return { data: null, error: null as { message: string } | null };
+  const tokenHash = await sha256Hex(token);
+  const byHash = await db.from('sp_insurer_auth_tokens')
+    .select('id, insurer_id, email, expires_at, used_at')
+    .eq('token_hash', tokenHash)
+    .maybeSingle();
+  if (!byHash.error) return byHash;
+  if (!/token_hash/i.test(byHash.error.message ?? '')) return byHash;
+  return db.from('sp_insurer_auth_tokens')
+    .select('id, insurer_id, email, expires_at, used_at')
+    .eq('token', token)
+    .maybeSingle();
+}
+
 export async function handleInsurersAction(action: string, ctx: GatewayContext): Promise<ActionResult | null> {
   const { db, params, caller, sendTelegram, logActivity, checkRateLimit, RESEND_KEY } = ctx;
 
@@ -60,12 +87,27 @@ export async function handleInsurersAction(action: string, ctx: GatewayContext):
         // Generate new token (7-day rolling)
         const newToken = crypto.randomUUID();
         const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-        const { error: tkErr } = await db.from('sp_insurer_auth_tokens').insert({
+        // FIX v2.7.56 (audit): simpan hash, bukan plaintext. Bila kolom
+        // token_hash belum ada (migration belum jalan), simpan seperti lama.
+        const tokenHash = await sha256Hex(newToken);
+        let tkErr: { message: string } | null = null;
+        const insertWithHash = await db.from('sp_insurer_auth_tokens').insert({
           insurer_id: insurerId,
           token: newToken,
+          token_hash: tokenHash,
           email,
           expires_at: expiresAt,
         });
+        tkErr = insertWithHash.error;
+        if (tkErr && /token_hash/i.test(tkErr.message)) {
+          const retry = await db.from('sp_insurer_auth_tokens').insert({
+            insurer_id: insurerId,
+            token: newToken,
+            email,
+            expires_at: expiresAt,
+          });
+          tkErr = retry.error;
+        }
         if (tkErr) return json({ error: tkErr.message }, 400);
         const magicLink = `https://myinsurepath.com/insurerapp?token=${newToken}`;
         // Audit notification
@@ -334,6 +376,18 @@ export async function handleInsurersAction(action: string, ctx: GatewayContext):
         if (!rt) return json({ error: 'Invalid token' }, 404);
         if (new Date(rt.expires_at) < new Date()) return json({ error: 'Token expired' }, 410);
         if (rt.insurer_action) return json({ error: 'Token already acted on', existing_action: rt.insurer_action }, 409);
+        // FIX v2.7.56 (audit): cermin gerbang jalur authed — keputusan hanya
+        // saat aplikasi masih hidup (SUBMITTED/UNDER_REVIEW). Sebelumnya jalur
+        // review-token bisa menimpa status terminal (ISSUED, CANCELLED, dll).
+        const { data: currentOrder, error: curErr } = await db.from('sp_policy_orders')
+          .select('id, status')
+          .eq('id', rt.order_id)
+          .maybeSingle();
+        if (curErr) return json({ error: curErr.message }, 400);
+        if (!currentOrder) return json({ error: 'Order not found' }, 404);
+        if (currentOrder.status !== 'SUBMITTED' && currentOrder.status !== 'UNDER_REVIEW') {
+          return json({ error: `Order tidak dapat diputuskan pada status ${currentOrder.status}.` }, 409);
+        }
         // Update token
         const ts = new Date().toISOString();
         const { error: updTokenErr } = await db.from('sp_review_tokens').update({
@@ -412,11 +466,8 @@ export async function handleInsurersAction(action: string, ctx: GatewayContext):
     case 'get_insurer_dashboard': {
         const token = String(params.token ?? '');
         if (!token) return json({ error: 'token required' }, 400);
-        // Validate insurer auth token (rolling 7-day, multi-use)
-        const { data: authToken, error: authErr } = await db.from('sp_insurer_auth_tokens')
-          .select('id, insurer_id, email, expires_at, used_at')
-          .eq('token', token)
-          .maybeSingle();
+        // FIX v2.7.56 (audit): validasi hash-first (fallback plaintext lama).
+        const { data: authToken, error: authErr } = await findInsurerAuthToken(db, token);
         if (authErr) return json({ error: authErr.message }, 400);
         if (!authToken) return json({ error: 'Invalid token' }, 404);
         if (new Date(authToken.expires_at) < new Date()) return json({ error: 'Token expired' }, 410);
@@ -450,11 +501,36 @@ export async function handleInsurersAction(action: string, ctx: GatewayContext):
           declined: (orders ?? []).filter((o: any) => o.insurer_decision === 'DECLINED').length,
           issued: (orders ?? []).filter((o: any) => o.status === 'ISSUED').length,
         };
-        // Auto-renew token (rolling 7-day) — non-blocking
-        const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-        db.from('sp_insurer_auth_tokens').update({ expires_at: newExpiry, used_at: new Date().toISOString() })
-          .eq('id', authToken.id).then(() => {}, () => {});
-        return json({ data: { insurer, orders: orders ?? [], kpi, token_expires_at: newExpiry } });
+        // FIX v2.7.56 (audit): rolling renewal diberi pagu — perpanjang hanya
+        // saat masa berlaku tersisa < 2 hari. Token bocor tidak lagi hidup
+        // selamanya hanya karena dipakai; maksimum usia = 7 hari + pemakaian.
+        const remainingMs = new Date(authToken.expires_at).getTime() - Date.now();
+        const withinRenewalWindow = remainingMs < 2 * 24 * 60 * 60 * 1000;
+        const finalExpiry = withinRenewalWindow
+          ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+          : authToken.expires_at;
+        if (withinRenewalWindow) {
+          db.from('sp_insurer_auth_tokens').update({ expires_at: finalExpiry, used_at: new Date().toISOString() })
+            .eq('id', authToken.id).then(() => {}, () => {});
+        } else {
+          db.from('sp_insurer_auth_tokens').update({ used_at: new Date().toISOString() })
+            .eq('id', authToken.id).then(() => {}, () => {});
+        }
+        return json({ data: { insurer, orders: orders ?? [], kpi, token_expires_at: finalExpiry } });
+      }
+
+    // FIX v2.7.56 (audit): invalidasi sisi server saat logout portal insurer.
+    // Sebelumnya logout hanya membersihkan sessionStorage; token bearer tetap
+    // hidup sampai rolling expiry-nya habis.
+    case 'insurer_logout': {
+        const token = String(params.token ?? '');
+        const tokenHash = await sha256Hex(token);
+        const del = await db.from('sp_insurer_auth_tokens').delete().eq('token_hash', tokenHash);
+        if (del.error && /token_hash/i.test(del.error.message ?? '')) {
+          if (!UUID_RE.test(token)) return json({ error: 'Invalid token' }, 400);
+          await db.from('sp_insurer_auth_tokens').delete().eq('token', token);
+        }
+        return json({ data: { success: true } });
       }
 
     case 'insurer_submit_decision_authed': {

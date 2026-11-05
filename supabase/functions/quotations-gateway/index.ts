@@ -129,6 +129,18 @@ Deno.serve(async (req) => {
         if (!/^[A-Za-z0-9_-]{8,40}$/.test(code)) return json({ error: 'Invalid quotation code' }, 400);
         if (!quotationNumber) return json({ error: 'Missing quotation number' }, 400);
 
+        // FIX v2.7.56 (audit): kode bukan kredensial. Kepemilikan baris diikat
+        // ke created_by — user lain tidak boleh menimpa snapshot (termasuk
+        // rekening pembayaran di payload) milik pembuat kode hanya karena
+        // kebetulan mengetahui/berbagi kode QR yang sama.
+        const { data: existingRow } = await db.from('sp_quotations')
+          .select('id, created_by')
+          .eq('code', code)
+          .maybeSingle();
+        if (existingRow && existingRow.created_by !== spUser.id) {
+          return json({ error: 'Kode kuotasi sudah dimiliki pengguna lain' }, 403);
+        }
+
         const row = {
           code,
           quotation_number: quotationNumber,

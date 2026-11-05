@@ -22,6 +22,12 @@ export const InsurerRoutes: React.FC<InsurerRoutesProps> = ({ pathname, lang, na
     const urlToken = new URLSearchParams(window.location.search).get('token');
     const savedToken = sessionStorage.getItem('SUREPATH_INSURER_TOKEN');
     const token = urlToken ?? savedToken;
+    // FIX v2.7.56 (audit): token bearer tidak boleh bertahan di address bar /
+    // history / link yang ikut ter-copy. Sesudah ditangkap, URL dibersihkan —
+    // sesi tetap hidup lewat sessionStorage.
+    if (urlToken && window.history?.replaceState) {
+      window.history.replaceState(null, '', '/insurerapp');
+    }
     if (!token) {
       return (
         <Suspense fallback={<PortalLoader lang={lang} />}>

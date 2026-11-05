@@ -64,6 +64,17 @@ export async function handleWalletAction(action: string, ctx: GatewayContext): P
         const stage = STAGE_OF[String(wd.status)];
         if (!stage) return json({ error: 'Withdrawal is not awaiting approval' }, 409);
 
+        // FIX v2.7.56 (audit): senioritas tingkat disetujui server-side, bukan
+        // hanya di UI (AdminViews.approvalLevelForUser). Matriks README:
+        // L1 = FINANCE/ADMIN, L2 = FINANCE_MANAGER, L3 = FINANCE_DIRECTOR.
+        // MASTER_ADMIN menandatangani tier mana pun.
+        const LEVEL_OF: Record<string, number> = {
+          FINANCE: 1, ADMIN: 1, FINANCE_MANAGER: 2, FINANCE_DIRECTOR: 3, MASTER_ADMIN: 3,
+        };
+        if ((LEVEL_OF[caller.role ?? ''] ?? 0) < stage) {
+          return json({ error: 'Peran Anda tidak berwenang menandatangani tingkat persetujuan ini' }, 403);
+        }
+
         // Tiers required by amount, mirroring agent_request_withdrawal below.
         const required = (wd.amount ?? 0) >= 25_000_000 ? 3 : (wd.amount ?? 0) >= 10_000_000 ? 2 : 1;
 
@@ -223,11 +234,14 @@ export async function handleWalletAction(action: string, ctx: GatewayContext): P
         const net_amount = amount - XENDIT_FEE;
         if (net_amount <= 0) return json({ error: 'Jumlah terlalu kecil setelah biaya transfer' }, 400);
 
-        // Determine required approval level
-        let initial_status: string;
-        if (amount >= 25_000_000) initial_status = 'PENDING_L3';
-        else if (amount >= 10_000_000) initial_status = 'PENDING_L2';
-        else initial_status = 'PENDING_L1';
+        // FIX v2.7.56 (audit): tangga persetujuan selalu mulai dari L1.
+        // Sebelumnya initial_status = tier final nominal (>=10jt → PENDING_L2,
+        // >=25jt → PENDING_L3), sehingga stage == required sejak insert:
+        // SATU approval langsung set APPROVED dan kontrol empat-mata
+        // (l1/l2_approved_by) tidak pernah terisi. admin_approve_withdrawal
+        // kini selalu menaiki tangga L1→L2→L3 sesuai README; tier required
+        // tetap diturunkan dari amount di sisi approval.
+        const initial_status = 'PENDING_L1';
 
         const scheduled_disburse_at = amount >= 25_000_000
           ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()

@@ -281,8 +281,21 @@ const DocumentsAdminView: React.FC = () => {
 
       // policy/ktp docs live in private buckets — swap for signed URLs before
       // rendering; still-public buckets (vehicle/claim photos) pass through as-is.
+      // FIX v2.7.56 (audit): fallback `?? d.url` sebelumnya me-render URL
+      // eksternal mentah (host sembarang yang lolos penulisan dokumen) sebagai
+      // bukti. URL yang bukan origin storage platform tidak dirender.
+      const PLATFORM_HOST = (() => {
+        try { return new URL(import.meta.env.VITE_SUPABASE_URL as string).host; } catch { return ''; }
+      })();
+      const isPlatformUrl = (u: string) => {
+        try { return !!PLATFORM_HOST && new URL(u).host === PLATFORM_HOST; } catch { return false; }
+      };
       const resolved = await Promise.all(
-        collected.map(async d => ({ ...d, url: (await resolveDocumentUrl(d.url)) ?? d.url }))
+        collected.map(async d => {
+          const signed = await resolveDocumentUrl(d.url);
+          const finalUrl = signed ?? (isPlatformUrl(d.url) ? d.url : '');
+          return { ...d, url: finalUrl };
+        })
       );
 
       if (!cancelled) {

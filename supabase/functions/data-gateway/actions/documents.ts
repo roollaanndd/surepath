@@ -32,6 +32,24 @@ interface DocInput {
   meta?: unknown;
 }
 
+// FIX v2.7.56 (audit): URL dokumen diikat ke origin storage platform — parsing
+// URL, bukan substring. Substring `includes()` menerima host eksternal mana
+// pun (https://attacker.example/storage/v1/object/...) yang kemudian dirender
+// sebagai bukti dokumen oleh admin/insurer.
+const SUPABASE_HOST = (() => {
+  try { return new URL(Deno.env.get('SUPABASE_URL') ?? 'https://invalid.invalid').host; }
+  catch { return 'invalid.invalid'; }
+})();
+
+function validStorageObjectUrl(raw: string): boolean {
+  if (raw.length > 2048) return false;
+  let u: URL;
+  try { u = new URL(raw); } catch { return false; }
+  return u.protocol === 'https:'
+    && u.host === SUPABASE_HOST
+    && u.pathname.startsWith('/storage/v1/object/');
+}
+
 function sanitizeDocInput(raw: DocInput): { error?: string; row?: Record<string, unknown> } {
   const docType = String(raw.doc_type ?? '');
   if (!ORDER_DOC_TYPES.has(docType)) return { error: `doc_type tidak diizinkan: ${docType}` };
@@ -44,8 +62,8 @@ function sanitizeDocInput(raw: DocInput): { error?: string; row?: Record<string,
 
   const url = raw.url == null ? null : String(raw.url);
   if (url) {
-    if (!url.startsWith('https://') || !url.includes('/storage/v1/object/') || url.length > 2048) {
-      return { error: 'url harus https URL objek storage yang valid' };
+    if (!validStorageObjectUrl(url)) {
+      return { error: 'url harus https URL objek storage platform ini' };
     }
   }
 
@@ -290,7 +308,7 @@ export async function handleDocumentsAction(action: string, ctx: GatewayContext)
         if (!agreementId) return json({ error: 'agreement_id required' }, 400);
         if (bucket !== 'agent-docs') return json({ error: 'bucket tidak diizinkan' }, 400);
         if (!path.startsWith(`${caller.ownerId}/`)) return json({ error: 'path harus di folder milik Anda' }, 403);
-        if (url && (!url.startsWith('https://') || !url.includes('/storage/v1/object/') || url.length > 2048)) {
+        if (url && !validStorageObjectUrl(url)) {
           return json({ error: 'url tidak valid' }, 400);
         }
 

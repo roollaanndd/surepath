@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Eye, EyeOff, Mail, KeyRound, User,
   AlertCircle, Smartphone, Briefcase,
-  ArrowRight, Shield, CheckCircle2, RefreshCw
+  ArrowRight, Shield, CheckCircle2, RefreshCw, Building2
 } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { SurePathLogo } from './Navbar';
@@ -761,6 +761,18 @@ const AuthGate: React.FC<AuthGateProps> = ({
                     <Mail size={16} />
                     <span className="text-2xs font-bold uppercase tracking-widest">{t('Email OTP / Magic Link', 'OTP Email / Magic Link')}</span>
                   </button>
+                )}
+                {/* FIX v2.7.56: akun korporat B2B masuk lewat portalnya sendiri —
+                    tautan eksplisit supaya klien korporat tidak tersesat di
+                    form perorangan (ditambahkan bersama fitur pendaftaran
+                    pengguna B2B oleh admin). */}
+                {mode === 'LOGIN' && (
+                  <a href="/b2bapps"
+                    className="w-full py-3 rounded-2xl flex items-center justify-center gap-2 text-slate-500 transition-all active:scale-[0.98] hover:text-emerald-700"
+                    style={{ border: '1px dashed rgba(15,23,42,0.15)' }}>
+                    <Building2 size={14} />
+                    <span className="text-2xs font-bold uppercase tracking-widest">{t('Corporate / B2B Portal', 'Portal Korporat (B2B)')}</span>
+                  </a>
                 )}
               </div>
             )}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, ChevronDown, ChevronUp, Plus, Trash2, CheckCircle2, AlertTriangle, FileText, Heart, Upload, Loader2, Building2 } from 'lucide-react';
+import { RefreshCw, ChevronDown, ChevronUp, Plus, Trash2, CheckCircle2, AlertTriangle, FileText, Heart, Upload, Loader2, Building2, KeyRound, Copy, Eye, EyeOff } from 'lucide-react';
 import {
   getAllB2BSubmissions,
   updateB2BSubmissionStatus,
@@ -10,11 +10,14 @@ import {
   adminIssueB2BBulkBatch,
   adminAssignB2BBulkInsurer,
   uploadB2BBulkMasterPolicy,
+  adminCreateB2BUser,
+  adminListB2BUsers,
   supabase,
   type SpB2BSubmission,
   type SpB2BQuote,
   type SpLifeApplication,
   type SpB2BBatch,
+  type SpB2BUser,
 } from '../../services/supabaseService';
 import ModuleIcon from '../shared/ModuleIcon';
 
@@ -512,12 +515,233 @@ const BulkBatchCard: React.FC<{ batch: SpB2BBatch; insurers: InsurerOption[]; on
   );
 };
 
+// ─── Pengguna Korporat (admin provisioning B2B, v2.7.56) ─────────────────────
+//
+// Mendaftarkan akun klien korporat B2B lengkap dengan kata sandi yang dibuat
+// manual oleh admin (hanya MASTER_ADMIN; ADMIN memakai email undangan). Kata
+// sandi ditampilkan sekali dan wajib diganti pengguna saat login pertama
+// (must_change_password) — alur ganti sudah ditangani B2BLogin.
+
+const generateB2BPassword = (): string => {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+  const bytes = new Uint32Array(14);
+  crypto.getRandomValues(bytes);
+  let out = '';
+  for (let i = 0; i < 14; i++) out += alphabet[bytes[i] % alphabet.length];
+  return out.slice(0, 4) + '-' + out.slice(4, 9) + '-' + out.slice(9);
+};
+
+const passwordClasses = (pw: string): number =>
+  [/[a-z]/, /[A-Z]/, /[0-9]/, /[^A-Za-z0-9]/].filter((re) => re.test(pw)).length;
+
+const UsersSection: React.FC<{ onToast: (msg: string) => void }> = ({ onToast }) => {
+  const [form, setForm] = useState({ name: '', email: '', phone: '', company_name: '', company_reg_no: '', company_industry: '' });
+  const [mode, setMode] = useState<'password' | 'invite'>('password');
+  const [password, setPassword] = useState('');
+  const [showPw, setShowPw] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState('');
+  const [credential, setCredential] = useState<{ email: string; password: string } | null>(null);
+  const [users, setUsers] = useState<SpB2BUser[]>([]);
+  const [listLoading, setListLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
+
+  const loadUsers = useCallback(async () => {
+    setListLoading(true);
+    setUsers(await adminListB2BUsers());
+    setListLoading(false);
+  }, []);
+  useEffect(() => { loadUsers(); }, [loadUsers]);
+
+  const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm(prev => ({ ...prev, [key]: e.target.value }));
+
+  const save = async () => {
+    setErr('');
+    setCredential(null);
+    if (mode === 'password') {
+      if (password.length < 10 || passwordClasses(password) < 3) {
+        setErr('Kata sandi minimal 10 karakter dan memuat minimal 3 dari 4 kelas karakter (huruf kecil, huruf besar, angka, simbol).');
+        return;
+      }
+    }
+    setSaving(true);
+    const res = await adminCreateB2BUser({ ...form, mode, password: mode === 'password' ? password : undefined });
+    setSaving(false);
+    if (res.error) { setErr(res.error); return; }
+    if (mode === 'password' && res.temp_password) {
+      setCredential({ email: form.email.trim().toLowerCase(), password: res.temp_password });
+      setPassword('');
+    }
+    setForm({ name: '', email: '', phone: '', company_name: '', company_reg_no: '', company_industry: '' });
+    onToast(mode === 'password' ? 'Pengguna B2B terdaftar.' : 'Email undangan B2B terkirim.');
+    loadUsers();
+  };
+
+  const copyCredential = async () => {
+    if (!credential) return;
+    try {
+      await navigator.clipboard.writeText(`Portal: https://myinsurepath.com/b2bapps\nEmail: ${credential.email}\nKata sandi sementara: ${credential.password}\n(Wajib diganti saat login pertama)`);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch { /* clipboard opsional */ }
+  };
+
+  return (
+    <div className="space-y-3">
+      {/* Form pendaftaran */}
+      <div className="rounded-2xl border border-ds-border bg-white dark:bg-ds-card2 p-5 space-y-4">
+        <div className="flex items-center gap-2">
+          <Building2 size={18} className="text-emerald-600 dark:text-emerald-400" />
+          <h3 className="text-sm font-black text-ds-ink dark:text-white">Daftarkan Pengguna Korporat Baru</h3>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <label className="block">
+            <span className="text-2xs font-bold uppercase tracking-wider text-ds-ink3">Nama perusahaan *</span>
+            <input className={INPUT} value={form.company_name} onChange={set('company_name')} placeholder="PT Contoh Finansial" />
+          </label>
+          <label className="block">
+            <span className="text-2xs font-bold uppercase tracking-wider text-ds-ink3">Nama PIC *</span>
+            <input className={INPUT} value={form.name} onChange={set('name')} placeholder="Nama lengkap PIC" />
+          </label>
+          <label className="block">
+            <span className="text-2xs font-bold uppercase tracking-wider text-ds-ink3">Email korporat *</span>
+            <input className={INPUT} type="email" autoComplete="off" value={form.email} onChange={set('email')} placeholder="pic@perusahaan.co.id" />
+          </label>
+          <label className="block">
+            <span className="text-2xs font-bold uppercase tracking-wider text-ds-ink3">No. HP PIC *</span>
+            <input className={INPUT} value={form.phone} onChange={set('phone')} placeholder="08xx xxxx xxxx" />
+          </label>
+          <label className="block">
+            <span className="text-2xs font-bold uppercase tracking-wider text-ds-ink3">No. registrasi (opsional)</span>
+            <input className={INPUT} value={form.company_reg_no} onChange={set('company_reg_no')} placeholder="NIB / NPWP" />
+          </label>
+          <label className="block">
+            <span className="text-2xs font-bold uppercase tracking-wider text-ds-ink3">Industri (opsional)</span>
+            <input className={INPUT} value={form.company_industry} onChange={set('company_industry')} placeholder="Pembiayaan / Logistik / …" />
+          </label>
+        </div>
+
+        {/* Mode akses */}
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => setMode('password')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors ${mode === 'password' ? 'bg-emerald-500 text-white border-emerald-500' : 'border-ds-border text-ds-ink2'}`}
+          >
+            <KeyRound size={12} className="inline mr-1" /> Kata sandi manual
+          </button>
+          <button
+            onClick={() => setMode('invite')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors ${mode === 'invite' ? 'bg-emerald-500 text-white border-emerald-500' : 'border-ds-border text-ds-ink2'}`}
+          >
+            Email undangan
+          </button>
+          <span className="text-2xs text-ds-ink3">
+            {mode === 'password'
+              ? 'Kata sandi ditampilkan sekali & wajib diganti pengguna saat login pertama. Hanya MASTER_ADMIN.'
+              : 'Pengguna menerima email untuk menyetel kata sandinya sendiri.'}
+          </span>
+        </div>
+
+        {mode === 'password' && (
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <input
+                  className={INPUT + ' pr-20 font-mono'}
+                  type={showPw ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Kata sandi awal (manual)"
+                />
+                <button type="button" onClick={() => setShowPw(v => !v)} className="absolute right-9 top-1/2 -translate-y-1/2 text-ds-ink3" aria-label="Tampilkan kata sandi">
+                  {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+                <button type="button" onClick={() => { setPassword(generateB2BPassword()); setShowPw(true); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-ds-ink3 hover:text-emerald-500" aria-label="Buat kata sandi acak">
+                  <KeyRound size={14} />
+                </button>
+              </div>
+            </div>
+            <p className={`text-2xs ${password.length >= 10 && passwordClasses(password) >= 3 ? 'text-emerald-600 dark:text-emerald-400' : 'text-ds-ink3'}`}>
+              Minimal 10 karakter · minimal 3 dari 4 kelas (huruf kecil, huruf besar, angka, simbol) — saat ini: {password.length} karakter, {passwordClasses(password)} kelas.
+            </p>
+          </div>
+        )}
+
+        {err && (
+          <div role="alert" className="flex items-center gap-2 rounded-xl border border-rose-300 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200">
+            <AlertTriangle size={15} className="shrink-0" /> {err}
+          </div>
+        )}
+
+        {/* Kredensial sekali-lihat */}
+        {credential && (
+          <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 space-y-2 dark:border-amber-800 dark:bg-amber-950/30">
+            <p className="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300">Kata sandi awal — tampil sekali, simpan sekarang</p>
+            <div className="flex flex-wrap items-center gap-2 font-mono text-sm">
+              <span className="rounded-lg bg-white dark:bg-ds-card px-2 py-1 border border-ds-border">{credential.email}</span>
+              <span className="rounded-lg bg-white dark:bg-ds-card px-2 py-1 border border-ds-border">{credential.password}</span>
+              <button onClick={copyCredential} className="inline-flex items-center gap-1 rounded-lg border border-ds-border px-2 py-1 text-xs font-bold text-ds-ink2">
+                {copied ? <CheckCircle2 size={12} className="text-emerald-500" /> : <Copy size={12} />} {copied ? 'Tersalin' : 'Salin'}
+              </button>
+            </div>
+            <p className="text-2xs text-amber-700 dark:text-amber-400">Kredensial ini tidak disimpan di sistem mana pun. Pengguna wajib mengganti kata sandi saat login pertama di /b2bapps.</p>
+          </div>
+        )}
+
+        <button
+          onClick={save}
+          disabled={saving || !form.name || !form.email || !form.phone || !form.company_name || (mode === 'password' && !password)}
+          className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
+        >
+          {saving ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+          {mode === 'password' ? 'Daftarkan pengguna' : 'Kirim undangan'}
+        </button>
+      </div>
+
+      {/* Daftar pengguna */}
+      <div className="rounded-2xl border border-ds-border bg-white dark:bg-ds-card2 p-5">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-black text-ds-ink dark:text-white">Pengguna Korporat Terdaftar</h3>
+          <button onClick={loadUsers} className="text-ds-ink3 hover:text-ds-ink2"><RefreshCw size={14} className={listLoading ? 'animate-spin' : ''} /></button>
+        </div>
+        {listLoading ? (
+          <div className="flex items-center justify-center py-8 text-ds-ink3 text-sm gap-2">
+            <Loader2 size={14} className="animate-spin" /> Memuat…
+          </div>
+        ) : users.length === 0 ? (
+          <p className="py-6 text-center text-sm text-ds-ink3">Belum ada pengguna korporat terdaftar.</p>
+        ) : (
+          <div className="space-y-2">
+            {users.map(u => (
+              <div key={u.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-ds-border px-3 py-2.5">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-2xs font-black text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                  {(u.company_name || 'B2B').trim().split(/\s+/).slice(0, 2).map(w => w[0] ?? '').join('').toUpperCase() || 'B2B'}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-bold text-ds-ink dark:text-white">{u.company_name || u.name || '—'}</p>
+                  <p className="truncate text-2xs text-ds-ink3">{u.name} · {u.email}{u.phone ? ` · ${u.phone}` : ''}</p>
+                </div>
+                {u.verified !== false && (
+                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-2xs font-black text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">AKTIF</span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const BULK_STATUSES = ['SUBMITTED', 'INVOICED', 'PAID', 'ISSUED', 'CANCELLED'];
 
 const B2BAdminView: React.FC = () => {
-  const [tab, setTab] = useState<'b2b' | 'bulk' | 'life'>('b2b');
+  const [tab, setTab] = useState<'b2b' | 'bulk' | 'life' | 'users'>('b2b');
   const [b2bSubs, setB2bSubs] = useState<SpB2BSubmission[]>([]);
   const [bulkBatches, setBulkBatches] = useState<SpB2BBatch[]>([]);
   const [lifeApps, setLifeApps] = useState<SpLifeApplication[]>([]);
@@ -571,6 +795,7 @@ const B2BAdminView: React.FC = () => {
         <TabBtn active={tab === 'b2b'} onClick={() => setTab('b2b')} icon={<ModuleIcon id="b2b" size={22} />} label="B2B Submissions" />
         <TabBtn active={tab === 'bulk'} onClick={() => setTab('bulk')} icon={<ModuleIcon id="documents" size={22} />} label="Bulk Batches" badge={bulkAwaitingPayment + bulkAwaitingIssuance} />
         <TabBtn active={tab === 'life'} onClick={() => setTab('life')} icon={<ModuleIcon id="family_health" size={22} />} label="Life Applications" />
+        <TabBtn active={tab === 'users'} onClick={() => setTab('users')} icon={<Building2 size={22} />} label="Pengguna Korporat" />
         <button onClick={load} className="ml-auto p-2 rounded-xl text-ds-ink3 hover:text-ds-ink2 dark:hover:text-ds-ink">
           <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
         </button>
@@ -619,6 +844,8 @@ const B2BAdminView: React.FC = () => {
               <BulkBatchCard key={batch.id} batch={batch} insurers={insurers} onUpdated={load} onToast={showToast} />
             ))
           )
+        ) : tab === 'users' ? (
+          <UsersSection onToast={showToast} />
         ) : (
           visibleLife.length === 0 ? (
             <Empty />

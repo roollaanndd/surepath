@@ -78,6 +78,14 @@ Deno.serve(async (req) => {
       return json({ ok: false, error: 'Phone required' }, 400, corsHeaders)
     }
 
+    // FIX v2.7.56 (audit): purpose adalah dimensi rate-limit yang dikuasai
+    // penyerang — setiap nilai baru = bucket baru = limit SMS lewat. Allowlist
+    // nilai yang benar-benar dipakai; sisanya ditolak.
+    const VALID_PURPOSES = new Set(['LOGIN', 'SIGNUP', 'RESET'])
+    if (!VALID_PURPOSES.has(String(purpose))) {
+      return json({ ok: false, error: 'Invalid purpose' }, 400, corsHeaders)
+    }
+
     const normalized = normalizePhone(phone)
     const clientIp = getClientIp(req)
 
@@ -87,32 +95,37 @@ Deno.serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
     // ── Per-phone rate limit: max OTP_PHONE_RATE_LIMIT per OTP_PHONE_WINDOW_MINUTES ──
+    // FIX v2.7.56 (audit): kunci limit adalah nomor telepon SAJA — bukan
+    // phone+purpose. Satu nomor tetap punya satu kuota, dari purpose mana pun.
     const phoneWindowStart = new Date(Date.now() - OTP_PHONE_WINDOW_MINUTES * 60 * 1000).toISOString()
-    const { count: phoneCount } = await supabase
+    const { count: phoneCount, error: phoneErr } = await supabase
       .from('sp_otp_codes')
       .select('id', { count: 'exact', head: true })
       .eq('phone', normalized)
-      .eq('purpose', purpose)
       .gte('created_at', phoneWindowStart)
+    if (phoneErr) {
+      return json({ ok: false, error: 'Gagal memeriksa limit OTP' }, 500, corsHeaders)
+    }
     if ((phoneCount ?? 0) >= OTP_PHONE_RATE_LIMIT) {
       return json({ ok: false, error: `Terlalu banyak permintaan OTP. Coba lagi dalam ${OTP_PHONE_WINDOW_MINUTES} menit.` }, 429, corsHeaders)
     }
 
     // ── Per-IP rate limit: max OTP_IP_RATE_LIMIT per OTP_IP_WINDOW_MINUTES ──
-    // Stored in sp_otp_codes.created_by_ip (if column exists; otherwise no-op).
-    // We use a try/catch so this is non-blocking if the column doesn't exist.
-    try {
-      const ipWindowStart = new Date(Date.now() - OTP_IP_WINDOW_MINUTES * 60 * 1000).toISOString()
-      const { count: ipCount } = await supabase
-        .from('sp_otp_codes')
-        .select('id', { count: 'exact', head: true })
-        .eq('created_by_ip', clientIp)
-        .gte('created_at', ipWindowStart)
-      if ((ipCount ?? 0) >= OTP_IP_RATE_LIMIT) {
-        return json({ ok: false, error: `Terlalu banyak permintaan dari jaringan ini. Coba lagi dalam ${OTP_IP_WINDOW_MINUTES} menit.` }, 429, corsHeaders)
-      }
-    } catch {
-      // created_by_ip column may not exist yet — non-blocking
+    // FIX v2.7.56 (audit): fail-closed. Kolom created_by_ip sudah dijamin
+    // migration 20260706; error query sekarang menolak permintaan (sebelumnya
+    // error dibungkam dan limit terlewati).
+    const ipWindowStart = new Date(Date.now() - OTP_IP_WINDOW_MINUTES * 60 * 1000).toISOString()
+    const { count: ipCount, error: ipErr } = await supabase
+      .from('sp_otp_codes')
+      .select('id', { count: 'exact', head: true })
+      .eq('created_by_ip', clientIp)
+      .gte('created_at', ipWindowStart)
+    if (ipErr) {
+      console.error('send-otp: IP rate-limit query failed:', ipErr.message)
+      return json({ ok: false, error: 'Gagal memeriksa limit OTP' }, 500, corsHeaders)
+    }
+    if ((ipCount ?? 0) >= OTP_IP_RATE_LIMIT) {
+      return json({ ok: false, error: `Terlalu banyak permintaan dari jaringan ini. Coba lagi dalam ${OTP_IP_WINDOW_MINUTES} menit.` }, 429, corsHeaders)
     }
 
     // Invalidate previous unused codes for this phone+purpose

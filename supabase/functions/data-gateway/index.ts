@@ -61,7 +61,7 @@ const FINANCE_ROLES = ['MASTER_ADMIN', 'ADMIN', 'FINANCE', 'FINANCE_MANAGER', 'F
 
 interface Caller { authId: string; email: string; spUser: Record<string, any> | null; role: string | null; isAdmin: boolean; isFinanceAdmin: boolean; userMetadata: Record<string, any> | null; ownerId: string; ownerIds: string[]; emailConfirmedAt: string | null; }
 
-const PUBLIC_ACTIONS = new Set(['submit_contact_lead', 'get_insurer_review', 'submit_insurer_decision', 'get_insurer_dashboard', 'insurer_submit_decision_authed', 'insurer_list_payments', 'insurer_upload_policy', 'get_public_quotation', 'confirm_public_quotation', 'insurer_list_bulk_batches', 'insurer_bulk_request_upload_url', 'insurer_upload_bulk_master_policy']);
+const PUBLIC_ACTIONS = new Set(['submit_contact_lead', 'get_insurer_review', 'submit_insurer_decision', 'get_insurer_dashboard', 'insurer_logout', 'insurer_submit_decision_authed', 'insurer_list_payments', 'insurer_upload_policy', 'get_public_quotation', 'confirm_public_quotation', 'insurer_list_bulk_batches', 'insurer_bulk_request_upload_url', 'insurer_upload_bulk_master_policy']);
 
 Deno.serve(async (req) => {
   const CORS = corsHeaders(req.headers.get('origin'));

@@ -136,6 +136,44 @@ export async function adminGetAllB2BBulkBatches(): Promise<SpB2BBatch[]> {
   return (data ?? []) as SpB2BBatch[];
 }
 
+// ─── B2B corporate users (admin provisioning, v2.7.56) ─────────────────────
+
+export interface SpB2BUser {
+  id: string;
+  email: string;
+  name: string | null;
+  phone: string | null;
+  company_name: string | null;
+  company_reg_no: string | null;
+  company_industry: string | null;
+  verified: boolean | null;
+  created_at: string | null;
+}
+
+/**
+ * Daftarkan pengguna B2B baru. mode 'password': admin menyetel kata sandi
+ * secara manual (hanya MASTER_ADMIN; sandi ditampilkan sekali dan wajib
+ * diganti saat login pertama). mode 'invite': email undangan dikirim.
+ */
+export async function adminCreateB2BUser(input: {
+  name: string;
+  email: string;
+  phone: string;
+  company_name: string;
+  company_reg_no?: string;
+  company_industry?: string;
+  mode: 'password' | 'invite';
+  password?: string;
+}): Promise<{ data?: SpB2BUser & { id: string }; mode?: string; temp_password?: string | null; error?: string }> {
+  return await callGateway('admin_create_b2b_user', input);
+}
+
+export async function adminListB2BUsers(): Promise<SpB2BUser[]> {
+  const { data, error } = await callGateway('admin_list_b2b_users', {});
+  if (error) { console.error('adminListB2BUsers:', error); return []; }
+  return (data ?? []) as SpB2BUser[];
+}
+
 export async function adminIssueB2BBulkBatch(input: {
   batchId: string;
   masterPolicyNumber: string;

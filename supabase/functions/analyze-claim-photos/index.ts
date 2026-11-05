@@ -66,11 +66,14 @@ interface ClaimPhotoForensicReport {
   exif: ForensicExif;
   duplicate: ForensicDuplicate;
   ai: ForensicAi;
-  verdict: 'CLEAN' | 'FLAGGED' | 'HIGH_RISK';
+  verdict: 'CLEAN' | 'FLAGGED' | 'HIGH_RISK' | 'UNANALYZED';
   flagReasons: string[];
 }
 
 const MAX_PHOTOS = 5;
+// FIX v2.7.56 (audit): batas byte foto — setara file_size_limit bucket
+// claim-photos (8 MiB); respons lebih besar tidak di-buffer sama sekali.
+const MAX_PHOTO_BYTES = 8 * 1024 * 1024;
 const RATE_LIMIT_PER_HOUR = 15;
 const HAMMING_DUPLICATE_THRESHOLD = 6; // out of 64 bits — conservative "near duplicate"
 const RATE_LIMIT_ACTION = 'analyze_claim_photos';
@@ -225,10 +228,25 @@ Deno.serve(async (req) => {
     if (photo_urls.length > MAX_PHOTOS) {
       return json({ success: false, error: `Maksimum ${MAX_PHOTOS} foto per klaim` }, 400, CORS);
     }
-    // Only accept our own claim-photos bucket URLs — prevents SSRF via
-    // arbitrary attacker-supplied fetch targets.
+    // FIX v2.7.56 (audit): gerbang URL struktural, bukan substring. Sebelumnya
+    // `url.includes('/storage/v1/object/public/claim-photos/')` menerima host
+    // & scheme apa pun — SSRF dari fetch server-side (dan fetch kedua oleh
+    // OpenRouter). Sekarang: https + host persis sama dengan SUPABASE_URL +
+    // prefix pathname bucket yang benar.
+    const storageHost = SUPABASE_URL ? new URL(SUPABASE_URL).host : '';
+    if (!storageHost) {
+      return json({ success: false, error: 'Storage not configured' }, 500, CORS);
+    }
     for (const url of photo_urls) {
-      if (typeof url !== 'string' || !url.includes('/storage/v1/object/public/claim-photos/')) {
+      if (typeof url !== 'string' || url.length > 2048) {
+        return json({ success: false, error: 'Invalid photo URL' }, 400, CORS);
+      }
+      let u: URL;
+      try { u = new URL(url); } catch {
+        return json({ success: false, error: 'Invalid photo URL' }, 400, CORS);
+      }
+      if (u.protocol !== 'https:' || u.host !== storageHost ||
+          !u.pathname.startsWith('/storage/v1/object/public/claim-photos/')) {
         return json({ success: false, error: 'Invalid photo URL' }, 400, CORS);
       }
     }
@@ -251,8 +269,15 @@ Deno.serve(async (req) => {
 
       let bytes: Uint8Array | null = null;
       try {
-        const res = await fetch(photoUrl);
-        if (res.ok) bytes = new Uint8Array(await res.arrayBuffer());
+        // FIX v2.7.56 (audit): redirect dilarang (mencegah gerbang dilewati via
+        // 30x ke host lain) dan byte respons dibatasi — tidak ada buffering
+        // tak terbatas dari URL eksternal.
+        const res = await fetch(photoUrl, { redirect: 'error' });
+        const len = Number(res.headers.get('content-length') ?? 0);
+        if (res.ok && len <= MAX_PHOTO_BYTES) {
+          const buf = await res.arrayBuffer();
+          if (buf.byteLength <= MAX_PHOTO_BYTES) bytes = new Uint8Array(buf);
+        }
       } catch (e) {
         console.error('fetch photo failed:', e);
       }
@@ -291,6 +316,11 @@ Deno.serve(async (req) => {
         isScreenPhoto: false, isStockOrDownloaded: false, plateVisible: false,
         confidence: 0, severity: 'Sedang',
       };
+      // FIX v2.7.56 (audit): gagal AI tidak lagi fail-open. Sebelumnya skor
+      // default 70 identik dengan hasil model yang lolos, verdict berakhir
+      // CLEAN, dan alert fraud tidak menyala. Sekarang kegagalan ditandai
+      // eksplisit: verdict foto jadi UNANALYZED → klaim minimal REVIEW_REQUIRED.
+      let aiUnavailable = false;
       try {
         const mime = photoUrl.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
         const orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -320,10 +350,26 @@ Deno.serve(async (req) => {
           const content: string = orData?.choices?.[0]?.message?.content ?? '';
           const cleaned = content.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
           const parsed = JSON.parse(cleaned);
+          // FIX v2.7.56 (audit): damageAssessment di-clamp sebelum dipersist —
+          // jumlah item, panjang string, dan nominal tetap terkendali.
+          const clampDamage = (arr: unknown) =>
+            Array.isArray(arr)
+              ? arr.slice(0, 20).map((it) => {
+                  if (typeof it !== 'object' || it === null) return {};
+                  const o = it as Record<string, unknown>;
+                  const clamped: Record<string, unknown> = {};
+                  for (const [k, v] of Object.entries(o)) {
+                    if (typeof v === 'string') clamped[k] = v.slice(0, 200);
+                    else if (typeof v === 'number' && Number.isFinite(v)) clamped[k] = Math.max(0, Math.min(v, 10_000_000_000));
+                    else clamped[k] = v === null ? null : String(v).slice(0, 200);
+                  }
+                  return clamped;
+                })
+              : [];
           ai = {
             authenticityScore: typeof parsed.authenticityScore === 'number' ? Math.max(0, Math.min(100, parsed.authenticityScore)) : 70,
-            tamperIndicators: Array.isArray(parsed.tamperIndicators) ? parsed.tamperIndicators.slice(0, 10) : [],
-            damageAssessment: Array.isArray(parsed.damageAssessment) ? parsed.damageAssessment : [],
+            tamperIndicators: Array.isArray(parsed.tamperIndicators) ? parsed.tamperIndicators.slice(0, 10).map((s: unknown) => String(s).slice(0, 200)) : [],
+            damageAssessment: clampDamage(parsed.damageAssessment),
             isScreenPhoto: Boolean(parsed.isScreenPhoto),
             isStockOrDownloaded: Boolean(parsed.isStockOrDownloaded),
             plateVisible: Boolean(parsed.plateVisible),
@@ -332,22 +378,30 @@ Deno.serve(async (req) => {
           };
         } else {
           console.error('OpenRouter error:', orRes.status, await orRes.text());
+          aiUnavailable = true;
         }
       } catch (e) {
         console.error('AI analysis failed for photo', i, e);
+        aiUnavailable = true;
       }
 
-      const { verdict, flagReasons } = buildVerdict(exif, duplicate, ai);
+      const built = buildVerdict(exif, duplicate, ai);
+      const verdict = aiUnavailable ? 'UNANALYZED' : built.verdict;
+      const flagReasons = aiUnavailable
+        ? [...built.flagReasons, 'Foto tidak dapat dianalisa AI — verifikasi manual diperlukan.']
+        : built.flagReasons;
       photoReports.push({ photoIndex: i, photoUrl, exif, duplicate, ai, verdict, flagReasons });
     }
 
     // ── Claim-level aggregate — worst-photo-weighted, not averaged ─────────
-    const worstVerdict = photoReports.reduce<'CLEAN' | 'FLAGGED' | 'HIGH_RISK'>((acc, r) => {
-      const rank = { CLEAN: 0, FLAGGED: 1, HIGH_RISK: 2 };
-      return rank[r.verdict] > rank[acc] ? r.verdict : acc;
+    // UNANALYZED diberi bobot setara FLAGGED: foto yang tidak terbaca AI tidak
+    // boleh membuat klaim lolos bersih.
+    const worstVerdict = photoReports.reduce<'CLEAN' | 'FLAGGED' | 'HIGH_RISK' | 'UNANALYZED'>((acc, r) => {
+      const rank: Record<string, number> = { CLEAN: 0, UNANALYZED: 1, FLAGGED: 1, HIGH_RISK: 2 };
+      return (rank[r.verdict] ?? 0) > (rank[acc] ?? 0) ? r.verdict : acc;
     }, 'CLEAN');
     const fraudVerdict: 'CLEAN' | 'REVIEW_REQUIRED' | 'REJECTED' =
-      worstVerdict === 'HIGH_RISK' ? 'REJECTED' : worstVerdict === 'FLAGGED' ? 'REVIEW_REQUIRED' : 'CLEAN';
+      worstVerdict === 'HIGH_RISK' ? 'REJECTED' : worstVerdict === 'CLEAN' ? 'CLEAN' : 'REVIEW_REQUIRED';
     const worstAuthenticity = Math.min(...photoReports.map(r => r.ai.authenticityScore));
     const fraudScore = Math.max(0, 100 - worstAuthenticity);
 

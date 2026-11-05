@@ -105,6 +105,12 @@ export async function getInsurerDashboard(token: string): Promise<InsurerDashboa
   return data as InsurerDashboard;
 }
 
+// FIX v2.7.56 (audit): logout portal insurer kini menghapus token di server
+// (gateway action insurer_logout) — bukan hanya membersihkan sessionStorage.
+export async function insurerLogout(token: string): Promise<void> {
+  await callGatewayToken('insurer_logout', { token });
+}
+
 export async function submitInsurerDecisionAuthed(
   token: string,
   orderId: string,

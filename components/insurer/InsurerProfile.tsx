@@ -7,7 +7,7 @@ import { SectionLabel } from '../shared/cards';
 import { useToast, useConfirmDialog } from '../ui';
 import { useT } from '../../src/i18n';
 import { APP_VERSION } from '../../src/version';
-import { getInsurerDashboard, type InsurerProfile as InsurerProfileData } from '../../services/insurerService';
+import { getInsurerDashboard, insurerLogout, type InsurerProfile as InsurerProfileData } from '../../services/insurerService';
 import ModuleIcon from '../shared/ModuleIcon';
 
 interface Props {
@@ -69,6 +69,10 @@ const InsurerProfile: React.FC<Props> = ({ authToken, lang, onLogout, insurerNam
       variant: 'danger',
     });
     if (!ok) return;
+    // FIX v2.7.56 (audit): token dihapus juga di server — logout tanpa
+    // invalidasi sisi server menyisakan bearer yang masih hidup. Fire-and-forget
+    // dengan catch: sesi lokal tetap berakhir walau panggilan gagal.
+    insurerLogout(authToken).catch(() => {});
     sessionStorage.removeItem('SUREPATH_INSURER_TOKEN');
     sessionStorage.removeItem('SUREPATH_INSURER_NAME');
     onLogout();

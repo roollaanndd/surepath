@@ -449,8 +449,9 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ onClose, onCreated })
   const { commission, coins, coinValue } = calcPreview(form);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/80 backdrop-blur-sm overflow-y-auto py-8 px-4">
-      <div className="bg-ds-card border border-ds-border rounded-[2.5rem] w-full max-w-lg shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto py-8 px-4">
+      <div className="absolute inset-0 bg-slate-900/40 dark:bg-slate-950/55 backdrop-blur-[3px]" onClick={onClose} aria-hidden="true" />
+      <div className="relative bg-white dark:bg-ds-card text-slate-900 dark:text-white border border-slate-200 dark:border-ds-border rounded-2xl sm:rounded-3xl w-full max-w-lg shadow-[0_24px_80px_rgba(15,23,42,0.22)]">
         {/* Header */}
         <div className="flex items-center justify-between px-7 py-5 border-b border-ds-border">
           <div>

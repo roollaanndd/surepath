@@ -21,6 +21,8 @@ const PolicyOrdersAdmin = lazy(() => import('./PolicyOrdersAdmin'));
 const ProductConfigAdmin = lazy(() => import('./ProductConfigAdmin'));
 const FinancialAdmin = lazy(() => import('./FinancialAdmin'));
 const CommissionLedger = lazy(() => import('./CommissionLedger'));
+const ManualCommissionRequestView = lazy(() => import('./ManualCommissionRequest'));
+const ManualCommissionApprovalView = lazy(() => import('./ManualCommissionApproval'));
 const AgentAgreementsAdmin = lazy(() => import('./AgentAgreementsAdmin'));
 const InsurerAdmin = lazy(() => import('./InsurerAdmin'));
 const OjkRateAdmin = lazy(() => import('./OjkRateAdmin'));
@@ -100,6 +102,8 @@ const TAB_SUBTITLE: Record<string, string> = {
   agents: 'Kelola jaringan mitra SurePath.',
   agent_agreements: 'Perjanjian keagenan yang ditandatangani.',
   commission_ledger: 'Buku komisi mitra per polis.',
+  manual_credit: 'Catat komisi & koin untuk polis offline — butuh approval MASTER_ADMIN.',
+  credit_approvals: 'Setujui atau tolak permintaan kredit manual (MASTER_ADMIN only).',
   b2b: 'Pengajuan dan penawaran korporasi.',
   product_config: 'Konfigurasi produk, komisi, dan koin.',
   tier_promo: 'Pengaturan tier mitra dan kode promo.',
@@ -743,6 +747,8 @@ const AdminPortal = ({
       case 'tnc_admin':        return <TncAdmin />;
       case 'vehicle_pricelist':return <VehiclePricelistAdmin />;
       case 'commission_ledger':return <CommissionLedger />;
+      case 'manual_credit':    return <ManualCommissionRequestView />;
+      case 'credit_approvals': return <ManualCommissionApprovalView />;
       case 'payments':         return <PaymentsAdminView />;
       case 'withdrawals':      return <WithdrawalsAdminView />;
       case 'endorsements':     return <EndorsementsAdminView />;

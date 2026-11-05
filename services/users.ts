@@ -193,6 +193,31 @@ export async function createMitra(
   };
 }
 
+// Pengguna internal (ADMIN/FINANCE/OPERATOR/INSURANCE_ADMIN) — pola dua mode
+// yang sama dengan createMitra. v2.7.58 menggantikan admin_invite_user yang
+// cuma punya mode undangan.
+export interface CreateInternalUserInput {
+  name: string;
+  email: string;
+  role: string;
+  phone?: string | null;
+  mode?: 'invite' | 'password';
+  /** Wajib saat mode='password'; tidak dibaca saat mode='invite'. */
+  password?: string;
+}
+
+export async function createInternalUser(
+  input: CreateInternalUserInput,
+): Promise<{ user?: SpUser; tempPassword?: string | null; mode?: string; error?: string }> {
+  const res = await callGateway('admin_create_internal_user', input as unknown as Record<string, unknown>);
+  if (res.error) return { error: res.error };
+  return {
+    user: res.data as SpUser,
+    tempPassword: (res.temp_password as string | null) ?? null,
+    mode: res.mode as string | undefined,
+  };
+}
+
 export async function sendMitraPasswordReset(
   userId: string,
 ): Promise<{ email?: string; recoveryLink?: string | null; error?: string }> {

@@ -330,6 +330,51 @@ export const SpPortalB2bIcon: React.FC<SpIllustrationProps> = ({ size = 64, clas
   </svg>
 );
 
+/**
+ * 21. BERANDA: KLIEN — dua orang yang terhubung, bukan sekadar "people" generik.
+ *     Tile Klien di Beranda Mitra dulu jatuh ke art generik yang sama dengan
+ *     Profil; pemilik minta ikon yang lebih baik (v2.7.50).
+ */
+export const SpClientsIcon: React.FC<SpIllustrationProps> = ({ size = 64, className = '', ...props }) => (
+  <svg width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} {...props}>
+    <rect x="8" y="8" width="48" height="48" rx="18" fill="#E2FBCE" fillOpacity="0.6" />
+    {/* Klien utama */}
+    <circle cx="26" cy="24" r="8" fill="#28A96B" />
+    <path d="M13 46c1.8-8 6.6-12 13-12s11.2 4 13 12" fill="#28A96B" />
+    <circle cx="26" cy="24" r="8" fill="#FFFDEE" fillOpacity="0.25" />
+    {/* Klien kedua — lebih kecil, di belakang */}
+    <circle cx="44" cy="27" r="5.5" fill="#0B8F78" />
+    <path d="M36 44c1.2-5.4 4.4-8 8-8s6.8 2.6 8 8" fill="#0B8F78" />
+    {/* Benang koneksi — relasi, bukan dua orang yang berdiri sendiri */}
+    <path d="M31 20c5-2 9-1 12 2" stroke="#E3EF26" strokeWidth="2.4" strokeLinecap="round" strokeDasharray="1 4" />
+    {/* Badge hati — relasi yang terjaga */}
+    <path d="M46 12.5c-1.9-2.2-5.4-.9-5.4 1.8 0 2.2 3 4 5.4 5.8 2.4-1.8 5.4-3.6 5.4-5.8 0-2.7-3.5-4-5.4-1.8z" fill="#FF6B2C" stroke="#FFFDEE" strokeWidth="1.3" />
+  </svg>
+);
+
+/**
+ * 22. BERANDA: PROFIL — kartu identitas dengan lencana terverifikasi.
+ *     Pengganti art generik "people" untuk tile Profil di Beranda Mitra.
+ */
+export const SpProfileIcon: React.FC<SpIllustrationProps> = ({ size = 64, className = '', ...props }) => (
+  <svg width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} {...props}>
+    <rect x="8" y="8" width="48" height="48" rx="18" fill="#E2FBCE" fillOpacity="0.6" />
+    {/* Kartu ID miring ringan supaya terasa benda, bukan diagram */}
+    <g transform="rotate(-4 32 34)">
+      <rect x="14" y="18" width="36" height="28" rx="6" fill="#FFFDEE" stroke="#0B8F78" strokeWidth="1.6" />
+      <rect x="14" y="18" width="36" height="7" rx="3.5" fill="#28A96B" />
+      <circle cx="24" cy="35" r="5" fill="#BDEFD7" stroke="#0B8F78" strokeWidth="1.4" />
+      <path d="M17.5 44c1.2-3.6 3.6-5.4 6.5-5.4s5.3 1.8 6.5 5.4" fill="#BDEFD7" />
+      <rect x="33" y="30" width="12" height="2.6" rx="1.3" fill="#0B8F78" />
+      <rect x="33" y="35" width="9" height="2.6" rx="1.3" fill="#BDEFD7" />
+      <rect x="33" y="40" width="12" height="2.6" rx="1.3" fill="#E2FBCE" />
+    </g>
+    {/* Lencana terverifikasi */}
+    <circle cx="46" cy="16" r="6" fill="#FF6B2C" stroke="#FFFDEE" strokeWidth="1.6" />
+    <path d="M43.2 16l2 2 3.4-3.8" stroke="#FFFDEE" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
 type BrandIconProps = { id: string; size?: number; className?: string; active?: boolean };
 
 /**
@@ -353,6 +398,8 @@ const BRAND_ICON_BY_ID: Record<string, React.FC<SpIllustrationProps>> = {
   security: SpVerifiedSecurityIcon,
   documents: SpStnkOcrIcon,
   vehicle_pricelist: SpAiVehicleAuditIcon,
+  clients: SpClientsIcon,
+  profile: SpProfileIcon,
 };
 
 export const PORTAL_BRAND_ICONS = {

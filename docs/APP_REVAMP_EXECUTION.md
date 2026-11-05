@@ -169,6 +169,41 @@ This record intentionally distinguishes incremental work from the full target.
 
 Append a new entry after each meaningful implementation/verification milestone.
 
+### 2026-11-05 (v2.7.55) — Portal Mitra: ikon Beranda, STNK setara Nasabah, rentang harga, diskon step 4, handoff & approval manual
+
+- **Direktif pemilik (6 poin):** ikon "Klien"/"Profil" diperbagus; UI AI STNK
+  extract disamakan dengan app nasabah (upload → AI extract → isi step
+  berikutnya); rentang harga mobil rekomendasi muncul; kolom diskon muncul &
+  dihitung di step 4; data STNK/nasabah/kendaraan mengalir ke Pembelian tanpa
+  diisi ulang; foto yang gagal dianalisa AI masuk approval manual admin dengan
+  notifikasi.
+- **Fakta riset yang mengikat:** tile `clients`/`profile` tanpa gambar Brand
+  jatuh ke art generik "people" yang sama (PathyNavIcon → fallback); agent
+  memakai `STNKAutoExtract` + `extractSTNKAndRecommend` yang ternyata stub —
+  hanya mengirim 100 karakter pertama dataURL dan mengarang harga, sementara
+  nasabah memakai `StnkScanCard` + `extractStnkOcr` sungguhan; nasabah
+  menampilkan rentang pasar ±5% (`StepVehicle` line 42-47) yang tidak ada di
+  agent; input diskon dulu di atas step 2; wizard underwriting sudah menerima
+  `initialQuote` tapi plat/rangka/mesin/warna tidak ikut; `canProceedStep5`
+  menuntut `aiResult !== null` sehingga analisa gagal = mitra terblokir, dan
+  antrean approval manual admin (`PolicyOrdersAdmin`, status SUBMITTED) sudah
+  ada namun tidak terjangkau dari kasus itu.
+- **Ikon:** `SpClientsIcon` + `SpProfileIcon` digambar sendiri (palet brand
+  lime/oranye/hijau) dan didaftarkan di `BRAND_ICON_BY_ID` — bukan ikon
+  eksternal, demi sistem ikon unified.
+- **STNK:** stub dihapus total (komponen + fungsi + tipe + import
+  `VEHICLE_CATEGORIES`; `INSURERS` tetap dipakai). Agent kini memakai
+  `StnkCaptureCard`/`StnkOcrNotice` + `extractStnkOcr`, brand/model dicocokkan
+  ke database kendaraan, harga dari `getMarketValueForYear`/`...ForMotoYear`.
+- **Handoff & approval manual:** `initialQuote` dibawa plate/chassis/engine/
+  color; kartu STNK wizard jadi chip "sudah terisi dari Penawaran" + pindai
+  ulang; `aiUnavailable` (foto ≥1, tanpa hasil AI) membuka jalur "Lanjut
+  (Persetujuan Manual)" dengan marker `PHOTO_ANALYSIS_UNAVAILABLE` di
+  `vehicle_details`, gate pembayaran memakai `needsManualReview`, notifikasi
+  menyebut alasan persetujuan manual.
+- **Uji:** `agentHomeStnkDisc.test.ts` merah dulu (5/7 gagal) → hijau 12/12
+  setelah implementasi; eslint file terubah 0 error (2 warning pre-existing).
+
 ### 2026-11-04 (v2.7.49) — Pathy Gelombang 1: mood, suara hands-free, kartu kaya
 
 - **Direktif pemilik:** "lets enhance pathy capabilities, make her more rich".

@@ -45,6 +45,11 @@ interface Props {
     coverage?: 'COMPREHENSIVE' | 'TLO';
     addons?: Partial<AddOns>;
     discountRate?: number;
+    /** v2.7.50 — hasil pindai STNK dari Penawaran, supaya tidak ditanyakan ulang. */
+    plate?: string;
+    chassis?: string;
+    engine?: string;
+    color?: string;
   };
   onBack: () => void;
   onOrderCreated?: (orderNumber: string) => void;
@@ -271,20 +276,28 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
   const [clientSearch, setClientSearch] = useState('');
 
   // ── Step 3: Vehicle Details ──
+  // v2.7.50 — plat/rangka/mesin/warna ikut di-prefill dari hasil pindai STNK
+  // di Penawaran (initialQuote), jadi mitra hanya melengkapi yang belum ada.
   const [vehicleDetails, setVehicleDetails] = useState({
     make: initialQuote?.brand ?? '',
     model: initialQuote?.model ?? '',
     year: initialQuote?.year ?? currentYear,
     variant: '',
-    plate: '',
+    plate: initialQuote?.plate ?? '',
     plateCode: '',
     plateNum: '',
     plateSuffix: '',
-    chassis: '',
-    engine: '',
-    color: '',
+    chassis: initialQuote?.chassis ?? '',
+    engine: initialQuote?.engine ?? '',
+    color: initialQuote?.color ?? '',
     usage: 'PERSONAL',
   });
+
+  // v2.7.50 — identitas kendaraan sudah dibawa dari Penawaran (hasil pindai
+  // STNK di sana): kartu pindai tidak ditampilkan lagi secara paksa; mitra
+  // cukup memeriksa/melengkapi field di bawahnya. Bisa dibuka lagi bila perlu.
+  const stnkPrefilled = Boolean(initialQuote?.brand && initialQuote?.model);
+  const [showStnkCard, setShowStnkCard] = useState(!stnkPrefilled);
 
   // ── Step 4: Coverage ──
   const [province, setProvince] = useState('');
@@ -629,7 +642,11 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
             ai_report: aiResult.underwritingReport,
             ai_fraud_analysis: aiResult.fraudAnalysis,
             ai_recommendations: aiResult.recommendations,
-          } : {}),
+          } : {
+            // v2.7.50 — penanda untuk admin: foto tidak dapat dianalisa AI,
+            // order masuk antrean persetujuan manual (PolicyOrdersAdmin).
+            ai_manual_review: 'PHOTO_ANALYSIS_UNAVAILABLE',
+          }),
         };
 
         const order = await createPolicyOrder({
@@ -711,7 +728,9 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
           agent_id: agentId,
           type: 'SYSTEM',
           title: 'Order Diajukan',
-          body: `Order ${num} tersimpan dan masuk antrean persetujuan operator. Anda akan diberi tahu setiap perubahan status.`,
+          body: needsManualReview
+            ? `Order ${num} menunggu persetujuan manual admin${aiUnavailable ? ' karena foto kendaraan tidak dapat dianalisa AI' : ' karena skor AI di bawah ambang'}. Pembayaran akan dibuka setelah foto dan data kendaraan disetujui.`
+            : `Order ${num} tersimpan dan masuk antrean persetujuan operator. Anda akan diberi tahu setiap perubahan status.`,
         });
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : 'Terjadi kesalahan.';
@@ -747,7 +766,12 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
   // Allow proceeding if AI ran (verdict set) and not REJECTED
   // CLEAN (>=80): normal flow → payment in step 7
   // REVIEW_REQUIRED (score<80): proceed → order created with SUBMITTED, payment gated pending approval
-  const canProceedStep5 = aiResult !== null && aiVerdict !== 'REJECTED';
+  // v2.7.50 — AI TIDAK dapat menganalisa (analisa gagal / foto < 5 slot terisi)
+  // bukan lagi jalan buntu: order tetap bisa diajukan dan otomatis masuk
+  // proses persetujuan manual admin sebelum pembayaran dibuka.
+  const aiUnavailable = aiResult === null && !aiScoring && photoCount >= 1;
+  const needsManualReview = (aiResult !== null && aiScore < 80 && aiVerdict !== 'REJECTED') || aiUnavailable;
+  const canProceedStep5 = aiVerdict !== 'REJECTED' && (aiResult !== null || aiUnavailable);
   const isPendingApprovalAgent = aiResult !== null && aiScore < 80 && aiVerdict !== 'REJECTED';
 
   // ─── Render Steps ──────────────────────────────────────────────────────────
@@ -949,16 +973,40 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
 
         {/* Pintu masuk OCR STNK — tampilan yang sama dengan portal Nasabah,
             lewat shared/StnkScanCard (satu pemilik untuk kedua portal).
-            Layanannya tetap stnk-ocr edge function dengan fallback Gemini. */}
-        <StnkCaptureCard
-          onPick={handleStnkScan}
-          scanning={stnkScanning}
-          secondaryAction={stnkOcrResult || stnkScanning ? undefined : {
-            label: 'Atau Isi Data Kendaraan Manual',
-            onClick: () => stnkFieldsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
-          }}
-        />
-        <StnkOcrNotice result={stnkOcrResult} />
+            Layanannya tetap stnk-ocr edge function dengan fallback Gemini.
+            v2.7.50 — bila data kendaraan sudah dibawa dari Penawaran (hasil
+            pindai STNK di sana), kartu tidak dipaksa lagi: cukup chip info
+            "sudah terisi" + opsi pindai ulang bila datanya perlu diganti. */}
+        {showStnkCard ? (
+          <>
+            <StnkCaptureCard
+              onPick={handleStnkScan}
+              scanning={stnkScanning}
+              secondaryAction={stnkOcrResult || stnkScanning ? undefined : {
+                label: 'Atau Isi Data Kendaraan Manual',
+                onClick: () => stnkFieldsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+              }}
+            />
+            <StnkOcrNotice result={stnkOcrResult} />
+          </>
+        ) : (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-500/30 dark:bg-emerald-950/30">
+            <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300">
+              <CheckCircle className="h-5 w-5 shrink-0" />
+              <p className="text-xs font-bold leading-snug">
+                Data kendaraan sudah terisi dari Penawaran (hasil pindai STNK).
+                Periksa dan lengkapi field yang masih kosong di bawah.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowStnkCard(true)}
+              className="rounded-xl border border-emerald-300 bg-white px-3 py-1.5 text-xs font-bold text-emerald-700 active:bg-emerald-100 dark:border-emerald-500/40 dark:bg-transparent dark:text-emerald-300"
+            >
+              Pindai Ulang STNK
+            </button>
+          </div>
+        )}
 
         <div ref={stnkFieldsRef}>
         <SectionCard>
@@ -1642,21 +1690,23 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
               </div>
             )}
 
-            {isPendingApprovalAgent && (
+            {(isPendingApprovalAgent || aiUnavailable) && (
               <div className="rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-500/30 p-4 flex flex-col gap-3 mb-4">
                 <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-black">
                   <AlertTriangle className="w-5 h-5" />
-                  Perlu Pemeriksaan Manual
+                  Perlu Persetujuan Manual Admin
                 </div>
                 <p className="text-sm text-amber-700 dark:text-amber-300">
-                  Skor AI di bawah 80 atau AI tidak dapat memberikan skor otomatis. Order akan dibuat dengan status SUBMITTED dan perlu persetujuan admin/penanggung sebelum pembayaran dapat diproses.
+                  {isPendingApprovalAgent
+                    ? 'Skor AI di bawah 80. Order akan dibuat dengan status SUBMITTED dan perlu persetujuan admin/penanggung sebelum pembayaran dapat diproses.'
+                    : 'Skor AI belum tersedia (analisa butuh minimal 3 foto, atau analisa foto gagal). Order akan diajukan dengan proses approval manual admin — pembayaran dibuka setelah foto dan data kendaraan disetujui.'}
                 </p>
               </div>
             )}
 
             {canProceedStep5 && (
               <PrimaryBtn onClick={() => setStep(6)}>
-                {isPendingApprovalAgent ? 'Lanjut (Persetujuan Manual)' : 'Lanjutkan ke Perhitungan Premi'} <ChevronRight className="inline w-4 h-4 ml-1" />
+                {needsManualReview ? 'Lanjut (Persetujuan Manual)' : 'Lanjutkan ke Perhitungan Premi'} <ChevronRight className="inline w-4 h-4 ml-1" />
               </PrimaryBtn>
             )}
           </SectionCard>
@@ -1999,7 +2049,7 @@ const VehicleUnderwritingWizard: React.FC<Props> = ({
           </div>
 
           {/* Payment section */}
-          {isPendingApprovalAgent ? (
+          {needsManualReview ? (
             <div className="w-full mb-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-500/30 rounded-2xl space-y-2">
               <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-black text-sm">
                 <AlertTriangle className="w-4 h-4" />

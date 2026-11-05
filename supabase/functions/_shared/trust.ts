@@ -153,6 +153,7 @@ export const ACTION_MIN_TIER: Record<string, TrustTier> = {
   agent_request_withdrawal: TIER_VERIFIED, // uang keluar
   redeem_coins:            TIER_VERIFIED,  // menukar imbalan jadi nilai
   apply_referral:          TIER_VERIFIED,  // jalur penyalahgunaan akun massal
+  b2b_bulk_create_batch:   TIER_VERIFIED,  // menerbitkan batch order B2B sungguhan — sama seperti create_policy_order
 
   // `accept_agreement` DULU TIER_VERIFIED, dan itu membuat pendaftaran mitra
   // mati total (dilaporkan 30 Okt 2026). Urutannya melingkar:

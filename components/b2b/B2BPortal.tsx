@@ -7,14 +7,18 @@ import { scrollPortalToTop } from '../shared/scrollReset';
 import {
   getB2BSubmissions,
   getB2BQuotes,
+  getB2BBulkBatches,
   type SpB2BSubmission,
   type SpB2BQuote,
+  type SpB2BBatch,
 } from '../../services/supabaseService';
 import B2BHome from './B2BHome';
 import B2BNewSubmission from './B2BNewSubmission';
 import B2BSubmissions from './B2BSubmissions';
 import B2BQuotes from './B2BQuotes';
 import B2BProfile from './B2BProfile';
+import B2BBulkImport from './B2BBulkImport';
+import B2BBulkBatches from './B2BBulkBatches';
 import { useDarkMode } from '../shared/theme';
 
 interface Props {
@@ -42,15 +46,23 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
   const [darkMode, setDarkMode] = useDarkMode();
   const [submissions, setSubmissions] = useState<SpB2BSubmission[]>([]);
   const [quotes, setQuotes] = useState<SpB2BQuote[]>([]);
+  const [bulkBatches, setBulkBatches] = useState<SpB2BBatch[]>([]);
+  // "Buat"/"Ajuan" each hold two flows (single submission vs. bulk fleet
+  // import). A 6th tab would reopen the width bug the comment below the TABS
+  // array describes (5 short labels already fill PortalTabBar's budget), so
+  // the bulk flow is a mode switch inside these two tabs instead.
+  const [bulkMode, setBulkMode] = useState(false);
 
   const loadData = async () => {
     if (!client?.id) return;
-    const [subs, qs] = await Promise.all([
+    const [subs, qs, batches] = await Promise.all([
       getB2BSubmissions(client.id),
       getB2BQuotes(client.id),
+      getB2BBulkBatches(),
     ]);
     setSubmissions(subs);
     setQuotes(qs);
+    setBulkBatches(batches);
   };
 
   useEffect(() => { loadData(); }, [client?.id]);
@@ -60,6 +72,23 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
     scrollPortalToTop();
   };
 
+  const modeToggle = (onLabel: string, offLabel: string) => (
+    <div className="flex justify-center gap-1.5 pt-5 pb-1">
+      <button
+        onClick={() => setBulkMode(false)}
+        className={`px-3 py-1.5 rounded-full text-2xs font-black uppercase tracking-wider transition-colors ${!bulkMode ? 'bg-ds-green text-ds-on-green' : 'bg-ds-card2 text-ds-ink3'}`}
+      >
+        {offLabel}
+      </button>
+      <button
+        onClick={() => setBulkMode(true)}
+        className={`px-3 py-1.5 rounded-full text-2xs font-black uppercase tracking-wider transition-colors ${bulkMode ? 'bg-ds-green text-ds-on-green' : 'bg-ds-card2 text-ds-ink3'}`}
+      >
+        {onLabel}
+      </button>
+    </div>
+  );
+
   const renderTab = () => {
     switch (activeTab) {
       case 'home':
@@ -68,26 +97,47 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
             client={client}
             submissions={submissions}
             quotes={quotes}
+            bulkBatches={bulkBatches}
             onNavigate={handleTabChange}
+            onNavigateBulk={(tab) => { setBulkMode(true); handleTabChange(tab); }}
             lang={lang}
           />
         );
       case 'new':
         return (
-          <B2BNewSubmission
-            clientId={client?.id ?? ''}
-            client={client}
-            onDone={() => { loadData(); handleTabChange('submissions'); }}
-            lang={lang}
-          />
+          <>
+            {modeToggle(t('Bulk Import', 'Impor Massal'), t('Single Submission', 'Pengajuan Satuan'))}
+            {bulkMode ? (
+              <B2BBulkImport
+                clientId={client?.id ?? ''}
+                client={client}
+                onDone={() => { loadData(); setBulkMode(false); handleTabChange('submissions'); }}
+                lang={lang}
+              />
+            ) : (
+              <B2BNewSubmission
+                clientId={client?.id ?? ''}
+                client={client}
+                onDone={() => { loadData(); handleTabChange('submissions'); }}
+                lang={lang}
+              />
+            )}
+          </>
         );
       case 'submissions':
         return (
-          <B2BSubmissions
-            clientId={client?.id ?? ''}
-            lang={lang}
-            onNavigate={handleTabChange}
-          />
+          <>
+            {modeToggle(t('Bulk Batches', 'Batch Massal'), t('Single Submissions', 'Pengajuan Satuan'))}
+            {bulkMode ? (
+              <B2BBulkBatches clientId={client?.id ?? ''} lang={lang} />
+            ) : (
+              <B2BSubmissions
+                clientId={client?.id ?? ''}
+                lang={lang}
+                onNavigate={handleTabChange}
+              />
+            )}
+          </>
         );
       case 'quotes':
         return <B2BQuotes clientId={client?.id ?? ''} lang={lang} companyName={client?.company_name} />;

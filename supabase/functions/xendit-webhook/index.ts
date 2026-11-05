@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
     // immediately without re-crediting commission / coins / overrides.
     const { data: existingPayment } = await supabase
       .from('sp_payments')
-      .select('id, status, order_id')
+      .select('id, status, order_id, batch_id')
       .eq('external_id', external_id)
       .maybeSingle();
 
@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
       // update commits, so only one PAID callback can transition this row and run
       // the downstream wallet/commission side effects.
       .neq('status', 'PAID')
-      .select('order_id, amount')
+      .select('order_id, batch_id, amount')
       .maybeSingle();
 
     if (payErr) {
@@ -451,6 +451,59 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ── B2B bulk batch payment (one invoice settles a whole uploaded fleet) ─
+    if (normalizedStatus === 'PAID' && payment.batch_id) {
+      const { data: batch } = await supabase
+        .from('sp_b2b_batches')
+        .select('id, batch_number, client_id, company_name, item_count, total_amount, status')
+        .eq('id', payment.batch_id)
+        .single();
+
+      const expectedAmount = Number(batch?.total_amount ?? 0);
+      const actualPaid = Number(paid_amount ?? 0);
+      const amountMismatch = batch && Math.abs(actualPaid - expectedAmount) > 100;
+
+      if (amountMismatch) {
+        console.error(`Amount mismatch for batch ${payment.batch_id}: expected ${expectedAmount}, paid ${actualPaid}`);
+        await supabase.from('sp_admin_notifications').insert({
+          type:     'PAYMENT_AMOUNT_MISMATCH',
+          title:    `Mismatch Pembayaran Batch B2B – ${batch?.batch_number ?? ''}`,
+          body:     `Dibayar Rp ${actualPaid.toLocaleString('id-ID')}, seharusnya Rp ${expectedAmount.toLocaleString('id-ID')}. Batch memerlukan review manual.`,
+          metadata: { batch_id: payment.batch_id, expected: expectedAmount, paid: actualPaid },
+          read:     false,
+        });
+        return new Response('ok', { status: 200, headers: CORS });
+      }
+
+      await supabase
+        .from('sp_b2b_batches')
+        .update({ status: 'PAID', updated_at: new Date().toISOString() })
+        .eq('id', payment.batch_id)
+        .in('status', ['SUBMITTED', 'INVOICED']);
+
+      // Line items move from PENDING (awaiting payment) to READY (awaiting
+      // the insurer's master policy) — issuance itself is a separate manual
+      // step (admin_b2b_bulk_issue) once the insurer hands back a real,
+      // signed policy document; this is never auto-generated.
+      await supabase
+        .from('sp_b2b_batch_items')
+        .update({ status: 'READY', updated_at: new Date().toISOString() })
+        .eq('batch_id', payment.batch_id)
+        .eq('status', 'PENDING');
+
+      if (batch) {
+        await supabase.from('sp_admin_notifications').insert({
+          type:     'B2B_BULK_PAID',
+          title:    `Pembayaran Batch B2B Diterima – ${batch.batch_number ?? ''}`,
+          body:     `${batch.company_name ?? 'Klien B2B'} telah membayar premi TLO massal untuk ${batch.item_count} unit. Batch siap diterbitkan polisnya.`,
+          metadata: { batch_id: batch.id, amount: paid_amount, payment_method },
+          read:     false,
+        });
+      }
+
+      return new Response('ok', { status: 200, headers: CORS });
+    }
+
     // If EXPIRED — update order and notify agent
     if (normalizedStatus === 'EXPIRED' && payment.order_id) {
       const { data: order } = await supabase
@@ -469,6 +522,15 @@ Deno.serve(async (req) => {
           read:     false,
         });
       }
+    }
+
+    // If EXPIRED — revert the B2B batch so the client can re-invoice it.
+    if (normalizedStatus === 'EXPIRED' && payment.batch_id) {
+      await supabase
+        .from('sp_b2b_batches')
+        .update({ status: 'SUBMITTED', updated_at: new Date().toISOString() })
+        .eq('id', payment.batch_id)
+        .eq('status', 'INVOICED');
     }
 
     return new Response('ok', { status: 200, headers: CORS });

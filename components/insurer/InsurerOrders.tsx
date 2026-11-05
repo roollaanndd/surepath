@@ -11,6 +11,7 @@ import { getInsurerDashboard, submitInsurerDecisionAuthed, uploadInsurerPolicy, 
 import { publishAndDownloadQuotation } from '../../services/quotationService';
 import { fromCustomerOrder } from '../../services/quotationSlipAdapter';
 import InsurerAIPanel from '../shared/InsurerAIPanel';
+import InsurerBulkBatches from './InsurerBulkBatches';
 import ModuleIcon from '../shared/ModuleIcon';
 
 interface Props {
@@ -62,6 +63,10 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
   const [activeStatus, setActiveStatus] = useState('SUBMITTED');
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
+  // Batch B2B lives inside this tab rather than a 6th bottom-nav entry —
+  // PortalTabBar is already full at 5 (same reasoning as B2BPortal.tsx's
+  // bulkMode toggle this session).
+  const [viewMode, setViewMode] = useState<'individual' | 'bulk'>('individual');
   const [selectedOrder, setSelectedOrder] = useState<InsurerOrder | null>(null);
   const [decisionMode, setDecisionMode] = useState<'APPROVED' | 'REQUEST_INFO' | 'DECLINED' | null>(null);
   const [notes, setNotes] = useState('');
@@ -205,6 +210,28 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
         art={<SpotOrdersArt size={72} />}
       />
 
+      {/* Individual / Batch B2B toggle */}
+      <div className="flex gap-2 p-1 bg-ds-card2 border border-ds-border rounded-2xl">
+        {([
+          { id: 'individual', label: 'Polis Individual' },
+          { id: 'bulk', label: 'Batch B2B' },
+        ] as const).map(m => (
+          <button
+            key={m.id}
+            onClick={() => setViewMode(m.id)}
+            className={`flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-colors ${
+              viewMode === m.id ? 'bg-emerald-500 text-white' : 'text-ds-ink3'
+            }`}
+          >
+            {m.label}
+          </button>
+        ))}
+      </div>
+
+      {viewMode === 'bulk' ? (
+        <InsurerBulkBatches authToken={authToken} refreshTick={refreshTick} />
+      ) : (
+      <>
       {/* Search */}
       <div className="relative">
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ds-ink3" />
@@ -663,6 +690,8 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
           <button className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 text-white text-xl flex items-center justify-center">✕</button>
           <img loading="lazy" src={lightboxUrl} alt="Dokumen" className="max-w-full max-h-full object-contain rounded-xl" />
         </div>
+      )}
+      </>
       )}
     </div>
   );

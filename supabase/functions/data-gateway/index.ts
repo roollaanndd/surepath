@@ -39,6 +39,8 @@ import { handleQuotationsAction } from './actions/quotations.ts';
 import { handleMarketingAction } from './actions/marketing.ts';
 import { handleMitraAccountsAction } from './actions/mitraAccounts.ts';
 import { handleDocumentsAction } from './actions/documents.ts';
+import { handleB2BBulkAction } from './actions/b2bBulk.ts';
+import { handleB2BSettingsAction } from './actions/b2bSettings.ts';
 
 // CORS allowlist
 const ALLOWED_ORIGINS = ['https://myinsurepath.com', 'https://www.myinsurepath.com'];
@@ -59,7 +61,7 @@ const FINANCE_ROLES = ['MASTER_ADMIN', 'ADMIN', 'FINANCE', 'FINANCE_MANAGER', 'F
 
 interface Caller { authId: string; email: string; spUser: Record<string, any> | null; role: string | null; isAdmin: boolean; isFinanceAdmin: boolean; userMetadata: Record<string, any> | null; ownerId: string; ownerIds: string[]; emailConfirmedAt: string | null; }
 
-const PUBLIC_ACTIONS = new Set(['submit_contact_lead', 'get_insurer_review', 'submit_insurer_decision', 'get_insurer_dashboard', 'insurer_submit_decision_authed', 'insurer_list_payments', 'insurer_upload_policy', 'get_public_quotation', 'confirm_public_quotation']);
+const PUBLIC_ACTIONS = new Set(['submit_contact_lead', 'get_insurer_review', 'submit_insurer_decision', 'get_insurer_dashboard', 'insurer_submit_decision_authed', 'insurer_list_payments', 'insurer_upload_policy', 'get_public_quotation', 'confirm_public_quotation', 'insurer_list_bulk_batches', 'insurer_bulk_request_upload_url', 'insurer_upload_bulk_master_policy']);
 
 Deno.serve(async (req) => {
   const CORS = corsHeaders(req.headers.get('origin'));
@@ -249,6 +251,8 @@ Deno.serve(async (req) => {
       await handleMarketingAction(action, ctx) ??
       await handleMitraAccountsAction(action, ctx) ??
       await handleDocumentsAction(action, ctx) ??
+      await handleB2BBulkAction(action, ctx) ??
+      await handleB2BSettingsAction(action, ctx) ??
       await handleContactLeadsAction(action, ctx) ??
       await handleMiscAction(action, ctx);
 

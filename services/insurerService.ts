@@ -149,6 +149,53 @@ export async function listInsurerOrderDocuments(
   return data?.documents ?? [];
 }
 
+// ─── B2B bulk batches assigned to this insurer ─────────────────────────────
+
+export interface InsurerBulkBatch {
+  id: string;
+  batch_number: string;
+  company_name: string;
+  item_count: number;
+  total_amount: number;
+  status: 'PAID' | 'ISSUED';
+  master_policy_number: string | null;
+  master_policy_signed_url: string | null;
+  created_at: string;
+}
+
+export async function listInsurerBulkBatches(token: string): Promise<InsurerBulkBatch[]> {
+  const { data, error } = await callGatewayToken<InsurerBulkBatch[]>('insurer_list_bulk_batches', { token });
+  if (error) throw new Error(error);
+  return data ?? [];
+}
+
+/**
+ * Uploads a master-policy PDF for a bulk batch and finalizes issuance. The
+ * insurer app has no Supabase session (bearer token only), so this goes
+ * through a service_role-issued signed upload URL rather than a direct
+ * client upload — the private b2b-documents bucket's owner-folder RLS has
+ * no way to recognize a token-authed caller.
+ */
+export async function uploadInsurerBulkMasterPolicy(
+  token: string,
+  batchId: string,
+  file: File,
+  policyNumber: string,
+): Promise<void> {
+  const { data: signed, error: signErr } = await callGatewayToken<{ path: string; signed_url: string; token: string }>(
+    'insurer_bulk_request_upload_url', { token, batch_id: batchId, file_name: file.name },
+  );
+  if (signErr || !signed) throw new Error(signErr ?? 'Gagal membuat signed upload URL');
+
+  const { error: upErr } = await supabase.storage.from('b2b-documents').uploadToSignedUrl(signed.path, signed.token, file, { contentType: file.type });
+  if (upErr) throw new Error(upErr.message);
+
+  const { error } = await callGatewayToken('insurer_upload_bulk_master_policy', {
+    token, batch_id: batchId, master_policy_path: signed.path, master_policy_number: policyNumber,
+  });
+  if (error) throw new Error(error);
+}
+
 export async function uploadInsurerPolicy(
   token: string,
   orderId: string,

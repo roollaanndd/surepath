@@ -62,3 +62,7 @@ build-server
 # which holds storePassword and keyPassword, was not.
 android/keystore.properties
 keystore.properties
+
+# Supabase CLI local state (version cache, link metadata) — machine-local,
+# never part of the project.
+supabase/.temp/

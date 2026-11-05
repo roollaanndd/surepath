@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Car, Plane, ShieldAlert, Package, Heart } from 'lucide-react';
 import { Language, UserRole } from './types';
 import { db, seedDatabase } from './db';
-import { supabase, getAgentByEmail, getUserTcStatus, recordTcAcceptance, recordUserHeartbeat, recordPageView, getActiveOjkRateSet, fetchMyProfileForLogin, ensureProfile } from './services/supabaseService';
+import { supabase, getAgentByEmail, getUserTcStatus, recordTcAcceptance, recordUserHeartbeat, recordPageView, getActiveOjkRateSet, getActiveB2BFleetRateConfig, fetchMyProfileForLogin, ensureProfile } from './services/supabaseService';
 import { applyOjkRateSet } from './services/ojkRates';
+import { setActiveBulkRateConfig } from './services/b2bFleetRating';
 import { initVehicleOverrides } from './services/vehicleOverrides';
 import { trackPageView } from './services/analytics';
 import TermsModal from './components/TermsModal';
@@ -60,6 +61,15 @@ const effectiveApps = (user: any): string[] => {
 // 2. Else if it has 1 entry → that app
 // 3. Else fall back to role-based routing (no allowed_apps at all)
 const rolePath = (user: any) => {
+  // B2B_CLIENT deliberately bypasses the allowed_apps/multi-app-selector
+  // system entirely (see effectiveApps' own comment above: its role-derived
+  // app id is CUSTOMER, specifically so the union below never grants it
+  // /agapps). That same collapse means the allowed.length===1 branch below
+  // sees a plain 'CUSTOMER' app id for a B2B_CLIENT too and would send it to
+  // /custapp — never actually broken (b2b.tsx's signed-in catch-all claims
+  // any pathname for this role regardless), but the URL bar showed the
+  // wrong portal. Special-cased here, before effectiveApps ever runs.
+  if (user?.role === UserRole.B2B_CLIENT) return '/b2bapps';
   const allowed = effectiveApps(user);
   if (allowed.length > 1) return '/select-app';
   if (allowed.length === 1) {
@@ -75,7 +85,14 @@ const rolePath = (user: any) => {
   return ADMIN_ROLES.includes(role) ? '/admin'
     : role === UserRole.OPERATOR ? '/operatorapp'
     : role === UserRole.MARKETING ? '/marketingapp'
-    : role === UserRole.AGENT ? '/agapps' : '/custapp';
+    : role === UserRole.AGENT ? '/agapps'
+    // FIX 2026-11-05: B2B_CLIENT had no branch here — it fell through to
+    // '/custapp'. src/app/routes/b2b.tsx's signed-in catch-all (B2BRoutes)
+    // claims ANY pathname for a B2B_CLIENT regardless, so this never broke
+    // functionality, but the URL bar showed the wrong portal after login —
+    // confusing, and the one thing a dedicated B2B login screen should get
+    // right.
+    : role === UserRole.B2B_CLIENT ? '/b2bapps' : '/custapp';
 };
 
 // Public standalone pages that must NEVER be hijacked by the post-login
@@ -168,6 +185,14 @@ const App = ({ initialRoute }: AppProps = {}) => {
   // is active — falls back silently to services/ojkRates.ts's built-in values.
   useEffect(() => {
     getActiveOjkRateSet().then(row => { if (row) applyOjkRateSet(row as any); }).catch(() => {});
+  }, []);
+
+  // Same pattern for the B2B bulk-fleet-specific rates (pickup/truck, heavy
+  // equipment, discounts, admin fees, min premium) — calcBulkPremium falls
+  // back silently to services/b2bFleetRating.ts's built-in defaults if no
+  // admin-edited set is active yet.
+  useEffect(() => {
+    getActiveB2BFleetRateConfig().then(row => { if (row) setActiveBulkRateConfig(row.rates); }).catch(() => {});
   }, []);
 
   // Harga kendaraan dikelola di CMS. Muat sekali saat boot, lalu segarkan saat

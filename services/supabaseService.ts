@@ -37,3 +37,5 @@ export * from './insurers';
 export * from './wallet';
 export * from './agreements';
 export * from './website';
+export * from './b2bBulk';
+export * from './tnc';

@@ -39,3 +39,4 @@ export * from './agreements';
 export * from './website';
 export * from './b2bBulk';
 export * from './tnc';
+export * from './manualCommission';

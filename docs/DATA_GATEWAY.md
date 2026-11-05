@@ -83,8 +83,21 @@ menyentuh kredensialnya bukan pekerjaan mereka.
 | Action | Peran | Keterangan |
 |---|---|---|
 | `admin_create_mitra` | ADMIN, MASTER_ADMIN | Buat pengguna auth **dan** profil `sp_users` dengan id yang sama. `mode: 'invite'` (bawaan) mengirim email undangan; `mode: 'temp'` (MASTER_ADMIN saja) mengembalikan kata sandi sementara. Role dipaksa `AGENT`; nilai bawaan sama dengan cabang AGENT di `ensure_profile`. Gagal menulis profil → pengguna auth dihapus kembali. |
+| `admin_create_internal_user` (v2.7.58) | ADMIN, MASTER_ADMIN | Buat pengguna internal (ADMIN/FINANCE/FINANCE_MANAGER/FINANCE_DIRECTOR/OPERATOR/INSURANCE_ADMIN/MASTER_ADMIN). Dua mode seperti `admin_create_mitra`: `invite` dan `password` (MASTER_ADMIN only, kata sandi dikembalikan sekali). Role MASTER_ADMIN/ADMIN hanya bisa dibuat oleh MASTER_ADMIN (anti-privilege-escalation). `verified = true` otomatis. |
 | `admin_send_mitra_reset` | ADMIN, MASTER_ADMIN | Dorong email setel ulang kata sandi lewat `POST /auth/v1/recover` (`redirect_to=…?reset=1`, dibaca `AuthGate`). MASTER_ADMIN juga menerima `recovery_link` sebagai cadangan bila email tidak sampai. Target harus `role = 'AGENT'`. |
 | `admin_set_mitra_temp_password` | MASTER_ADMIN | Setel kata sandi sementara, dikembalikan **sekali** di respons. Menyetel `user_metadata.must_change_password`, yang memaksa layar ganti sandi di login berikutnya. Target harus `role = 'AGENT'`. |
+
+### Kredit manual komisi & koin — four-eyes (v2.7.58)
+
+Untuk polis yang ditutup mitra di luar aplikasi. Semua kredit manual WAJIB
+melewati approval MASTER_ADMIN sebelum menyentuh wallet. Lihat
+`supabase/functions/data-gateway/actions/manualCommission.ts`.
+
+| Action | Peran | Keterangan |
+|---|---|---|
+| `finance_request_manual_commission` | MASTER_ADMIN, ADMIN, FINANCE, FINANCE_MANAGER, FINANCE_DIRECTOR | Buat baris PENDING di `sp_manual_commission_requests`. Validasi: target = AGENT, min salah satu dari komisi/koin > 0, alasan 10–1000 karakter, batas kewajaran 100jt / 1jt koin. Notifikasi MASTER_ADMIN via `sp_admin_notifications` + Telegram. |
+| `admin_list_manual_commission_requests` | MASTER_ADMIN, ADMIN, FINANCE* | List request dengan filter `scope: 'all' \| 'pending' \| 'mine'` + `status`. Proyeksi mencakup join agent/requester/decider. |
+| `master_decide_manual_commission` | MASTER_ADMIN | Approve atau reject. **Four-eyes**: `caller.id === requested_by` ditolak (CHECK di DB + gate di handler). Approve menandai APPROVED dulu (optimistic concurrency `.eq('status', 'PENDING')`), lalu memanggil `credit_agent_wallet` RPC + `sp_coin_ledger.insert` + `increment_coins_balance` RPC, lalu menandai APPLIED dengan `applied_wallet_tx_id`. Kegagalan di langkah kredit meninggalkan status APPROVED (bukan APPLIED) sebagai jejak audit; tidak ada retry otomatis. |
 
 **Tidak ada aksi "lihat kata sandi", dan tidak akan ada.** Supabase Auth
 menyimpan bcrypt hash; tidak ada jalan dari hash ke teks aslinya. Satu-satunya

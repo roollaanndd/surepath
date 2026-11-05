@@ -473,7 +473,7 @@ export async function handleAdminAction(action: string, ctx: GatewayContext): Pr
           order_id: null,
           action: 'ADMIN_BACKUP_EXPORT',
           details: { actor_email: caller.email, tables: Object.keys(result), row_counts: rowCounts, exported_at: exportedAt },
-        }).then(() => {}, (e) => console.warn('backup_export: audit write failed:', e?.message ?? e));
+        }).then(() => {}, (e: unknown) => console.warn('backup_export: audit write failed:', (e as { message?: string })?.message ?? e));
         return json({ data: { tables: result, exportedAt } });
       }
 

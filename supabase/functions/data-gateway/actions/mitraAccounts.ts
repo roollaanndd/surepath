@@ -372,6 +372,152 @@ export async function handleMitraAccountsAction(
       return json({ data: users });
     }
 
+    // ── Buat pengguna internal (ADMIN/FINANCE/OPERATOR/INSURANCE_ADMIN) ────
+    //
+    // Pengganti `admin_invite_user` lama yang hanya memberi mode undangan.
+    // Pola sama persis dengan admin_create_mitra & admin_create_b2b_user:
+    //   'invite'   → ADMIN atau MASTER_ADMIN; penerima menyetel sandi sendiri.
+    //   'password' → MASTER_ADMIN only; sandi manual, tampil sekali, wajib
+    //                diganti saat login pertama (must_change_password).
+    //
+    // Matriks role mencerminkan admin_update_user:
+    //   - MASTER_ADMIN dan ADMIN hanya boleh dibuat MASTER_ADMIN
+    //     (anti-privilege-escalation — ADMIN tidak bisa membuat ADMIN baru).
+    //   - Role lain (OPERATOR/FINANCE*/INSURANCE_ADMIN) boleh dibuat ADMIN
+    //     atau MASTER_ADMIN.
+    case 'admin_create_internal_user': {
+      if (!CAN_MANAGE_MITRA_ACCOUNT.includes(caller.role ?? '')) {
+        return json({ error: 'Forbidden: hanya ADMIN atau MASTER_ADMIN' }, 403);
+      }
+
+      const name = String(params.name ?? '').trim();
+      const email = String(params.email ?? '').trim().toLowerCase();
+      const role = String(params.role ?? '').trim().toUpperCase();
+      const phone = params.phone ? String(params.phone).trim() : null;
+
+      if (!name || !email || !role) {
+        return json({ error: 'name, email, role wajib diisi' }, 400);
+      }
+      if (!EMAIL_RE.test(email)) return json({ error: 'Format email tidak valid' }, 400);
+
+      // Role yang boleh dibuat lewat jalur ini — hanya pengguna internal.
+      // AGENT pakai admin_create_mitra, B2B_CLIENT pakai admin_create_b2b_user,
+      // CUSTOMER tidak dibuat admin.
+      const INTERNAL_ROLES = new Set([
+        'ADMIN', 'MASTER_ADMIN',
+        'FINANCE', 'FINANCE_MANAGER', 'FINANCE_DIRECTOR',
+        'INSURANCE_ADMIN', 'OPERATOR',
+      ]);
+      if (!INTERNAL_ROLES.has(role)) {
+        return json({ error: `Role ${role} bukan role internal. Gunakan admin_create_mitra untuk AGENT atau admin_create_b2b_user untuk B2B_CLIENT.` }, 400);
+      }
+      // Anti-eskalasi: hanya MASTER_ADMIN yang bisa membuat ADMIN/MASTER_ADMIN.
+      if ((role === 'ADMIN' || role === 'MASTER_ADMIN') && caller.role !== 'MASTER_ADMIN') {
+        return json({ error: `Hanya MASTER_ADMIN yang boleh membuat role ${role}.` }, 403);
+      }
+
+      // Domain gate — mitra saja yang lewat; staf internal selalu pakai
+      // domain yang kami percaya.
+      if (isUntrustedEmail(email) && caller.role !== 'MASTER_ADMIN') {
+        return json({
+          error: 'Domain email tersebut tidak bisa menerima email. Minta MASTER_ADMIN bila memang disengaja.',
+          code: 'UNTRUSTED_EMAIL_DOMAIN',
+        }, 403);
+      }
+
+      // Bentrokan dulu, pesan lebih jelas dibanding "duplicate key".
+      const { data: existing } = await db.from('sp_users')
+        .select('id, email, role').eq('email', email).maybeSingle();
+      if (existing) {
+        return json({
+          error: `Email ${email} sudah terdaftar sebagai ${existing.role ?? 'pengguna'}.`,
+          code: 'EMAIL_TAKEN',
+        }, 409);
+      }
+
+      const mode = params.mode === 'password' ? 'password' : 'invite';
+      let manualPassword: string | null = null;
+      if (mode === 'password') {
+        if (!CAN_SET_MITRA_PASSWORD.includes(caller.role ?? '')) {
+          return json({ error: 'Forbidden: kata sandi manual hanya MASTER_ADMIN (ADMIN memakai mode undangan)' }, 403);
+        }
+        manualPassword = String(params.password ?? '');
+        if (manualPassword.length < 10) {
+          return json({ error: 'Kata sandi minimal 10 karakter' }, 400);
+        }
+        const classes = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^A-Za-z0-9]/].filter((re) => re.test(manualPassword!)).length;
+        if (classes < 3) {
+          return json({ error: 'Kata sandi harus memuat minimal 3 dari 4 kelas karakter (huruf kecil, huruf besar, angka, simbol)' }, 400);
+        }
+      }
+
+      const authMeta = {
+        name,
+        ...(phone ? { phone } : {}),
+        role,
+        created_by_admin: caller.email,
+      };
+
+      let authUserId: string | null = null;
+      if (mode === 'password') {
+        const { data: created, error: createErr } = await db.auth.admin.createUser({
+          email,
+          password: manualPassword!,
+          email_confirm: true,
+          user_metadata: { ...authMeta, must_change_password: true },
+        });
+        if (createErr) return json({ error: createErr.message }, 400);
+        authUserId = created.user?.id ?? null;
+      } else {
+        const { data: invited, error: inviteErr } = await db.auth.admin.inviteUserByEmail(email, {
+          redirectTo: `${APP_ORIGIN}/admin`,
+          data: authMeta,
+        });
+        if (inviteErr) return json({ error: inviteErr.message }, 400);
+        authUserId = invited.user?.id ?? null;
+      }
+      if (!authUserId) return json({ error: 'Gagal membuat akun auth' }, 500);
+
+      const insertRow: Record<string, unknown> = {
+        id: authUserId,
+        email,
+        name,
+        role,
+        ...(phone ? { phone } : {}),
+        verified: true, // staf internal tidak melalui verifikasi dokumen
+      };
+
+      const { data: profile, error: profileErr } = await db.from('sp_users')
+        .insert(insertRow).select().single();
+      if (profileErr) {
+        // Hindari akun auth yatim — ensure_profile akan membuatnya sebagai
+        // CUSTOMER kalau ditinggal, dan itu lebih buruk daripada gagal total.
+        await db.auth.admin.deleteUser(authUserId).catch(() => {});
+        return json({ error: profileErr.message }, 400);
+      }
+
+      db.from('sp_admin_notifications').insert({
+        type: 'NEW_INTERNAL_USER',
+        title: 'Pengguna Internal Baru',
+        body: `${name} (${email}) ditambahkan sebagai ${role} oleh ${caller.email}.`,
+        read: false,
+        metadata: { user_id: profile.id, role, email, created_by: caller.email, mode },
+      }).then(() => {}, () => {});
+
+      sendTelegram(
+        `Pengguna Internal Baru - SurePath\n\n` +
+        `Nama: ${name}\nEmail: ${email}\nRole: ${role}\n` +
+        `Ditambahkan oleh: ${caller.email}\n` +
+        `Mode: ${mode === 'password' ? 'kata sandi manual' : 'email undangan'}`,
+      );
+
+      return json({
+        data: profile,
+        mode,
+        temp_password: mode === 'password' ? manualPassword : null,
+      });
+    }
+
     // ── Dorong setel ulang kata sandi ─────────────────────────────────────
     case 'admin_send_mitra_reset': {
       if (!CAN_MANAGE_MITRA_ACCOUNT.includes(caller.role ?? '')) {

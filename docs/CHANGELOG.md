@@ -1,5 +1,70 @@
 # SurePath — Changelog
 
+## v2.7.58 — 2026-11-05
+
+### Tambah user password manual + Kredit manual komisi/koin (four-eyes) + UX modal
+
+Tiga direktif owner digabung dalam satu rilis — semua di Admin CMS:
+
+**A. Admin Dashboard: tambah pengguna internal dengan kata sandi manual.**
+Sebelum ini modal "Tambah Admin Baru" hanya punya mode email-undangan;
+pola mode `password` yang sudah ada untuk Mitra & B2B tidak tersedia untuk
+ADMIN/FINANCE/OPERATOR/INSURANCE_ADMIN. Ditambahkan aksi gateway baru
+`admin_create_internal_user` (dua mode `invite` + `password`, mode password
+MASTER_ADMIN only) dan modal `AddInternalUserModal` yang mencerminkan pola
+AddMitraModal: role picker dengan matriks eskalasi (MASTER_ADMIN/ADMIN
+hanya bisa dibuat MASTER_ADMIN), input sandi dengan kebijakan min 10 + 3
+dari 4 kelas karakter, serta `CredentialModal` sekali-tampil (sandi tidak
+disimpan di mana pun). Label tombol pemicu di menu Kelola Akun berubah dari
+"Tambah Admin" menjadi "Tambah Pengguna".
+
+**B. Finance: Kredit manual komisi & koin (four-eyes approval).** Untuk
+polis yang ditutup mitra di luar aplikasi (telepon, kunjungan, mitra
+institusi). Alurnya:
+- DB: tabel baru `sp_manual_commission_requests` dengan deny-all RLS,
+  CHECK constraint four-eyes (`decided_by <> requested_by`) dan status
+  terbatas `PENDING → APPROVED → APPLIED` atau `PENDING → REJECTED`.
+- Gateway: 3 aksi baru di `manualCommission.ts`
+  - `finance_request_manual_commission` (FINANCE_ROLES — tidak termasuk
+    OPERATOR, konsisten dengan gerbang wallet)
+  - `admin_list_manual_commission_requests` (FINANCE_ROLES + MASTER_ADMIN)
+  - `master_decide_manual_commission` (MASTER_ADMIN only; approve memanggil
+    `credit_agent_wallet` RPC + `sp_coin_ledger` + `increment_coins_balance`,
+    lalu pindah ke APPLIED dan menyimpan `applied_wallet_tx_id` sebagai
+    audit link; reject wajib alasan min 5 karakter)
+- UI: dua view baru di grup Keuangan → Komisi
+  - **Kredit Manual** (`manual_credit`, Finance/Admin/MASTER_ADMIN): form
+    pengajuan dengan agent picker (search), nominal IDR + koin, nomor
+    polis referensi, alasan wajib (min 10 karakter), plus tabel
+    permintaan milik caller dengan status real-time.
+  - **Approval Kredit Manual** (`credit_approvals`, MASTER_ADMIN only):
+    antrean PENDING + tab riwayat. Tombol Setujui/Tolak dimatikan untuk
+    permintaan yang diajukan caller sendiri (four-eyes UX).
+- Notifikasi: MASTER_ADMIN menerima lonceng CMS + Telegram tiap request
+  baru; requester & mitra diberi tahu saat disetujui/ditolak.
+- 18 test baru (`services/__tests__/manualCommission.test.ts`): gerbang
+  peran, validasi, four-eyes anti-self-approve, dan jalur approve
+  memanggil RPC yang benar.
+
+**C. UX modal — fix "lembaran hitam".** Owner menyebut modal yang terbuka
+dari CMS punya backdrop terlalu gelap dan ukuran tidak user-friendly.
+Dibuat wrapper terpadu `components/admin/shared/AdminModal.tsx`:
+- Backdrop standar `bg-slate-900/40 dark:bg-slate-950/55 backdrop-blur-[3px]`
+  (lebih lembut dari `bg-black/80` lama), dengan tone `prominent` untuk
+  modal yang memang perlu menarik perhatian (CredentialModal).
+- Ukuran konsisten `sm|md|lg|xl|2xl`, `max-h-[92dvh]`, scroll contained
+  (tidak "menjepit" header/footer saat konten panjang).
+- Sticky footer, Escape close, klik backdrop close, `aria-modal`.
+- Diterapkan ke: `CredentialModal`, `AddInternalUserModal` baru,
+  `ManualCommissionRequest/ApprovalView`, `DecisionDialog`. Juga memperbaiki
+  backdrop `bg-black/80` di `BulkImportModal` dan `ProductConfigAdmin`.
+- Nav: dua leaf baru (`manual_credit`, `credit_approvals`) wiring ke
+  AdminPortal + ADMIN_MENU_ITEMS; pinned count naik 31 → 33.
+
+Verifikasi: `tsc --noEmit` 0 error, eslint bersih, vitest **639 lulus**
+(sebelumnya 620 + 19 tes baru), vite build sukses. Migration
+`20261106150000_manual_commission_requests` sudah diterapkan ke production.
+
 ## v2.7.55 — 2026-11-05
 
 ### Portal Mitra: ikon Beranda, STNK setara Nasabah, rentang harga, diskon di step 4, handoff pembelian & approval manual

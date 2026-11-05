@@ -48,15 +48,44 @@ const UserDetailModal: React.FC<{ userId: string; onClose: () => void }> = ({ us
     getAdminUser(userId).then(d => { setUser(d); setLoading(false); });
   }, [userId]);
 
-  const Field: React.FC<{ label: string; value?: string | number | null }> = ({ label, value }) => (
-    <div className="space-y-0.5">
-      <p className="text-2xs font-black uppercase tracking-[0.25em] text-ds-ink3">{label}</p>
-      <p className="text-xs font-bold text-ds-ink break-all">{value || <span className="text-ds-ink2">—</span>}</p>
+  // Refine v2.7.57: Field berbentuk kartu kecil dengan teks yang terbaca
+  // (sebelumnya label 2xs + nilai text-xs di grid rapat — terasa penuh dan
+  // "tidak fit", terutama di layar sempit), grid responsif 1→2 kolom.
+  const Field: React.FC<{ label: string; value?: string | number | null; mono?: boolean }> = ({ label, value, mono }) => (
+    <div className="min-w-0 rounded-2xl border border-ds-border bg-ds-card2 px-4 py-3">
+      <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3">{label}</p>
+      <p className={`mt-1 text-sm font-bold text-ds-ink break-words ${mono ? 'font-mono' : ''}`}>
+        {value || <span className="font-medium text-ds-ink2">—</span>}
+      </p>
     </div>
   );
 
+  const SectionTitle: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+    <p className="flex items-center gap-2 text-2xs font-black uppercase tracking-[0.2em] text-ds-ink3">
+      <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500/70" />{children}
+    </p>
+  );
+
+  const statusMeta = user
+    ? user.is_suspended
+      ? { label: 'Suspended', cls: 'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/20' }
+      : user.verified
+        ? { label: 'Aktif', cls: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20' }
+        : { label: 'Pending Verifikasi', cls: 'bg-amber-500/10 text-amber-800 dark:text-amber-400 border-amber-500/20' }
+    : null;
+
   return (
-    <DetailDrawer open onClose={onClose} title="Detail Pengguna">
+    <DetailDrawer
+      open
+      onClose={onClose}
+      title={user?.name ?? 'Detail Pengguna'}
+      subtitle={user?.email}
+      headerExtra={statusMeta && (
+        <span className={`rounded-full border px-2.5 py-1 text-2xs font-black uppercase tracking-widest ${statusMeta.cls}`}>
+          {statusMeta.label}
+        </span>
+      )}
+    >
         {loading ? (
           <div className="flex justify-center py-16">
             <div className="w-8 h-8 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
@@ -64,68 +93,78 @@ const UserDetailModal: React.FC<{ userId: string; onClose: () => void }> = ({ us
         ) : !user ? (
           <div className="text-center py-12 text-ds-ink3 text-sm font-bold">Data tidak ditemukan.</div>
         ) : (
-          <div className="space-y-6">
-            {/* Photos */}
-            <div className="grid grid-cols-2 gap-4">
-              {/* Profile photo */}
-              <div className="space-y-2">
-                <p className="text-2xs font-black uppercase tracking-[0.25em] text-ds-ink3">Foto Profil</p>
-                {user.profile_photo_url && !imgError['profile'] ? (
-                  <img
-                    src={user.profile_photo_url}
-                    alt="Foto profil"
-                    className="w-full h-36 object-cover rounded-2xl border border-ds-border"
-                    onError={() => setImgError(p => ({ ...p, profile: true }))}
-                  />
-                ) : (
-                  <div className="w-full h-36 rounded-2xl border border-ds-border bg-ds-card2 flex items-center justify-center">
-                    <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 text-ds-green flex items-center justify-center font-black text-2xl">
-                      {user.name?.charAt(0)?.toUpperCase() ?? '?'}
-                    </div>
-                  </div>
-                )}
-              </div>
-              {/* KTP document */}
-              <div className="space-y-2">
-                <p className="text-2xs font-black uppercase tracking-[0.25em] text-ds-ink3">Dokumen KTP</p>
-                {user.ktp_document_url ? (
-                  <SecureDocLink url={user.ktp_document_url} className="block w-full">
-                    <SecureDocImage
-                      url={user.ktp_document_url}
-                      alt="KTP"
-                      className="w-full h-36 object-cover rounded-2xl border border-ds-border hover:opacity-80 transition-opacity cursor-pointer"
+          <div className="space-y-7">
+            {/* Dokumen */}
+            <div className="space-y-3">
+              <SectionTitle>Dokumen</SectionTitle>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Profile photo */}
+                <div className="space-y-2">
+                  <p className="text-2xs font-bold uppercase tracking-widest text-ds-ink3">Foto Profil</p>
+                  {user.profile_photo_url && !imgError['profile'] ? (
+                    <img
+                      src={user.profile_photo_url}
+                      alt="Foto profil"
+                      className="h-40 w-full object-cover rounded-2xl border border-ds-border"
+                      onError={() => setImgError(p => ({ ...p, profile: true }))}
                     />
-                  </SecureDocLink>
-                ) : (
-                  <div className="w-full h-36 rounded-2xl border border-ds-border bg-ds-card2 flex items-center justify-center text-ds-ink2 text-xs font-bold">
-                    Belum ada dokumen
-                  </div>
-                )}
+                  ) : (
+                    <div className="flex h-40 w-full items-center justify-center rounded-2xl border border-ds-border bg-ds-card2">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 font-black text-2xl text-ds-green">
+                        {user.name?.charAt(0)?.toUpperCase() ?? '?'}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {/* KTP document */}
+                <div className="space-y-2">
+                  <p className="text-2xs font-bold uppercase tracking-widest text-ds-ink3">Dokumen KTP</p>
+                  {user.ktp_document_url ? (
+                    <SecureDocLink url={user.ktp_document_url} className="block w-full">
+                      <SecureDocImage
+                        url={user.ktp_document_url}
+                        alt="KTP"
+                        className="h-40 w-full object-cover rounded-2xl border border-ds-border transition-opacity hover:opacity-80"
+                      />
+                    </SecureDocLink>
+                  ) : (
+                    <div className="flex h-40 w-full items-center justify-center rounded-2xl border border-ds-border bg-ds-card2 text-xs font-bold text-ds-ink2">
+                      Belum ada dokumen
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Personal data */}
-            <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-              <Field label="Nama Lengkap" value={user.name} />
-              <Field label="Email" value={user.email} />
-              <Field label="No. Telepon" value={user.phone} />
-              <Field label="Role" value={user.role} />
-              <Field label="No. KTP" value={user.ktp} />
-              <Field label="Alamat" value={user.address} />
-              <Field label="Tanggal Daftar" value={user.created_at ? new Date(user.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : null} />
-              <Field label="Status" value={user.is_suspended ? 'Suspended' : user.verified ? 'Aktif ✓' : 'Pending Verifikasi'} />
+            {/* Data pribadi */}
+            <div className="space-y-3">
+              <SectionTitle>Data Pribadi</SectionTitle>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Field label="Nama Lengkap" value={user.name} />
+                <Field label="Email" value={user.email} mono />
+                <Field label="No. Telepon" value={user.phone} mono />
+                <Field label="Role" value={String(user.role ?? '').replace('_', ' ')} />
+                <Field label="No. KTP" value={user.ktp} mono />
+                <Field label="Alamat" value={user.address} />
+                <Field label="Tanggal Daftar" value={user.created_at ? new Date(user.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : null} />
+              </div>
             </div>
 
-            {/* Agent-specific */}
+            {/* Data mitra */}
             {user.role === 'AGENT' && (
-              <div className="pt-4 border-t border-ds-border grid grid-cols-2 gap-x-6 gap-y-4">
-                <Field label="Kode Mitra" value={user.agent_code} />
-                <Field label="Kode Referral" value={user.referral_code} />
-                <Field label="Tier" value={user.tier ?? 'Standard'} />
-                <Field label="Komisi Rate" value={user.commission_rate != null ? `${(user.commission_rate * 100).toFixed(0)}%` : null} />
-                <Field label="Target Bulanan" value={user.monthly_target ? `Rp ${Number(user.monthly_target).toLocaleString('id-ID')}` : null} />
-                <Field label="Trust Score" value={user.trust_score != null ? String(user.trust_score) : null} />
-                {user.upline_id && <Field label="Upline ID" value={user.upline_id} />}
+              <div className="space-y-3">
+                <SectionTitle>Data Mitra</SectionTitle>
+                <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <Field label="Kode Mitra" value={user.agent_code} mono />
+                    <Field label="Kode Referral" value={user.referral_code} mono />
+                    <Field label="Tier" value={user.tier ?? 'Standard'} />
+                    <Field label="Komisi Rate" value={user.commission_rate != null ? `${(user.commission_rate * 100).toFixed(0)}%` : null} />
+                    <Field label="Target Bulanan" value={user.monthly_target ? `Rp ${Number(user.monthly_target).toLocaleString('id-ID')}` : null} />
+                    <Field label="Trust Score" value={user.trust_score != null ? String(user.trust_score) : null} />
+                    {user.upline_id && <Field label="Upline ID" value={user.upline_id} mono />}
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -1334,79 +1373,92 @@ const AddMitraModal: React.FC<{
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-5">
       <div className="absolute inset-0 bg-slate-900/35 dark:bg-black/65 backdrop-blur-[2px]" onClick={onClose} />
-      <div role="dialog" aria-modal="true" aria-labelledby="add-mitra-title" className="relative z-10 w-full max-w-3xl max-h-[92dvh] overflow-y-auto overscroll-contain no-scrollbar bg-white dark:bg-ds-card text-slate-900 dark:text-white border border-slate-200 dark:border-ds-border rounded-2xl sm:rounded-3xl px-5 py-5 sm:px-7 sm:py-6 shadow-[0_24px_80px_rgba(15,23,42,0.22)]">
-        <h3 id="add-mitra-title" className="font-bold tracking-tight text-base sm:text-lg mb-4 flex items-center gap-3">
+      <div role="dialog" aria-modal="true" aria-labelledby="add-mitra-title" className="relative z-10 w-full max-w-2xl max-h-[92dvh] overflow-y-auto overscroll-contain no-scrollbar bg-white dark:bg-ds-card text-slate-900 dark:text-white border border-slate-200 dark:border-ds-border rounded-2xl sm:rounded-3xl px-5 py-5 sm:px-7 sm:py-6 shadow-[0_24px_80px_rgba(15,23,42,0.22)]">
+        <h3 id="add-mitra-title" className="font-bold tracking-tight text-base sm:text-lg flex items-center gap-3">
           <UserPlus size={18} className="text-ds-green" /> Tambah Mitra Baru
         </h3>
+        <p className="mt-1 text-xs text-slate-500 dark:text-ds-ink3">Akun login dan profil mitra dibuat sekaligus dalam satu langkah.</p>
         {error && (
-          <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-400 font-bold">{error}</div>
+          <div className="mt-4 mb-1 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-400 font-bold">{error}</div>
         )}
-        <div className="space-y-3">
-          <div>
-            <label className={labelCls}>Nama Lengkap</label>
-            <input type="text" value={form.name} onChange={set('name')} placeholder="Cth: Budi Santoso" className={inputCls} />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className={labelCls}>Email</label>
-              <input type="email" value={form.email} onChange={set('email')} placeholder="budi@email.com" className={inputCls} />
+        <div className="mt-5 space-y-6">
+          {/* ── Data mitra ── */}
+          <section className="space-y-3">
+            <p className="flex items-center gap-2 text-2xs font-black uppercase tracking-[0.2em] text-slate-500 dark:text-ds-ink3">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500/70" />Data Mitra
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="sm:col-span-2">
+                <label className={labelCls}>Nama Lengkap</label>
+                <input type="text" value={form.name} onChange={set('name')} placeholder="Cth: Budi Santoso" className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Email</label>
+                <input type="email" value={form.email} onChange={set('email')} placeholder="budi@email.com" className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Nomor HP</label>
+                <input type="tel" value={form.phone} onChange={set('phone')} placeholder="08xxxxxxxxxx" className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>NIK KTP (opsional)</label>
+                <input type="text" value={form.ktp} onChange={set('ktp')} placeholder="16 digit" className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Kode Upline (opsional)</label>
+                <input type="text" value={form.upline_code} onChange={set('upline_code')} placeholder="SP-AGT-1234" className={inputCls} />
+              </div>
+              <div className="sm:col-span-2">
+                <label className={labelCls}>Alamat (opsional)</label>
+                <input type="text" value={form.address} onChange={set('address')} placeholder="Alamat domisili" className={inputCls} />
+              </div>
             </div>
-            <div>
-              <label className={labelCls}>Nomor HP</label>
-              <input type="tel" value={form.phone} onChange={set('phone')} placeholder="08xxxxxxxxxx" className={inputCls} />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className={labelCls}>NIK KTP (opsional)</label>
-              <input type="text" value={form.ktp} onChange={set('ktp')} placeholder="16 digit" className={inputCls} />
-            </div>
-            <div>
-              <label className={labelCls}>Kode Upline (opsional)</label>
-              <input type="text" value={form.upline_code} onChange={set('upline_code')} placeholder="SP-AGT-1234" className={inputCls} />
-            </div>
-          </div>
-          <div>
-            <label className={labelCls}>Alamat (opsional)</label>
-            <input type="text" value={form.address} onChange={set('address')} placeholder="Alamat domisili" className={inputCls} />
-          </div>
+          </section>
 
-          <div>
-            <label className={labelCls}>Cara Mitra Masuk Pertama Kali</label>
+          {/* ── Akses pertama ── */}
+          <section className="space-y-3">
+            <p className="flex items-center gap-2 text-2xs font-black uppercase tracking-[0.2em] text-slate-500 dark:text-ds-ink3">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500/70" />Cara Mitra Masuk Pertama Kali
+            </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => setMode('invite')}
-                className={`w-full text-left px-3.5 py-3 rounded-xl border transition-all ${
-                  mode === 'invite' ? 'border-emerald-500 bg-emerald-500/10' : 'border-ds-border bg-ds-card2'
+                className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${
+                  mode === 'invite' ? 'border-emerald-500 bg-emerald-500/10' : 'border-ds-border bg-ds-card2 hover:border-emerald-500/40'
                 }`}
               >
                 <p className="text-xs font-bold text-slate-900 dark:text-white">Email Undangan</p>
                 <p className="text-xs text-slate-600 dark:text-ds-ink3 mt-1">Mitra menerima email dan menyetel kata sandinya sendiri. Disarankan.</p>
               </button>
-              {canSetTempPassword && (
+              {canSetTempPassword ? (
                 <button
                   type="button"
                   onClick={() => setMode('temp')}
                   className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${
-                    mode === 'temp' ? 'border-amber-500 bg-amber-500/10' : 'border-ds-border bg-ds-card2'
+                    mode === 'temp' ? 'border-amber-500 bg-amber-500/10' : 'border-ds-border bg-ds-card2 hover:border-amber-500/40'
                   }`}
                 >
                   <p className="text-xs font-bold text-slate-900 dark:text-white">Kata Sandi Sementara</p>
                   <p className="text-xs text-slate-600 dark:text-ds-ink3 mt-1">Ditampilkan sekali dan wajib diganti saat login pertama.</p>
                 </button>
+              ) : (
+                <div className="w-full text-left px-4 py-3 rounded-xl border border-dashed border-ds-border bg-ds-card2/50 opacity-60">
+                  <p className="text-xs font-bold text-slate-900 dark:text-white">Kata Sandi Sementara</p>
+                  <p className="text-xs text-slate-600 dark:text-ds-ink3 mt-1">Hanya MASTER_ADMIN.</p>
+                </div>
               )}
             </div>
-          </div>
+          </section>
 
-          <p className="mt-3 rounded-xl bg-slate-50 dark:bg-ds-card2 px-3.5 py-3 text-xs text-slate-600 dark:text-ds-ink3 leading-relaxed">
+          <p className="rounded-xl bg-slate-50 dark:bg-ds-card2 px-3.5 py-3 text-xs text-slate-600 dark:text-ds-ink3 leading-relaxed">
             Mitra dibuat dengan status <span className="font-bold text-amber-700 dark:text-amber-400">belum terverifikasi</span>, komisi
             10%, dan target bulanan Rp 50 juta — persis seperti mitra yang mendaftar sendiri. Tekan Approve pada
             barisnya setelah dokumennya diperiksa.
           </p>
         </div>
 
-        <div className="flex gap-3 mt-4 sticky bottom-0 bg-white dark:bg-ds-card pt-3 pb-1 border-t border-slate-100 dark:border-ds-border">
+        <div className="flex gap-3 mt-5 sticky bottom-0 bg-white dark:bg-ds-card pt-3 pb-1 border-t border-slate-100 dark:border-ds-border">
           <button
             onClick={onClose}
             className="flex-1 py-2.5 border border-slate-200 dark:border-ds-border text-slate-700 dark:text-ds-ink3 rounded-xl font-semibold text-sm transition-all hover:bg-slate-50 dark:hover:bg-ds-card2"
@@ -1647,7 +1699,10 @@ export const AgentManagementView = () => {
 
     return (
       <Card key={a.id} className="py-5">
-        <div className="flex flex-col md:flex-row md:items-center gap-4">
+        {/* Refine v2.7.57: info di kiri, semua kontrol dalam satu cluster yang
+            membungkus (flex-wrap) — sebelumnya empat kelompok kontrol dipaksa
+            sebaris sejak md, saling mendorong hingga overflow / tidak fit. */}
+        <div className="flex flex-col xl:flex-row xl:items-center gap-4">
           {/* Avatar + info — click to view full profile */}
           <button
             type="button"
@@ -1679,9 +1734,11 @@ export const AgentManagementView = () => {
             </div>
           </button>
 
+          {/* Kontrol — satu cluster flex-wrap agar tidak saling mendorong */}
+          <div className="flex flex-wrap items-center gap-2">
           {/* Tier selector — business manager only */}
           {canAssignTier && (
-            <div className="flex items-center gap-1.5 flex-shrink-0">
+            <div className="flex items-center gap-1.5">
               {pendingTierRequests.has(a.id) && (
                 <span className="px-2 py-1 rounded-lg text-2xs font-black uppercase tracking-widest bg-amber-500/10 text-amber-800 dark:text-amber-400">
                   {pendingTierRequests.get(a.id)
@@ -1750,7 +1807,7 @@ export const AgentManagementView = () => {
 
           {/* Akun & kata sandi */}
           {canManageMitraAccount && (
-            <div className="flex items-center gap-1.5 flex-shrink-0">
+            <div className="flex items-center gap-1.5">
               <button
                 onClick={() => handleSendReset(a)}
                 disabled={pwBusy === a.id + '_reset'}
@@ -1778,7 +1835,7 @@ export const AgentManagementView = () => {
           <button
             disabled={saving === a.id}
             onClick={() => handleVerify(a.id, !verified)}
-            className={`px-6 py-2.5 rounded-2xl text-2xs font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 flex-shrink-0 ${
+            className={`px-6 py-2.5 rounded-2xl text-2xs font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 ${
               verified
                 ? 'bg-rose-500/10 text-rose-700 dark:text-rose-300 hover:bg-rose-500 hover:text-white'
                 : 'bg-emerald-500 text-white shadow-emerald-500/20 hover:bg-emerald-600'
@@ -1786,6 +1843,7 @@ export const AgentManagementView = () => {
           >
             {saving === a.id ? '…' : verified ? 'Revoke' : 'Approve'}
           </button>
+          </div>
         </div>
       </Card>
     );
@@ -2272,14 +2330,14 @@ export const UserManagementView = () => {
         </div>
       </div>
 
-      {/* Table */}
+      {/* Table — refine v2.7.57: email dipindah ke bawah nama (kolom hilang
+          satu, tabel tidak lagi sesak) */}
       <Card className="p-0 overflow-hidden">
         <div className="overflow-x-auto no-scrollbar">
-          <table className="w-full text-left whitespace-nowrap min-w-[800px]">
+          <table className="w-full text-left whitespace-nowrap min-w-[760px]">
             <thead>
               <tr className="border-b border-ds-border text-2xs font-black uppercase text-ds-ink3 tracking-[0.2em]">
                 <th className="py-4 pl-6">Nama</th>
-                <th className="py-4">Email</th>
                 <th className="py-4">Role</th>
                 <th className="py-4">Apps</th>
                 <th className="py-4">Status</th>
@@ -2307,10 +2365,12 @@ export const UserManagementView = () => {
                             <img loading="lazy" src={(u as any).profile_photo_url} alt={u.name} className="w-full h-full object-cover" />
                           ) : (u.name?.[0] ?? '?').toUpperCase()}
                         </div>
-                        <span className="font-bold text-ds-ink truncate max-w-[140px]">{u.name}</span>
+                        <div className="min-w-0">
+                          <span className="block font-bold text-ds-ink truncate max-w-[160px]">{u.name}</span>
+                          <span className="block text-2xs font-mono text-ds-ink3 truncate max-w-[200px]" title={u.email}>{u.email}</span>
+                        </div>
                       </button>
                     </td>
-                    <td className="py-3.5 font-mono text-2xs text-ds-ink3">{u.email}</td>
                     <td className="py-3.5">
                       {isEditingRole ? (
                         <div className="flex items-center gap-2">
@@ -2435,18 +2495,20 @@ export const UserManagementView = () => {
         <PartnerDirectorySection />
       )}
 
-      {/* Add Admin Modal */}
+      {/* Add Admin Modal — refine v2.7.57: sudut, judul, dan input
+          diselaraskan dengan modal Tambah Mitra */}
       {showAddModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowAddModal(false)} />
-          <div className="relative z-10 w-full max-w-md mx-4 bg-ds-card border border-ds-border rounded-[2.5rem] p-8 shadow-2xl">
-            <h3 className="font-black uppercase tracking-widest text-sm mb-6 flex items-center gap-3">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-5">
+          <div className="absolute inset-0 bg-slate-900/35 dark:bg-black/65 backdrop-blur-[2px]" onClick={() => { setShowAddModal(false); setAddError(null); }} />
+          <div className="relative z-10 w-full max-w-md bg-ds-card border border-ds-border rounded-2xl sm:rounded-3xl p-6 sm:p-7 shadow-2xl">
+            <h3 className="font-bold tracking-tight text-base sm:text-lg flex items-center gap-3">
               <UserPlus size={18} className="text-ds-green" /> Tambah Admin Baru
             </h3>
+            <p className="mt-1 text-xs text-ds-ink3">Undangan dikirim ke email — penerima menyetel kata sandinya sendiri.</p>
             {addError && (
-              <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-400 font-bold">{addError}</div>
+              <div className="mt-4 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-400 font-bold">{addError}</div>
             )}
-            <div className="space-y-4">
+            <div className="mt-5 space-y-4">
               <div>
                 <label className="block text-2xs font-black text-ds-ink3 uppercase tracking-widest mb-1.5">Nama Lengkap</label>
                 <input
@@ -2454,7 +2516,7 @@ export const UserManagementView = () => {
                   value={newUser.name}
                   onChange={e => setNewUser({ ...newUser, name: e.target.value })}
                   placeholder="Cth: Budi Santoso"
-                  className="w-full bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm text-ds-ink font-mono focus:outline-none focus:border-emerald-500 transition-all"
+                  className="w-full bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm text-ds-ink focus:outline-none focus:border-emerald-500 transition-all"
                 />
               </div>
               <div>
@@ -2464,7 +2526,7 @@ export const UserManagementView = () => {
                   value={newUser.email}
                   onChange={e => setNewUser({ ...newUser, email: e.target.value })}
                   placeholder="admin@surepath.id"
-                  className="w-full bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm text-ds-ink font-mono focus:outline-none focus:border-emerald-500 transition-all"
+                  className="w-full bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm text-ds-ink focus:outline-none focus:border-emerald-500 transition-all"
                 />
               </div>
               <div>
@@ -2472,7 +2534,7 @@ export const UserManagementView = () => {
                 <select
                   value={newUser.role}
                   onChange={e => setNewUser({ ...newUser, role: e.target.value as UserRole })}
-                  className="w-full bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm text-ds-ink font-mono focus:outline-none focus:border-emerald-500 transition-all [&>option]:bg-ds-card"
+                  className="w-full bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm text-ds-ink focus:outline-none focus:border-emerald-500 transition-all [&>option]:bg-ds-card"
                 >
                   {Object.values(UserRole).map(r => (
                     <option key={r} value={r}>{r.replace('_', ' ')}</option>
@@ -2483,14 +2545,14 @@ export const UserManagementView = () => {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => { setShowAddModal(false); setAddError(null); }}
-                className="flex-1 py-3 bg-ds-card2 text-ds-ink3 rounded-2xl font-black uppercase text-2xs tracking-widest hover:bg-ds-card2 transition-all"
+                className="flex-1 py-2.5 border border-ds-border text-ds-ink3 rounded-xl font-semibold text-sm transition-all hover:bg-ds-card2"
               >
                 Batal
               </button>
               <button
                 onClick={handleAddUser}
                 disabled={addLoading}
-                className="flex-1 py-3 bg-emerald-500 text-white rounded-2xl font-black uppercase text-2xs tracking-widest hover:bg-emerald-600 shadow-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 py-2.5 bg-emerald-500 text-white rounded-xl font-semibold text-sm hover:bg-emerald-600 shadow-sm transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {addLoading ? 'Mengirim...' : 'Kirim Undangan'}
               </button>

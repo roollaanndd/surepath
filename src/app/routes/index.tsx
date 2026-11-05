@@ -6,6 +6,7 @@ import { RecoveryGateRoutes, AuthEntryRoutes, SelectAppRoutes, DefaultAuthGateRo
 import { StandaloneRoutes } from './standalone';
 import { InsurerRoutes } from './insurer';
 import { PublicRoutes } from './public';
+import { AppIsolationGuard } from './isolation';
 import { AdminRoutes } from './admin';
 import { OperatorRoutes } from './operator';
 import { MarketingRoutes } from './marketing';
@@ -59,6 +60,13 @@ export const AppRoutes: React.FC<AppRouteProps> = (props) => {
     onSignIn: () => props.navigate('/login'),
   });
   if (publicContent) return publicContent;
+
+  // App isolation (v2.7.57): pengguna yang sudah masuk dipantulkan ke portal
+  // utamanya bila pathname milik app lain (lihat isolation.tsx). Diletakkan
+  // SETELAH halaman publik (tetap terbuka untuk semua) dan SEBELUM modul
+  // portal mana pun mengklaim — termasuk sebelum catch-all Admin CMS.
+  const isolation = AppIsolationGuard(props);
+  if (isolation) return isolation;
 
   const admin = AdminRoutes(props);
   if (admin) return admin;

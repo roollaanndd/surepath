@@ -1,5 +1,19 @@
 # SurePath — Changelog
 
+## v2.7.54 — 2026-11-05
+
+### Link Portal B2B di menu website
+
+- **`/b2bapps` punya login screen sejak v2.7.53 tapi tidak ada link ke
+  sana di mana pun di situs** — sama seperti `/agapps`/`/insurerapp`/
+  `/operatorapp`, hanya bisa diakses kalau tahu URL-nya langsung. Untuk
+  B2B ini masalah nyata: calon pengguna (mitra multifinance) tidak akan
+  pernah menemukan portalnya sendiri. Ditambahkan link "Portal B2B" di
+  tiga titik di `SiteLayout.tsx` (situs marketing publik), menyamai pola
+  link "Admin" yang sudah ada: tombol navbar desktop, tombol menu mobile,
+  dan entri kolom footer "Perusahaan" ("Portal Mitra B2B") + ikon di
+  bilah bawah footer. Semua mengarah ke `/b2bapps`.
+
 ## v2.7.53 — 2026-11-05
 
 ### Login khusus portal B2B + dashboard menampilkan batch fleet

@@ -58,7 +58,7 @@ export const ADMIN_NAV: NavGroup[] = [
     label: 'Keuangan',
     sections: [
       { id: 'cash', label: 'Pembayaran & Penarikan', childIds: ['payments', 'withdrawals'] },
-      { id: 'commission', label: 'Komisi', childIds: ['commission_ledger'] },
+      { id: 'commission', label: 'Komisi', childIds: ['commission_ledger', 'manual_credit', 'credit_approvals'] },
       { id: 'finance', label: 'Keuangan & Laporan', childIds: ['financial'] },
     ],
   },
@@ -98,7 +98,7 @@ export const LEGACY_LEAF_IDS = [
   'dashboard', 'ops_console', 'analytics',
   'user_mgmt', 'payments', 'withdrawals',
   'policy_orders', 'approvals', 'claims_admin', 'endorsements', 'documents',
-  'agents', 'agent_agreements', 'tnc_admin', 'commission_ledger', 'b2b',
+  'agents', 'agent_agreements', 'tnc_admin', 'commission_ledger', 'manual_credit', 'credit_approvals', 'b2b',
   'product_config', 'tier_promo', 'insurers', 'ojk_rates', 'b2b_fleet_rates', 'financial',
   'vehicle_pricelist', 'website_editor', 'portal_icons', 'ai_admin', 'ai_finance',
   'pathy_logs', 'activity_log', 'security', 'settings',
@@ -183,6 +183,11 @@ export const ADMIN_MENU_ITEMS: AdminMenuItem[] = [
   { id: 'agent_agreements', label: 'Perjanjian Mitra',     roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.INSURANCE_ADMIN] },
   { id: 'tnc_admin',        label: 'Syarat & Ketentuan',   roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
   { id: 'commission_ledger',label: 'Komisi',           roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.ADMIN] },
+  // v2.7.58 — kredit manual untuk polis offline (two-person rule).
+  // `manual_credit`: Finance/Admin/MASTER_ADMIN bisa mengajukan.
+  // `credit_approvals`: hanya MASTER_ADMIN yang menyetujui / menolak.
+  { id: 'manual_credit',    label: 'Kredit Manual',    roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.FINANCE_MANAGER, UserRole.FINANCE_DIRECTOR, UserRole.ADMIN] },
+  { id: 'credit_approvals', label: 'Approval Kredit Manual', roles: [UserRole.MASTER_ADMIN] },
   { id: 'b2b',              label: 'B2B',       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.INSURANCE_ADMIN] },
   // PRODUK & ASURANSI
   { id: '_sep5', isSeparator: true, groupLabel: 'Produk & Asuransi',  roles: ALL_ROLES },

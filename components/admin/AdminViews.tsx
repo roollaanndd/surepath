@@ -24,6 +24,8 @@ import { CLAIM_STATUS_META } from '../../lib/statusMeta';
 import { PERMISSION_MENU_IDS, defaultPermissionsFor, SP_ROLE_PERMISSIONS_KEY } from './navigation';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { UserRole } from '../../types';
+import { AdminModal } from './shared/AdminModal';
+import { createInternalUser } from '../../services/users';
 import { useTierDefinitions, getTierByCode } from '../../hooks/useTierDefinitions';
 import type { BackupRecord } from '../../services/backupService';
 import { listBackups, performBackup, downloadBackup, getLastBackupTime } from '../../services/backupService';
@@ -1167,17 +1169,17 @@ const BulkImportModal: React.FC<BulkImportModalProps> = ({ onClose }) => {
   const errorCount   = rows.filter(r => r.status === 'error').length;
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={importing ? undefined : onClose} />
-      <div className="relative z-10 w-full max-w-2xl mx-4 bg-ds-card border border-ds-border rounded-[2.5rem] p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-5">
+      <div className="absolute inset-0 bg-slate-900/40 dark:bg-slate-950/55 backdrop-blur-[3px]" onClick={importing ? undefined : onClose} />
+      <div className="relative z-10 w-full max-w-2xl bg-white dark:bg-ds-card text-slate-900 dark:text-white border border-slate-200 dark:border-ds-border rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-[0_24px_80px_rgba(15,23,42,0.22)] max-h-[92dvh] overflow-y-auto overscroll-contain no-scrollbar">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="font-black uppercase tracking-widest text-sm flex items-center gap-3">
-            <Upload size={18} className="text-blue-400" />
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="font-bold tracking-tight text-base sm:text-lg flex items-center gap-3">
+            <Upload size={18} className="text-blue-500" />
             Impor Mitra dari CSV/Excel
           </h3>
           {!importing && (
-            <button onClick={onClose} className="text-ds-ink3 hover:text-ds-ink transition-colors">
+            <button onClick={onClose} className="text-slate-500 hover:text-slate-900 dark:text-ds-ink3 dark:hover:text-white transition-colors p-1 -m-1 rounded-full">
               <X size={18} />
             </button>
           )}
@@ -1504,38 +1506,256 @@ const CredentialModal: React.FC<{
   };
 
   return (
-    <div className="fixed inset-0 z-[210] flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/85 backdrop-blur-sm" />
-      <div className="relative z-10 w-full max-w-md mx-4 bg-ds-card border border-amber-500/30 rounded-[2.5rem] p-8 shadow-2xl">
-        <h3 className="font-black uppercase tracking-widest text-sm mb-2 flex items-center gap-3">
-          <KeyRound size={18} className="text-amber-400" />
-          {password ? 'Kata Sandi Sementara' : 'Tautan Setel Ulang'}
-        </h3>
-        <p className="text-xs font-bold text-ds-ink2">{name}</p>
-        <p className="text-2xs font-mono text-ds-ink3 mb-5">{email}</p>
-
-        <div className="p-4 bg-ds-card2 border border-ds-border rounded-2xl">
-          <p className="font-mono text-sm text-ds-ink break-all select-all">{value}</p>
-        </div>
-        <button
-          onClick={copy}
-          className="mt-3 w-full flex items-center justify-center gap-2 py-3 bg-amber-500/10 text-amber-800 dark:text-amber-400 rounded-2xl font-black uppercase text-2xs tracking-widest hover:bg-amber-500 hover:text-white transition-all"
-        >
-          <Copy size={13} /> {copied ? 'Tersalin' : 'Salin'}
-        </button>
-
-        <div className="mt-5 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl">
-          <p className="text-2xs text-rose-700 dark:text-rose-200 font-semibold leading-relaxed">{note}</p>
-        </div>
-
+    <AdminModal
+      onClose={onClose}
+      zIndex={210}
+      tone="prominent"
+      size="md"
+      icon={<KeyRound size={18} className="text-amber-500" />}
+      title={password ? 'Kata Sandi Sementara' : 'Tautan Setel Ulang'}
+      subtitle={<><span className="font-semibold text-slate-700 dark:text-ds-ink2">{name}</span> · <span className="font-mono text-[11px]">{email}</span></>}
+      footer={
         <button
           onClick={onClose}
-          className="mt-5 w-full py-3 bg-ds-card2 text-ds-ink2 rounded-2xl font-black uppercase text-2xs tracking-widest hover:text-ds-ink transition-all"
+          className="w-full py-2.5 bg-slate-100 dark:bg-ds-card2 text-slate-700 dark:text-ds-ink2 rounded-xl font-semibold text-sm hover:bg-slate-200 dark:hover:bg-white/5 transition-all"
         >
           Sudah Dicatat, Tutup
         </button>
+      }
+    >
+      <div className="space-y-4">
+        <div className="p-4 bg-slate-50 dark:bg-ds-card2 border border-slate-200 dark:border-ds-border rounded-xl">
+          <p className="font-mono text-sm text-slate-900 dark:text-white break-all select-all">{value}</p>
+        </div>
+        <button
+          onClick={copy}
+          className="w-full flex items-center justify-center gap-2 py-2.5 bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30 rounded-xl font-semibold text-sm hover:bg-amber-500 hover:text-white transition-all"
+        >
+          <Copy size={14} /> {copied ? 'Tersalin' : 'Salin'}
+        </button>
+        <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl">
+          <p className="text-xs text-rose-700 dark:text-rose-200 font-semibold leading-relaxed">{note}</p>
+        </div>
       </div>
-    </div>
+    </AdminModal>
+  );
+};
+
+// ── Tambah Pengguna Internal (ADMIN/FINANCE/OPERATOR/INSURANCE_ADMIN) ────────
+// v2.7.58: ganti modal "Tambah Admin Baru" yang cuma invite-only dengan modal
+// bermode seperti Tambah Mitra:
+//   'invite'   → ADMIN atau MASTER_ADMIN; penerima menyetel sandi sendiri.
+//   'password' → MASTER_ADMIN only; sandi manual, tampil sekali via
+//                CredentialModal, wajib diganti saat login pertama.
+// Role picker memakai matriks eskalasi yang sama dengan server: role
+// MASTER_ADMIN/ADMIN hanya tampil kalau caller MASTER_ADMIN.
+const AddInternalUserModal: React.FC<{
+  canSetPassword: boolean;
+  callerIsMasterAdmin: boolean;
+  onClose: () => void;
+  onCreated: (
+    user: SpUser,
+    credential: { name: string; email: string; password?: string | null; note: string } | null,
+  ) => void;
+}> = ({ canSetPassword, callerIsMasterAdmin, onClose, onCreated }) => {
+  const [form, setForm] = useState({
+    name: '', email: '', phone: '',
+    role: callerIsMasterAdmin ? UserRole.ADMIN : UserRole.FINANCE,
+    password: '',
+  });
+  const [mode, setMode] = useState<'invite' | 'password'>('invite');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showPass, setShowPass] = useState(false);
+
+  // Hanya MASTER_ADMIN yang boleh membuat MASTER_ADMIN/ADMIN. Role lain
+  // boleh dibuat ADMIN atau MASTER_ADMIN.
+  const availableRoles: UserRole[] = callerIsMasterAdmin
+    ? [UserRole.ADMIN, UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.FINANCE_MANAGER, UserRole.FINANCE_DIRECTOR, UserRole.INSURANCE_ADMIN, UserRole.OPERATOR]
+    : [UserRole.FINANCE, UserRole.FINANCE_MANAGER, UserRole.FINANCE_DIRECTOR, UserRole.INSURANCE_ADMIN, UserRole.OPERATOR];
+
+  const passwordValid = (p: string): string | null => {
+    if (p.length < 10) return 'Kata sandi minimal 10 karakter';
+    const classes = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^A-Za-z0-9]/].filter((re) => re.test(p)).length;
+    if (classes < 3) return 'Butuh minimal 3 dari 4: huruf kecil, huruf besar, angka, simbol';
+    return null;
+  };
+
+  const submit = async () => {
+    setError(null);
+    if (!form.name.trim() || !form.email.trim()) {
+      setError('Nama dan email wajib diisi.');
+      return;
+    }
+    if (mode === 'password') {
+      const vErr = passwordValid(form.password);
+      if (vErr) { setError(vErr); return; }
+    }
+    setBusy(true);
+    try {
+      const res = await createInternalUser({
+        name: form.name.trim(),
+        email: form.email.trim().toLowerCase(),
+        role: form.role,
+        phone: form.phone.trim() || null,
+        mode,
+        ...(mode === 'password' ? { password: form.password } : {}),
+      });
+      if (res.error || !res.user) {
+        setError(res.error ?? 'Backend tidak mengembalikan profil pengguna.');
+        return;
+      }
+      onCreated(
+        res.user,
+        res.tempPassword
+          ? {
+              name: res.user.name,
+              email: res.user.email,
+              password: res.tempPassword,
+              note: 'Catat sekarang — kata sandi ini tidak disimpan di mana pun dan tidak bisa ditampilkan lagi. Pengguna wajib menggantinya saat login pertama.',
+            }
+          : null,
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal menghubungi server. Coba lagi.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const inputCls = 'w-full min-w-0 bg-white dark:bg-ds-card2 border border-slate-200 dark:border-ds-border rounded-xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 transition-all';
+  const labelCls = 'block text-2xs font-bold text-slate-600 dark:text-ds-ink3 uppercase tracking-wider mb-1.5';
+
+  return (
+    <AdminModal
+      onClose={busy ? () => {} : onClose}
+      dismissible={!busy}
+      size="2xl"
+      icon={<UserPlus size={18} className="text-ds-green" />}
+      title="Tambah Pengguna Internal"
+      subtitle="Akun login dan profil dibuat sekaligus. Role berikut: Admin, Finance (3 level), Insurance Admin, dan Operator."
+      footer={
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            disabled={busy}
+            className="flex-1 py-2.5 border border-slate-200 dark:border-ds-border text-slate-700 dark:text-ds-ink3 rounded-xl font-semibold text-sm transition-all hover:bg-slate-50 dark:hover:bg-ds-card2 disabled:opacity-50"
+          >
+            Batal
+          </button>
+          <button
+            onClick={submit}
+            disabled={busy}
+            className="flex-1 py-2.5 bg-emerald-600 text-white rounded-xl font-semibold text-sm hover:bg-emerald-700 shadow-sm transition-all disabled:opacity-50"
+          >
+            {busy ? 'Menyimpan...' : mode === 'password' ? 'Buat & Tampilkan Sandi' : 'Buat & Kirim Undangan'}
+          </button>
+        </div>
+      }
+    >
+      {error && (
+        <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-700 dark:text-rose-300 font-semibold">{error}</div>
+      )}
+      <div className="space-y-6">
+        {/* Data pengguna */}
+        <section className="space-y-3">
+          <p className="flex items-center gap-2 text-2xs font-black uppercase tracking-[0.2em] text-slate-500 dark:text-ds-ink3">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500/70" />Data Pengguna
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="sm:col-span-2">
+              <label className={labelCls}>Nama Lengkap</label>
+              <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Cth: Budi Santoso" className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Email</label>
+              <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="budi@surepath.id" className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Nomor HP (opsional)</label>
+              <input type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="08xxxxxxxxxx" className={inputCls} />
+            </div>
+            <div className="sm:col-span-2">
+              <label className={labelCls}>Role</label>
+              <select
+                value={form.role}
+                onChange={e => setForm({ ...form, role: e.target.value as UserRole })}
+                className={`${inputCls} [&>option]:bg-white dark:[&>option]:bg-ds-card`}
+              >
+                {availableRoles.map(r => (
+                  <option key={r} value={r}>{r.replace(/_/g, ' ')}</option>
+                ))}
+              </select>
+              <p className="mt-1 text-[11px] text-slate-500 dark:text-ds-ink3">Role MASTER_ADMIN & ADMIN hanya bisa dibuat oleh MASTER_ADMIN.</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Akses pertama */}
+        <section className="space-y-3">
+          <p className="flex items-center gap-2 text-2xs font-black uppercase tracking-[0.2em] text-slate-500 dark:text-ds-ink3">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500/70" />Cara Masuk Pertama Kali
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setMode('invite')}
+              className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${
+                mode === 'invite' ? 'border-emerald-500 bg-emerald-500/10' : 'border-slate-200 dark:border-ds-border bg-slate-50 dark:bg-ds-card2 hover:border-emerald-500/40'
+              }`}
+            >
+              <p className="text-xs font-bold text-slate-900 dark:text-white">Email Undangan</p>
+              <p className="text-xs text-slate-600 dark:text-ds-ink3 mt-1">Pengguna menerima email dan menyetel sandinya sendiri. Disarankan.</p>
+            </button>
+            {canSetPassword ? (
+              <button
+                type="button"
+                onClick={() => setMode('password')}
+                className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${
+                  mode === 'password' ? 'border-amber-500 bg-amber-500/10' : 'border-slate-200 dark:border-ds-border bg-slate-50 dark:bg-ds-card2 hover:border-amber-500/40'
+                }`}
+              >
+                <p className="text-xs font-bold text-slate-900 dark:text-white">Kata Sandi Manual</p>
+                <p className="text-xs text-slate-600 dark:text-ds-ink3 mt-1">Anda menentukan sandi awal. Ditampilkan sekali, wajib diganti saat login pertama.</p>
+              </button>
+            ) : (
+              <div className="w-full text-left px-4 py-3 rounded-xl border border-dashed border-slate-200 dark:border-ds-border bg-slate-50 dark:bg-ds-card2/50 opacity-60">
+                <p className="text-xs font-bold text-slate-900 dark:text-white">Kata Sandi Manual</p>
+                <p className="text-xs text-slate-600 dark:text-ds-ink3 mt-1">Hanya MASTER_ADMIN.</p>
+              </div>
+            )}
+          </div>
+
+          {mode === 'password' && canSetPassword && (
+            <div className="mt-3">
+              <label className={labelCls}>Kata Sandi Awal</label>
+              <div className="relative">
+                <input
+                  type={showPass ? 'text' : 'password'}
+                  value={form.password}
+                  onChange={e => setForm({ ...form, password: e.target.value })}
+                  placeholder="Minimal 10 karakter, 3 dari 4 kelas"
+                  className={`${inputCls} pr-20 font-mono`}
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPass(v => !v)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 text-[11px] font-semibold text-slate-500 hover:text-slate-800 dark:text-ds-ink3 dark:hover:text-white rounded-md"
+                >
+                  {showPass ? 'Sembunyi' : 'Lihat'}
+                </button>
+              </div>
+              <p className="mt-1.5 text-[11px] text-slate-500 dark:text-ds-ink3">Huruf besar + kecil + angka + simbol — minimal 3 dari 4 kelas. Pengguna wajib ganti saat login pertama.</p>
+            </div>
+          )}
+        </section>
+
+        <p className="rounded-xl bg-slate-50 dark:bg-ds-card2 px-3.5 py-3 text-xs text-slate-600 dark:text-ds-ink3 leading-relaxed">
+          Role AGENT dibuat lewat menu <span className="font-bold">Manajemen Mitra → Tambah Mitra</span>; role B2B_CLIENT lewat menu <span className="font-bold">B2B → Tambah Pengguna Korporat</span>.
+        </p>
+      </div>
+    </AdminModal>
   );
 };
 
@@ -2141,11 +2361,23 @@ export const UserManagementView = () => {
   const [editRoleId, setEditRoleId] = useState<string | null>(null);
   const [editAppsId, setEditAppsId] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newUser, setNewUser] = useState({ name: '', email: '', role: UserRole.ADMIN as UserRole });
-  const [addError, setAddError] = useState<string | null>(null);
-  const [addLoading, setAddLoading] = useState(false);
+  // v2.7.58: credential one-shot card dipakai saat mode 'password' — mirror
+  // pola AgentManagementView. Nilainya tidak disimpan di mana pun.
+  const [credential, setCredential] = useState<
+    { name: string; email: string; password?: string | null; link?: string | null; note: string } | null
+  >(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+
+  // Sejajar dengan AgentManagementView — baca role caller dari sesi untuk
+  // menampilkan opsi password manual hanya pada MASTER_ADMIN.
+  const callerRole: string = (() => {
+    try {
+      const raw = localStorage.getItem('SUREPATH_SESSION') ?? sessionStorage.getItem('SUREPATH_SESSION');
+      return JSON.parse(raw ?? '{}')?.role ?? '';
+    } catch { return ''; }
+  })();
+  const callerIsMasterAdmin = callerRole === UserRole.MASTER_ADMIN;
   // Menu cleanup 2026-10-26: the former standalone "Pengguna" menu (BizAdminView)
   // merged in here as the "Partner Aktif" tab — one canonical user screen.
   const [dirTab, setDirTab] = useState<'accounts' | 'partners'>('accounts');
@@ -2231,28 +2463,9 @@ export const UserManagementView = () => {
     }
   };
 
-  const handleAddUser = async () => {
-    setAddError(null);
-    if (!newUser.name.trim() || !newUser.email.trim()) {
-      setAddError('Nama dan email wajib diisi.');
-      return;
-    }
-    setAddLoading(true);
-    try {
-      await callGateway('admin_invite_user', {
-        email: newUser.email.trim(),
-        name: newUser.name.trim(),
-        role: newUser.role,
-      });
-      setShowAddModal(false);
-      setNewUser({ name: '', email: '', role: UserRole.ADMIN });
-      load();
-    } catch (e: any) {
-      setAddError(e?.message ?? 'Gagal mengirim undangan.');
-    } finally {
-      setAddLoading(false);
-    }
-  };
+  // v2.7.58: AddInternalUserModal menggantikan handler lama yang memanggil
+  // admin_invite_user — modal baru memakai admin_create_internal_user yang
+  // mendukung mode 'password' (MASTER_ADMIN only).
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -2294,7 +2507,7 @@ export const UserManagementView = () => {
               onClick={() => setShowAddModal(true)}
               className="flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black uppercase text-2xs tracking-widest shadow-xl transition-all active:scale-95"
             >
-              <UserPlus size={16} /> Tambah Admin
+              <UserPlus size={16} /> Tambah Pengguna
             </button>
           </>
         }
@@ -2495,71 +2708,23 @@ export const UserManagementView = () => {
         <PartnerDirectorySection />
       )}
 
-      {/* Add Admin Modal — refine v2.7.57: sudut, judul, dan input
-          diselaraskan dengan modal Tambah Mitra */}
+      {/* v2.7.58: Tambah Pengguna Internal — modal baru dengan mode
+          invite + password (MASTER_ADMIN only). CredentialModal dipakai
+          kembali untuk menampilkan sandi sekali-tampil. */}
       {showAddModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-5">
-          <div className="absolute inset-0 bg-slate-900/35 dark:bg-black/65 backdrop-blur-[2px]" onClick={() => { setShowAddModal(false); setAddError(null); }} />
-          <div className="relative z-10 w-full max-w-md bg-ds-card border border-ds-border rounded-2xl sm:rounded-3xl p-6 sm:p-7 shadow-2xl">
-            <h3 className="font-bold tracking-tight text-base sm:text-lg flex items-center gap-3">
-              <UserPlus size={18} className="text-ds-green" /> Tambah Admin Baru
-            </h3>
-            <p className="mt-1 text-xs text-ds-ink3">Undangan dikirim ke email — penerima menyetel kata sandinya sendiri.</p>
-            {addError && (
-              <div className="mt-4 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-400 font-bold">{addError}</div>
-            )}
-            <div className="mt-5 space-y-4">
-              <div>
-                <label className="block text-2xs font-black text-ds-ink3 uppercase tracking-widest mb-1.5">Nama Lengkap</label>
-                <input
-                  type="text"
-                  value={newUser.name}
-                  onChange={e => setNewUser({ ...newUser, name: e.target.value })}
-                  placeholder="Cth: Budi Santoso"
-                  className="w-full bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm text-ds-ink focus:outline-none focus:border-emerald-500 transition-all"
-                />
-              </div>
-              <div>
-                <label className="block text-2xs font-black text-ds-ink3 uppercase tracking-widest mb-1.5">Email</label>
-                <input
-                  type="email"
-                  value={newUser.email}
-                  onChange={e => setNewUser({ ...newUser, email: e.target.value })}
-                  placeholder="admin@surepath.id"
-                  className="w-full bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm text-ds-ink focus:outline-none focus:border-emerald-500 transition-all"
-                />
-              </div>
-              <div>
-                <label className="block text-2xs font-black text-ds-ink3 uppercase tracking-widest mb-1.5">Role</label>
-                <select
-                  value={newUser.role}
-                  onChange={e => setNewUser({ ...newUser, role: e.target.value as UserRole })}
-                  className="w-full bg-ds-card2 border border-ds-border rounded-xl px-4 py-3 text-sm text-ds-ink focus:outline-none focus:border-emerald-500 transition-all [&>option]:bg-ds-card"
-                >
-                  {Object.values(UserRole).map(r => (
-                    <option key={r} value={r}>{r.replace('_', ' ')}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => { setShowAddModal(false); setAddError(null); }}
-                className="flex-1 py-2.5 border border-ds-border text-ds-ink3 rounded-xl font-semibold text-sm transition-all hover:bg-ds-card2"
-              >
-                Batal
-              </button>
-              <button
-                onClick={handleAddUser}
-                disabled={addLoading}
-                className="flex-1 py-2.5 bg-emerald-500 text-white rounded-xl font-semibold text-sm hover:bg-emerald-600 shadow-sm transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {addLoading ? 'Mengirim...' : 'Kirim Undangan'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <AddInternalUserModal
+          canSetPassword={callerIsMasterAdmin}
+          callerIsMasterAdmin={callerIsMasterAdmin}
+          onClose={() => setShowAddModal(false)}
+          onCreated={(user, cred) => {
+            setShowAddModal(false);
+            if (cred) setCredential(cred);
+            toast.success(`${user.name} ditambahkan sebagai ${user.role}.`);
+            load();
+          }}
+        />
       )}
+      {credential && <CredentialModal {...credential} onClose={() => setCredential(null)} />}
     </div>
   );
 };

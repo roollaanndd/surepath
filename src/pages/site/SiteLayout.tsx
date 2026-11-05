@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronRight, Menu, X, Globe, Lock, Mail, Download } from 'lucide-react';
+import { ChevronRight, Menu, X, Globe, Lock, Mail, Download, Building2 } from 'lucide-react';
 import { Language } from '../../../types';
 import { SurePathLogo } from '../../../components/Navbar';
 import {
@@ -115,6 +115,14 @@ const SiteNav: React.FC<SitePageProps & { active?: string }> = ({ onSignIn, navi
           style={{ background: th.navBtnBg, color: th.navBtnColor }}>
           <Globe size={12} /> {lang}
         </button>
+        {/* B2B client portal — no self-registration (admin-provisioned accounts
+            only), so this is the only discoverable way to reach /b2bapps; the
+            portal existed with no entry point anywhere on the site before. */}
+        <button onClick={() => go('/b2bapps')}
+          className="hidden md:inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg text-xs font-bold transition-all hover:opacity-80"
+          style={{ background: th.navBtnBg, color: th.navBtnColor }}>
+          <Building2 size={12} /> {t('Portal B2B', 'B2B Portal')}
+        </button>
         <button onClick={() => go('/admin')}
           className="hidden md:inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg text-xs font-bold transition-all hover:opacity-80"
           style={{ background: th.navBtnBg, color: th.navBtnColor }}>
@@ -151,6 +159,8 @@ const SiteNav: React.FC<SitePageProps & { active?: string }> = ({ onSignIn, navi
             </button>
           )}
           <div className="flex gap-2 mt-2">
+            <button onClick={() => go('/b2bapps')} className="flex-1 py-2.5 rounded-xl text-xs font-black border"
+              style={{ borderColor: th.cardBorder, color: th.textMuted }}>B2B</button>
             <button onClick={() => go('/admin')} className="flex-1 py-2.5 rounded-xl text-xs font-black border"
               style={{ borderColor: th.cardBorder, color: th.textMuted }}>Admin</button>
             <button onClick={onSignIn} className="flex-1 py-2.5 rounded-xl text-xs font-black text-white"
@@ -224,6 +234,7 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang }) => {
       { label: t('Karir', 'Careers'),              path: '/careers' },
       { label: t('Blog', 'Blog'),                  path: '/blog' },
       { label: t('Program Mitra', 'Partner Program'), path: '/agents' },
+      { label: t('Portal Mitra B2B', 'B2B Partner Portal'), path: '/b2bapps' },
     ]},
     { title: t('Legal', 'Legal'), links: [
       { label: t('Kebijakan Privasi', 'Privacy Policy'),       path: '/privacy' },
@@ -350,6 +361,11 @@ const SiteFooter: React.FC<SitePageProps> = ({ navigate, lang }) => {
             ].map(l => (
               <a key={l.path} href={l.path} onClick={e => { e.preventDefault(); navigate(l.path); }} className="text-2xs transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'none' }}>{l.label}</a>
             ))}
+            <button onClick={() => navigate('/b2bapps')} aria-label="Portal B2B"
+              className="flex items-center gap-1 text-2xs transition-colors hover:text-white"
+              style={{ color: 'rgba(255,255,255,0.65)' }}>
+              <Building2 size={9} /> B2B
+            </button>
             <button onClick={() => navigate('/admin')} aria-label="Admin"
               className="flex items-center gap-1 text-2xs transition-colors hover:text-white"
               style={{ color: 'rgba(255,255,255,0.65)' }}>

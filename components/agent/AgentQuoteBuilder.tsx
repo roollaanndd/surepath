@@ -9,7 +9,12 @@ import {
 import { generatePolicyCertPDF } from '../../services/pdfService';
 import { publishAndDownloadQuotation } from '../../services/quotationService';
 import { fromAgentQuote } from '../../services/quotationSlipAdapter';
-import STNKAutoExtract from '../shared/STNKAutoExtract';
+// v2.7.50 — pintu masuk STNK memakai kartu pindai yang sama dengan portal
+// Nasabah (StnkScanCard) dan layanan OCR yang sama (stnk-ocr). Pipeline stub
+// `extractSTNKAndRecommend` (aiGateway) dihapus: ia hanya mengirim 100 karakter
+// pertama dataURL dan mengarang nilai pasar — bukan data.
+import { StnkCaptureCard, StnkOcrNotice } from '../shared/StnkScanCard';
+import { extractStnkOcr, type StnkOcrResult } from '../../services/stnkOcr';
 import { useToast } from '../ui';
 import { calcPremium as calcOjkPremium, getZone, getBaseRateByBand, getVehicleCategory } from '../../services/ojkRates';
 import VehicleUnderwritingWizard from './VehicleUnderwritingWizard';
@@ -133,6 +138,77 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
   const [discountRate, setDiscountRate] = useState(0); // percent, capped at 15% for quote estimates
   const [convertQuoteToPurchase, setConvertQuoteToPurchase] = useState(false);
 
+  // v2.7.50 — STNK OCR memakai layanan yang sama dengan portal Nasabah.
+  // Hasilnya otomatis mengisi brand/model/tahun/harga di form langkah ini.
+  const [stnkScanning, setStnkScanning] = useState(false);
+  const [stnkOcrResult, setStnkOcrResult] = useState<StnkOcrResult | null>(null);
+
+  // Rentang harga pasar ±5% — rumus yang sama dengan StepVehicle Nasabah,
+  // supaya nasabah dan mitra melihat angka yang sama untuk kendaraan yang sama.
+  const marketPriceRange = (() => {
+    if (!carInputs.brand || !carInputs.model) return null;
+    const base = product === 'MOTORCYCLE'
+      ? getMarketValueForMotoYear(carInputs.brand, carInputs.model, carInputs.year)
+      : getMarketValueForYear(carInputs.brand, carInputs.model, carInputs.year);
+    if (!base) return null;
+    return { min: Math.round(base * 0.95), max: Math.round(base * 1.05) };
+  })();
+
+  // v2.7.50 — STNK dipindai dengan layanan yang sama dengan portal Nasabah
+  // (stnk-ocr edge + validasi per-field). Data yang terbaca mengisi form di
+  // bawah kartu; field yang gagal validasi ditandai StnkOcrNotice supaya mitra
+  // tahu apa yang harus dicek sebelum menawarkan.
+  const handleStnkPick = (file: File) => {
+    setStnkScanning(true);
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const result = await extractStnkOcr(reader.result as string);
+        setStnkOcrResult(result);
+        if (result.ok || result.status === 'PARTIAL') {
+          const matchedBrand = result.brand && VEHICLE_BRANDS.includes(result.brand) ? result.brand : '';
+          const modelList = product === 'MOTORCYCLE'
+            ? (matchedBrand ? getModelsForMotoBrand(matchedBrand) : [])
+            : (matchedBrand ? getModelsForBrand(matchedBrand) : []);
+          const matchedModel = matchedBrand
+            ? (modelList.find(m => result.model && m.toUpperCase() === result.model.toUpperCase()) ?? result.model)
+            : result.model;
+          const yearInt = result.year ?? new Date().getFullYear();
+          const price = matchedBrand && matchedModel
+            ? (product === 'MOTORCYCLE'
+                ? getMarketValueForMotoYear(matchedBrand, matchedModel, yearInt)
+                : getMarketValueForYear(matchedBrand, matchedModel, yearInt))
+            : null;
+          setCarInputs(v => ({
+            ...v,
+            brand: matchedBrand || result.brand || v.brand,
+            model: matchedModel || result.model || v.model,
+            year: yearInt || v.year,
+            price: price ?? v.price,
+          }));
+          toast.success(t(
+            `STNK terbaca: ${result.brand ?? '-'} ${result.model ?? ''} ${yearInt}. Data kendaraan terisi otomatis.`,
+            `STNK read: ${result.brand ?? '-'} ${result.model ?? ''} ${yearInt}. Vehicle data filled automatically.`,
+          ));
+        } else {
+          toast.error(t(
+            'STNK tidak terbaca. Isi data kendaraan secara manual di bawah.',
+            'The STNK could not be read. Fill the vehicle data manually below.',
+          ));
+        }
+      } catch {
+        toast.error(t('Gagal memindai STNK. Coba lagi ya.', 'Failed to scan the STNK. Please try again.'));
+      } finally {
+        setStnkScanning(false);
+      }
+    };
+    reader.onerror = () => {
+      setStnkScanning(false);
+      toast.error(t('Gagal membaca berkas.', 'Could not read the file.'));
+    };
+    reader.readAsDataURL(file);
+  };
+
   useEffect(() => { setLocalClients(clients); }, [clients]);
 
   const [carInputs, setCarInputs] = useState<CarInputs>({ brand: '', model: '', year: new Date().getFullYear(), price: 0, coverage: 'COMPREHENSIVE' });
@@ -243,6 +319,12 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
           coverage: carInputs.coverage,
           addons,
           discountRate: discountRate / 100,
+          // v2.7.50 — hasil pindai STNK ikut dibawa supaya mitra tidak perlu
+          // memindai ulang atau mengetik ulang plat/rangka/mesin di wizard.
+          plate: stnkOcrResult?.plate ?? '',
+          chassis: stnkOcrResult?.vin ?? '',
+          engine: stnkOcrResult?.engineNo ?? '',
+          color: stnkOcrResult?.color ?? '',
         } : undefined}
         onBack={() => setVehicleWizardType(null)}
         onOrderCreated={() => { setVehicleWizardType(null); setQuoteTab('orders'); }}
@@ -902,43 +984,20 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
       {/* ─── STEP 2: PRODUCT INPUTS ─── */}
       {step === 'inputs' && (
         <div className="space-y-4">
-          <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4">
-            <label className="mb-2 block text-xs font-black uppercase tracking-widest text-emerald-900" htmlFor="agent-quote-discount">{t('Discount (%)', 'Diskon (%)')}</label>
-            <div className="flex items-center gap-3">
-              <input
-                id="agent-quote-discount"
-                type="number"
-                min="0"
-                max="15"
-                step="0.5"
-                inputMode="decimal"
-                value={discountRate}
-                onChange={event => setDiscountRate(Math.min(15, Math.max(0, Number(event.target.value) || 0)))}
-                className="w-24 rounded-xl border border-emerald-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
-                aria-describedby="agent-quote-discount-note"
-              />
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-bold text-emerald-950">{formatIDR(discountAmount)} discount</p>
-                <p id="agent-quote-discount-note" className="text-[10px] leading-relaxed text-emerald-800">Maks. 15% untuk estimasi. Diskon final tetap mengikuti batas produk/insurer dan persetujuan yang berlaku.</p>
-              </div>
-            </div>
-          </div>
-          {/* STNK Auto-Extract — AI reads STNK and pre-fills vehicle data + recommends package */}
+          {/* STNK — kartu pindai yang sama dengan portal Nasabah (v2.7.50).
+              AI membaca STNK, datanya mengisi form kendaraan di bawah. */}
           {(product === 'CAR' || product === 'MOTORCYCLE') && (
-            <STNKAutoExtract
-              onExtracted={(data) => {
-                // Auto-fill car inputs from STNK extraction
-                setCarInputs(v => ({
-                  ...v,
-                  brand: data.extraction.brand || v.brand,
-                  model: data.extraction.model || v.model,
-                  year: data.extraction.year || v.year,
-                  price: data.extraction.estimatedMarketValue || v.price,
-                }));
-                toast.success(`STNK terbaca: ${data.extraction.brand} ${data.extraction.model} ${data.extraction.year}. Premi estimasi: Rp ${data.recommendation.estimatedPremium.toLocaleString('id-ID')}`);
-              }}
-              compact
-            />
+            <div className="space-y-4">
+              <StnkCaptureCard
+                onPick={handleStnkPick}
+                scanning={stnkScanning}
+                heading={{
+                  title: t('Scan the STNK', 'Pindai STNK'),
+                  subtitle: t('The AI reads the registration and fills the vehicle data below.', 'AI membaca STNK dan mengisi data kendaraan di bawah otomatis.'),
+                }}
+              />
+              <StnkOcrNotice result={stnkOcrResult} />
+            </div>
           )}
 
           {/* CAR / MOTORCYCLE — dropdowns from vehicle database */}
@@ -981,9 +1040,18 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
               )}
 
               {carInputs.brand && carInputs.model && carInputs.price > 0 && (
-                <p className="text-xs text-emerald-400 font-bold">
-                  Nilai Pasar: {formatIDR(carInputs.price)}
-                </p>
+                <div className="space-y-0.5">
+                  <p className="text-xs text-emerald-400 font-bold">
+                    {t('Market value', 'Nilai Pasar')}: {formatIDR(carInputs.price)}
+                  </p>
+                  {/* v2.7.50 — rentang rekomendasi ±5%, sama dengan yang dilihat
+                      nasabah di wizard pembelian (StepVehicle). */}
+                  {marketPriceRange && (
+                    <p className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                      {t('Recommended price range', 'Rentang harga rekomendasi')} {carInputs.year}: {formatIDR(marketPriceRange.min)} – {formatIDR(marketPriceRange.max)}
+                    </p>
+                  )}
+                </div>
               )}
 
               <div>
@@ -1219,9 +1287,38 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
                 <span className="font-bold text-sm">{(getBaseRateByBand(product === 'MOTORCYCLE' ? 'MOTORCYCLE' : 'CAR', carInputs.coverage, getZone(''), getVehicleCategory(carInputs.price), 'MID') * 100).toFixed(2)}%</span>
               </div>
             </div>
+            {/* v2.7.50 — diskon pindah ke step ringkasan: muncul DAN dihitung
+                di sini, dengan rincian premi dasar → diskon → premi akhir. */}
+            <div className="mt-4 pt-4 border-t border-white/10">
+              <div className="flex items-center justify-between gap-3">
+                <label htmlFor="agent-quote-discount-quote" className="text-slate-400 text-xs font-bold uppercase tracking-widest">{t('Discount (%)', 'Diskon (%)')}</label>
+                <input
+                  id="agent-quote-discount-quote"
+                  type="number"
+                  min="0"
+                  max="15"
+                  step="0.5"
+                  inputMode="decimal"
+                  value={discountRate}
+                  onChange={event => setDiscountRate(Math.min(15, Math.max(0, Number(event.target.value) || 0)))}
+                  className="w-20 rounded-xl border border-white/20 bg-white/10 px-3 py-1.5 text-right text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
+                  aria-describedby="agent-quote-discount-quote-note"
+                />
+              </div>
+              <div className="mt-2 space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-slate-400 text-xs font-bold">{t('Base premium', 'Premi dasar')}</span>
+                  <span className="font-bold text-sm">{formatIDR(basePremium)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400 text-xs font-bold">{t('Discount', 'Diskon')} {discountRate}%</span>
+                  <span className="font-bold text-sm text-emerald-400">−{formatIDR(discountAmount)}</span>
+                </div>
+              </div>
+              <p id="agent-quote-discount-quote-note" className="mt-1 text-[10px] leading-relaxed text-slate-500">{t('Max. 15% for the estimate. The final discount still follows product/insurer limits and applicable approvals.', 'Maks. 15% untuk estimasi. Diskon final tetap mengikuti batas produk/insurer dan persetujuan yang berlaku.')}</p>
+            </div>
             <div className="mt-4 pt-4 border-t border-white/10">
               <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Est. Premi Tahunan</p>
-              {discountAmount > 0 && <p className="mt-2 text-xs text-emerald-200">{t('Before discount', 'Sebelum diskon')}: <span className="line-through">{formatIDR(basePremium)}</span> · {t('Discount', 'Diskon')} {discountRate}%</p>}
             <p className="font-black text-3xl text-white mt-0.5">{formatIDR(premium)}</p>
             </div>
             <div className="mt-3 bg-white/10 rounded-2xl px-4 py-3 flex items-center justify-between">
@@ -1276,6 +1373,37 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
             <p className="text-slate-400 text-xs font-black uppercase tracking-widest mb-1">{t('Quote Summary', 'Ringkasan Penawaran')}</p>
             <h2 className="font-black text-2xl tracking-tight">{clientName}</h2>
             <p className="text-slate-400 text-sm mt-0.5">{product}</p>
+            {/* v2.7.50 — diskon dihitung di step 4: input + rincian
+                premi dasar → diskon → premi akhir, sama dengan kartu
+                penawaran kendaraan. */}
+            <div className="mt-5 pt-4 border-t border-white/10">
+              <div className="flex items-center justify-between gap-3">
+                <label htmlFor="agent-quote-discount" className="text-slate-400 text-xs font-bold uppercase tracking-widest">{t('Discount (%)', 'Diskon (%)')}</label>
+                <input
+                  id="agent-quote-discount"
+                  type="number"
+                  min="0"
+                  max="15"
+                  step="0.5"
+                  inputMode="decimal"
+                  value={discountRate}
+                  onChange={event => setDiscountRate(Math.min(15, Math.max(0, Number(event.target.value) || 0)))}
+                  className="w-20 rounded-xl border border-white/20 bg-white/10 px-3 py-1.5 text-right text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
+                  aria-describedby="agent-quote-discount-note"
+                />
+              </div>
+              <div className="mt-2 space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-slate-400 text-xs font-bold">{t('Base premium', 'Premi dasar')}</span>
+                  <span className="font-bold text-sm">{formatIDR(basePremium)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400 text-xs font-bold">{t('Discount', 'Diskon')} {discountRate}%</span>
+                  <span className="font-bold text-sm text-emerald-400">−{formatIDR(discountAmount)}</span>
+                </div>
+              </div>
+              <p id="agent-quote-discount-note" className="mt-1 text-[10px] leading-relaxed text-slate-500">{t('Max. 15% for the estimate. The final discount still follows product/insurer limits and applicable approvals.', 'Maks. 15% untuk estimasi. Diskon final tetap mengikuti batas produk/insurer dan persetujuan yang berlaku.')}</p>
+            </div>
             <div className="mt-5 pt-4 border-t border-white/10">
               <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">{t('Est. Annual Premium', 'Est. Premi Tahunan')}</p>
               <p className="font-black text-3xl text-white mt-0.5">{formatIDR(premium)}</p>

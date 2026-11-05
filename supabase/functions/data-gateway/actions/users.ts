@@ -3,6 +3,7 @@
 import type { GatewayContext, ActionResult } from './types.ts';
 import { isUntrustedEmail, deriveTier } from '../../_shared/trust.ts';
 import { linkOrdersToNewCustomer } from './clientLink.ts';
+import { getActiveTncVersion } from './b2bSettings.ts';
 
 // json() helper — returns ActionResult (main index.ts converts to Response)
 const json = (body: unknown, status = 200): ActionResult => ({ status, body });
@@ -41,11 +42,18 @@ export async function handleUsersAction(action: string, ctx: GatewayContext): Pr
         if (fullName.length < 3) return json({ error: 'Name too short' }, 400);
         if (!/^[0-9]{16}$/.test(ktpNumber)) return json({ error: 'KTP must be 16 digits' }, 400);
 
+        // FIX 2026-11-05: doc_version used to be hardcoded here. It now
+        // tracks whatever version is published via the CMS T&C editor
+        // (admin_publish_tnc_document, actions/b2bSettings.ts) — publishing a
+        // new version means a mitra who already signed the old one is
+        // correctly treated as not-yet-accepted for the new text.
+        const docVersion = await getActiveTncVersion(db);
+
         const { data: existing } = await db
           .from('sp_agent_agreements')
           .select('id')
           .in('agent_id', caller.ownerIds)
-          .eq('doc_version', 'v1.0-2026')
+          .eq('doc_version', docVersion)
           .maybeSingle();
         if (existing) return json({ error: 'ALREADY_ACCEPTED' }, 409);
 
@@ -53,7 +61,7 @@ export async function handleUsersAction(action: string, ctx: GatewayContext): Pr
           .from('sp_agent_agreements')
           .insert({
             agent_id: caller.ownerId,
-            doc_version: 'v1.0-2026',
+            doc_version: docVersion,
             full_name: fullName,
             ktp_number: ktpNumber,
             user_agent: String(params.user_agent ?? '').slice(0, 255) || null,
@@ -69,11 +77,12 @@ export async function handleUsersAction(action: string, ctx: GatewayContext): Pr
 
     case 'get_my_agreement': {
         if (!caller.spUser) return json({ data: null });
+        const docVersion = await getActiveTncVersion(db);
         const { data: ag } = await db
           .from('sp_agent_agreements')
           .select('*')
           .in('agent_id', caller.ownerIds)
-          .eq('doc_version', 'v1.0-2026')
+          .eq('doc_version', docVersion)
           .maybeSingle();
         return json({ data: ag ?? null });
       }
@@ -325,10 +334,11 @@ export async function handleUsersAction(action: string, ctx: GatewayContext): Pr
     case 'record_tc_acceptance': {
         if (!caller.spUser) return json({ error: 'No profile' }, 403);
         const refNumber = `TC-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000000)).padStart(6, '0')}`;
+        const tncVersion = params.tnc_version ? String(params.tnc_version) : await getActiveTncVersion(db);
         const { error: tcErr } = await db.from('sp_tnc_records').insert({
           user_id: caller.spUser.id,
           reference_number: refNumber,
-          tnc_version: String(params.tnc_version ?? 'v1.0'),
+          tnc_version: tncVersion,
           accepted_at: new Date().toISOString(),
         });
         if (tcErr) return json({ error: tcErr.message }, 400);

@@ -83,6 +83,9 @@ verify_jwt = true
 [functions.create-xendit-invoice]
 verify_jwt = true
 
+[functions.create-b2b-bulk-invoice]
+verify_jwt = true
+
 [functions.xendit-disburse]
 verify_jwt = true
 

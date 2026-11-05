@@ -12,6 +12,7 @@
 // override in the review grid) do.
 import type { GatewayContext, ActionResult } from './types.ts';
 import { calcBulkPremium, calcBulkTotals, type VehicleClass, type Zone, type BulkPremiumResult } from '../../_shared/b2bFleetRating.ts';
+import { loadActiveBulkRateConfig } from './b2bSettings.ts';
 
 const json = (body: unknown, status = 200): ActionResult => ({ status, body });
 const ok = (data: unknown): ActionResult => json({ data });
@@ -113,6 +114,9 @@ export async function handleB2BBulkAction(action: string, ctx: GatewayContext): 
       }
 
       // Authoritative recompute — never trust client-supplied money figures.
+      // Loads whatever admin-edited rate set is currently active (or leaves
+      // the built-in defaults if none is) before pricing a single row.
+      await loadActiveBulkRateConfig(db);
       const rated = validated.map(it => {
         const premium: BulkPremiumResult = calcBulkPremium({
           vehicleClass: it.vehicleClass,
@@ -228,22 +232,62 @@ export async function handleB2BBulkAction(action: string, ctx: GatewayContext): 
         .limit(1)
         .maybeSingle();
 
-      return ok({ batch, items: items ?? [], payment: payment ?? null });
+      // master_policy_document_url holds a storage PATH (private bucket) —
+      // resolve it to a short-lived signed URL here so the client/admin UI
+      // has something that actually downloads. Legacy rows that still hold
+      // an old public-URL-shaped value (issued before the 2026-11-05 fix)
+      // are left as-is; they simply won't resolve to a live document.
+      let masterPolicySignedUrl: string | null = null;
+      if (batch.master_policy_document_url && !batch.master_policy_document_url.startsWith('http')) {
+        const { data: signed } = await db.storage.from('b2b-documents').createSignedUrl(batch.master_policy_document_url, 300);
+        masterPolicySignedUrl = signed?.signedUrl ?? null;
+      }
+
+      return ok({ batch: { ...batch, master_policy_signed_url: masterPolicySignedUrl }, items: items ?? [], payment: payment ?? null });
     }
 
     // ── Admin: issue the master policy for a PAID batch ────────────────────
+    // ── Admin: signed upload URL for the master policy file ────────────────
+    // b2b-documents' INSERT storage policy only allows
+    // (storage.foldername(name))[1] = auth.uid()::text — there is no
+    // is_admin() OR clause on INSERT (only on SELECT/UPDATE/DELETE), so even
+    // an authenticated ADMIN cannot satisfy it by uploading directly under a
+    // path keyed by batch_id rather than their own uid. uploadB2BBulkMasterPolicy()
+    // (services/b2bBulk.ts) relied on exactly that direct upload and would
+    // fail. A signed upload URL from service_role sidesteps the policy
+    // entirely — same reasoning as insurer_bulk_request_upload_url below.
+    case 'admin_b2b_bulk_request_upload_url': {
+      if (!caller.isAdmin) return err('Forbidden: admin only', 403);
+      const batchId = String(params.batch_id ?? '');
+      const fileName = String(params.file_name ?? 'master-policy.pdf');
+      if (!batchId) return err('batch_id required', 400);
+      const { data: batch } = await db.from('sp_b2b_batches').select('id').eq('id', batchId).maybeSingle();
+      if (!batch) return err('Batch not found', 404);
+      const ext = (fileName.split('.').pop() || 'pdf').toLowerCase().replace(/[^a-z0-9]/g, '') || 'pdf';
+      const path = `${batchId}/master-policy-${Date.now()}.${ext}`;
+      const { data: signed, error: signErr } = await db.storage.from('b2b-documents').createSignedUploadUrl(path);
+      if (signErr || !signed) return err(signErr?.message ?? 'Gagal membuat signed upload URL', 400);
+      return ok({ path, signed_url: signed.signedUrl, token: signed.token });
+    }
+
     case 'admin_b2b_bulk_issue': {
       if (!caller.isAdmin) return err('Forbidden: admin only', 403);
       const batchId = String(params.batch_id ?? '');
       const policyNumber = String(params.master_policy_number ?? '').trim();
-      const policyDocUrl = String(params.master_policy_document_url ?? '').trim();
-      if (!batchId || !policyNumber || !policyDocUrl) {
-        return err('batch_id, master_policy_number, master_policy_document_url required', 400);
+      // FIX 2026-11-05: b2b-documents is a PRIVATE bucket (20260706_security_
+      // hardening_phase3) — a getPublicUrl() result for it 404s. This param
+      // is now the storage PATH inside that bucket, not a URL; every reader
+      // resolves it to a short-lived signed URL (below, and in
+      // insurer_list_bulk_batches / b2b_bulk_get_batch) instead of storing
+      // one. Accepts a legacy value that still looks like a URL (already
+      // issued under the old, broken behavior) without rejecting it — it
+      // just won't resolve to anything live; new issuances always get a path.
+      const masterPolicyPath = String(params.master_policy_path ?? params.master_policy_document_url ?? '').trim();
+      if (!batchId || !policyNumber || !masterPolicyPath) {
+        return err('batch_id, master_policy_number, master_policy_path required', 400);
       }
-      let docUrl: URL;
-      try { docUrl = new URL(policyDocUrl); } catch { return err('master_policy_document_url must be a valid URL', 400); }
-      if (docUrl.protocol !== 'https:' || !docUrl.pathname.includes('/b2b-documents/')) {
-        return err('master_policy_document_url must be an https URL inside the b2b-documents bucket', 400);
+      if (masterPolicyPath.includes('..') || !masterPolicyPath.startsWith(`${batchId}/`)) {
+        return err(`master_policy_path harus diawali ${batchId}/`, 400);
       }
 
       const { data: batch, error: batchErr } = await db.from('sp_b2b_batches').select('id, status').eq('id', batchId).maybeSingle();
@@ -258,7 +302,7 @@ export async function handleB2BBulkAction(action: string, ctx: GatewayContext): 
       const { data: updated, error: updErr } = await db.from('sp_b2b_batches').update({
         status: 'ISSUED',
         master_policy_number: policyNumber,
-        master_policy_document_url: policyDocUrl,
+        master_policy_document_url: masterPolicyPath,
         insurer_name: insurerName,
         issued_at: ts,
         updated_at: ts,
@@ -267,7 +311,134 @@ export async function handleB2BBulkAction(action: string, ctx: GatewayContext): 
 
       await db.from('sp_b2b_batch_items').update({ status: 'ISSUED', policy_number: policyNumber, updated_at: ts }).eq('batch_id', batchId);
 
-      return ok(updated);
+      const { data: signed } = await db.storage.from('b2b-documents').createSignedUrl(masterPolicyPath, 300);
+      return ok({ ...updated, master_policy_signed_url: signed?.signedUrl ?? null });
+    }
+
+    // ── Admin: assign the insurer who will issue the master policy ─────────
+    // Previously insurer_id on a batch was only ever written by
+    // admin_b2b_bulk_issue itself (the LAST step) — there was no way to
+    // assign one earlier, so an insurer's token-authed dashboard had nothing
+    // to query before the batch was already done. This lets admin pick the
+    // insurer any time after submission; it does not change batch status.
+    case 'admin_b2b_bulk_assign_insurer': {
+      if (!caller.isAdmin) return err('Forbidden: admin only', 403);
+      const batchId = String(params.batch_id ?? '');
+      const insurerId = String(params.insurer_id ?? '');
+      if (!batchId || !insurerId) return err('batch_id, insurer_id required', 400);
+      const { data: insurer } = await db.from('sp_insurers').select('id, name').eq('id', insurerId).maybeSingle();
+      if (!insurer) return err('Insurer not found', 404);
+      const { data, error } = await db.from('sp_b2b_batches').update({
+        insurer_id: insurerId, insurer_name: insurer.name, updated_at: new Date().toISOString(),
+      }).eq('id', batchId).select().maybeSingle();
+      if (error) return err(error.message, 400);
+      if (!data) return err('Batch not found', 404);
+      return ok(data);
+    }
+
+    // ── Insurer (token-authed): batches assigned to them ────────────────────
+    // Mirrors insurer_list_payments's token-validation shape. Only PAID
+    // batches are actionable (awaiting their master-policy upload); ISSUED
+    // ones are included read-only as history so the dashboard isn't empty
+    // once an insurer has worked through their queue.
+    case 'insurer_list_bulk_batches': {
+      const token = String(params.token ?? '');
+      if (!token) return err('token required', 400);
+      const { data: authToken, error: authErr } = await db.from('sp_insurer_auth_tokens')
+        .select('id, insurer_id, expires_at').eq('token', token).maybeSingle();
+      if (authErr) return err(authErr.message, 400);
+      if (!authToken) return err('Invalid token', 404);
+      if (new Date(authToken.expires_at) < new Date()) return err('Token expired', 410);
+
+      const { data: batches, error: batchesErr } = await db.from('sp_b2b_batches')
+        .select('*').eq('insurer_id', authToken.insurer_id).in('status', ['PAID', 'ISSUED'])
+        .order('created_at', { ascending: false });
+      if (batchesErr) return err(batchesErr.message, 400);
+
+      // Sign whichever ISSUED batches already have a master policy path, so
+      // the dashboard can offer a working download link without a second
+      // round trip (same inline-signing shape as insurer_list_order_documents).
+      const withUrls = await Promise.all((batches ?? []).map(async (b: any) => {
+        if (!b.master_policy_document_url || b.master_policy_document_url.startsWith('http')) {
+          return { ...b, master_policy_signed_url: null };
+        }
+        const { data: signed } = await db.storage.from('b2b-documents').createSignedUrl(b.master_policy_document_url, 300);
+        return { ...b, master_policy_signed_url: signed?.signedUrl ?? null };
+      }));
+      return ok(withUrls);
+    }
+
+    // ── Insurer (token-authed): request a signed upload URL ────────────────
+    // b2b-documents is private with owner-folder-only INSERT policies — an
+    // insurer has no Supabase session (bearer token only), so it cannot
+    // satisfy that policy by uploading directly the way an authenticated
+    // admin/client would. A signed upload URL from service_role sidesteps
+    // that entirely: the URL itself is the grant, scoped to this one path.
+    case 'insurer_bulk_request_upload_url': {
+      const token = String(params.token ?? '');
+      const batchId = String(params.batch_id ?? '');
+      const fileName = String(params.file_name ?? 'master-policy.pdf');
+      if (!token || !batchId) return err('token, batch_id required', 400);
+      const { data: authToken, error: authErr } = await db.from('sp_insurer_auth_tokens')
+        .select('id, insurer_id, expires_at').eq('token', token).maybeSingle();
+      if (authErr) return err(authErr.message, 400);
+      if (!authToken) return err('Invalid token', 404);
+      if (new Date(authToken.expires_at) < new Date()) return err('Token expired', 410);
+
+      const { data: batch } = await db.from('sp_b2b_batches').select('id, status, insurer_id').eq('id', batchId).maybeSingle();
+      if (!batch || batch.insurer_id !== authToken.insurer_id) return err('Batch not found or not assigned to your insurer', 404);
+      if (batch.status !== 'PAID') return err(`Batch belum berstatus PAID (status: ${batch.status})`, 409);
+
+      const ext = (fileName.split('.').pop() || 'pdf').toLowerCase().replace(/[^a-z0-9]/g, '') || 'pdf';
+      const path = `${batchId}/master-policy-${Date.now()}.${ext}`;
+      const { data: signed, error: signErr } = await db.storage.from('b2b-documents').createSignedUploadUrl(path);
+      if (signErr || !signed) return err(signErr?.message ?? 'Gagal membuat signed upload URL', 400);
+      return ok({ path, signed_url: signed.signedUrl, token: signed.token });
+    }
+
+    // ── Insurer (token-authed): finalize — mirrors insurer_upload_policy ──
+    case 'insurer_upload_bulk_master_policy': {
+      const token = String(params.token ?? '');
+      const batchId = String(params.batch_id ?? '');
+      const path = String(params.master_policy_path ?? '').trim();
+      const policyNumber = String(params.master_policy_number ?? '').trim();
+      if (!token || !batchId || !path) return err('token, batch_id, master_policy_path required', 400);
+      if (path.includes('..') || !path.startsWith(`${batchId}/`)) return err(`master_policy_path harus diawali ${batchId}/`, 400);
+
+      const { data: authToken, error: authErr } = await db.from('sp_insurer_auth_tokens')
+        .select('id, insurer_id, expires_at').eq('token', token).maybeSingle();
+      if (authErr) return err(authErr.message, 400);
+      if (!authToken) return err('Invalid token', 404);
+      if (new Date(authToken.expires_at) < new Date()) return err('Token expired', 410);
+
+      const { data: batch, error: batchErr } = await db.from('sp_b2b_batches')
+        .select('id, status, insurer_id, company_name, batch_number').eq('id', batchId).maybeSingle();
+      if (batchErr) return err(batchErr.message, 400);
+      if (!batch || batch.insurer_id !== authToken.insurer_id) return err('Batch not found or not assigned to your insurer', 404);
+      if (batch.status !== 'PAID') return err(`Batch belum berstatus PAID (status: ${batch.status})`, 409);
+
+      const ts = new Date().toISOString();
+      const { data: updated, error: updErr } = await db.from('sp_b2b_batches').update({
+        status: 'ISSUED',
+        master_policy_number: policyNumber || null,
+        master_policy_document_url: path,
+        issued_at: ts,
+        updated_at: ts,
+      }).eq('id', batchId).select().maybeSingle();
+      if (updErr) return err(updErr.message, 400);
+
+      await db.from('sp_b2b_batch_items').update({ status: 'ISSUED', policy_number: policyNumber || null, updated_at: ts }).eq('batch_id', batchId);
+
+      await db.from('sp_admin_notifications').insert({
+        type: 'B2B_BULK_ISSUED',
+        title: `Polis Induk B2B Diterbitkan — ${batch.company_name}`,
+        body: `${batch.batch_number}: polis ${policyNumber || '(no number)'} diunggah oleh insurer.`,
+        metadata: { batch_id: batchId, policy_number: policyNumber },
+        read: false,
+      }).then(() => {}, () => {});
+
+      const { data: signed } = await db.storage.from('b2b-documents').createSignedUrl(path, 300);
+      return ok({ ...updated, master_policy_signed_url: signed?.signedUrl ?? null });
     }
 
     case 'admin_b2b_bulk_list_batches': {

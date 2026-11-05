@@ -131,6 +131,43 @@ export const ADMIN_FEE_HEAVY = 65_000;
 
 export const MIN_PREMIUM_GROSS = 50_000;
 
+// ─── Admin-editable override (sp_b2b_fleet_rate_sets) ──────────────────────
+// Mirrors services/b2bFleetRating.ts — see the comment there. The constants
+// above stay as the parity-tested defaults; calcBulkPremium/selectRate price
+// from this mutable "active config" instead, set per-request by the gateway
+// action after it loads the active sp_b2b_fleet_rate_sets row.
+export interface BulkRateConfig {
+  pickupTruckTloMin: Record<Zone, number>;
+  heavyEquipmentRate: number;
+  discountRateStandard: number;
+  discountRateHeavy: number;
+  adminFeeMotorcycle: number;
+  adminFeeCar: number;
+  adminFeeHeavy: number;
+  minPremiumGross: number;
+}
+
+export const DEFAULT_BULK_RATE_CONFIG: BulkRateConfig = {
+  pickupTruckTloMin: PICKUP_TRUCK_TLO_MIN,
+  heavyEquipmentRate: HEAVY_EQUIPMENT_TLO_RATE,
+  discountRateStandard: DISCOUNT_RATE_STANDARD,
+  discountRateHeavy: DISCOUNT_RATE_HEAVY,
+  adminFeeMotorcycle: ADMIN_FEE_MOTORCYCLE,
+  adminFeeCar: ADMIN_FEE_CAR,
+  adminFeeHeavy: ADMIN_FEE_HEAVY,
+  minPremiumGross: MIN_PREMIUM_GROSS,
+};
+
+let activeBulkRateConfig: BulkRateConfig = DEFAULT_BULK_RATE_CONFIG;
+
+export function setActiveBulkRateConfig(config: BulkRateConfig): void {
+  activeBulkRateConfig = config;
+}
+
+export function getActiveBulkRateConfig(): BulkRateConfig {
+  return activeBulkRateConfig;
+}
+
 export interface RateSelection {
   rate: number;
   category: VehicleCategory | null;
@@ -142,15 +179,16 @@ export function selectRate(
   zone: Zone,
   otr: number,
   commercialBodyHint: boolean,
+  rateConfig: BulkRateConfig = activeBulkRateConfig,
 ): RateSelection {
   if (vehicleClass === 'MOTORCYCLE') {
     return { rate: MOTO_TLO_MIN[zone], category: null, commercialBody: false };
   }
   if (vehicleClass === 'HEAVY_EQUIPMENT') {
-    return { rate: HEAVY_EQUIPMENT_TLO_RATE, category: null, commercialBody: false };
+    return { rate: rateConfig.heavyEquipmentRate, category: null, commercialBody: false };
   }
   if (commercialBodyHint) {
-    return { rate: PICKUP_TRUCK_TLO_MIN[zone], category: null, commercialBody: true };
+    return { rate: rateConfig.pickupTruckTloMin[zone], category: null, commercialBody: true };
   }
   const category = getVehicleCategory(otr || 0);
   return { rate: CAR_TLO_MIN[category][zone], category, commercialBody: false };
@@ -177,24 +215,24 @@ export interface BulkPremiumResult {
   totalPremium: number;
 }
 
-export function calcBulkPremium(input: BulkPremiumInput): BulkPremiumResult {
+export function calcBulkPremium(input: BulkPremiumInput, rateConfig: BulkRateConfig = activeBulkRateConfig): BulkPremiumResult {
   const { vehicleClass, zone, financingValue, otr, tenorMonths } = input;
   const { rate, category, commercialBody } = selectRate(
-    vehicleClass, zone, otr, input.commercialBodyHint ?? false,
+    vehicleClass, zone, otr, input.commercialBodyHint ?? false, rateConfig,
   );
 
   const tenor = Math.max(1, Math.round(tenorMonths || 12));
   const rawGross = financingValue * rate * (tenor / 12);
-  const premiumGross = Math.round(Math.max(rawGross, MIN_PREMIUM_GROSS));
+  const premiumGross = Math.round(Math.max(rawGross, rateConfig.minPremiumGross));
 
-  const discountRate = vehicleClass === 'HEAVY_EQUIPMENT' ? DISCOUNT_RATE_HEAVY : DISCOUNT_RATE_STANDARD;
+  const discountRate = vehicleClass === 'HEAVY_EQUIPMENT' ? rateConfig.discountRateHeavy : rateConfig.discountRateStandard;
   const discountAmount = Math.round(premiumGross * discountRate);
   const premiumAfterDiscount = premiumGross - discountAmount;
 
   const adminFee =
-    vehicleClass === 'MOTORCYCLE' ? ADMIN_FEE_MOTORCYCLE :
-    vehicleClass === 'HEAVY_EQUIPMENT' ? ADMIN_FEE_HEAVY :
-    ADMIN_FEE_CAR;
+    vehicleClass === 'MOTORCYCLE' ? rateConfig.adminFeeMotorcycle :
+    vehicleClass === 'HEAVY_EQUIPMENT' ? rateConfig.adminFeeHeavy :
+    rateConfig.adminFeeCar;
 
   const totalPremium = premiumAfterDiscount + adminFee;
 

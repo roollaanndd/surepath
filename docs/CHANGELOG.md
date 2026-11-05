@@ -1,5 +1,52 @@
 # SurePath — Changelog
 
+## v2.7.52 — 2026-11-05
+
+### Kontrol admin untuk fleet B2B, Syarat & Ketentuan, dan koneksi dashboard insurer
+
+Lanjutan v2.7.51 — menutup gap yang ditemukan saat menyambungkan fitur bulk
+import B2B ke dashboard admin dan insurer.
+
+- **Rate fleet B2B kini bisa diedit admin** (`sp_b2b_fleet_rate_sets`, menu
+  CMS baru "Rate Fleet B2B") — pickup/truk, alat berat, dua tarif diskon,
+  tiga biaya admin, dan premi minimum, yang sebelumnya konstanta hardcoded di
+  `services/b2bFleetRating.ts`. Pola versi-aktif yang sama dengan
+  `sp_ojk_rate_sets`/`OjkRateAdmin.tsx`. Rate TLO mobil penumpang & motor
+  **tidak** diduplikasi ke tabel baru ini — keduanya sudah reaktif terhadap
+  rate set OJK aktif (`CAR_TLO_MIN`/`MOTO_TLO_MIN` adalah binding `let` yang
+  ditimpa `applyOjkRateSet()`), jadi menu Rate OJK yang sudah ada tetap satu
+  sumber kebenarannya.
+- **Syarat & Ketentuan kini punya editor bervensi** (`sp_tnc_documents`, menu
+  CMS baru "Syarat & Ketentuan"). Sebelumnya `accept_agreement` memakai
+  `doc_version` hardcoded `'v1.0-2026'` — tidak ada tempat mengedit isinya
+  sama sekali. Sekarang admin menulis draft, dan "Terbitkan" (aksi terpisah
+  dari simpan) mengaktifkan versi itu untuk mitra baru.
+- **Admin bisa menugaskan insurer ke batch bulk** (`admin_b2b_bulk_assign_insurer`)
+  sebelum batch lunas — sebelumnya `insurer_id` hanya terisi di langkah
+  terakhir (`admin_b2b_bulk_issue`), jadi dashboard insurer tidak punya apa
+  pun untuk dikueri.
+- **Dashboard insurer kini menampilkan batch B2B** — tab "Polis" punya saklar
+  Individual/Batch B2B (bukan tab ke-6; `PortalTabBar` sudah penuh di 5).
+  Insurer melihat batch PAID yang ditugaskan ke mereka dan mengunggah polis
+  induk sendiri (`insurer_upload_bulk_master_policy`), sama seperti
+  `insurer_upload_policy` pada order retail.
+- **FIX keamanan**: `b2b-documents` adalah bucket **privat**, tapi
+  `admin_b2b_bulk_issue`/`uploadB2BBulkMasterPolicy` (dibangun di v2.7.51)
+  menyimpan hasil `getPublicUrl()` — yang 404 di bucket privat. Diperbaiki:
+  kolom `master_policy_document_url` sekarang menyimpan storage PATH, setiap
+  pembaca (admin/insurer/klien) me-resolve-nya ke signed URL lewat gateway.
+  Upload sisi insurer (tanpa sesi Supabase — hanya token) memakai signed
+  upload URL dari service_role (`insurer_bulk_request_upload_url`), bukan
+  upload klien langsung yang tidak mungkin lolos RLS folder-pemilik
+  `b2b-documents` tanpa `auth.uid()`.
+- **FIX CI**: `xlsx` (dipasang di v2.7.51) punya advisory HIGH severity
+  (prototype pollution + ReDoS) tanpa fix di registry npm — SheetJS berhenti
+  mempublikasikan versi terbaru ke npm, perbaikannya hanya ada di tarball CDN
+  mereka sendiri. `package.json` sekarang memakai
+  `https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz` — API identik, 0
+  advisory. Juga: `create-b2b-bulk-invoice` belum dideklarasikan di
+  `supabase/config.toml` (lolos dari `check-edge-functions.mjs`).
+
 ## v2.7.51 — 2026-11-04
 
 ### B2B Bulk Fleet TLO Import — upload → premi → invoice → polis massal

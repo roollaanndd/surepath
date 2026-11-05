@@ -139,16 +139,23 @@ export async function adminGetAllB2BBulkBatches(): Promise<SpB2BBatch[]> {
 export async function adminIssueB2BBulkBatch(input: {
   batchId: string;
   masterPolicyNumber: string;
-  masterPolicyDocumentUrl: string;
+  masterPolicyPath: string;
   insurerName?: string;
 }): Promise<SpB2BBatch | null> {
   const { data, error } = await callGateway('admin_b2b_bulk_issue', {
     batch_id: input.batchId,
     master_policy_number: input.masterPolicyNumber,
-    master_policy_document_url: input.masterPolicyDocumentUrl,
+    master_policy_path: input.masterPolicyPath,
     insurer_name: input.insurerName,
   });
   if (error) { console.error('adminIssueB2BBulkBatch:', error); return null; }
+  return data as SpB2BBatch;
+}
+
+/** Admin: assign which insurer will issue a batch's master policy. */
+export async function adminAssignB2BBulkInsurer(batchId: string, insurerId: string): Promise<SpB2BBatch | null> {
+  const { data, error } = await callGateway('admin_b2b_bulk_assign_insurer', { batch_id: batchId, insurer_id: insurerId });
+  if (error) { console.error('adminAssignB2BBulkInsurer:', error); return null; }
   return data as SpB2BBatch;
 }
 
@@ -163,15 +170,21 @@ export async function uploadB2BBulkSourceFile(clientId: string, batchNumberHint:
   return data.publicUrl;
 }
 
+// FIX 2026-11-05: b2b-documents is a PRIVATE bucket. The previous version of
+// this function uploaded directly with the browser client (which happened to
+// satisfy the bucket's owner-folder INSERT policy because the path's first
+// segment was the admin's own auth.uid()) and then called getPublicUrl() —
+// which returns a URL that 404s on a private bucket. Uploads it via a
+// service_role-issued signed upload URL instead (admin_b2b_bulk_request_upload_url)
+// and returns the storage PATH, which admin_b2b_bulk_issue now expects and
+// every reader resolves to a short-lived signed URL on demand.
 export async function uploadB2BBulkMasterPolicy(batchId: string, file: File): Promise<string | null> {
-  const { data: { session } } = await supabase.auth.getSession();
-  const uploaderId = session?.user?.id ?? 'admin';
-  const ext = file.name.split('.').pop() ?? 'pdf';
-  const path = `${uploaderId}/bulk-policies/${batchId}/master-policy-${Date.now()}.${ext}`;
-  const { error } = await supabase.storage.from('b2b-documents').upload(path, file, { upsert: true, contentType: file.type });
-  if (error) { console.error('uploadB2BBulkMasterPolicy:', error); return null; }
-  const { data } = supabase.storage.from('b2b-documents').getPublicUrl(path);
-  return data.publicUrl;
+  const { data, error } = await callGateway('admin_b2b_bulk_request_upload_url', { batch_id: batchId, file_name: file.name });
+  if (error || !data) { console.error('uploadB2BBulkMasterPolicy: request_upload_url:', error); return null; }
+  const { path, token } = data as { path: string; signed_url: string; token: string };
+  const { error: upErr } = await supabase.storage.from('b2b-documents').uploadToSignedUrl(path, token, file, { contentType: file.type });
+  if (upErr) { console.error('uploadB2BBulkMasterPolicy: upload:', upErr); return null; }
+  return path;
 }
 
 // ─── Payment (dedicated edge function — one invoice per batch) ─────────────
@@ -201,4 +214,61 @@ export async function createB2BBulkInvoice(batchId: string): Promise<XenditInvoi
     console.error('createB2BBulkInvoice error:', err);
     return null;
   }
+}
+
+// ─── B2B fleet rate sets (admin-editable; see actions/b2bSettings.ts) ──────
+// Covers only what services/b2bFleetRating.ts's calcBulkPremium() doesn't
+// already get from the active sp_ojk_rate_sets row: pickup/truck rate, heavy
+// equipment rate, the two discount rates, the three admin fees, and the
+// minimum premium floor.
+
+export interface SpB2BFleetRateSet {
+  id: string;
+  version: string;
+  source_reference: string;
+  effective_date: string;
+  is_active: boolean;
+  rates: {
+    pickupTruckTloMin: Record<'1' | '2' | '3', number>;
+    heavyEquipmentRate: number;
+    discountRateStandard: number;
+    discountRateHeavy: number;
+    adminFeeMotorcycle: number;
+    adminFeeCar: number;
+    adminFeeHeavy: number;
+    minPremiumGross: number;
+  };
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function getActiveB2BFleetRateConfig(): Promise<SpB2BFleetRateSet | null> {
+  const { data, error } = await callGateway('get_active_b2b_fleet_rate_config', {});
+  if (error) { console.error('getActiveB2BFleetRateConfig:', error); return null; }
+  return (data as SpB2BFleetRateSet | null) ?? null;
+}
+
+export async function adminListB2BFleetRateSets(): Promise<SpB2BFleetRateSet[]> {
+  const { data, error } = await callGateway('admin_list_b2b_fleet_rate_sets', {});
+  if (error) { console.error('adminListB2BFleetRateSets:', error); return []; }
+  return (data ?? []) as SpB2BFleetRateSet[];
+}
+
+export async function adminSaveB2BFleetRateSet(input: Partial<SpB2BFleetRateSet> & { id?: string; version: string; rates: SpB2BFleetRateSet['rates'] }): Promise<SpB2BFleetRateSet | null> {
+  const { data, error } = await callGateway('admin_save_b2b_fleet_rate_set', input);
+  if (error) { console.error('adminSaveB2BFleetRateSet:', error); return null; }
+  return data as SpB2BFleetRateSet;
+}
+
+export async function adminActivateB2BFleetRateSet(id: string): Promise<boolean> {
+  const { error } = await callGateway('admin_activate_b2b_fleet_rate_set', { id });
+  if (error) { console.error('adminActivateB2BFleetRateSet:', error); return false; }
+  return true;
+}
+
+export async function adminDeleteB2BFleetRateSet(id: string): Promise<boolean> {
+  const { error } = await callGateway('admin_delete_b2b_fleet_rate_set', { id });
+  if (error) { console.error('adminDeleteB2BFleetRateSet:', error); return false; }
+  return true;
 }

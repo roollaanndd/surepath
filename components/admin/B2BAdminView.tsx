@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, ChevronDown, ChevronUp, Plus, Trash2, CheckCircle2, AlertTriangle, FileText, Heart, Upload, Loader2 } from 'lucide-react';
+import { RefreshCw, ChevronDown, ChevronUp, Plus, Trash2, CheckCircle2, AlertTriangle, FileText, Heart, Upload, Loader2, Building2 } from 'lucide-react';
 import {
   getAllB2BSubmissions,
   updateB2BSubmissionStatus,
@@ -8,13 +8,17 @@ import {
   updateLifeApplicationStatus,
   adminGetAllB2BBulkBatches,
   adminIssueB2BBulkBatch,
+  adminAssignB2BBulkInsurer,
   uploadB2BBulkMasterPolicy,
+  supabase,
   type SpB2BSubmission,
   type SpB2BQuote,
   type SpLifeApplication,
   type SpB2BBatch,
 } from '../../services/supabaseService';
 import ModuleIcon from '../shared/ModuleIcon';
+
+interface InsurerOption { id: string; name: string; }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -389,14 +393,24 @@ const BULK_STATUS_CLS: Record<string, string> = {
 
 const fmtIDRBulk = (n: number) => 'Rp ' + Math.round(n).toLocaleString('id-ID');
 
-const BulkBatchCard: React.FC<{ batch: SpB2BBatch; onUpdated: () => void; onToast: (m: string) => void }> = ({ batch, onUpdated, onToast }) => {
+const BulkBatchCard: React.FC<{ batch: SpB2BBatch; insurers: InsurerOption[]; onUpdated: () => void; onToast: (m: string) => void }> = ({ batch, insurers, onUpdated, onToast }) => {
   const [showIssueForm, setShowIssueForm] = useState(false);
   const [policyNumber, setPolicyNumber] = useState(batch.master_policy_number ?? '');
   const [insurerName, setInsurerName] = useState(batch.insurer_name ?? '');
   const [docUrl, setDocUrl] = useState(batch.master_policy_document_url ?? '');
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [assigningInsurer, setAssigningInsurer] = useState(false);
   const [err, setErr] = useState('');
+
+  const handleAssignInsurer = async (insurerId: string) => {
+    if (!insurerId) return;
+    setAssigningInsurer(true);
+    const result = await adminAssignB2BBulkInsurer(batch.id, insurerId);
+    setAssigningInsurer(false);
+    if (result) { onToast('Insurer ditugaskan — batch kini terlihat di dashboard mereka.'); onUpdated(); }
+    else onToast('Gagal menugaskan insurer.');
+  };
 
   const handleUpload = async (file: File) => {
     setUploading(true);
@@ -409,10 +423,10 @@ const BulkBatchCard: React.FC<{ batch: SpB2BBatch; onUpdated: () => void; onToas
   const handleIssue = async () => {
     if (!policyNumber.trim() || !docUrl.trim()) { setErr('Nomor polis dan dokumen polis wajib diisi.'); return; }
     setSaving(true);
-    const result = await adminIssueB2BBulkBatch({ batchId: batch.id, masterPolicyNumber: policyNumber.trim(), masterPolicyDocumentUrl: docUrl.trim(), insurerName: insurerName.trim() || undefined });
+    const result = await adminIssueB2BBulkBatch({ batchId: batch.id, masterPolicyNumber: policyNumber.trim(), masterPolicyPath: docUrl.trim(), insurerName: insurerName.trim() || undefined });
     setSaving(false);
     if (result) { onToast('Polis batch diterbitkan'); setShowIssueForm(false); onUpdated(); }
-    else setErr('Gagal menerbitkan polis. Periksa URL dokumen.');
+    else setErr('Gagal menerbitkan polis. Coba unggah ulang dokumennya.');
   };
 
   return (
@@ -428,6 +442,26 @@ const BulkBatchCard: React.FC<{ batch: SpB2BBatch; onUpdated: () => void; onToas
           <p className="text-xs text-ds-ink3">{fmtDate(batch.created_at)}</p>
         </div>
       </div>
+
+      {/* Insurer assignment — needed before the insurer's own token-authed
+          dashboard can show this batch at all (insurer_list_bulk_batches
+          filters by sp_b2b_batches.insurer_id). Available at any status so
+          admin can assign early and let the insurer start preparing. */}
+      {batch.status !== 'CANCELLED' && batch.status !== 'ISSUED' && (
+        <div className="flex items-center gap-2">
+          <Building2 size={13} className="text-ds-ink3 flex-shrink-0" />
+          <select
+            value={batch.insurer_id ?? ''}
+            disabled={assigningInsurer}
+            onChange={e => handleAssignInsurer(e.target.value)}
+            className="flex-1 bg-ds-card2 border border-ds-border rounded-lg px-2.5 py-1.5 text-2xs font-bold text-ds-ink focus:outline-none focus:border-emerald-500/50 [&>option]:bg-ds-card"
+          >
+            <option value="">— Belum ditugaskan ke insurer —</option>
+            {insurers.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
+          </select>
+          {assigningInsurer && <Loader2 size={12} className="animate-spin text-ds-ink3" />}
+        </div>
+      )}
 
       {batch.status === 'ISSUED' && (
         <div className="text-xs text-ds-green dark:text-emerald-400 font-semibold">
@@ -458,7 +492,7 @@ const BulkBatchCard: React.FC<{ batch: SpB2BBatch; onUpdated: () => void; onToas
           </div>
           <div>
             <label className="block text-xs font-semibold text-ds-ink3 mb-1">Dokumen Polis Induk (PDF)</label>
-            {docUrl && <p className="text-2xs text-ds-green break-all mb-1">{docUrl}</p>}
+            {docUrl && <p className="text-2xs text-ds-green break-all mb-1">Tersimpan: {docUrl}</p>}
             <label className="flex items-center gap-2 px-3 py-2 rounded-xl bg-ds-green text-ds-on-green text-xs font-bold cursor-pointer w-fit">
               {uploading ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
               {docUrl ? 'Ganti Dokumen' : 'Unggah Dokumen'}
@@ -487,6 +521,7 @@ const B2BAdminView: React.FC = () => {
   const [b2bSubs, setB2bSubs] = useState<SpB2BSubmission[]>([]);
   const [bulkBatches, setBulkBatches] = useState<SpB2BBatch[]>([]);
   const [lifeApps, setLifeApps] = useState<SpLifeApplication[]>([]);
+  const [insurers, setInsurers] = useState<InsurerOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [b2bFilter, setB2bFilter] = useState('ALL');
@@ -498,10 +533,14 @@ const B2BAdminView: React.FC = () => {
     setLoading(true);
     setLoadError(null);
     try {
-      const [subs, batches, apps] = await Promise.all([getAllB2BSubmissions(), adminGetAllB2BBulkBatches(), getAllLifeApplications()]);
+      const [subs, batches, apps, insRes] = await Promise.all([
+        getAllB2BSubmissions(), adminGetAllB2BBulkBatches(), getAllLifeApplications(),
+        supabase.from('sp_insurers').select('id, name').eq('is_active', true).order('name'),
+      ]);
       setB2bSubs(subs);
       setBulkBatches(batches);
       setLifeApps(apps);
+      setInsurers((insRes.data ?? []) as InsurerOption[]);
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : 'Gagal memuat pengajuan B2B dan aplikasi jiwa.');
     } finally {
@@ -510,6 +549,12 @@ const B2BAdminView: React.FC = () => {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  // Surfaced prominently per the owner's request (5 Nov 2026) — bulk batches
+  // awaiting payment or awaiting master-policy issuance are easy to lose
+  // track of buried inside a filtered tab.
+  const bulkAwaitingPayment = bulkBatches.filter(b => b.status === 'SUBMITTED' || b.status === 'INVOICED').length;
+  const bulkAwaitingIssuance = bulkBatches.filter(b => b.status === 'PAID').length;
 
   const showToast = (msg: string) => setToast(msg);
 
@@ -524,7 +569,7 @@ const B2BAdminView: React.FC = () => {
       {/* Sub-tabs */}
       <div className="flex items-center gap-1 px-5 pt-5 pb-3">
         <TabBtn active={tab === 'b2b'} onClick={() => setTab('b2b')} icon={<ModuleIcon id="b2b" size={22} />} label="B2B Submissions" />
-        <TabBtn active={tab === 'bulk'} onClick={() => setTab('bulk')} icon={<ModuleIcon id="documents" size={22} />} label="Bulk Batches" />
+        <TabBtn active={tab === 'bulk'} onClick={() => setTab('bulk')} icon={<ModuleIcon id="documents" size={22} />} label="Bulk Batches" badge={bulkAwaitingPayment + bulkAwaitingIssuance} />
         <TabBtn active={tab === 'life'} onClick={() => setTab('life')} icon={<ModuleIcon id="family_health" size={22} />} label="Life Applications" />
         <button onClick={load} className="ml-auto p-2 rounded-xl text-ds-ink3 hover:text-ds-ink2 dark:hover:text-ds-ink">
           <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
@@ -571,7 +616,7 @@ const B2BAdminView: React.FC = () => {
             <Empty />
           ) : (
             visibleBulk.map(batch => (
-              <BulkBatchCard key={batch.id} batch={batch} onUpdated={load} onToast={showToast} />
+              <BulkBatchCard key={batch.id} batch={batch} insurers={insurers} onUpdated={load} onToast={showToast} />
             ))
           )
         ) : (
@@ -590,7 +635,7 @@ const B2BAdminView: React.FC = () => {
 
 // ─── Minor atoms ──────────────────────────────────────────────────────────────
 
-const TabBtn: React.FC<{ active: boolean; onClick: () => void; icon: React.ReactNode; label: string }> = ({ active, onClick, icon, label }) => (
+const TabBtn: React.FC<{ active: boolean; onClick: () => void; icon: React.ReactNode; label: string; badge?: number }> = ({ active, onClick, icon, label, badge }) => (
   <button
     onClick={onClick}
     className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
@@ -598,6 +643,11 @@ const TabBtn: React.FC<{ active: boolean; onClick: () => void; icon: React.React
     }`}
   >
     {icon}{label}
+    {!!badge && (
+      <span className={`ml-0.5 px-1.5 py-0.5 rounded-full text-2xs font-black ${active ? 'bg-white/20 text-white' : 'bg-rose-500 text-white'}`}>
+        {badge}
+      </span>
+    )}
   </button>
 );
 

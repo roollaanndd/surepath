@@ -13,7 +13,7 @@ import {
 } from '../../components/admin/navigation';
 
 describe('navigasi Admin CMS', () => {
-  it('6 grup, 17 section — konsolidasi dari 29 item lama', () => {
+  it('6 grup, 17 section — konsolidasi dari 29 item lama (+2 sejak v2.7.51: tnc_admin, b2b_fleet_rates)', () => {
     expect(ADMIN_NAV).toHaveLength(6);
     expect(ADMIN_NAV.flatMap(g => g.sections)).toHaveLength(17);
   });
@@ -21,7 +21,7 @@ describe('navigasi Admin CMS', () => {
   it('tidak ada view lama yang hilang atau terdaftar dua kali', () => {
     expect(new Set(ALL_CHILD_IDS).size).toBe(ALL_CHILD_IDS.length);
     expect([...ALL_CHILD_IDS].sort()).toEqual([...LEGACY_LEAF_IDS].sort());
-    expect(ALL_CHILD_IDS).toHaveLength(29);
+    expect(ALL_CHILD_IDS).toHaveLength(31);
   });
 
   it('setiap section punya minimal satu view', () => {

@@ -180,7 +180,7 @@ jobs:
             # are admin-only and the run summary is not, so the real CLI error
             # (bundle/npm/auth) stays visible to every maintainer instead of
             # hiding behind an opaque "exit code 1" (v2.7.16).
-            if out=$(supabase functions deploy "$fn" --project-ref "$PROJECT_REF" 2>&1); then
+            if out=$(supabase functions deploy "$fn" --project-ref "$PROJECT_REF" --yes 2>&1); then
               printf '%s\n' "$out"
             else
               echo "--- CLI output ($(date -u +%H:%M:%SZ)) ---"

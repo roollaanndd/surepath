@@ -24,6 +24,8 @@ const CommissionLedger = lazy(() => import('./CommissionLedger'));
 const AgentAgreementsAdmin = lazy(() => import('./AgentAgreementsAdmin'));
 const InsurerAdmin = lazy(() => import('./InsurerAdmin'));
 const OjkRateAdmin = lazy(() => import('./OjkRateAdmin'));
+const B2BFleetRateAdmin = lazy(() => import('./B2BFleetRateAdmin'));
+const TncAdmin = lazy(() => import('./TncAdmin'));
 const VehiclePricelistAdmin = lazy(() => import('./VehiclePricelistAdmin'));
 const WebsiteEditorAdmin = lazy(() => import('./WebsiteEditorAdmin'));
 const PortalIconManagerView = lazy(() => import('./PortalIconManager'));
@@ -98,6 +100,8 @@ const TAB_SUBTITLE: Record<string, string> = {
   tier_promo: 'Pengaturan tier mitra dan kode promo.',
   insurers: 'Perusahaan asuransi rekanan.',
   ojk_rates: 'Tarif acuan resmi OJK (SEOJK).',
+  b2b_fleet_rates: 'Tarif pickup/truk, alat berat, diskon, dan biaya admin untuk impor massal B2B.',
+  tnc_admin: 'Syarat & Ketentuan yang ditandatangani mitra saat bergabung.',
   financial: 'Kesehatan keuangan dan laporan periode platform.',
   vehicle_pricelist: 'Database harga kendaraan.',
   website_editor: 'Kelola konten website publik.',
@@ -701,6 +705,8 @@ const AdminPortal = ({
       case 'financial':        return <FinancialAdmin />;
       case 'insurers':         return <InsurerAdmin />;
       case 'ojk_rates':        return <OjkRateAdmin />;
+      case 'b2b_fleet_rates':  return <B2BFleetRateAdmin />;
+      case 'tnc_admin':        return <TncAdmin />;
       case 'vehicle_pricelist':return <VehiclePricelistAdmin />;
       case 'commission_ledger':return <CommissionLedger />;
       case 'payments':         return <PaymentsAdminView />;

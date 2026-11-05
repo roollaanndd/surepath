@@ -515,7 +515,7 @@ export async function generateB2BBulkSchedulePDF(data: B2BBulkScheduleData): Pro
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.setTextColor(60, 60, 60);
-    let y = 74;
+    const y = 74;
     doc.text(`Batch: ${data.batchNumber}`, margin, y);
     doc.text(`Perusahaan: ${data.companyName}`, margin, y + 14);
     doc.text(`No. Polis Induk: ${data.masterPolicyNumber}`, margin, y + 28);

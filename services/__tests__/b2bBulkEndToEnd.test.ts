@@ -14,7 +14,12 @@ const FIXTURE = '/tmp/xlsx_inspect/data.xlsx';
 
 describe.skipIf(!fs.existsSync(FIXTURE))('b2b bulk — full reference file reconciliation', () => {
   it('rates all 253 rows and lands close to the reference TOTAL TAGIHAN', async () => {
-    const wb = XLSX.readFile(FIXTURE);
+    // XLSX.read(buffer) rather than XLSX.readFile(path): mirrors what
+    // services/b2bBulkParser.ts actually does in production (reads an
+    // ArrayBuffer, never a file path) and sidesteps readFile's Node-vs-
+    // browser environment detection misfiring under vitest's jsdom env
+    // (where `window` exists) — a test-harness-only quirk, not a real bug.
+    const wb = XLSX.read(fs.readFileSync(FIXTURE));
     const sheet = wb.Sheets[wb.SheetNames[0]];
     const allRows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, raw: true, defval: null });
     const headers = allRows[0].map(h => String(h ?? ''));

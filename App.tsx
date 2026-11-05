@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Car, Plane, ShieldAlert, Package, Heart } from 'lucide-react';
 import { Language, UserRole } from './types';
 import { db, seedDatabase } from './db';
-import { supabase, getAgentByEmail, getUserTcStatus, recordTcAcceptance, recordUserHeartbeat, recordPageView, getActiveOjkRateSet, fetchMyProfileForLogin, ensureProfile } from './services/supabaseService';
+import { supabase, getAgentByEmail, getUserTcStatus, recordTcAcceptance, recordUserHeartbeat, recordPageView, getActiveOjkRateSet, getActiveB2BFleetRateConfig, fetchMyProfileForLogin, ensureProfile } from './services/supabaseService';
 import { applyOjkRateSet } from './services/ojkRates';
+import { setActiveBulkRateConfig } from './services/b2bFleetRating';
 import { initVehicleOverrides } from './services/vehicleOverrides';
 import { trackPageView } from './services/analytics';
 import TermsModal from './components/TermsModal';
@@ -168,6 +169,14 @@ const App = ({ initialRoute }: AppProps = {}) => {
   // is active — falls back silently to services/ojkRates.ts's built-in values.
   useEffect(() => {
     getActiveOjkRateSet().then(row => { if (row) applyOjkRateSet(row as any); }).catch(() => {});
+  }, []);
+
+  // Same pattern for the B2B bulk-fleet-specific rates (pickup/truck, heavy
+  // equipment, discounts, admin fees, min premium) — calcBulkPremium falls
+  // back silently to services/b2bFleetRating.ts's built-in defaults if no
+  // admin-edited set is active yet.
+  useEffect(() => {
+    getActiveB2BFleetRateConfig().then(row => { if (row) setActiveBulkRateConfig(row.rates); }).catch(() => {});
   }, []);
 
   // Harga kendaraan dikelola di CMS. Muat sekali saat boot, lalu segarkan saat

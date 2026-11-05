@@ -5,6 +5,25 @@ import type { AppRouteProps } from '../routeHelpers';
 import { UserRole } from '../../../types';
 
 const B2BPortal = lazy(() => import('../../../components/b2b/B2BPortal'));
+const B2BLogin  = lazy(() => import('../../../components/b2b/B2BLogin'));
+
+// ─── B2B login gate — signed-out /b2bapps ────────────────────────────────────
+// Mirrors AuthEntryRoutes (auth.tsx) for /custapp and /agapps, which never
+// included /b2bapps — a signed-out visit there fell through to the public
+// marketing homepage instead of any login form at all (2026-11-05 fix).
+// Placed in the dispatch chain right alongside AuthEntryRoutes in index.tsx,
+// same precedence.
+export const B2BAuthEntryRoutes: React.FC<AppRouteProps> = ({
+  pathname, currentUser, onAuthSuccess, navigate,
+}) => {
+  if (currentUser) return null;
+  if (pathname !== '/b2bapps') return null;
+  return (
+    <Suspense fallback={<PortalLoader />}>
+      <B2BLogin onLoginSuccess={onAuthSuccess} onBack={() => navigate('/')} />
+    </Suspense>
+  );
+};
 
 // ─── B2B corporate portal — signed-in catch-all (App.tsx line 735) ──────────
 // Claims ANY pathname for a signed-in B2B_CLIENT. Importance of staying after

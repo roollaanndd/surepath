@@ -10,7 +10,7 @@ import { AdminRoutes } from './admin';
 import { OperatorRoutes } from './operator';
 import { MarketingRoutes } from './marketing';
 import { AgentRoutes } from './agent';
-import { B2BRoutes } from './b2b';
+import { B2BRoutes, B2BAuthEntryRoutes } from './b2b';
 import { CustomerRoutes } from './customer';
 
 const HomePage = lazy(() => import('../../../src/pages/HomePage'));
@@ -27,6 +27,8 @@ const HomePage = lazy(() => import('../../../src/pages/HomePage'));
 //     BEFORE select-app (647) — the selector never reached an admin
 //   • /operatorapp resolves login-vs-portal internally (620 + 688 + 709)
 //   • the AuthGate entry gate runs for signed-out /login//custapp//agapps
+//   • /b2bapps signed-out gets its own B2BLogin (same precedence tier as the
+//     AuthGate entry gate, added 2026-11-05 — previously unhandled entirely)
 //   • B2B and Customer are the signed-in catch-alls, in that order (735, 745)
 //   • the logged-out homepage exists only OUTSIDE app/standalone mode (759)
 //   • the terminal AuthGate is signed-out + app mode only (774)
@@ -66,6 +68,12 @@ export const AppRoutes: React.FC<AppRouteProps> = (props) => {
 
   const authGate = AuthEntryRoutes(props);
   if (authGate) return authGate;
+
+  // Same precedence tier as the AuthEntryRoutes check above — a signed-out
+  // visit to /b2bapps (2026-11-05: previously unhandled, falling through to
+  // the public marketing homepage with no login form at all).
+  const b2bAuthGate = B2BAuthEntryRoutes(props);
+  if (b2bAuthGate) return b2bAuthGate;
 
   const selectApp = SelectAppRoutes(props);
   if (selectApp) return selectApp;

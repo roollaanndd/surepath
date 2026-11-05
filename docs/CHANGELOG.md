@@ -1,5 +1,30 @@
 # SurePath — Changelog
 
+## v2.7.53 — 2026-11-05
+
+### Login khusus portal B2B + dashboard menampilkan batch fleet
+
+- **Portal B2B sebelumnya tidak punya layar login sendiri.** Mengunjungi
+  `/b2bapps` dalam keadaan logout jatuh ke beranda marketing umum — tidak
+  ada form login sama sekali (`/custapp`/`/agapps` sudah punya ini,
+  `/b2bapps` tidak pernah ditambahkan). Dibuat `B2BLogin.tsx`: layar
+  glassmorphism khusus, animasi masuk satu kali (blur → fokus + naik,
+  staggered), identitas warna indigo yang sengaja berbeda dari oranye
+  Insurer — B2B di sini berarti institusi/multifinance, bukan ritel. Email +
+  kata sandi saja (akun B2B disediakan admin, tidak ada pendaftaran
+  mandiri), plus alur lupa kata sandi.
+- **FIX**: `rolePath()` (App.tsx) tidak pernah punya cabang untuk
+  `B2B_CLIENT` — selalu jatuh ke `/custapp`. Tidak pernah benar-benar rusak
+  (penjaga `B2BRoutes` di `src/app/routes/b2b.tsx` mengklaim path apa pun
+  untuk B2B_CLIENT yang sudah login), tapi bilah URL menampilkan portal yang
+  salah. Diperbaiki di sumbernya.
+- **Dashboard B2B (`B2BHome.tsx`) sekarang menampilkan batch fleet massal** —
+  sebelumnya statistik dan aktivitas terbaru hanya menghitung pengajuan
+  satuan (`sp_b2b_submissions`), sehingga mitra yang memakai impor massal
+  (fitur andalan sesi sebelumnya) melihat dashboard kosong selamanya.
+  Ditambahkan: tombol kedua "Impor Massal Fleet", ringkasan batch menunggu
+  bayar + total unit, dan daftar batch terbaru.
+
 ## v2.7.52 — 2026-11-05
 
 ### Kontrol admin untuk fleet B2B, Syarat & Ketentuan, dan koneksi dashboard insurer

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Home, FilePlus, ClipboardList, FileCheck, UserCircle } from 'lucide-react';
+import { Home, FilePlus, ClipboardList, FileCheck, UserCircle, Sparkles } from 'lucide-react';
 import { Language } from '../../types';
 import PortalTabBar, { type PortalTab } from '../shared/PortalTabBar';
 import PortalHeader from '../shared/PortalHeader';
 import { scrollPortalToTop } from '../shared/scrollReset';
+import PathyChat, { PATHY_OPEN_EVENT } from '../shared/PathyChat';
 import {
   getB2BSubmissions,
   getB2BQuotes,
@@ -195,6 +196,23 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
         onSelect={handleTabChange}
         modernIcons
       />
+
+      {/* v2.8.0 — Pathy di portal B2B: bedah Excel armada, hitung premi per
+          baris, bantu alur pengajuan. Trigger mengapung, bukan tab keenam —
+          bar tab sudah penuh (lihat komentar TABS di atas). */}
+      <PathyChat
+        lang={lang}
+        currentUser={{ name: client?.company_name, id: client?.id, role: client?.role }}
+        hideLauncher
+      />
+      <button
+        type="button"
+        onClick={() => window.dispatchEvent(new CustomEvent(PATHY_OPEN_EVENT))}
+        aria-label={t('Tanya Pathy', 'Ask Pathy')}
+        className="fixed bottom-28 right-4 z-[60] w-14 h-14 rounded-full bg-emerald-600 text-white shadow-[0_12px_32px_-8px_rgba(5,150,105,0.6)] ring-2 ring-emerald-400/40 flex items-center justify-center active:scale-90 transition-transform duration-200 focus:outline-none focus-visible:ring-4 focus-visible:ring-emerald-500/50"
+      >
+        <Sparkles size={22} />
+      </button>
     </div>
   );
 };

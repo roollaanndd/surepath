@@ -31,6 +31,8 @@ import { serviceToolSchemas, runServiceTool, isServiceTool } from './serviceTool
 import {
   attachmentHints, documentToolSchemas, isDocumentTool, runDocumentTool,
 } from './documents.ts';
+import { bulkToolSchemas, isBulkTool, runBulkTool } from './bulkTools.ts';
+import { adminToolSchemas, isAdminTool, isAdminToolRole, runAdminTool } from './adminTools.ts';
 import { PRICE_DISCLAIMER } from './disclaimers.ts';
 
 // ─── Product catalogue ───────────────────────────────────────────────────────
@@ -282,6 +284,10 @@ export function toolSchemas(role: string) {
 
   tools.push(...documentToolSchemas);
   tools.push(...serviceToolSchemas(role));
+  // v2.8.0 — Excel bulk analysis (B2B + admin + agent) dan toolset admin
+  // (MASTER_ADMIN/ADMIN saja, read-only).
+  if (isAgentSide(role) || role === 'B2B_CLIENT') tools.push(...bulkToolSchemas());
+  if (isAdminToolRole(role)) tools.push(...adminToolSchemas());
   return tools;
 }
 
@@ -903,6 +909,10 @@ export async function runTool(
       if (isDocumentTool(name)) return await runDocumentTool(name, args, ctx);
       // v2.3.0 service tools (coverage, claims, renewal, payment, pipeline).
       if (isServiceTool(name)) return await runServiceTool(name, args, ctx);
+      // v2.8.0 — Excel bulk analysis + admin toolset (masing-masing menjaga
+      // gate perannya sendiri di dalam).
+      if (isBulkTool(name)) return await runBulkTool(name, args, ctx);
+      if (isAdminTool(name)) return await runAdminTool(name, args, ctx);
       return { result: { error: `Tool tidak dikenal: ${name}` } };
   }
 }

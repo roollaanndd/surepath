@@ -7,6 +7,7 @@ import {
   NON_VEHICLE_RATES,
 } from '../../services/ojkRates';
 import ModuleIcon from '../shared/ModuleIcon';
+import InsurerApiConfig from './InsurerApiConfig';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -896,6 +897,9 @@ const InsurerCard: React.FC<InsurerCardProps> = ({ insurer, onEdit, onDelete, on
             insurerName={insurer.name}
             onRequestAdd={() => setShowAddProduct(true)}
           />
+          {/* v2.8.0 — backend v1.23.0 akhirnya dapat antarmukanya (temuan audit:
+              admin_get/save_insurer_api_config tidak pernah dipanggil UI). */}
+          <InsurerApiConfig insurerId={insurer.id} />
         </div>
       )}
     </div>

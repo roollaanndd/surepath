@@ -32,7 +32,7 @@ export const ADMIN_NAV: NavGroup[] = [
     id: 'today',
     label: 'Hari Ini',
     sections: [
-      { id: 'overview', label: 'Ringkasan', childIds: ['dashboard', 'ops_console', 'analytics'] },
+      { id: 'overview', label: 'Ringkasan', childIds: ['dashboard', 'ops_console', 'contact_leads', 'analytics'] },
     ],
   },
   {
@@ -76,7 +76,7 @@ export const ADMIN_NAV: NavGroup[] = [
     label: 'Platform',
     sections: [
       { id: 'content', label: 'Konten Web', childIds: ['website_editor', 'portal_icons'] },
-      { id: 'ai', label: 'AI & Pathy', childIds: ['ai_admin', 'ai_finance', 'pathy_logs'] },
+      { id: 'ai', label: 'AI & Pathy', childIds: ['ai_admin', 'ai_finance', 'pathy_ai', 'pathy_logs'] },
       { id: 'audit', label: 'Jejak & Keamanan', childIds: ['activity_log', 'security'] },
       { id: 'settings', label: 'Pengaturan', childIds: ['settings'] },
     ],
@@ -93,15 +93,15 @@ export interface VisibleGroup {
   sections: VisibleSection[];
 }
 
-/** Semua id view yang pernah ada di menu lama — dipakai test cakupan. */
+/** Semua id view yang pernah ada di menu lama + leaf baru v2.8.0 — dipakai test cakupan. */
 export const LEGACY_LEAF_IDS = [
-  'dashboard', 'ops_console', 'analytics',
+  'dashboard', 'ops_console', 'analytics', 'contact_leads',
   'user_mgmt', 'payments', 'withdrawals',
   'policy_orders', 'approvals', 'claims_admin', 'endorsements', 'documents',
   'agents', 'agent_agreements', 'tnc_admin', 'commission_ledger', 'b2b',
   'product_config', 'tier_promo', 'insurers', 'ojk_rates', 'b2b_fleet_rates', 'financial',
   'vehicle_pricelist', 'website_editor', 'portal_icons', 'ai_admin', 'ai_finance',
-  'pathy_logs', 'activity_log', 'security', 'settings',
+  'pathy_logs', 'pathy_ai', 'activity_log', 'security', 'settings',
 ] as const;
 
 export const ALL_SECTION_IDS = ADMIN_NAV.flatMap(g => g.sections.map(s => s.id));
@@ -157,6 +157,9 @@ export const ADMIN_MENU_ITEMS: AdminMenuItem[] = [
   { id: 'dashboard',        label: 'Dashboard', roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.INSURANCE_ADMIN] },
   { id: 'ops_console',      label: 'Konsol Operasi',           roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.INSURANCE_ADMIN] },
   { id: 'analytics',        label: 'Analytics',      roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE] },
+  // v2.8.0 — antrean prospek form kontak publik (gap analysis: fitur operator
+  // yang belum tercermin di admin; backend list/update_contact_leads sudah ada).
+  { id: 'contact_leads',    label: 'Prospek Kontak',            roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
   // NASABAH & TRANSAKSI
   // Menu cleanup 2026-10-26 (before→after map in the redesign report):
   //  - 'users' (BizAdminView) removed — duplicate directory; its partner
@@ -202,6 +205,8 @@ export const ADMIN_MENU_ITEMS: AdminMenuItem[] = [
   { id: 'ai_admin',         label: 'AI Admin Agent',             roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.INSURANCE_ADMIN] },
   { id: 'ai_finance',       label: 'AI Finance Agent',             roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE] },
   { id: 'pathy_logs',       label: 'Rekaman Pathy',   roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
+  // v2.8.0 — Pathy sebagai asisten operasional admin (toolset read-only).
+  { id: 'pathy_ai',         label: 'Tanya Pathy',           roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
   { id: 'activity_log',     label: 'Jejak Aktivitas',        roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
   { id: 'security',         label: 'Keamanan',     roles: [UserRole.MASTER_ADMIN] },
   { id: 'settings',         label: 'Pengaturan',    roles: [UserRole.MASTER_ADMIN] },

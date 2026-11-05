@@ -28,7 +28,7 @@ export interface PathyCaller {
  * whatever photo it is given, so a driving licence, a policy schedule or a
  * workshop invoice arrives here as extracted fields too.
  */
-export type PathyDocumentType = 'STNK' | 'KTP' | 'SIM' | 'POLIS' | 'INVOICE' | 'DOC';
+export type PathyDocumentType = 'STNK' | 'KTP' | 'SIM' | 'POLIS' | 'INVOICE' | 'DOC' | 'SHEET';
 
 export interface PathyDocument {
   type: PathyDocumentType;
@@ -38,7 +38,7 @@ export interface PathyDocument {
   confidence?: number;
 }
 
-export const DOCUMENT_TYPES: PathyDocumentType[] = ['STNK', 'KTP', 'SIM', 'POLIS', 'INVOICE', 'DOC'];
+export const DOCUMENT_TYPES: PathyDocumentType[] = ['STNK', 'KTP', 'SIM', 'POLIS', 'INVOICE', 'DOC', 'SHEET'];
 
 export interface ToolContext {
   // deno-lint-ignore no-explicit-any
@@ -61,7 +61,11 @@ export interface PathyCard {
     | 'policy_explainer' | 'payment_help'
     | 'pipeline' | 'commission_forecast' | 'followup_draft'
     // v2.5.0 — documents kept, not just read
-    | 'document_saved';
+    | 'document_saved'
+    // v2.8.0 — Excel bulk analysis (B2B) + admin toolset
+    | 'bulk_analysis'
+    | 'admin_overview' | 'admin_orders' | 'admin_claims'
+    | 'admin_leads' | 'admin_users';
   // deno-lint-ignore no-explicit-any
   data: any;
 }

@@ -143,17 +143,6 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
   const [stnkScanning, setStnkScanning] = useState(false);
   const [stnkOcrResult, setStnkOcrResult] = useState<StnkOcrResult | null>(null);
 
-  // Rentang harga pasar ±5% — rumus yang sama dengan StepVehicle Nasabah,
-  // supaya nasabah dan mitra melihat angka yang sama untuk kendaraan yang sama.
-  const marketPriceRange = (() => {
-    if (!carInputs.brand || !carInputs.model) return null;
-    const base = product === 'MOTORCYCLE'
-      ? getMarketValueForMotoYear(carInputs.brand, carInputs.model, carInputs.year)
-      : getMarketValueForYear(carInputs.brand, carInputs.model, carInputs.year);
-    if (!base) return null;
-    return { min: Math.round(base * 0.95), max: Math.round(base * 1.05) };
-  })();
-
   // v2.7.50 — STNK dipindai dengan layanan yang sama dengan portal Nasabah
   // (stnk-ocr edge + validasi per-field). Data yang terbaca mengisi form di
   // bawah kartu; field yang gagal validasi ditandai StnkOcrNotice supaya mitra
@@ -216,6 +205,18 @@ const AgentQuoteBuilder: React.FC<Props> = ({ agentId, clients, lang, onBack, ag
   const [travelInputs, setTravelInputs] = useState<TravelInputs>({ destination: '', startDate: '', endDate: '', adults: 1, plan: 'GOLD' });
   const [paInputs, setPAInputs] = useState<PAInputs>({ category: 'GENERAL', plan: 'BASIC' });
   const [mparInputs, setMPARInputs] = useState<MPARInputs>({ category: 'GADGET', itemName: '', price: 0, period: 12 });
+
+  // Rentang harga pasar ±5% — rumus yang sama dengan StepVehicle Nasabah,
+  // supaya nasabah dan mitra melihat angka yang sama untuk kendaraan yang sama.
+  // (Di sini setelah carInputs dideklarasikan — IIFE dieksekusi saat render.)
+  const marketPriceRange = (() => {
+    if (!carInputs.brand || !carInputs.model) return null;
+    const base = product === 'MOTORCYCLE'
+      ? getMarketValueForMotoYear(carInputs.brand, carInputs.model, carInputs.year)
+      : getMarketValueForYear(carInputs.brand, carInputs.model, carInputs.year);
+    if (!base) return null;
+    return { min: Math.round(base * 0.95), max: Math.round(base * 1.05) };
+  })();
 
   const [saving, setSaving] = useState(false);
   const [converting, setConverting] = useState(false);

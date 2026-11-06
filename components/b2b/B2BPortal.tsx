@@ -1,29 +1,41 @@
-import React, { useState, useEffect } from 'react';
-import { Home, FilePlus, ClipboardList, FileCheck, UserCircle, Sparkles, ShieldCheck } from 'lucide-react';
-import { Language, UserRole } from '../../types';
-import PortalTabBar, { type PortalTab } from '../shared/PortalTabBar';
-import PortalHeader from '../shared/PortalHeader';
-import { scrollPortalToTop } from '../shared/scrollReset';
-import PathyChat, { PATHY_OPEN_EVENT } from '../shared/PathyChat';
+// B2BPortal — dashboard shell host for the corporate portal.
+//
+// Replaces the earlier mobile shell (PortalHeader + PortalTabBar) with a
+// desktop-first sidebar + topbar via <B2BShell>. The portal is a laptop
+// tool for corporate ops teams; mobile is still supported (sidebar
+// collapses to a drawer below lg, content reflows), but the primary
+// layout is now dense-information, data-forward dashboard.
+//
+// Data fetching, auth model, and gateway calls stay identical — the shell
+// just wraps the same screens.
+
+import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import {
-  getB2BSubmissions,
-  getAllB2BSubmissions,
-  getB2BQuotes,
-  getAllB2BQuotes,
-  getB2BBulkBatches,
-  adminListB2BUsers,
-  type SpB2BSubmission,
-  type SpB2BQuote,
-  type SpB2BBatch,
+  LayoutDashboard, FileText, FileCheck, Layers, User, Sparkles, ShieldCheck,
+} from 'lucide-react';
+import { Language, UserRole } from '../../types';
+import {
+  getB2BSubmissions, getAllB2BSubmissions,
+  getB2BQuotes, getAllB2BQuotes,
+  getB2BBulkBatches, adminListB2BUsers,
+  type SpB2BSubmission, type SpB2BQuote, type SpB2BBatch,
 } from '../../services/supabaseService';
-import B2BHome from './B2BHome';
-import B2BNewSubmission from './B2BNewSubmission';
-import B2BSubmissions from './B2BSubmissions';
-import B2BQuotes from './B2BQuotes';
-import B2BProfile from './B2BProfile';
-import B2BBulkImport from './B2BBulkImport';
-import B2BBulkBatches from './B2BBulkBatches';
+import PathyChat, { PATHY_OPEN_EVENT } from '../shared/PathyChat';
 import { useDarkMode } from '../shared/theme';
+import {
+  B2BAmbient, B2BShell, B2BGlass, B2BToastProvider, B2BCommandPalette,
+  type B2BNavItem,
+} from './dashboard/ui';
+import B2BDashboard from './B2BDashboard';
+
+// Lazy-load the heavier screens — each holds its own feature logic (wizards,
+// XLSX parser, PDF builder) that isn't needed on the overview.
+const B2BNewSubmission = lazy(() => import('./B2BNewSubmission'));
+const B2BBulkImport    = lazy(() => import('./B2BBulkImport'));
+const B2BSubmissions   = lazy(() => import('./B2BSubmissions'));
+const B2BBulkBatches   = lazy(() => import('./B2BBulkBatches'));
+const B2BQuotes        = lazy(() => import('./B2BQuotes'));
+const B2BProfile       = lazy(() => import('./B2BProfile'));
 
 interface Props {
   client: any;
@@ -31,40 +43,27 @@ interface Props {
   lang: Language;
 }
 
-// Five text tabs share the bar here, where Customer and Agent each spend one
-// slot on a narrow centre button. "Pengajuan" and "Penawaran" never had the
-// width, and were rendering as "PENGAJ/UAN". The short forms carry the same
-// meaning and match the verb the Agent portal already uses for "create".
-const TABS: { id: string; labelEn: string; labelId: string; Icon: PortalTab['Icon']; glyph: PortalTab['glyph'] }[] = [
-  { id: 'home',        labelEn: 'Home',     labelId: 'Beranda', Icon: Home,          glyph: 'home' },
-  { id: 'new',         labelEn: 'New',      labelId: 'Buat',    Icon: FilePlus,      glyph: 'quote' },
-  { id: 'submissions', labelEn: 'Requests', labelId: 'Ajuan',   Icon: ClipboardList, glyph: 'document' },
-  { id: 'quotes',      labelEn: 'Quotes',   labelId: 'Tawaran', Icon: FileCheck,     glyph: 'wallet' },
-  { id: 'profile',     labelEn: 'Profile',  labelId: 'Profil',  Icon: UserCircle,    glyph: 'people' },
-];
+// Section ids drive both the sidebar (B2BNavItem.id) and the render switch.
+// Single/Massal split lives inside Pengajuan & Ajuan as sub-items — lets a
+// multifinance partner jump straight to Bulk without hunting a toggle.
+type Section =
+  | 'dashboard'
+  | 'new-single' | 'new-bulk'
+  | 'submissions' | 'batches'
+  | 'quotes'
+  | 'profile';
 
 const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
-  const t = (en: string, id: string) => lang === Language.EN ? en : id;
-
-  // v2.8.1 — MASTER_ADMIN masuk portal B2B dalam MODE PANTAU: melihat ajuan,
-  // penawaran dan batch massal milik SEMUA klien korporat (RLS/gateway sudah
-  // mengizinkan admin), tanpa bisa membuat pengajuan atau bertindak atas
-  // penawaran milik klien. Klien B2B biasa tidak melihat perubahan apa pun.
+  const t = (en: string, id: string) => (lang === Language.EN ? en : id);
   const isMaster = client?.role === UserRole.MASTER_ADMIN;
 
-  const [activeTab, setActiveTab] = useState('home');
+  const [activeId, setActiveId] = useState<Section>('dashboard');
   const [darkMode, setDarkMode] = useDarkMode();
   const [submissions, setSubmissions] = useState<SpB2BSubmission[]>([]);
   const [quotes, setQuotes] = useState<SpB2BQuote[]>([]);
   const [bulkBatches, setBulkBatches] = useState<SpB2BBatch[]>([]);
-  // Mode pantau: peta client_id → nama perusahaan (dari admin_list_b2b_users)
-  // untuk melabeli kartu penawaran, yang tidak membawa company_name sendiri.
   const [companyByClient, setCompanyByClient] = useState<Record<string, string>>({});
-  // "Buat"/"Ajuan" each hold two flows (single submission vs. bulk fleet
-  // import). A 6th tab would reopen the width bug the comment below the TABS
-  // array describes (5 short labels already fill PortalTabBar's budget), so
-  // the bulk flow is a mode switch inside these two tabs instead.
-  const [bulkMode, setBulkMode] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   const loadData = async () => {
     if (!client?.id) return;
@@ -81,6 +80,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
       setCompanyByClient(Object.fromEntries(
         clients.map(c => [c.id, c.company_name || c.name || '—']),
       ));
+      setInitialLoading(false);
       return;
     }
     const [subs, qs, batches] = await Promise.all([
@@ -91,185 +91,205 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
     setSubmissions(subs);
     setQuotes(qs);
     setBulkBatches(batches);
+    setInitialLoading(false);
   };
 
-  useEffect(() => { loadData(); }, [client?.id, isMaster]);
+  useEffect(() => { void loadData(); }, [client?.id, isMaster]);
 
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab);
-    scrollPortalToTop();
-  };
+  const handleSelect = (id: string) => setActiveId(id as Section);
 
-  const modeToggle = (onLabel: string, offLabel: string) => (
-    <div className="flex justify-center gap-1.5 pt-5 pb-1">
-      <button
-        onClick={() => setBulkMode(false)}
-        className={`px-3 py-1.5 rounded-full text-2xs font-black uppercase tracking-wider transition-colors ${!bulkMode ? 'bg-ds-green text-ds-on-green' : 'bg-ds-card2 text-ds-ink3'}`}
-      >
-        {offLabel}
-      </button>
-      <button
-        onClick={() => setBulkMode(true)}
-        className={`px-3 py-1.5 rounded-full text-2xs font-black uppercase tracking-wider transition-colors ${bulkMode ? 'bg-ds-green text-ds-on-green' : 'bg-ds-card2 text-ds-ink3'}`}
-      >
-        {onLabel}
-      </button>
-    </div>
-  );
+  const nav: B2BNavItem[] = useMemo(() => [
+    { id: 'dashboard', label: t('Dashboard', 'Dashboard'), icon: LayoutDashboard },
+    {
+      id: 'submissions', label: t('Requests', 'Pengajuan'), icon: FileText,
+      badge: submissions.filter(s => s.status === 'SUBMITTED' || s.status === 'REVIEWING').length,
+      children: [
+        { id: 'submissions', label: t('Single', 'Satuan') },
+        { id: 'batches',     label: t('Bulk Fleet', 'Armada Massal') },
+      ],
+    },
+    {
+      id: 'quotes', label: t('Quotes', 'Penawaran'), icon: FileCheck,
+      badge: quotes.filter(q => q.status === 'PENDING').length,
+    },
+    {
+      id: 'new-single', label: t('Create', 'Buat'), icon: Layers,
+      children: [
+        { id: 'new-single', label: t('New Request', 'Pengajuan Baru') },
+        { id: 'new-bulk',   label: t('Bulk Import', 'Impor Massal') },
+      ],
+    },
+    { id: 'profile', label: t('Profile', 'Profil'), icon: User },
+  ], [submissions, quotes, lang]);
 
-  const renderTab = () => {
-    switch (activeTab) {
-      case 'home':
+  const breadcrumb = useMemo((): string[] => {
+    switch (activeId) {
+      case 'dashboard':   return [t('Portal B2B', 'Portal B2B'), t('Dashboard', 'Dashboard')];
+      case 'new-single':  return [t('Portal B2B', 'Portal B2B'), t('Create', 'Buat'), t('New Request', 'Pengajuan Baru')];
+      case 'new-bulk':    return [t('Portal B2B', 'Portal B2B'), t('Create', 'Buat'), t('Bulk Import', 'Impor Massal')];
+      case 'submissions': return [t('Portal B2B', 'Portal B2B'), t('Requests', 'Pengajuan'), t('Single', 'Satuan')];
+      case 'batches':     return [t('Portal B2B', 'Portal B2B'), t('Requests', 'Pengajuan'), t('Bulk Fleet', 'Armada Massal')];
+      case 'quotes':      return [t('Portal B2B', 'Portal B2B'), t('Quotes', 'Penawaran')];
+      case 'profile':     return [t('Portal B2B', 'Portal B2B'), t('Profile', 'Profil')];
+    }
+  }, [activeId, lang]);
+
+  const masterName = client?.name || 'Master Admin';
+  const displayName = isMaster ? masterName : (client?.company_name ?? 'Company');
+  const userCode = isMaster
+    ? t('Master Admin · Monitor', 'Master Admin · Mode Pantau')
+    : t('B2B Client', 'Klien B2B');
+  const initials = (isMaster ? masterName : (client?.company_name ?? 'B2B'))
+    .split(' ').slice(0, 2).map((w: string) => w[0] ?? '').join('').toUpperCase();
+
+  const openPathy = () => window.dispatchEvent(new CustomEvent(PATHY_OPEN_EVENT));
+
+  const renderContent = () => {
+    if (isMaster && (activeId === 'new-single' || activeId === 'new-bulk')) {
+      return (
+        <div className="max-w-md mx-auto mt-8">
+          <B2BGlass className="p-6 text-center space-y-3">
+            <div className="mx-auto w-11 h-11 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(79,70,229,0.1)' }}>
+              <ShieldCheck size={18} className="text-indigo-600" />
+            </div>
+            <p className="font-black text-sm text-slate-900">{t('Monitor Mode', 'Mode Pantau')}</p>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              {t('Submissions are created by B2B client accounts. As Master Admin you can review all client submissions in Requests and Quotes.',
+                 'Pengajuan dibuat oleh akun klien B2B. Sebagai Master Admin, Anda dapat memantau seluruh ajuan klien pada Pengajuan dan Penawaran.')}
+            </p>
+          </B2BGlass>
+        </div>
+      );
+    }
+
+    switch (activeId) {
+      case 'dashboard':
         return (
-          <B2BHome
+          <B2BDashboard
             client={client}
             submissions={submissions}
             quotes={quotes}
             bulkBatches={bulkBatches}
-            onNavigate={handleTabChange}
-            onNavigateBulk={(tab) => { setBulkMode(true); handleTabChange(tab); }}
+            onNavigate={handleSelect}
+            onNavigateBulk={handleSelect}
+            onPathyOpen={openPathy}
+            companyByClient={companyByClient}
             lang={lang}
+            loading={initialLoading}
           />
         );
-      case 'new':
-        if (isMaster) {
-          return (
-            <div className="px-4 py-6 max-w-lg mx-auto space-y-4">
-              <div className="rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 p-5 text-center space-y-2">
-                <ShieldCheck size={28} className="mx-auto text-indigo-500" />
-                <p className="font-black text-sm">{t('Monitor Mode', 'Mode Pantau')}</p>
-                <p className="text-xs text-ds-ink2 leading-relaxed">
-                  {t(
-                    'Submissions are created by B2B client accounts. As Master Admin you can review all client submissions in the Requests and Quotes tabs.',
-                    'Pengajuan dibuat oleh akun klien B2B. Sebagai Master Admin, Anda dapat memantau seluruh ajuan klien pada tab Ajuan dan Tawaran.',
-                  )}
-                </p>
-              </div>
-            </div>
-          );
-        }
+      case 'new-single':
         return (
-          <>
-            {modeToggle(t('Bulk Import', 'Impor Massal'), t('Single Submission', 'Pengajuan Satuan'))}
-            {bulkMode ? (
-              <B2BBulkImport
-                clientId={client?.id ?? ''}
-                client={client}
-                onDone={() => { loadData(); setBulkMode(false); handleTabChange('submissions'); }}
-                lang={lang}
-              />
-            ) : (
-              <B2BNewSubmission
-                clientId={client?.id ?? ''}
-                client={client}
-                onDone={() => { loadData(); handleTabChange('submissions'); }}
-                lang={lang}
-              />
-            )}
-          </>
+          <Suspense fallback={<div className="text-sm text-slate-400 text-center py-16">Memuat…</div>}>
+            <B2BNewSubmission
+              clientId={client?.id ?? ''}
+              client={client}
+              onDone={() => { loadData(); handleSelect('submissions'); }}
+              lang={lang}
+            />
+          </Suspense>
+        );
+      case 'new-bulk':
+        return (
+          <Suspense fallback={<div className="text-sm text-slate-400 text-center py-16">Memuat…</div>}>
+            <B2BBulkImport
+              clientId={client?.id ?? ''}
+              client={client}
+              onDone={() => { loadData(); handleSelect('batches'); }}
+              lang={lang}
+            />
+          </Suspense>
         );
       case 'submissions':
         return (
-          <>
-            {!isMaster && modeToggle(t('Bulk Batches', 'Batch Massal'), t('Single Submissions', 'Pengajuan Satuan'))}
-            {bulkMode ? (
-              <B2BBulkBatches clientId={client?.id ?? ''} lang={lang} allClients={isMaster} />
-            ) : (
-              <B2BSubmissions
-                clientId={client?.id ?? ''}
-                lang={lang}
-                onNavigate={handleTabChange}
-                allClients={isMaster}
-              />
-            )}
-          </>
+          <Suspense fallback={<div className="text-sm text-slate-400 text-center py-16">Memuat…</div>}>
+            <B2BSubmissions
+              clientId={client?.id ?? ''}
+              lang={lang}
+              onNavigate={(t) => handleSelect(t === 'quotes' ? 'quotes' : 'submissions')}
+              allClients={isMaster}
+            />
+          </Suspense>
+        );
+      case 'batches':
+        return (
+          <Suspense fallback={<div className="text-sm text-slate-400 text-center py-16">Memuat…</div>}>
+            <B2BBulkBatches clientId={client?.id ?? ''} lang={lang} allClients={isMaster} />
+          </Suspense>
         );
       case 'quotes':
         return (
-          <B2BQuotes
-            clientId={client?.id ?? ''}
-            lang={lang}
-            companyName={client?.company_name}
-            allClients={isMaster}
-            companyByClient={companyByClient}
-          />
+          <Suspense fallback={<div className="text-sm text-slate-400 text-center py-16">Memuat…</div>}>
+            <B2BQuotes
+              clientId={client?.id ?? ''}
+              lang={lang}
+              companyName={client?.company_name}
+              allClients={isMaster}
+              companyByClient={companyByClient}
+            />
+          </Suspense>
         );
       case 'profile':
         return (
-          <B2BProfile
-            client={client}
-            clientId={client?.id ?? ''}
-            lang={lang}
-            onLogout={onLogout}
-            masterView={isMaster}
-          />
+          <Suspense fallback={<div className="text-sm text-slate-400 text-center py-16">Memuat…</div>}>
+            <B2BProfile
+              client={client}
+              clientId={client?.id ?? ''}
+              lang={lang}
+              onLogout={onLogout}
+              masterView={isMaster}
+            />
+          </Suspense>
         );
-      default:
-        return null;
     }
   };
 
-  const masterName = client?.name || 'Master Admin';
-  const companyInitials = (isMaster ? masterName : (client?.company_name ?? 'B2B'))
-    .split(' ').slice(0, 2).map((w: string) => w[0] ?? '').join('').toUpperCase();
-
   return (
-    <div className="sp-modern-app min-h-screen bg-ds-bg dark:bg-ds-dk-bg text-ds-ink dark:text-ds-dk-ink transition-colors duration-300 font-sora">
-      <div aria-hidden className="sp-ambient" />
-      {/* Top Header */}
-      {/* Was a hand-copied PortalHeader that had drifted: it carried the same
-          squeeze bugs the shared one has since been fixed for, and its three
-          controls had no focus ring and the avatar no accessible name. */}
-      <PortalHeader
-        portalLabel="B2B"
-        userName={isMaster ? masterName : (client?.company_name ?? 'Company')}
-        userCode={isMaster
-          ? t('Master Admin · Monitor', 'Master Admin · Mode Pantau')
-          : t('B2B Client', 'Klien B2B')}
-        avatarInitial={companyInitials}
-        onBellClick={() => {}}
+    <B2BToastProvider>
+    <div
+      className="sp-b2b-root min-h-screen relative"
+      style={{ background: '#f5f7fa', fontFamily: "'Sora', system-ui, sans-serif" }}
+    >
+      <B2BAmbient />
+      <B2BCommandPalette nav={nav} onSelect={handleSelect} />
+
+      <B2BShell
+        nav={nav}
+        activeId={activeId}
+        onSelect={handleSelect}
+        user={{ name: displayName, code: userCode, initials }}
+        breadcrumb={breadcrumb}
+        onLogout={onLogout}
         darkMode={darkMode}
         onToggleDark={() => setDarkMode(!darkMode)}
-        onAvatarClick={() => handleTabChange('profile')}
-        labels={{
-          notifications: t('Notifications', 'Notifikasi'),
-          theme: t('Toggle theme', 'Ganti tema'),
-          profile: t('Profile', 'Profil'),
-        }}
-      />
+        rightSlot={
+          <button
+            type="button"
+            onClick={openPathy}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black text-white transition-all duration-150 hover:scale-[1.03] active:scale-95"
+            style={{
+              background: 'linear-gradient(115deg, #087a58 0%, #059669 100%)',
+              boxShadow: '0 6px 16px -6px rgba(5,150,105,0.4)',
+            }}
+            aria-label={t('Ask Pathy', 'Tanya Pathy')}
+          >
+            <Sparkles size={13} strokeWidth={2.5} />
+            <span className="hidden sm:inline">Pathy</span>
+          </button>
+        }
+      >
+        {renderContent()}
+      </B2BShell>
 
-      {/* Main Content */}
-      <main className="pb-[calc(7rem+env(safe-area-inset-bottom))] min-h-screen" style={{ paddingTop: "calc(4rem + env(safe-area-inset-top, 0px))" }}>
-        <div key={activeTab} className="sp-page-enter">
-          {renderTab()}
-        </div>
-      </main>
-
-      {/* Bottom Tab Navigation */}
-      <PortalTabBar
-        tabs={TABS.map(({ id, labelEn, labelId, Icon, glyph }) => ({ id, label: lang === Language.EN ? labelEn : labelId, Icon, glyph }))}
-        activeId={activeTab}
-        onSelect={handleTabChange}
-        modernIcons
-      />
-
-      {/* v2.8.0 — Pathy di portal B2B: bedah Excel armada, hitung premi per
-          baris, bantu alur pengajuan. Trigger mengapung, bukan tab keenam —
-          bar tab sudah penuh (lihat komentar TABS di atas). */}
+      {/* Pathy floating chat — same instance as before, but the launcher
+          has moved into the topbar so it isn't a duplicate FAB. */}
       <PathyChat
         lang={lang}
         currentUser={{ name: client?.company_name, id: client?.id, role: client?.role }}
         hideLauncher
       />
-      <button
-        type="button"
-        onClick={() => window.dispatchEvent(new CustomEvent(PATHY_OPEN_EVENT))}
-        aria-label={t('Tanya Pathy', 'Ask Pathy')}
-        className="fixed bottom-28 right-4 z-[60] w-14 h-14 rounded-full bg-emerald-600 text-white shadow-[0_12px_32px_-8px_rgba(5,150,105,0.6)] ring-2 ring-emerald-400/40 flex items-center justify-center active:scale-90 transition-transform duration-200 focus:outline-none focus-visible:ring-4 focus-visible:ring-emerald-500/50"
-      >
-        <Sparkles size={22} />
-      </button>
     </div>
+    </B2BToastProvider>
   );
 };
 

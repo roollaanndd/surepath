@@ -3,7 +3,7 @@
 // buttons; quotes still belong to the client, master admin only watches.
 
 import React, { useState, useEffect } from 'react';
-import { Loader2, FileDown, ThumbsUp, ThumbsDown, FileText } from 'lucide-react';
+import { FileDown, ThumbsUp, ThumbsDown, FileText } from 'lucide-react';
 import { Language } from '../../types';
 import {
   getB2BQuotes, getAllB2BQuotes, updateB2BQuoteStatus, type SpB2BQuote,
@@ -13,7 +13,7 @@ import { publishAndDownloadQuotation } from '../../services/quotationService';
 import { fromB2BQuote } from '../../services/quotationSlipAdapter';
 import {
   B2BGlass, B2BTable, B2BPill, B2BSectionHeader, B2BSearchInput,
-  B2BSidePanel, B2BButton,
+  B2BSidePanel, B2BButton, useB2BToast,
   type B2BColumn, type B2BPillTone,
 } from './dashboard/ui';
 
@@ -72,6 +72,7 @@ const fmtDate = (iso?: string | null, lang: Language = Language.ID) => {
 
 const B2BQuotes: React.FC<Props> = ({ clientId, lang, companyName, allClients, companyByClient }) => {
   const t = (en: string, id: string) => (lang === Language.EN ? en : id);
+  const toast = useB2BToast();
   const [quotes, setQuotes] = useState<SpB2BQuote[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('ALL');
@@ -97,6 +98,13 @@ const B2BQuotes: React.FC<Props> = ({ clientId, lang, companyName, allClients, c
     if (ok) {
       setQuotes(prev => prev.map(q => q.id === selected.id ? { ...q, status } : q));
       setSelected(prev => prev ? { ...prev, status } : prev);
+      toast.success(
+        status === 'ACCEPTED'
+          ? t('Quote accepted. Insurer will be notified.', 'Penawaran diterima. Penanggung akan diberi tahu.')
+          : t('Quote rejected.', 'Penawaran ditolak.'),
+      );
+    } else {
+      toast.error(t('Failed to update quote. Try again.', 'Gagal memperbarui penawaran. Coba lagi.'));
     }
   };
 
@@ -190,18 +198,13 @@ const B2BQuotes: React.FC<Props> = ({ clientId, lang, companyName, allClients, c
           ))}
         </div>
 
-        {loading ? (
-          <div className="py-16 text-center">
-            <Loader2 size={24} className="mx-auto animate-spin text-indigo-500" />
-          </div>
-        ) : (
-          <B2BTable
-            columns={columns}
-            rows={filtered}
-            onRowClick={(q) => setSelected(q)}
-            empty={t('No quotes match your filter.', 'Tidak ada penawaran dengan filter ini.')}
-          />
-        )}
+        <B2BTable
+          columns={columns}
+          rows={filtered}
+          onRowClick={(q) => setSelected(q)}
+          loading={loading}
+          empty={t('No quotes match your filter.', 'Tidak ada penawaran dengan filter ini.')}
+        />
       </B2BGlass>
 
       <B2BSidePanel

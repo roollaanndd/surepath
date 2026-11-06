@@ -7,7 +7,7 @@
 // detail in a right-side panel instead of expanding in place.
 
 import React, { useState, useEffect } from 'react';
-import { Loader2, AlertTriangle, RefreshCw, FileCheck, FileText } from 'lucide-react';
+import { AlertTriangle, RefreshCw, FileCheck, FileText } from 'lucide-react';
 import { Language } from '../../types';
 import {
   getB2BSubmissions, getAllB2BSubmissions, type SpB2BSubmission,
@@ -161,15 +161,12 @@ const B2BSubmissions: React.FC<Props> = ({ clientId, lang, onNavigate, allClient
               </B2BButton>
             </div>
           </div>
-        ) : loading ? (
-          <div className="py-16 text-center">
-            <Loader2 size={24} className="mx-auto animate-spin text-indigo-500" />
-          </div>
         ) : (
           <B2BTable
             columns={columns}
             rows={filtered}
             onRowClick={(s) => setSelected(s)}
+            loading={loading}
             empty={t('No submissions match your filter.', 'Tidak ada pengajuan dengan filter ini.')}
           />
         )}

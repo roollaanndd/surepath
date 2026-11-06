@@ -55,6 +55,37 @@ column di tengah + bottom tab bar HP terasa "apps" bukan "dashboard".
 quick-launch panel di dashboard home — hemat viewport, konsisten dengan
 pola dashboard enterprise.
 
+### Polish pass — animated micro-interactions + nice-to-haves
+
+- **Skeleton loading** (`B2BSkeleton`, `B2BTableSkeleton`, `B2BKpiSkeleton`):
+  shimmering indigo-tinted placeholders yang match shape elemen nyata,
+  bukan grey slug generik. Dipakai saat initial dashboard fetch dan di
+  semua table list screens.
+- **CountUp animation**: KPI numerals animate 0→value dengan ease-out-quart
+  700ms saat pertama kali render. Respect prefers-reduced-motion.
+- **Toast system** (`B2BToastProvider` + `useB2BToast()` hook): top-right
+  stack, max 3 pesan, auto-dismiss 3.5s, slide-in dari atas dengan fade.
+  Wired ke save profile, accept/reject quote, create invoice.
+- **Ripple effect**: tombol primary/danger/success tunjukin pointer-origin
+  ripple on press; subtle lift (`-translate-y-0.5`) + shadow on hover.
+- **Row hover accent**: stripe gradient indigo→emerald glide dari kiri
+  pada table row hover (3px). Lift tanpa biaya layout shift.
+- **Stagger animation**: KPI cards dan table rows muncul dengan stagger
+  40-240ms (`b2b-stagger` class + nth-child delays).
+- **Command palette ⌘K / Ctrl+K**: hidden power feature untuk quick-jump
+  ke nav section. Search, arrow-key nav, Enter pilih, Esc close. Hint
+  tombol visible di topbar (`⌘K` kbd) untuk discoverability.
+- **Enhanced side panel**: TLS slide-in dari kanan (`b2b-slide-in-right`
+  keyframe), background blur-2px backdrop, Esc close.
+- **Sleek font tuning**: `font-feature-settings: "ss01","cv11","cv09","liga"`
+  di `.sp-b2b-root` scope + tabular-nums + lnum untuk `.b2b-numerals`
+  class. Antialiased, legibility rendering.
+- **Scoped thin scrollbars** (`.b2b-scroll`) Firefox + WebKit, tipis
+  dengan tint indigo-18%.
+- **A11y**: `prefers-reduced-motion` honored untuk semua animation.
+  Skeleton punya `role="status"` + `aria-busy="true"`. Toast punya
+  `aria-live="polite"`. Command palette `role="dialog"`.
+
 Data fetching, gateway calls, auth, Supabase service, dan PWA tidak
 berubah — hanya chrome + layout. `B2BLogin` (glassmorphism indigo yang
 baru dirilis v2.8.2) tetap. B2BHome.tsx dihapus.

@@ -14,7 +14,7 @@ import {
 } from '../../services/supabaseService';
 import { generateB2BBulkSchedulePDF } from '../../services/pdfService';
 import {
-  B2BGlass, B2BTable, B2BPill, B2BSectionHeader, B2BSearchInput, B2BButton,
+  B2BGlass, B2BTable, B2BPill, B2BSectionHeader, B2BSearchInput, B2BButton, useB2BToast,
   type B2BColumn, type B2BPillTone,
 } from './dashboard/ui';
 
@@ -39,6 +39,7 @@ const fmtDate = (s?: string | null) =>
 
 const B2BBulkBatches: React.FC<Props> = ({ lang, allClients }) => {
   const t = (en: string, id: string) => (lang === Language.EN ? en : id);
+  const toast = useB2BToast();
 
   const [batches, setBatches] = useState<SpB2BBatch[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,8 +73,10 @@ const B2BBulkBatches: React.FC<Props> = ({ lang, allClients }) => {
     if (res?.invoice_url) {
       setSelected(prev => prev ? { ...prev, batch: { ...prev.batch, status: 'INVOICED' }, payment: { invoice_url: res.invoice_url, status: 'PENDING' } } : prev);
       load();
+      toast.success(t('Invoice created. Ready to pay.', 'Invoice dibuat. Siap untuk dibayar.'));
     } else {
       setError(t('Failed to create invoice. Try again.', 'Gagal membuat invoice. Coba lagi.'));
+      toast.error(t('Failed to create invoice. Try again.', 'Gagal membuat invoice. Coba lagi.'));
     }
   };
 
@@ -292,16 +295,13 @@ const B2BBulkBatches: React.FC<Props> = ({ lang, allClients }) => {
         {detailLoading && (
           <div className="py-4 text-center"><Loader2 size={18} className="animate-spin text-indigo-500 mx-auto" /></div>
         )}
-        {loading ? (
-          <div className="py-16 text-center"><Loader2 size={24} className="mx-auto animate-spin text-indigo-500" /></div>
-        ) : (
-          <B2BTable
-            columns={columns}
-            rows={filtered}
-            onRowClick={(b) => openBatch(b.id)}
-            empty={t('No bulk batches yet.', 'Belum ada batch massal.')}
-          />
-        )}
+        <B2BTable
+          columns={columns}
+          rows={filtered}
+          onRowClick={(b) => openBatch(b.id)}
+          loading={loading}
+          empty={t('No bulk batches yet.', 'Belum ada batch massal.')}
+        />
       </B2BGlass>
     </div>
   );

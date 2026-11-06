@@ -23,7 +23,8 @@ import {
 import PathyChat, { PATHY_OPEN_EVENT } from '../shared/PathyChat';
 import { useDarkMode } from '../shared/theme';
 import {
-  B2BAmbient, B2BShell, B2BGlass, type B2BNavItem,
+  B2BAmbient, B2BShell, B2BGlass, B2BToastProvider, B2BCommandPalette,
+  type B2BNavItem,
 } from './dashboard/ui';
 import B2BDashboard from './B2BDashboard';
 
@@ -62,6 +63,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
   const [quotes, setQuotes] = useState<SpB2BQuote[]>([]);
   const [bulkBatches, setBulkBatches] = useState<SpB2BBatch[]>([]);
   const [companyByClient, setCompanyByClient] = useState<Record<string, string>>({});
+  const [initialLoading, setInitialLoading] = useState(true);
 
   const loadData = async () => {
     if (!client?.id) return;
@@ -78,6 +80,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
       setCompanyByClient(Object.fromEntries(
         clients.map(c => [c.id, c.company_name || c.name || '—']),
       ));
+      setInitialLoading(false);
       return;
     }
     const [subs, qs, batches] = await Promise.all([
@@ -88,6 +91,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
     setSubmissions(subs);
     setQuotes(qs);
     setBulkBatches(batches);
+    setInitialLoading(false);
   };
 
   useEffect(() => { void loadData(); }, [client?.id, isMaster]);
@@ -171,6 +175,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
             onPathyOpen={openPathy}
             companyByClient={companyByClient}
             lang={lang}
+            loading={initialLoading}
           />
         );
       case 'new-single':
@@ -240,11 +245,13 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
   };
 
   return (
+    <B2BToastProvider>
     <div
-      className="min-h-screen relative"
+      className="sp-b2b-root min-h-screen relative"
       style={{ background: '#f5f7fa', fontFamily: "'Sora', system-ui, sans-serif" }}
     >
       <B2BAmbient />
+      <B2BCommandPalette nav={nav} onSelect={handleSelect} />
 
       <B2BShell
         nav={nav}
@@ -282,6 +289,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
         hideLauncher
       />
     </div>
+    </B2BToastProvider>
   );
 };
 

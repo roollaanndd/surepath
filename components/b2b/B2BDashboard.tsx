@@ -17,6 +17,7 @@ import type { SpB2BSubmission, SpB2BQuote, SpB2BBatch } from '../../services/sup
 import { formatIDR } from '../car-wizard/WizardUI';
 import {
   B2BGlass, B2BKpi, B2BPill, B2BSectionHeader, B2BTable, B2BButton,
+  B2BKpiSkeleton, B2BSkeleton,
   type B2BColumn, type B2BPillTone,
 } from './dashboard/ui';
 
@@ -30,6 +31,11 @@ interface Props {
   onPathyOpen?: () => void;
   companyByClient?: Record<string, string>;
   lang: Language;
+  /** When true, KPI + table areas render shimmering skeletons instead of
+   *  the "0" / "No submissions yet" empty state — distinguishes fetching
+   *  from genuinely empty so a first-time client doesn't flash "0" at the
+   *  user before their data arrives. */
+  loading?: boolean;
 }
 
 const STATUS_PILL: Record<string, { tone: B2BPillTone; id: string; en: string }> = {
@@ -60,7 +66,7 @@ const fmtDate = (iso: string, lang: Language) =>
 
 const B2BDashboard: React.FC<Props> = ({
   client, submissions, quotes, bulkBatches, onNavigate, onNavigateBulk,
-  onPathyOpen, companyByClient, lang,
+  onPathyOpen, companyByClient, lang, loading = false,
 }) => {
   const t = (en: string, id: string) => (lang === Language.EN ? en : id);
   const companyName = client?.company_name ?? client?.name ?? 'Perusahaan';
@@ -183,7 +189,15 @@ const B2BDashboard: React.FC<Props> = ({
       </div>
 
       {/* ── KPI strip ───────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+      {loading ? (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 b2b-stagger">
+          <B2BKpiSkeleton />
+          <B2BKpiSkeleton />
+          <B2BKpiSkeleton />
+          <B2BKpiSkeleton />
+        </div>
+      ) : (
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 b2b-stagger">
         <B2BKpi
           label={t('Pending Review', 'Menunggu Review')}
           value={pending}
@@ -207,12 +221,13 @@ const B2BDashboard: React.FC<Props> = ({
         />
         <B2BKpi
           label={t('Fleet Units', 'Unit Armada')}
-          value={batchTotalUnits.toLocaleString('id-ID')}
+          value={batchTotalUnits}
           hint={t(`across ${bulkBatches.length} batches`, `di ${bulkBatches.length} batch`)}
           tone="default"
           icon={Layers}
         />
       </div>
+      )}
 
       {/* ── Tables + side panel row ─────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
@@ -234,6 +249,7 @@ const B2BDashboard: React.FC<Props> = ({
               columns={subColumns}
               rows={recentSubs}
               onRowClick={() => onNavigate('submissions')}
+              loading={loading}
               empty={t('No submissions yet. Create your first one above.',
                        'Belum ada pengajuan. Buat yang pertama di atas.')}
             />
@@ -262,7 +278,24 @@ const B2BDashboard: React.FC<Props> = ({
               </div>
               {openQuotes.length > 0 && <B2BPill tone="accent">{openQuotes.length}</B2BPill>}
             </div>
-            {openQuotes.length === 0 ? (
+            {loading ? (
+              <div className="space-y-2.5 b2b-stagger">
+                <div className="flex items-center gap-3 py-2 px-3">
+                  <div className="flex-1">
+                    <B2BSkeleton width="60%" height={12} />
+                    <B2BSkeleton width="40%" height={10} className="mt-1.5" />
+                  </div>
+                  <B2BSkeleton width={70} height={14} />
+                </div>
+                <div className="flex items-center gap-3 py-2 px-3">
+                  <div className="flex-1">
+                    <B2BSkeleton width="70%" height={12} />
+                    <B2BSkeleton width="35%" height={10} className="mt-1.5" />
+                  </div>
+                  <B2BSkeleton width={70} height={14} />
+                </div>
+              </div>
+            ) : openQuotes.length === 0 ? (
               <p className="text-xs text-slate-500 leading-relaxed">
                 {t('No open quotes. Submit a request and insurers will respond here.',
                    'Belum ada penawaran aktif. Ajukan permintaan dan penanggung akan membalas di sini.')}
@@ -344,6 +377,7 @@ const B2BDashboard: React.FC<Props> = ({
             columns={batchColumns}
             rows={recentBatches}
             onRowClick={() => onNavigateBulk?.('submissions')}
+            loading={loading}
           />
         </B2BGlass>
       )}

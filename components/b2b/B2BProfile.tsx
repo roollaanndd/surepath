@@ -6,7 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { Loader2, Save, ShieldCheck, LayoutGrid, LogOut, Mail, Phone, Building2 } from 'lucide-react';
 import { Language } from '../../types';
 import { getB2BProfile, updateB2BProfile, type SpUser } from '../../services/supabaseService';
-import { B2BGlass, B2BSectionHeader, B2BPill, B2BButton } from './dashboard/ui';
+import { B2BGlass, B2BSectionHeader, B2BPill, B2BButton, useB2BToast } from './dashboard/ui';
 
 interface Props {
   client: any;
@@ -18,6 +18,7 @@ interface Props {
 
 const B2BProfile: React.FC<Props> = ({ client, clientId, lang, onLogout, masterView }) => {
   const t = (en: string, id: string) => (lang === Language.EN ? en : id);
+  const toast = useB2BToast();
 
   const [profile, setProfile] = useState<SpUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,7 +58,13 @@ const B2BProfile: React.FC<Props> = ({ client, clientId, lang, onLogout, masterV
       company_industry: profile.company_industry,
     });
     setSaving(false);
-    if (ok) { setSaved(true); setTimeout(() => setSaved(false), 2000); }
+    if (ok) {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+      toast.success(t('Profile saved successfully.', 'Profil berhasil tersimpan.'));
+    } else {
+      toast.error(t('Failed to save profile. Try again.', 'Gagal menyimpan profil. Coba lagi.'));
+    }
   };
 
   const companyName = [profile?.company_name, client?.company_name]

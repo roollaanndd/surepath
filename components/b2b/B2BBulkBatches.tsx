@@ -1,3 +1,7 @@
+// B2BBulkBatches — bulk fleet batches as a dashboard table + detail view.
+// Keeps the full invoice/pay/issue workflow intact (createB2BBulkInvoice,
+// schedule PDF, master policy link); only the chrome changed.
+
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   Loader2, ChevronLeft, ExternalLink, FileDown, CheckCircle2, Clock,
@@ -9,41 +13,36 @@ import {
   type SpB2BBatch, type SpB2BBatchItem,
 } from '../../services/supabaseService';
 import { generateB2BBulkSchedulePDF } from '../../services/pdfService';
+import {
+  B2BGlass, B2BTable, B2BPill, B2BSectionHeader, B2BSearchInput, B2BButton,
+  type B2BColumn, type B2BPillTone,
+} from './dashboard/ui';
 
 interface Props {
   clientId: string;
   lang: Language;
-  // v2.8.1 — Mode pantau MASTER_ADMIN: daftar batch seluruh klien via
-  // b2b_bulk_list_batches {all:true} (dijaga caller.isAdmin di gateway).
   allClients?: boolean;
 }
 
-const STATUS_LABEL: Record<string, [string, string]> = {
-  DRAFT:     ['Draft', 'Draf'],
-  SUBMITTED: ['Awaiting Invoice', 'Menunggu Invoice'],
-  INVOICED:  ['Awaiting Payment', 'Menunggu Pembayaran'],
-  PAID:      ['Paid — Awaiting Policy', 'Dibayar — Menunggu Polis'],
-  ISSUED:    ['Policy Issued', 'Polis Terbit'],
-  CANCELLED: ['Cancelled', 'Dibatalkan'],
-};
-
-const STATUS_CLS: Record<string, string> = {
-  DRAFT:     'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-ds-ink3',
-  SUBMITTED: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300',
-  INVOICED:  'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
-  PAID:      'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
-  ISSUED:    'bg-emerald-500 text-white',
-  CANCELLED: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
+const STATUS_MAP: Record<string, { tone: B2BPillTone; en: string; id: string }> = {
+  DRAFT:     { tone: 'neutral', en: 'Draft',             id: 'Draf' },
+  SUBMITTED: { tone: 'info',    en: 'Awaiting Invoice',  id: 'Menunggu Invoice' },
+  INVOICED:  { tone: 'warn',    en: 'Awaiting Payment',  id: 'Menunggu Bayar' },
+  PAID:      { tone: 'success', en: 'Paid',              id: 'Lunas' },
+  ISSUED:    { tone: 'success', en: 'Policy Issued',     id: 'Polis Terbit' },
+  CANCELLED: { tone: 'danger',  en: 'Cancelled',         id: 'Dibatalkan' },
 };
 
 const fmtIDR = (n: number) => 'Rp ' + Math.round(n).toLocaleString('id-ID');
-const fmtDate = (s?: string | null) => s ? new Date(s).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+const fmtDate = (s?: string | null) =>
+  s ? new Date(s).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 
 const B2BBulkBatches: React.FC<Props> = ({ lang, allClients }) => {
-  const t = (en: string, id: string) => lang === Language.EN ? en : id;
+  const t = (en: string, id: string) => (lang === Language.EN ? en : id);
 
   const [batches, setBatches] = useState<SpB2BBatch[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<{ batch: SpB2BBatch; items: SpB2BBatchItem[]; payment: { invoice_url: string | null; status: string } | null } | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [invoiceLoading, setInvoiceLoading] = useState(false);
@@ -56,11 +55,10 @@ const B2BBulkBatches: React.FC<Props> = ({ lang, allClients }) => {
     setLoading(false);
   }, [allClients]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { void load(); }, [load]);
 
   const openBatch = async (batchId: string) => {
-    setDetailLoading(true);
-    setError('');
+    setDetailLoading(true); setError('');
     const data = await getB2BBulkBatch(batchId);
     setDetailLoading(false);
     if (data) setSelected(data as any);
@@ -95,165 +93,238 @@ const B2BBulkBatches: React.FC<Props> = ({ lang, allClients }) => {
     });
   };
 
-  // ─── Detail view ──────────────────────────────────────────────────────────
+  /* ── Detail view ──────────────────────────────────────────────────────── */
   if (selected) {
     const { batch, items, payment } = selected;
+    const status = STATUS_MAP[batch.status] ?? { tone: 'neutral' as B2BPillTone, en: batch.status, id: batch.status };
     return (
-      <div className="px-4 py-6 max-w-2xl mx-auto space-y-4">
-        <button onClick={() => setSelected(null)} className="flex items-center gap-1 text-xs font-bold text-ds-ink3">
+      <div className="max-w-6xl mx-auto space-y-4">
+        <button
+          onClick={() => setSelected(null)}
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors"
+        >
           <ChevronLeft size={14} /> {t('Back to batches', 'Kembali ke daftar batch')}
         </button>
 
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <div className="font-mono text-sm font-black">{batch.batch_number}</div>
-            {allClients && batch.company_name && (
-              <div className="text-xs font-bold text-ds-ink2 mt-0.5">{batch.company_name}</div>
-            )}
-            <div className="text-xs text-ds-ink3">{fmtDate(batch.created_at)} · {batch.item_count} {t('units', 'unit')}</div>
+        <B2BGlass className="p-6">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-5">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-black text-xl text-slate-900 tabular-nums" style={{ fontFamily: '"JetBrains Mono",monospace', letterSpacing: '-0.02em' }}>
+                  {batch.batch_number}
+                </span>
+                <B2BPill tone={status.tone}>{lang === Language.EN ? status.en : status.id}</B2BPill>
+              </div>
+              {allClients && batch.company_name && (
+                <div className="text-sm font-bold text-slate-700">{batch.company_name}</div>
+              )}
+              <div className="text-xs text-slate-500 mt-0.5">
+                {fmtDate(batch.created_at)} · {batch.item_count} {t('units', 'unit')}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              {batch.status === 'SUBMITTED' && !allClients && (
+                <B2BButton variant="primary" onClick={handleInvoice} disabled={invoiceLoading}>
+                  {invoiceLoading && <Loader2 size={13} className="animate-spin" />}
+                  {t('Create Invoice', 'Buat Invoice')}
+                </B2BButton>
+              )}
+              {batch.status === 'INVOICED' && payment?.invoice_url && !allClients && (
+                <a
+                  href={payment.invoice_url} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest text-white transition-all duration-150 active:scale-[0.97]"
+                  style={{ background: 'linear-gradient(115deg, #059669 0%, #10b981 100%)' }}
+                >
+                  {t('Pay Now', 'Bayar Sekarang')} <ExternalLink size={13} />
+                </a>
+              )}
+              {batch.status === 'ISSUED' && batch.master_policy_document_url && (
+                <a
+                  href={batch.master_policy_document_url} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest text-emerald-700 border border-emerald-200 bg-white/70 hover:bg-emerald-50 transition-colors"
+                >
+                  <ExternalLink size={13} /> {t('Master Policy', 'Polis Induk')}
+                </a>
+              )}
+              {batch.status === 'ISSUED' && (
+                <B2BButton variant="ghost" icon={FileDown} onClick={handleDownloadSchedule}>
+                  {t('Vehicle Schedule', 'Lampiran Kendaraan')}
+                </B2BButton>
+              )}
+            </div>
           </div>
-          <span className={`text-2xs font-black uppercase tracking-widest px-2 py-1 rounded-full ${STATUS_CLS[batch.status] ?? ''}`}>
-            {lang === Language.EN ? STATUS_LABEL[batch.status]?.[0] : STATUS_LABEL[batch.status]?.[1]}
-          </span>
-        </div>
 
-        <div className="rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 p-4 space-y-1.5">
-          <div className="flex justify-between text-sm"><span className="text-ds-ink3">{t('Gross Premium', 'Premi Gross')}</span><span className="font-bold">{fmtIDR(batch.total_premium_gross)}</span></div>
-          <div className="flex justify-between text-sm"><span className="text-ds-ink3">{t('Discount', 'Diskon')}</span><span className="font-bold">-{fmtIDR(batch.total_discount)}</span></div>
-          <div className="flex justify-between text-sm"><span className="text-ds-ink3">{t('Admin Fee', 'Biaya Admin')}</span><span className="font-bold">{fmtIDR(batch.total_admin_fee)}</span></div>
-          <div className="flex justify-between text-base border-t border-slate-100 dark:border-white/10 pt-2 mt-1">
-            <span className="font-black">{t('Total', 'Total')}</span>
-            <span className="font-black text-ds-green">{fmtIDR(batch.total_amount)}</span>
-          </div>
-        </div>
+          {batch.status === 'PAID' && (
+            <div className="mb-4 flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-xs text-emerald-800">
+              <Clock size={14} className="flex-shrink-0" />
+              {t('Payment received. Waiting for the insurer to issue the master policy.',
+                 'Pembayaran diterima. Menunggu polis induk diterbitkan oleh penanggung.')}
+            </div>
+          )}
 
-        {batch.status === 'SUBMITTED' && !allClients && (
-          <button
-            disabled={invoiceLoading}
-            onClick={handleInvoice}
-            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-emerald-500 text-white text-sm font-black disabled:opacity-60"
-          >
-            {invoiceLoading ? <Loader2 size={16} className="animate-spin" /> : null}
-            {t('Create Invoice', 'Buat Invoice')}
-          </button>
-        )}
-
-        {batch.status === 'INVOICED' && payment?.invoice_url && !allClients && (
-          <a
-            href={payment.invoice_url} target="_blank" rel="noopener noreferrer"
-            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-emerald-500 text-white text-sm font-black"
-          >
-            {t('Pay Now', 'Bayar Sekarang')} <ExternalLink size={14} />
-          </a>
-        )}
-
-        {batch.status === 'PAID' && (
-          <div className="flex items-center gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 p-3 text-xs text-ds-green dark:text-emerald-300">
-            <Clock size={14} className="flex-shrink-0" />
-            {t('Payment received. Waiting for the insurer to issue the master policy.', 'Pembayaran diterima. Menunggu polis induk diterbitkan oleh penanggung.')}
-          </div>
-        )}
-
-        {batch.status === 'ISSUED' && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 p-3 text-xs text-ds-green dark:text-emerald-300">
+          {batch.status === 'ISSUED' && (
+            <div className="mb-4 flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-xs text-emerald-800">
               <CheckCircle2 size={14} className="flex-shrink-0" />
               {t('Policy No.', 'No. Polis')}: <span className="font-mono font-bold">{batch.master_policy_number}</span>
             </div>
-            {batch.master_policy_document_url && (
-              <a
-                href={batch.master_policy_document_url} target="_blank" rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 text-ds-green dark:text-emerald-400 text-xs font-black"
-              >
-                <ExternalLink size={13} /> {t('Download Master Policy (PDF)', 'Unduh Polis Induk (PDF)')}
-              </a>
-            )}
-            <button
-              onClick={handleDownloadSchedule}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-slate-200 dark:border-white/10 text-xs font-black text-ds-ink2"
-            >
-              <FileDown size={13} /> {t('Download Vehicle Schedule (PDF)', 'Unduh Lampiran Daftar Kendaraan (PDF)')}
-            </button>
-          </div>
-        )}
+          )}
 
-        {error && (
-          <div className="flex items-start gap-2 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 p-3 text-xs text-rose-700 dark:text-rose-300">
-            <AlertTriangle size={14} className="flex-shrink-0 mt-0.5" /> {error}
-          </div>
-        )}
+          {error && (
+            <div className="mb-4 flex items-start gap-2 rounded-xl bg-rose-50 border border-rose-200 p-3 text-xs text-rose-700">
+              <AlertTriangle size={14} className="flex-shrink-0 mt-0.5" /> {error}
+            </div>
+          )}
 
-        <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/10">
-          <table className="w-full text-xs whitespace-nowrap">
-            <thead className="bg-slate-50 dark:bg-white/5 text-ds-ink3 uppercase text-2xs">
-              <tr>
-                <th className="px-2 py-2 text-left">#</th>
-                <th className="px-2 py-2 text-left">{t('Name', 'Nama')}</th>
-                <th className="px-2 py-2 text-left">{t('Vehicle', 'Kendaraan')}</th>
-                <th className="px-2 py-2 text-right">{t('Total', 'Total')}</th>
-                <th className="px-2 py-2 text-left">{t('Status', 'Status')}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-              {items.map(it => (
-                <tr key={it.id}>
-                  <td className="px-2 py-1.5 text-ds-ink3">{it.row_no}</td>
-                  <td className="px-2 py-1.5 font-bold max-w-[160px] truncate">{it.nasabah_name}</td>
-                  <td className="px-2 py-1.5">{[it.make, it.model].filter(Boolean).join(' ') || '—'}</td>
-                  <td className="px-2 py-1.5 text-right">{fmtIDR(it.total_premium)}</td>
-                  <td className="px-2 py-1.5">{it.status}</td>
+          {/* Totals grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <TotalCard label={t('Gross Premium', 'Premi Gross')} value={fmtIDR(batch.total_premium_gross)} />
+            <TotalCard label={t('Discount', 'Diskon')} value={`- ${fmtIDR(batch.total_discount)}`} />
+            <TotalCard label={t('Admin Fee', 'Biaya Admin')} value={fmtIDR(batch.total_admin_fee)} />
+            <TotalCard label={t('Total', 'Total')} value={fmtIDR(batch.total_amount)} accent />
+          </div>
+        </B2BGlass>
+
+        {/* Items table */}
+        <B2BGlass className="p-6">
+          <B2BSectionHeader
+            title={t('Vehicles in Batch', 'Kendaraan di Batch')}
+            subtitle={`${items.length} ${t('rows', 'baris')}`}
+          />
+          <div className="b2b-scroll overflow-x-auto -mx-6 px-6">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-slate-200/70">
+                  <th className="py-2.5 px-3 font-bold text-[10px] text-slate-500 uppercase tracking-widest text-left w-12">#</th>
+                  <th className="py-2.5 px-3 font-bold text-[10px] text-slate-500 uppercase tracking-widest text-left">{t('Name', 'Nama')}</th>
+                  <th className="py-2.5 px-3 font-bold text-[10px] text-slate-500 uppercase tracking-widest text-left hidden md:table-cell">{t('Vehicle', 'Kendaraan')}</th>
+                  <th className="py-2.5 px-3 font-bold text-[10px] text-slate-500 uppercase tracking-widest text-left hidden lg:table-cell">{t('Plate', 'Plat')}</th>
+                  <th className="py-2.5 px-3 font-bold text-[10px] text-slate-500 uppercase tracking-widest text-right">{t('Premium', 'Premi')}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {items.map(it => (
+                  <tr key={it.id} className="border-b border-slate-100/70 last:border-0 hover:bg-indigo-50/40">
+                    <td className="py-2.5 px-3 text-slate-400 tabular-nums">{it.row_no}</td>
+                    <td className="py-2.5 px-3 font-bold text-slate-900 max-w-[200px] truncate">{it.nasabah_name}</td>
+                    <td className="py-2.5 px-3 text-slate-600 hidden md:table-cell">
+                      {[it.make, it.model].filter(Boolean).join(' ') || '—'}
+                    </td>
+                    <td className="py-2.5 px-3 text-slate-500 font-mono hidden lg:table-cell">{it.plate_no || '—'}</td>
+                    <td className="py-2.5 px-3 text-right font-bold text-slate-900 tabular-nums" style={{ fontFamily: '"JetBrains Mono",monospace' }}>
+                      {fmtIDR(it.total_premium)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </B2BGlass>
       </div>
     );
   }
 
-  // ─── List view ────────────────────────────────────────────────────────────
-  return (
-    <div className="px-4 py-6 max-w-lg mx-auto space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="font-black text-lg">{t('Bulk Batches', 'Daftar Batch Massal')}</h2>
-        <button onClick={load} className="p-2 rounded-xl text-ds-ink3"><RefreshCw size={16} className={loading ? 'animate-spin' : ''} /></button>
-      </div>
+  /* ── List view ────────────────────────────────────────────────────────── */
+  const filtered = batches
+    .filter(b => !search ||
+      b.batch_number.toLowerCase().includes(search.toLowerCase()) ||
+      (b.company_name ?? '').toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-      {detailLoading && (
-        <div className="flex justify-center py-6"><Loader2 size={20} className="animate-spin text-ds-green" /></div>
-      )}
-
-      {loading ? (
-        <div className="flex justify-center py-16"><Loader2 size={28} className="animate-spin text-ds-green" /></div>
-      ) : batches.length === 0 ? (
-        <div className="text-center py-16 text-ds-ink3 text-sm">{t('No bulk batches yet.', 'Belum ada batch massal.')}</div>
-      ) : (
-        <div className="space-y-3">
-          {batches.map(b => (
-            <button
-              key={b.id}
-              onClick={() => openBatch(b.id)}
-              className="w-full text-left rounded-2xl bg-ds-card border border-ds-border p-4 shadow-sm space-y-2"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <div className="font-mono text-xs font-black">{b.batch_number}</div>
-                  {allClients && b.company_name && (
-                    <div className="text-2xs font-bold text-ds-ink2 mt-0.5">{b.company_name}</div>
-                  )}
-                  <div className="text-2xs text-ds-ink3 mt-0.5">{fmtDate(b.created_at)} · {b.item_count} {t('units', 'unit')}</div>
-                </div>
-                <span className={`text-2xs font-black uppercase tracking-widest px-2 py-0.5 rounded-full flex-shrink-0 ${STATUS_CLS[b.status] ?? ''}`}>
-                  {lang === Language.EN ? STATUS_LABEL[b.status]?.[0] : STATUS_LABEL[b.status]?.[1]}
-                </span>
-              </div>
-              <div className="text-lg font-black text-ds-green">{fmtIDR(b.total_amount)}</div>
-            </button>
-          ))}
+  const columns: B2BColumn<SpB2BBatch>[] = [
+    {
+      key: 'batch', header: 'Batch',
+      render: (b) => (
+        <div>
+          <div className="font-black text-slate-900 tabular-nums" style={{ fontFamily: '"JetBrains Mono",monospace', fontSize: 11 }}>
+            {b.batch_number}
+          </div>
+          {allClients && b.company_name && (
+            <div className="text-[10px] text-slate-500 mt-0.5 truncate max-w-[180px]">{b.company_name}</div>
+          )}
         </div>
-      )}
+      ),
+    },
+    {
+      key: 'date', header: t('Created', 'Dibuat'), hideBelow: 'md',
+      render: (b) => <span className="text-slate-500 tabular-nums">{fmtDate(b.created_at)}</span>,
+    },
+    {
+      key: 'units', header: 'Unit', align: 'right', hideBelow: 'md',
+      render: (b) => <span className="font-bold text-slate-700 tabular-nums">{b.item_count ?? 0}</span>,
+    },
+    {
+      key: 'amount', header: 'Nilai', align: 'right',
+      render: (b) => (
+        <span className="font-black text-emerald-700 tabular-nums" style={{ fontFamily: '"JetBrains Mono",monospace', fontSize: 12 }}>
+          {fmtIDR(b.total_amount)}
+        </span>
+      ),
+    },
+    {
+      key: 'status', header: 'Status', align: 'right',
+      render: (b) => {
+        const m = STATUS_MAP[b.status] ?? { tone: 'neutral' as B2BPillTone, en: b.status, id: b.status };
+        return <B2BPill tone={m.tone}>{lang === Language.EN ? m.en : m.id}</B2BPill>;
+      },
+    },
+  ];
+
+  return (
+    <div className="max-w-7xl mx-auto space-y-4">
+      <B2BGlass className="p-6">
+        <B2BSectionHeader
+          title={t('Bulk Batches', 'Daftar Batch Massal')}
+          subtitle={t(`${filtered.length} of ${batches.length} total`, `${filtered.length} dari ${batches.length} total`)}
+          action={
+            <div className="flex items-center gap-2">
+              <B2BSearchInput value={search} onChange={setSearch} placeholder={t('Search batch…', 'Cari batch…')} className="w-40 lg:w-56" />
+              <button
+                onClick={load}
+                className="p-2 rounded-xl text-slate-500 hover:text-indigo-700 hover:bg-indigo-50 transition-colors"
+                aria-label={t('Refresh', 'Muat ulang')}
+              >
+                <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+              </button>
+            </div>
+          }
+        />
+        {detailLoading && (
+          <div className="py-4 text-center"><Loader2 size={18} className="animate-spin text-indigo-500 mx-auto" /></div>
+        )}
+        {loading ? (
+          <div className="py-16 text-center"><Loader2 size={24} className="mx-auto animate-spin text-indigo-500" /></div>
+        ) : (
+          <B2BTable
+            columns={columns}
+            rows={filtered}
+            onRowClick={(b) => openBatch(b.id)}
+            empty={t('No bulk batches yet.', 'Belum ada batch massal.')}
+          />
+        )}
+      </B2BGlass>
     </div>
   );
 };
+
+const TotalCard: React.FC<{ label: string; value: string; accent?: boolean }> = ({ label, value, accent }) => (
+  <div
+    className={`rounded-xl p-3 ${accent ? '' : 'bg-slate-50 border border-slate-200/70'}`}
+    style={accent ? {
+      background: 'linear-gradient(115deg, rgba(5,150,105,0.08), rgba(5,150,105,0.04))',
+      border: '1px solid rgba(5,150,105,0.2)',
+    } : undefined}
+  >
+    <div className={`text-[10px] font-bold uppercase tracking-widest ${accent ? 'text-emerald-700' : 'text-slate-500'}`}>
+      {label}
+    </div>
+    <div
+      className={`font-black mt-1 tabular-nums ${accent ? 'text-lg text-emerald-700' : 'text-sm text-slate-900'}`}
+      style={{ fontFamily: '"JetBrains Mono",monospace', letterSpacing: '-0.015em' }}
+    >
+      {value}
+    </div>
+  </div>
+);
 
 export default B2BBulkBatches;

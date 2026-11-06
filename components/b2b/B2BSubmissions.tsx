@@ -1,189 +1,243 @@
+// B2BSubmissions — list of submissions as a Mercury-style data table.
+//
+// Was mobile-first stack of cards. For a corporate ops team scanning 20+
+// pending submissions on a laptop that layout meant scrolling the same
+// column of near-identical cards. The dashboard table surfaces more rows
+// per viewport, keeps status + company + product on one line, and opens
+// detail in a right-side panel instead of expanding in place.
+
 import React, { useState, useEffect } from 'react';
-import { Loader2, ChevronDown, ChevronUp, FileCheck, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Loader2, AlertTriangle, RefreshCw, FileCheck, FileText } from 'lucide-react';
 import { Language } from '../../types';
-import { getB2BSubmissions, getAllB2BSubmissions, type SpB2BSubmission } from '../../services/supabaseService';
+import {
+  getB2BSubmissions, getAllB2BSubmissions, type SpB2BSubmission,
+} from '../../services/supabaseService';
+import {
+  B2BGlass, B2BTable, B2BPill, B2BSectionHeader, B2BSearchInput,
+  B2BSidePanel, B2BButton,
+  type B2BColumn, type B2BPillTone,
+} from './dashboard/ui';
 
 interface Props {
   clientId: string;
   lang: Language;
   onNavigate: (tab: string) => void;
-  // v2.8.1 — Mode pantau MASTER_ADMIN: muat ajuan semua klien korporat.
-  // Kartu sudah menampilkan sub.company_name sendiri, jadi label per klien
-  // tidak butuh prop tambahan.
   allClients?: boolean;
 }
 
-const STATUS_BADGE: Record<string, string> = {
-  SUBMITTED: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
-  REVIEWING: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300',
-  QUOTED:    'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300',
-  ACCEPTED:  'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
-  REJECTED:  'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  SUBMITTED: 'Menunggu Review',
-  REVIEWING: 'Sedang Dikaji',
-  QUOTED:    'Penawaran Tersedia',
-  ACCEPTED:  'Diterima',
-  REJECTED:  'Ditolak',
-};
-
-const PRODUCT_COLOR: Record<string, string> = {
-  FLEET_MV:     'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300',
-  BONDING:      'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300',
-  GROUP_HEALTH: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
+const STATUS_MAP: Record<string, { tone: B2BPillTone; en: string; id: string }> = {
+  SUBMITTED: { tone: 'warn',    en: 'Awaiting',   id: 'Menunggu Review' },
+  REVIEWING: { tone: 'info',    en: 'Reviewing',  id: 'Sedang Dikaji' },
+  QUOTED:    { tone: 'accent',  en: 'Quoted',     id: 'Penawaran Siap' },
+  ACCEPTED:  { tone: 'success', en: 'Accepted',   id: 'Diterima' },
+  REJECTED:  { tone: 'danger',  en: 'Rejected',   id: 'Ditolak' },
 };
 
 const PRODUCT_LABEL: Record<string, string> = {
   FLEET_MV: 'Fleet MV', BONDING: 'Bonding', GROUP_HEALTH: 'Group Health',
 };
-
-const FILTER_TABS = ['ALL', 'SUBMITTED', 'REVIEWING', 'QUOTED', 'ACCEPTED'] as const;
-type FilterTab = typeof FILTER_TABS[number];
-
-const SubmissionCard: React.FC<{ sub: SpB2BSubmission; lang: Language; onNavigate: (t: string) => void }> = ({ sub, lang, onNavigate }) => {
-  const [expanded, setExpanded] = useState(false);
-  const t = (en: string, id: string) => lang === Language.EN ? en : id;
-
-  const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(
-    lang === Language.EN ? 'en-GB' : 'id-ID',
-    { day: '2-digit', month: 'short', year: 'numeric' }
-  );
-
-  return (
-    <div className="rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 p-4 shadow-sm space-y-3">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className={`text-2xs font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${PRODUCT_COLOR[sub.product_type] ?? ''}`}>
-              {PRODUCT_LABEL[sub.product_type] ?? sub.product_type}
-            </span>
-          </div>
-          <div className="font-black text-sm mt-1 truncate">{sub.company_name}</div>
-          <div className="text-[11px] text-ds-ink3 mt-0.5">{fmtDate(sub.created_at)}</div>
-        </div>
-        <span className={`text-2xs font-black px-2 py-1 rounded-full flex-shrink-0 ${STATUS_BADGE[sub.status] ?? ''}`}>
-          {STATUS_LABEL[sub.status] ?? sub.status}
-        </span>
-      </div>
-
-      {sub.admin_notes && (
-        <div>
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="flex items-center gap-1 text-xs font-bold text-slate-500 dark:text-slate-400"
-          >
-            {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-            {t('Admin Notes', 'Catatan Admin')}
-          </button>
-          {expanded && (
-            <div className="mt-2 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 p-3 text-xs text-slate-600 dark:text-slate-300">
-              {sub.admin_notes}
-            </div>
-          )}
-        </div>
-      )}
-
-      {sub.status === 'QUOTED' && (
-        <button
-          onClick={() => onNavigate('quotes')}
-          className="flex items-center gap-2 w-full justify-center rounded-xl bg-green-500 text-white py-2.5 text-xs font-black"
-        >
-          <FileCheck size={14} />
-          {t('View Quote', 'Lihat Penawaran')}
-        </button>
-      )}
-    </div>
-  );
+const PRODUCT_PILL_TONE: Record<string, B2BPillTone> = {
+  FLEET_MV: 'info', BONDING: 'accent', GROUP_HEALTH: 'danger',
 };
 
+const FILTERS: Array<{ id: string; en: string; id_: string }> = [
+  { id: 'ALL',       en: 'All',         id_: 'Semua' },
+  { id: 'SUBMITTED', en: 'Awaiting',    id_: 'Menunggu' },
+  { id: 'REVIEWING', en: 'Reviewing',   id_: 'Dikaji' },
+  { id: 'QUOTED',    en: 'Quoted',      id_: 'Siap Tawaran' },
+  { id: 'ACCEPTED',  en: 'Accepted',    id_: 'Diterima' },
+];
+
+const fmtDate = (iso: string, lang: Language) =>
+  new Date(iso).toLocaleDateString(lang === Language.EN ? 'en-GB' : 'id-ID', {
+    day: '2-digit', month: 'short', year: 'numeric',
+  });
+
 const B2BSubmissions: React.FC<Props> = ({ clientId, lang, onNavigate, allClients }) => {
-  const t = (en: string, id: string) => lang === Language.EN ? en : id;
+  const t = (en: string, id: string) => (lang === Language.EN ? en : id);
   const [submissions, setSubmissions] = useState<SpB2BSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
-  const [filter, setFilter] = useState<FilterTab>('ALL');
+  const [filter, setFilter] = useState<string>('ALL');
+  const [search, setSearch] = useState('');
+  const [selected, setSelected] = useState<SpB2BSubmission | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-
-    const loadSubmissions = async () => {
+    const load = async () => {
       if (!allClients && !clientId) {
-        setSubmissions([]);
-        setLoading(false);
-        setLoadError(false);
-        return;
+        setSubmissions([]); setLoading(false); setLoadError(false); return;
       }
-
-      setLoading(true);
-      setLoadError(false);
+      setLoading(true); setLoadError(false);
       try {
         const data = allClients ? await getAllB2BSubmissions() : await getB2BSubmissions(clientId);
         if (!cancelled) setSubmissions(data);
-      } catch (error) {
-        console.error('Unable to load B2B submissions:', error);
+      } catch (err) {
+        console.error('Unable to load B2B submissions:', err);
         if (!cancelled) setLoadError(true);
       } finally {
         if (!cancelled) setLoading(false);
       }
     };
-
-    void loadSubmissions();
+    void load();
     return () => { cancelled = true; };
   }, [clientId, allClients, reloadKey]);
 
-  const filtered = filter === 'ALL' ? submissions : submissions.filter(s => s.status === filter);
-  const sorted = filtered.slice().sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  const filtered = submissions
+    .filter(s => filter === 'ALL' || s.status === filter)
+    .filter(s => !search || s.company_name.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  const columns: B2BColumn<SpB2BSubmission>[] = [
+    {
+      key: 'company', header: t('Company', 'Perusahaan'),
+      render: (s) => (
+        <div>
+          <div className="font-bold text-slate-900 truncate max-w-[220px]">{s.company_name}</div>
+          <div className="text-[10px] text-slate-400 mt-0.5">#{s.id.slice(0, 8)}</div>
+        </div>
+      ),
+    },
+    {
+      key: 'product', header: t('Product', 'Produk'), hideBelow: 'md',
+      render: (s) => (
+        <B2BPill tone={PRODUCT_PILL_TONE[s.product_type] ?? 'neutral'}>
+          {PRODUCT_LABEL[s.product_type] ?? s.product_type}
+        </B2BPill>
+      ),
+    },
+    {
+      key: 'date', header: t('Submitted', 'Tgl Ajuan'), hideBelow: 'lg',
+      render: (s) => <span className="text-slate-500 tabular-nums">{fmtDate(s.created_at, lang)}</span>,
+    },
+    {
+      key: 'status', header: 'Status', align: 'right',
+      render: (s) => {
+        const m = STATUS_MAP[s.status] ?? { tone: 'neutral' as B2BPillTone, en: s.status, id: s.status };
+        return <B2BPill tone={m.tone}>{lang === Language.EN ? m.en : m.id}</B2BPill>;
+      },
+    },
+  ];
+
+  const detailStatus = selected ? (STATUS_MAP[selected.status] ?? null) : null;
 
   return (
-    <div className="px-4 py-6 max-w-lg mx-auto space-y-5">
-      <h2 className="font-black text-lg">{t('My Submissions', 'Pengajuan Saya')}</h2>
+    <div className="max-w-7xl mx-auto space-y-4">
+      <B2BGlass className="p-6">
+        <B2BSectionHeader
+          title={allClients ? t('All Client Submissions', 'Ajuan Semua Klien') : t('My Submissions', 'Pengajuan Saya')}
+          subtitle={t(`${filtered.length} of ${submissions.length} total`,
+                       `${filtered.length} dari ${submissions.length} total`)}
+          action={<B2BSearchInput value={search} onChange={setSearch} placeholder={t('Search company…', 'Cari perusahaan…')} className="w-48 lg:w-64" />}
+        />
 
-      {/* Filter tabs */}
-      <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
-        {FILTER_TABS.map(f => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-2xs font-black uppercase tracking-wider transition-colors ${
-              filter === f
-                ? 'bg-ds-green text-ds-on-green'
-                : 'bg-ds-card2 text-ds-ink3'
-            }`}
-          >
-            {f === 'ALL' ? t('All', 'Semua') : (STATUS_LABEL[f] ?? f)}
-          </button>
-        ))}
-      </div>
-
-      {loading ? (
-        <div className="flex justify-center py-16">
-          <Loader2 size={28} className="animate-spin text-ds-green" />
-        </div>
-      ) : loadError ? (
-        <div role="alert" className="rounded-2xl border border-amber-200 bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/10 p-5 text-center space-y-3">
-          <AlertTriangle size={24} className="mx-auto text-ds-amber dark:text-amber-300" />
-          <p className="text-sm font-bold text-amber-800 dark:text-amber-200">{t('Could not load submissions.', 'Pengajuan belum dapat dimuat.')}</p>
-          <p className="text-xs text-amber-700 dark:text-amber-200/80">{t('Check your connection and try again. Your submissions have not been changed.', 'Periksa koneksi lalu coba lagi. Data pengajuan tidak diubah.')}</p>
-          <button type="button" onClick={() => setReloadKey(key => key + 1)} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2">
-            <RefreshCw size={14} /> {t('Try again', 'Coba lagi')}
-          </button>
-        </div>
-      ) : sorted.length === 0 ? (
-        <div className="text-center py-16 text-ds-ink3 text-sm">
-          {t('No submissions found.', 'Belum ada pengajuan.')}
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {sorted.map(sub => (
-            <SubmissionCard key={sub.id} sub={sub} lang={lang} onNavigate={onNavigate} />
+        {/* Filter chips — carries status filtering, kept on one row */}
+        <div className="flex gap-1.5 overflow-x-auto b2b-scroll pb-2 mb-3 -mx-1 px-1">
+          {FILTERS.map(f => (
+            <button
+              key={f.id}
+              onClick={() => setFilter(f.id)}
+              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-colors ${
+                filter === f.id
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'bg-white/60 text-slate-600 hover:bg-indigo-50'
+              }`}
+            >
+              {lang === Language.EN ? f.en : f.id_}
+            </button>
           ))}
         </div>
-      )}
+
+        {loadError ? (
+          <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50/70 p-5 flex items-start gap-3">
+            <AlertTriangle size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-bold text-amber-900">{t('Could not load submissions.', 'Pengajuan belum dapat dimuat.')}</p>
+              <p className="text-xs text-amber-700 mt-1">{t('Check your connection and try again. Your submissions have not been changed.',
+                                                              'Periksa koneksi lalu coba lagi. Data pengajuan tidak diubah.')}</p>
+              <B2BButton variant="ghost" icon={RefreshCw} onClick={() => setReloadKey(k => k + 1)} className="mt-3">
+                {t('Try again', 'Coba lagi')}
+              </B2BButton>
+            </div>
+          </div>
+        ) : loading ? (
+          <div className="py-16 text-center">
+            <Loader2 size={24} className="mx-auto animate-spin text-indigo-500" />
+          </div>
+        ) : (
+          <B2BTable
+            columns={columns}
+            rows={filtered}
+            onRowClick={(s) => setSelected(s)}
+            empty={t('No submissions match your filter.', 'Tidak ada pengajuan dengan filter ini.')}
+          />
+        )}
+      </B2BGlass>
+
+      <B2BSidePanel
+        open={selected !== null}
+        onClose={() => setSelected(null)}
+        title={selected?.company_name ?? ''}
+        subtitle={selected ? `${PRODUCT_LABEL[selected.product_type] ?? selected.product_type} · ${fmtDate(selected.created_at, lang)}` : undefined}
+        footer={
+          selected?.status === 'QUOTED' && (
+            <B2BButton
+              variant="primary"
+              icon={FileCheck}
+              onClick={() => { onNavigate('quotes'); setSelected(null); }}
+              className="w-full"
+            >
+              {t('View Quote', 'Lihat Penawaran')}
+            </B2BButton>
+          )
+        }
+      >
+        {selected && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Status</span>
+              {detailStatus && (
+                <B2BPill tone={detailStatus.tone}>
+                  {lang === Language.EN ? detailStatus.en : detailStatus.id}
+                </B2BPill>
+              )}
+            </div>
+
+            <div className="border-t border-slate-200/70 pt-3 space-y-2.5">
+              <DetailRow label={t('Submission ID', 'ID Pengajuan')} value={selected.id} mono />
+              <DetailRow label={t('Product', 'Produk')} value={PRODUCT_LABEL[selected.product_type] ?? selected.product_type} />
+              <DetailRow label={t('Submitted', 'Tgl Ajuan')} value={fmtDate(selected.created_at, lang)} />
+            </div>
+
+            {selected.admin_notes && (
+              <div className="border-t border-slate-200/70 pt-3">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5 mb-2">
+                  <FileText size={11} />
+                  {t('Admin Notes', 'Catatan Admin')}
+                </span>
+                <div className="rounded-xl bg-slate-50 border border-slate-200/70 p-3 text-xs text-slate-700 leading-relaxed">
+                  {selected.admin_notes}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </B2BSidePanel>
     </div>
   );
 };
+
+const DetailRow: React.FC<{ label: string; value: string; mono?: boolean }> = ({ label, value, mono }) => (
+  <div className="flex items-start justify-between gap-3">
+    <span className="text-xs text-slate-500">{label}</span>
+    <span
+      className={`text-xs font-bold text-slate-900 text-right ${mono ? 'font-mono tabular-nums text-[11px]' : ''}`}
+      style={mono ? { fontFamily: '"JetBrains Mono",monospace' } : undefined}
+    >
+      {value}
+    </span>
+  </div>
+);
 
 export default B2BSubmissions;

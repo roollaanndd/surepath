@@ -1,23 +1,23 @@
+// B2BProfile — corporate account details, two-column dashboard layout.
+// Form on the left, identity + status card on the right. Master-admin
+// monitor view shows a single identity card with no form.
+
 import React, { useState, useEffect } from 'react';
-import { Loader2, LogOut, Save, ShieldCheck, LayoutGrid } from 'lucide-react';
+import { Loader2, Save, ShieldCheck, LayoutGrid, LogOut, Mail, Phone, Building2 } from 'lucide-react';
 import { Language } from '../../types';
 import { getB2BProfile, updateB2BProfile, type SpUser } from '../../services/supabaseService';
+import { B2BGlass, B2BSectionHeader, B2BPill, B2BButton } from './dashboard/ui';
 
 interface Props {
   client: any;
   clientId: string;
   lang: Language;
   onLogout: () => void;
-  // v2.8.1 — MASTER_ADMIN memantau portal B2B tanpa profil klien: tampilkan
-  // kartu identitas read-only, bukan form profil korporat milik klien.
   masterView?: boolean;
 }
 
-const INPUT = 'w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40';
-const LABEL = 'block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider';
-
 const B2BProfile: React.FC<Props> = ({ client, clientId, lang, onLogout, masterView }) => {
-  const t = (en: string, id: string) => lang === Language.EN ? en : id;
+  const t = (en: string, id: string) => (lang === Language.EN ? en : id);
 
   const [profile, setProfile] = useState<SpUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,7 +43,7 @@ const B2BProfile: React.FC<Props> = ({ client, clientId, lang, onLogout, masterV
   }, [clientId]);
 
   const update = (key: keyof SpUser, value: string) => {
-    setProfile(prev => prev ? { ...prev, [key]: value } : prev);
+    setProfile(prev => (prev ? { ...prev, [key]: value } : prev));
   };
 
   const handleSave = async () => {
@@ -60,153 +60,216 @@ const B2BProfile: React.FC<Props> = ({ client, clientId, lang, onLogout, masterV
     if (ok) { setSaved(true); setTimeout(() => setSaved(false), 2000); }
   };
 
-  // `??` falls through on null/undefined but NOT on '', and a client whose
-  // company_name has not been filled in yet carries the empty string — so the
-  // 'B2B' fallback never fired and the avatar rendered as a blank green tile.
-  // Pick the first non-blank name, and keep the fallback if it yields nothing.
   const companyName = [profile?.company_name, client?.company_name]
     .find((n): n is string => typeof n === 'string' && n.trim().length > 0);
   const initials = (companyName ?? 'B2B')
-    .trim().split(/\s+/).slice(0, 2).map((w: string) => w[0] ?? '').join('').toUpperCase()
-    || 'B2B';
+    .trim().split(/\s+/).slice(0, 2).map(w => w[0] ?? '').join('').toUpperCase() || 'B2B';
 
   if (loading) {
     return (
       <div className="flex justify-center py-24">
-        <Loader2 size={28} className="animate-spin text-ds-green" />
+        <Loader2 size={24} className="animate-spin text-indigo-500" />
       </div>
     );
   }
 
-  // Mode pantau MASTER_ADMIN — identitas read-only, tanpa form profil klien.
+  /* ── Monitor view — Master Admin ──────────────────────────────────────── */
   if (masterView) {
     const adminName = client?.name || 'Master Admin';
     const adminInitials = adminName.trim().split(/\s+/).slice(0, 2)
       .map((w: string) => w[0] ?? '').join('').toUpperCase() || 'MA';
     return (
-      <div className="px-4 py-6 max-w-lg mx-auto space-y-5">
-        <div className="flex flex-col items-center gap-3 py-2">
-          <div className="w-20 h-20 rounded-3xl bg-indigo-500 flex items-center justify-center text-white text-2xl font-black shadow-xl shadow-indigo-500/25">
-            {adminInitials}
-          </div>
-          <div className="text-center">
-            <div className="font-black text-base">{adminName}</div>
-            <div className="text-xs text-ds-ink3 mt-0.5">{client?.email ?? ''}</div>
-            <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 px-3 py-1 text-2xs font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-300">
-              <ShieldCheck size={12} />
-              {t('Master Admin · Monitor', 'Master Admin · Mode Pantau')}
+      <div className="max-w-3xl mx-auto space-y-4">
+        <B2BGlass className="p-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+            <div
+              className="w-20 h-20 rounded-2xl flex items-center justify-center text-white text-xl font-black flex-shrink-0"
+              style={{
+                background: 'linear-gradient(135deg, #4338ca, #4f46e5)',
+                boxShadow: '0 12px 32px -12px rgba(67,56,202,0.5)',
+              }}
+            >
+              {adminInitials}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="font-black text-xl text-slate-900" style={{ letterSpacing: '-0.02em' }}>{adminName}</h2>
+              <p className="text-sm text-slate-500 mt-0.5">{client?.email ?? ''}</p>
+              <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-indigo-700 bg-indigo-50 border border-indigo-200">
+                <ShieldCheck size={11} />
+                {t('Master Admin · Monitor', 'Master Admin · Mode Pantau')}
+              </div>
             </div>
           </div>
-        </div>
+        </B2BGlass>
 
-        <div className="rounded-2xl bg-ds-card border border-ds-border p-4 text-xs text-ds-ink2 leading-relaxed space-y-2">
-          <p>
+        <B2BGlass className="p-6">
+          <B2BSectionHeader title={t('Monitor Scope', 'Lingkup Pantau')} />
+          <p className="text-sm text-slate-600 leading-relaxed">
             {t(
               'You are viewing the B2B corporate portal as a monitor: all client submissions, quotes and bulk batches are visible under their tabs, without any client-side actions.',
               'Anda memantau portal korporat B2B: seluruh ajuan, penawaran, dan batch massal semua klien terlihat pada tab masing-masing, tanpa aksi sisi klien.',
             )}
           </p>
-          <p className="flex items-center gap-1.5 text-ds-ink3">
-            <LayoutGrid size={12} className="flex-shrink-0" />
-            {t('Use the floating switcher (bottom-left) to move between apps.', 'Gunakan pengalih mengapung (kiri bawah) untuk berpindah aplikasi.')}
-          </p>
-        </div>
+          <div className="flex items-center gap-2 text-xs text-slate-500 mt-4 pt-4 border-t border-slate-200/70">
+            <LayoutGrid size={12} />
+            {t('Use the floating switcher (bottom-left) to move between apps.',
+               'Gunakan pengalih mengapung (kiri bawah) untuk berpindah aplikasi.')}
+          </div>
+        </B2BGlass>
 
-        <button
-          onClick={onLogout}
-          className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-rose-200 dark:border-rose-500/30 text-rose-500 font-black text-sm"
-        >
-          <LogOut size={16} />
-          {t('Log Out', 'Keluar')}
-        </button>
+        <div className="flex justify-end">
+          <B2BButton variant="ghost" icon={LogOut} onClick={onLogout} className="text-rose-600 hover:text-rose-800 hover:bg-rose-50 border-rose-200">
+            {t('Log Out', 'Keluar')}
+          </B2BButton>
+        </div>
       </div>
     );
   }
 
+  /* ── Client view — full form ──────────────────────────────────────────── */
+  const inputClass = 'w-full px-4 py-2.5 rounded-xl text-sm text-slate-900 outline-none transition-colors';
+  const inputStyle: React.CSSProperties = {
+    background: 'rgba(255,255,255,0.72)',
+    border: '1px solid rgba(67,56,202,0.14)',
+  };
+  const labelClass = 'block text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-widest';
+
   return (
-    <div className="px-4 py-6 max-w-lg mx-auto space-y-5">
-      {/* Avatar */}
-      <div className="flex flex-col items-center gap-3 py-2">
-        <div className="w-20 h-20 rounded-3xl bg-ds-green flex items-center justify-center text-ds-on-green text-2xl font-black shadow-xl shadow-emerald-500/25">
-          {initials}
-        </div>
-        <div className="text-center">
-          <div className="font-black text-base">{companyName ?? '—'}</div>
-          <div className="text-xs text-ds-ink3 mt-0.5">{profile?.email}</div>
-        </div>
+    <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+      {/* Identity card — right column on desktop, top on mobile */}
+      <aside className="lg:col-span-1 lg:order-last space-y-4">
+        <B2BGlass className="p-6 text-center">
+          <div
+            className="mx-auto w-20 h-20 rounded-2xl flex items-center justify-center text-white text-xl font-black mb-4"
+            style={{
+              background: 'linear-gradient(135deg, #059669, #10b981)',
+              boxShadow: '0 12px 32px -12px rgba(5,150,105,0.5)',
+            }}
+          >
+            {initials}
+          </div>
+          <h2 className="font-black text-base text-slate-900" style={{ letterSpacing: '-0.015em' }}>
+            {companyName ?? '—'}
+          </h2>
+          <div className="mt-2 flex justify-center">
+            <B2BPill tone="accent">{t('B2B Client', 'Klien B2B')}</B2BPill>
+          </div>
+          <div className="mt-5 pt-5 border-t border-slate-200/70 space-y-2 text-left">
+            <div className="flex items-center gap-2 text-xs text-slate-600">
+              <Mail size={12} className="text-slate-400 flex-shrink-0" />
+              <span className="truncate">{profile?.email}</span>
+            </div>
+            {profile?.phone && (
+              <div className="flex items-center gap-2 text-xs text-slate-600">
+                <Phone size={12} className="text-slate-400 flex-shrink-0" />
+                <span>{profile.phone}</span>
+              </div>
+            )}
+            {profile?.company_industry && (
+              <div className="flex items-center gap-2 text-xs text-slate-600">
+                <Building2 size={12} className="text-slate-400 flex-shrink-0" />
+                <span>{profile.company_industry}</span>
+              </div>
+            )}
+          </div>
+        </B2BGlass>
+
+        <B2BButton
+          variant="ghost"
+          icon={LogOut}
+          onClick={onLogout}
+          className="w-full !text-rose-600 hover:!bg-rose-50 border-rose-200"
+        >
+          {t('Log Out', 'Keluar')}
+        </B2BButton>
+      </aside>
+
+      {/* Form — left 2/3 */}
+      <div className="lg:col-span-2">
+        <B2BGlass className="p-6 lg:p-8">
+          <B2BSectionHeader
+            title={t('Account Details', 'Detail Akun')}
+            subtitle={t('Update your company and PIC information.',
+                        'Perbarui informasi perusahaan dan PIC.')}
+          />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="sm:col-span-2">
+              <label className={labelClass}>{t('Company Name', 'Nama Perusahaan')}</label>
+              <input
+                className={inputClass}
+                style={inputStyle}
+                value={profile?.company_name ?? ''}
+                onChange={e => update('company_name', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>{t('Company Reg No', 'No. Registrasi')}</label>
+              <input
+                className={inputClass}
+                style={inputStyle}
+                value={profile?.company_reg_no ?? ''}
+                onChange={e => update('company_reg_no', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>{t('Industry', 'Industri')}</label>
+              <input
+                className={inputClass}
+                style={inputStyle}
+                value={profile?.company_industry ?? ''}
+                onChange={e => update('company_industry', e.target.value)}
+              />
+            </div>
+
+            <div className="sm:col-span-2 border-t border-slate-200/70 pt-4 mt-2">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                {t('PIC Contact', 'Kontak PIC')}
+              </span>
+            </div>
+
+            <div>
+              <label className={labelClass}>{t('PIC Name', 'Nama PIC')}</label>
+              <input
+                className={inputClass}
+                style={inputStyle}
+                value={profile?.name ?? ''}
+                onChange={e => update('name', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>{t('PIC Phone', 'Telepon PIC')}</label>
+              <input
+                className={inputClass}
+                style={inputStyle}
+                value={profile?.phone ?? ''}
+                onChange={e => update('phone', e.target.value)}
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className={labelClass}>{t('Email (read-only)', 'Email (tidak dapat diubah)')}</label>
+              <input
+                className={`${inputClass} opacity-60 cursor-not-allowed`}
+                style={inputStyle}
+                value={profile?.email ?? ''}
+                readOnly
+              />
+            </div>
+          </div>
+
+          <div className="mt-6 pt-6 border-t border-slate-200/70 flex justify-end">
+            <B2BButton
+              variant={saved ? 'success' : 'primary'}
+              icon={saving ? undefined : Save}
+              onClick={handleSave}
+              disabled={saving}
+            >
+              {saving && <Loader2 size={13} className="animate-spin" />}
+              {saved ? t('Saved!', 'Tersimpan!') : t('Save Changes', 'Simpan Perubahan')}
+            </B2BButton>
+          </div>
+        </B2BGlass>
       </div>
-
-      {/* Fields */}
-      <div className="rounded-2xl bg-ds-card border border-ds-border p-4 space-y-4">
-        <div>
-          <label className={LABEL}>{t('Company Name', 'Nama Perusahaan')}</label>
-          <input
-            className={INPUT}
-            value={profile?.company_name ?? ''}
-            onChange={e => update('company_name', e.target.value)}
-          />
-        </div>
-        <div>
-          <label className={LABEL}>{t('Company Reg No', 'No. Registrasi Perusahaan')}</label>
-          <input
-            className={INPUT}
-            value={profile?.company_reg_no ?? ''}
-            onChange={e => update('company_reg_no', e.target.value)}
-          />
-        </div>
-        <div>
-          <label className={LABEL}>{t('Industry', 'Industri')}</label>
-          <input
-            className={INPUT}
-            value={profile?.company_industry ?? ''}
-            onChange={e => update('company_industry', e.target.value)}
-          />
-        </div>
-        <div>
-          <label className={LABEL}>{t('PIC Name', 'Nama PIC')}</label>
-          <input
-            className={INPUT}
-            value={profile?.name ?? ''}
-            onChange={e => update('name', e.target.value)}
-          />
-        </div>
-        <div>
-          <label className={LABEL}>{t('PIC Phone', 'Telepon PIC')}</label>
-          <input
-            className={INPUT}
-            value={profile?.phone ?? ''}
-            onChange={e => update('phone', e.target.value)}
-          />
-        </div>
-        <div>
-          <label className={LABEL}>{t('Email (read-only)', 'Email (tidak dapat diubah)')}</label>
-          <input
-            className={`${INPUT} opacity-60 cursor-not-allowed`}
-            value={profile?.email ?? ''}
-            readOnly
-          />
-        </div>
-      </div>
-
-      <button
-        onClick={handleSave}
-        disabled={saving}
-        className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-emerald-500 text-white font-black text-sm shadow-lg shadow-emerald-500/25 disabled:opacity-60"
-      >
-        {saving
-          ? <Loader2 size={16} className="animate-spin" />
-          : <Save size={16} />
-        }
-        {saved ? t('Saved!', 'Tersimpan!') : t('Save Changes', 'Simpan Perubahan')}
-      </button>
-
-      <button
-        onClick={onLogout}
-        className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-rose-200 dark:border-rose-500/30 text-rose-500 font-black text-sm"
-      >
-        <LogOut size={16} />
-        {t('Log Out', 'Keluar')}
-      </button>
     </div>
   );
 };

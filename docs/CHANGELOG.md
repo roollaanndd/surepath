@@ -1,5 +1,68 @@
 # SurePath — Changelog
 
+## v2.8.3 — 2026-11-06
+
+### B2B Portal: full dashboard refresh (glassmorphism, Mercury tables)
+
+Portal B2B (`/b2bapps`) diubah total dari shell mobile-first consumer app
+ke dashboard enterprise desktop-first. User korporat (multifinance, admin
+perusahaan) buka portal dari laptop — layout lama dengan `max-w-lg`
+column di tengah + bottom tab bar HP terasa "apps" bukan "dashboard".
+
+**Shell baru** (`components/b2b/dashboard/ui.tsx` — satu file design system):
+- Sidebar kiri 240px dengan glass transparan indigo (`rgba(255,255,255,0.78)` +
+  backdrop-blur 24px), drawer dari kiri di <lg. Grouped nav dengan sub-items
+  (Pengajuan→Satuan/Massal, Buat→Pengajuan Baru/Impor Massal), active state
+  gradient indigo, badge count real-time untuk Pengajuan+Penawaran.
+- Topbar 64px dengan breadcrumb path (Portal B2B › Section › Subsection),
+  Pathy CTA (tombol emerald gradient ganti FAB floating 56px lama),
+  bell/theme/mobile menu button.
+- Ambient background: dot grid indigo + dua drifting radial blobs
+  (emerald + indigo) — lanjutan dari B2BLogin yang baru.
+- Primitives shared: `B2BGlass`, `B2BKpi`, `B2BPill`, `B2BTable`,
+  `B2BSidePanel`, `B2BSectionHeader`, `B2BSearchInput`, `B2BButton`.
+
+**Dashboard home** (`B2BDashboard.tsx`, replace `B2BHome.tsx`):
+- Hero line dengan company name (gradient indigo→emerald text), role
+  indicator, quick-action buttons (Pengajuan Baru / Impor Massal).
+- KPI strip 4 kartu flat glass: Menunggu Review, Penawaran Aktif, Polis
+  Terbit, Unit Armada — mono JetBrains numerals, icon ring indigo, tone
+  semantic (warn/accent/success/default).
+- 2-column grid: Pengajuan Terbaru table (2/3) + Open Quotes callout
+  panel + Pathy quick-launch panel (1/3).
+- Bulk batches full-width table row saat ada batch.
+
+**List screens** (`B2BSubmissions`, `B2BQuotes`, `B2BBulkBatches`):
+- Mercury-style data tables (hairline divider, hover indigo-50 highlight,
+  click row → side panel detail).
+- Status pill tone-mapped (warn/info/accent/success/danger).
+- Search input + filter chips scoped per-panel.
+- Detail panel kanan (`B2BSidePanel`) dengan Esc + backdrop close, 480px
+  width di desktop, full-width di mobile.
+- B2BBulkBatches detail view: totals grid 4-kolom (Gross/Diskon/Admin/Total),
+  action buttons inline di header, items table full-width.
+
+**Create flows** (`B2BNewSubmission`, `B2BBulkImport`):
+- Container diperlebar dari `max-w-lg` ke `max-w-4xl`/`max-w-5xl` + glass
+  card wrapper. Internal step logic + form validation unchanged.
+
+**Profile** (`B2BProfile`):
+- 2-column layout: form 2/3 kiri, identity card 1/3 kanan.
+- Avatar emerald gradient, pill "B2B Client", contact rows (mail/phone/industry).
+- Master-admin monitor view: single identity card + scope explanation.
+
+**Pathy launcher** pindah dari FAB bottom-right ke tombol di topbar +
+quick-launch panel di dashboard home — hemat viewport, konsisten dengan
+pola dashboard enterprise.
+
+Data fetching, gateway calls, auth, Supabase service, dan PWA tidak
+berubah — hanya chrome + layout. `B2BLogin` (glassmorphism indigo yang
+baru dirilis v2.8.2) tetap. B2BHome.tsx dihapus.
+
+Verifikasi: tsc 0 error, eslint 5 warning (pola existing), vitest 639/639
+pass, vite build sukses, screenshot desktop (dashboard/submissions/quotes/
+profile) + mobile drawer confirmed.
+
 ## v2.8.2 — 2026-11-06
 
 ### Insurer Portal: redesign Dashboard + Login (hybrid "Brand hero + Mercury data")

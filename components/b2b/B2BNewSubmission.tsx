@@ -305,7 +305,26 @@ const B2BNewSubmission: React.FC<Props> = ({ clientId, client, onDone, lang }) =
   const canNext = [canProceedStep1, !!canProceedStep2, true, true, false];
 
   return (
-    <div className="px-4 py-6 max-w-lg mx-auto">
+    <div className="max-w-4xl mx-auto">
+      <div className="mb-6">
+        <h1 className="text-2xl font-black text-slate-900" style={{ letterSpacing: '-0.025em' }}>
+          {t('New B2B Submission', 'Pengajuan Baru')}
+        </h1>
+        <p className="text-sm text-slate-500 mt-1">
+          {t('Submit a single corporate insurance request.',
+             'Ajukan permintaan asuransi korporat satuan.')}
+        </p>
+      </div>
+      <div
+        className="rounded-2xl p-6 lg:p-8"
+        style={{
+          background: 'rgba(255,255,255,0.72)',
+          backdropFilter: 'blur(20px) saturate(140%)',
+          WebkitBackdropFilter: 'blur(20px) saturate(140%)',
+          border: '1px solid rgba(67,56,202,0.12)',
+          boxShadow: '0 8px 28px -20px rgba(15,23,42,0.16)',
+        }}
+      >
       {/* Step indicator */}
       <div className="flex items-center gap-1.5 mb-6">
         {STEPS.map((label, i) => (
@@ -342,6 +361,7 @@ const B2BNewSubmission: React.FC<Props> = ({ clientId, client, onDone, lang }) =
             {t('Next', 'Lanjut')} <ChevronRight size={16} />
           </button>
         )}
+      </div>
       </div>
     </div>
   );

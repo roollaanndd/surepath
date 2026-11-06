@@ -167,7 +167,7 @@ const B2BBulkImport: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
   // ─── Upload step ──────────────────────────────────────────────────────────
   if (step === 'upload') {
     return (
-      <div className="px-4 py-6 max-w-lg mx-auto space-y-4">
+      <div className="max-w-5xl mx-auto space-y-4">
         <h2 className="font-black text-lg">{t('Bulk Import — Fleet TLO', 'Impor Massal — TLO Armada')}</h2>
         <p className="text-sm text-ds-ink3">{t(
           'Upload a spreadsheet of financed vehicles (one row per nasabah). Pathy reads it, computes the TLO premium per unit against the OJK rate table, and flags anything that needs a second look.',
@@ -200,7 +200,7 @@ const B2BBulkImport: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
   if (step === 'mapping' && sheet && mapping) {
     const missing = REQUIRED_FIELDS.filter(f => mapping[f] == null);
     return (
-      <div className="px-4 py-6 max-w-lg mx-auto space-y-4">
+      <div className="max-w-5xl mx-auto space-y-4">
         <div className="flex items-center gap-2">
           <FileSpreadsheet size={18} className="text-ds-green" />
           <h2 className="font-black text-lg">{t('Column Mapping', 'Pemetaan Kolom')}</h2>
@@ -386,7 +386,7 @@ const B2BBulkImport: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
   // ─── Done ─────────────────────────────────────────────────────────────────
   if (step === 'done' && batchResult) {
     return (
-      <div className="px-4 py-10 max-w-lg mx-auto text-center space-y-4">
+      <div className="max-w-xl mx-auto py-8 text-center space-y-4">
         <CheckCircle2 size={48} className="text-ds-green mx-auto" />
         <h2 className="font-black text-lg">{t('Batch Submitted', 'Batch Terkirim')}</h2>
         <p className="text-sm text-ds-ink3">

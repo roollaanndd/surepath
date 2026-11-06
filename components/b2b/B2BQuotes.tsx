@@ -1,64 +1,61 @@
+// B2BQuotes — insurer quotes list as a data table, with side-panel detail
+// and inline accept/reject. Monitor-mode (allClients) hides decision
+// buttons; quotes still belong to the client, master admin only watches.
+
 import React, { useState, useEffect } from 'react';
-import { Loader2, ChevronDown, ChevronUp, FileDown } from 'lucide-react';
+import { Loader2, FileDown, ThumbsUp, ThumbsDown, FileText } from 'lucide-react';
 import { Language } from '../../types';
-import { getB2BQuotes, getAllB2BQuotes, updateB2BQuoteStatus, type SpB2BQuote } from '../../services/supabaseService';
+import {
+  getB2BQuotes, getAllB2BQuotes, updateB2BQuoteStatus, type SpB2BQuote,
+} from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { publishAndDownloadQuotation } from '../../services/quotationService';
 import { fromB2BQuote } from '../../services/quotationSlipAdapter';
+import {
+  B2BGlass, B2BTable, B2BPill, B2BSectionHeader, B2BSearchInput,
+  B2BSidePanel, B2BButton,
+  type B2BColumn, type B2BPillTone,
+} from './dashboard/ui';
 
 interface Props {
   clientId: string;
   lang: Language;
   companyName?: string;
-  // v2.8.1 — Mode pantau MASTER_ADMIN: muat penawaran semua klien korporat,
-  // tampilkan nama perusahaan per kartu, dan sembunyikan aksi Terima/Tolak
-  // (keputusan penawaran tetap milik klien, master admin hanya memantau).
   allClients?: boolean;
   companyByClient?: Record<string, string>;
 }
 
-const STATUS_BADGE: Record<string, string> = {
-  PENDING:  'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
-  ACCEPTED: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
-  REJECTED: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
+const STATUS_MAP: Record<string, { tone: B2BPillTone; en: string; id: string }> = {
+  PENDING:  { tone: 'warn',    en: 'Pending',  id: 'Menunggu Keputusan' },
+  ACCEPTED: { tone: 'success', en: 'Accepted', id: 'Diterima' },
+  REJECTED: { tone: 'danger',  en: 'Rejected', id: 'Ditolak' },
 };
 
-const STATUS_LABEL: Record<string, string> = {
-  PENDING:  'Menunggu Keputusan',
-  ACCEPTED: 'Diterima',
-  REJECTED: 'Ditolak',
-};
+const FILTERS: Array<{ id: string; en: string; id_: string }> = [
+  { id: 'ALL',      en: 'All',      id_: 'Semua' },
+  { id: 'PENDING',  en: 'Pending',  id_: 'Menunggu' },
+  { id: 'ACCEPTED', en: 'Accepted', id_: 'Diterima' },
+  { id: 'REJECTED', en: 'Rejected', id_: 'Ditolak' },
+];
 
-type FilterTab = 'ALL' | 'PENDING' | 'ACCEPTED';
-
-// `coverage_details` is free-form JSON an operator fills in, so the screen used
-// to print its keys title-cased and its values with String(). In an Indonesian
-// UI that rendered "Coverage Type / Deductible / Unit Count", and a deductible
-// of 1_500_000 came out as the bare digits "1500000" on a corporate quote.
-// Known keys get a proper label; anything else still falls back to the key.
 const COVERAGE_LABEL: Record<string, [en: string, id: string]> = {
-  coverage_type:   ['Coverage type', 'Jenis pertanggungan'],
-  deductible:      ['Deductible', 'Risiko sendiri'],
-  unit_count:      ['Units', 'Jumlah unit'],
-  sum_insured:     ['Sum insured', 'Nilai pertanggungan'],
-  period_months:   ['Period', 'Periode'],
-  territory:       ['Territory', 'Wilayah'],
+  coverage_type: ['Coverage type', 'Jenis pertanggungan'],
+  deductible:    ['Deductible', 'Risiko sendiri'],
+  unit_count:    ['Units', 'Jumlah unit'],
+  sum_insured:   ['Sum insured', 'Nilai pertanggungan'],
+  period_months: ['Period', 'Periode'],
+  territory:     ['Territory', 'Wilayah'],
 };
-
 const COVERAGE_TYPE_LABEL: Record<string, string> = {
-  COMPREHENSIVE: 'Komprehensif',
-  TLO:           'Total Loss Only',
+  COMPREHENSIVE: 'Komprehensif', TLO: 'Total Loss Only',
 };
-
-// Rupiah-bearing keys, so a number is read as money rather than a count.
 const MONEY_KEYS = new Set(['deductible', 'sum_insured', 'premium', 'premium_amount']);
 
 const coverageLabel = (key: string, lang: Language) => {
   const pair = COVERAGE_LABEL[key];
-  if (!pair) return key.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase());
+  if (!pair) return key.replace(/_/g, ' ').replace(/^./, c => c.toUpperCase());
   return lang === Language.EN ? pair[0] : pair[1];
 };
-
 const coverageValue = (key: string, value: unknown) => {
   if (typeof value === 'number' && MONEY_KEYS.has(key)) return formatIDR(value);
   if (typeof value === 'number') return value.toLocaleString('id-ID');
@@ -66,142 +63,22 @@ const coverageValue = (key: string, value: unknown) => {
   return String(value);
 };
 
-interface QuoteCardProps {
-  quote: SpB2BQuote;
-  lang: Language;
-  companyName?: string;
-  onAction: (id: string, status: 'ACCEPTED' | 'REJECTED') => Promise<void>;
-  readOnly?: boolean;
-}
-
-const QuoteCard: React.FC<QuoteCardProps> = ({ quote, lang, companyName, onAction, readOnly }) => {
-  const t = (en: string, id: string) => lang === Language.EN ? en : id;
-  const [termsOpen, setTermsOpen] = useState(false);
-  const [acting, setActing] = useState(false);
-  const [downloading, setDownloading] = useState(false);
-
-  const handleDownload = async () => {
-    if (downloading) return;
-    setDownloading(true);
-    try {
-      await publishAndDownloadQuotation(fromB2BQuote(quote, companyName), { sourceApp: 'B2B', totalPremiumNumeric: quote.premium_amount ?? undefined });
-    } catch (e) {
-      console.error('Quotation slip download failed:', e);
-    } finally {
-      setDownloading(false);
-    }
-  };
-
-  const fmtDate = (iso?: string) => {
-    if (!iso) return '—';
-    return new Date(iso).toLocaleDateString(lang === Language.EN ? 'en-GB' : 'id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-  };
-
-  const handle = async (status: 'ACCEPTED' | 'REJECTED') => {
-    setActing(true);
-    await onAction(quote.id, status);
-    setActing(false);
-  };
-
-  return (
-    <div className="rounded-2xl bg-ds-card border border-ds-border p-4 shadow-sm space-y-3">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <div className="font-black text-sm">{quote.insurer_name ?? t('Insurer', 'Penanggung')}</div>
-          {companyName && (
-            <div className="text-[11px] font-bold text-ds-ink2 mt-0.5">{companyName}</div>
-          )}
-          <div className="text-[11px] text-ds-ink3 mt-0.5">{t('Quoted', 'Ditawarkan')} {fmtDate(quote.created_at)}</div>
-        </div>
-        <span className={`text-2xs font-black px-2 py-1 rounded-full flex-shrink-0 ${STATUS_BADGE[quote.status] ?? ''}`}>
-          {STATUS_LABEL[quote.status] ?? quote.status}
-        </span>
-      </div>
-
-      {/* Premium */}
-      <div className="rounded-xl bg-emerald-500/5 border border-emerald-500/20 px-4 py-3">
-        <div className="text-2xs font-bold text-ds-green uppercase tracking-widest">{t('Annual Premium', 'Premi Tahunan')}</div>
-        <div className="text-xl font-black text-ds-green mt-0.5">{formatIDR(quote.premium_amount)}</div>
-      </div>
-
-      {/* Coverage details */}
-      {Object.keys(quote.coverage_details ?? {}).length > 0 && (
-        <div className="rounded-xl bg-ds-card2 p-3 space-y-1.5">
-          {Object.entries(quote.coverage_details).map(([k, v]) => (
-            <div key={k} className="flex justify-between text-xs gap-2">
-              <span className="text-ds-ink3">{coverageLabel(k, lang)}</span>
-              <span className="font-bold text-ds-ink2 text-right">{coverageValue(k, v)}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Valid until */}
-      {quote.valid_until && (
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-ds-ink3">{t('Valid until', 'Berlaku s.d.')}</span>
-          <span className="font-bold text-ds-ink2">{fmtDate(quote.valid_until)}</span>
-        </div>
-      )}
-
-      {/* Terms */}
-      {quote.terms && (
-        <div>
-          <button
-            onClick={() => setTermsOpen(!termsOpen)}
-            className="flex items-center gap-1 text-xs font-bold text-ds-ink3"
-          >
-            {termsOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-            {t('Terms & Conditions', 'Syarat & Ketentuan')}
-          </button>
-          {termsOpen && (
-            <div className="mt-2 rounded-xl border border-ds-border bg-ds-card2 p-3 text-xs text-ds-ink2 leading-relaxed">
-              {quote.terms}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Download quotation slip */}
-      <button
-        disabled={downloading}
-        onClick={handleDownload}
-        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/5 text-ds-green dark:text-emerald-400 text-xs font-black uppercase tracking-widest disabled:opacity-60"
-      >
-        {downloading ? <Loader2 size={12} className="animate-spin" /> : <FileDown size={12} />}
-        {downloading ? t('Preparing PDF…', 'Menyiapkan PDF…') : t('Download Quotation (PDF)', 'Unduh Penawaran (PDF)')}
-      </button>
-
-      {/* Actions — hidden in master-admin monitor mode */}
-      {quote.status === 'PENDING' && !readOnly && (
-        <div className="flex gap-2 pt-1">
-          <button
-            disabled={acting}
-            onClick={() => handle('ACCEPTED')}
-            className="flex-1 flex items-center justify-center gap-1 py-3 rounded-xl bg-ds-green text-ds-on-green text-xs font-black disabled:opacity-60"
-          >
-            {acting ? <Loader2 size={12} className="animate-spin" /> : null}
-            {t('Accept', 'Terima')}
-          </button>
-          <button
-            disabled={acting}
-            onClick={() => handle('REJECTED')}
-            className="flex-1 flex items-center justify-center gap-1 py-3 rounded-xl bg-rose-500 text-white text-xs font-black disabled:opacity-60"
-          >
-            {t('Reject', 'Tolak')}
-          </button>
-        </div>
-      )}
-    </div>
-  );
+const fmtDate = (iso?: string | null, lang: Language = Language.ID) => {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString(lang === Language.EN ? 'en-GB' : 'id-ID', {
+    day: '2-digit', month: 'short', year: 'numeric',
+  });
 };
 
 const B2BQuotes: React.FC<Props> = ({ clientId, lang, companyName, allClients, companyByClient }) => {
-  const t = (en: string, id: string) => lang === Language.EN ? en : id;
+  const t = (en: string, id: string) => (lang === Language.EN ? en : id);
   const [quotes, setQuotes] = useState<SpB2BQuote[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<FilterTab>('ALL');
+  const [filter, setFilter] = useState<string>('ALL');
+  const [search, setSearch] = useState('');
+  const [selected, setSelected] = useState<SpB2BQuote | null>(null);
+  const [acting, setActing] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   const load = async () => {
     if (!allClients && !clientId) return;
@@ -210,64 +87,235 @@ const B2BQuotes: React.FC<Props> = ({ clientId, lang, companyName, allClients, c
     setQuotes(data);
     setLoading(false);
   };
+  useEffect(() => { void load(); }, [clientId, allClients]);
 
-  // `allClients` masuk guard supaya master admin tidak memicu fetch
-  // per-klien dengan clientId kosong sebelum prop terpasang.
-  useEffect(() => { load(); }, [clientId, allClients]);
-
-  const handleAction = async (id: string, status: 'ACCEPTED' | 'REJECTED') => {
-    const ok = await updateB2BQuoteStatus(id, status);
+  const handleAction = async (status: 'ACCEPTED' | 'REJECTED') => {
+    if (!selected) return;
+    setActing(true);
+    const ok = await updateB2BQuoteStatus(selected.id, status);
+    setActing(false);
     if (ok) {
-      setQuotes(prev => prev.map(q => q.id === id ? { ...q, status } : q));
+      setQuotes(prev => prev.map(q => q.id === selected.id ? { ...q, status } : q));
+      setSelected(prev => prev ? { ...prev, status } : prev);
     }
   };
 
-  const filtered = filter === 'ALL' ? quotes : quotes.filter(q => q.status === filter);
-  const sorted = filtered.slice().sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  const handleDownload = async () => {
+    if (!selected || downloading) return;
+    setDownloading(true);
+    try {
+      const resolvedCompany = companyByClient?.[selected.client_id] ?? companyName;
+      await publishAndDownloadQuotation(
+        fromB2BQuote(selected, resolvedCompany),
+        { sourceApp: 'B2B', totalPremiumNumeric: selected.premium_amount ?? undefined },
+      );
+    } catch (err) {
+      console.error('Quotation slip download failed:', err);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const filtered = quotes
+    .filter(q => filter === 'ALL' || q.status === filter)
+    .filter(q => {
+      if (!search) return true;
+      const needle = search.toLowerCase();
+      const insurer = (q.insurer_name ?? '').toLowerCase();
+      const company = (companyByClient?.[q.client_id] ?? '').toLowerCase();
+      return insurer.includes(needle) || company.includes(needle);
+    })
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  const columns: B2BColumn<SpB2BQuote>[] = [
+    {
+      key: 'insurer', header: t('Insurer', 'Penanggung'),
+      render: (q) => (
+        <div>
+          <div className="font-bold text-slate-900">{q.insurer_name ?? t('Insurer', 'Penanggung')}</div>
+          {allClients && companyByClient?.[q.client_id] && (
+            <div className="text-[10px] text-slate-500 mt-0.5 truncate max-w-[180px]">
+              {companyByClient[q.client_id]}
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'premium', header: t('Annual Premium', 'Premi Tahunan'), align: 'right',
+      render: (q) => (
+        <span className="font-black text-emerald-700 tabular-nums" style={{ fontFamily: '"JetBrains Mono",monospace', fontSize: 12 }}>
+          {formatIDR(q.premium_amount ?? 0)}
+        </span>
+      ),
+    },
+    {
+      key: 'valid', header: t('Valid Until', 'Berlaku s.d.'), align: 'right', hideBelow: 'lg',
+      render: (q) => <span className="text-slate-500 tabular-nums">{fmtDate(q.valid_until, lang)}</span>,
+    },
+    {
+      key: 'status', header: 'Status', align: 'right',
+      render: (q) => {
+        const m = STATUS_MAP[q.status] ?? { tone: 'neutral' as B2BPillTone, en: q.status, id: q.status };
+        return <B2BPill tone={m.tone}>{lang === Language.EN ? m.en : m.id}</B2BPill>;
+      },
+    },
+  ];
+
+  const selectedCompany = selected ? (companyByClient?.[selected.client_id] ?? companyName) : undefined;
+  const detailStatus = selected ? (STATUS_MAP[selected.status] ?? null) : null;
 
   return (
-    <div className="px-4 py-6 max-w-lg mx-auto space-y-5">
-      <h2 className="font-black text-lg">{t('Quotes', 'Penawaran')}</h2>
+    <div className="max-w-7xl mx-auto space-y-4">
+      <B2BGlass className="p-6">
+        <B2BSectionHeader
+          title={allClients ? t('All Client Quotes', 'Penawaran Semua Klien') : t('Insurer Quotes', 'Penawaran Penanggung')}
+          subtitle={t(`${filtered.length} of ${quotes.length} total`, `${filtered.length} dari ${quotes.length} total`)}
+          action={<B2BSearchInput value={search} onChange={setSearch} placeholder={t('Search insurer…', 'Cari penanggung…')} className="w-48 lg:w-64" />}
+        />
 
-      {/* Filter tabs */}
-      <div className="flex gap-1.5">
-        {(['ALL', 'PENDING', 'ACCEPTED'] as FilterTab[]).map(f => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`px-3 py-1.5 rounded-full text-2xs font-black uppercase tracking-wider transition-colors ${
-              filter === f
-                ? 'bg-ds-green text-ds-on-green'
-                : 'bg-ds-card2 text-ds-ink3'
-            }`}
-          >
-            {f === 'ALL' ? t('All', 'Semua') : (STATUS_LABEL[f] ?? f)}
-          </button>
-        ))}
-      </div>
-
-      {loading ? (
-        <div className="flex justify-center py-16">
-          <Loader2 size={28} className="animate-spin text-ds-green" />
-        </div>
-      ) : sorted.length === 0 ? (
-        <div className="text-center py-16 text-ds-ink3 text-sm">
-          {t('No quotes yet.', 'Belum ada penawaran.')}
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {sorted.map(q => (
-            <QuoteCard
-              key={q.id}
-              quote={q}
-              lang={lang}
-              companyName={companyByClient?.[q.client_id] ?? companyName}
-              onAction={handleAction}
-              readOnly={allClients}
-            />
+        <div className="flex gap-1.5 overflow-x-auto b2b-scroll pb-2 mb-3 -mx-1 px-1">
+          {FILTERS.map(f => (
+            <button
+              key={f.id}
+              onClick={() => setFilter(f.id)}
+              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-colors ${
+                filter === f.id
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'bg-white/60 text-slate-600 hover:bg-indigo-50'
+              }`}
+            >
+              {lang === Language.EN ? f.en : f.id_}
+            </button>
           ))}
         </div>
-      )}
+
+        {loading ? (
+          <div className="py-16 text-center">
+            <Loader2 size={24} className="mx-auto animate-spin text-indigo-500" />
+          </div>
+        ) : (
+          <B2BTable
+            columns={columns}
+            rows={filtered}
+            onRowClick={(q) => setSelected(q)}
+            empty={t('No quotes match your filter.', 'Tidak ada penawaran dengan filter ini.')}
+          />
+        )}
+      </B2BGlass>
+
+      <B2BSidePanel
+        open={selected !== null}
+        onClose={() => { setSelected(null); setActing(false); }}
+        title={selected?.insurer_name ?? t('Insurer', 'Penanggung')}
+        subtitle={selectedCompany ? selectedCompany : undefined}
+        footer={
+          selected && selected.status === 'PENDING' && !allClients && (
+            <div className="flex gap-2">
+              <B2BButton
+                variant="success"
+                icon={ThumbsUp}
+                onClick={() => handleAction('ACCEPTED')}
+                disabled={acting}
+                className="flex-1"
+              >
+                {t('Accept', 'Terima')}
+              </B2BButton>
+              <B2BButton
+                variant="danger"
+                icon={ThumbsDown}
+                onClick={() => handleAction('REJECTED')}
+                disabled={acting}
+                className="flex-1"
+              >
+                {t('Reject', 'Tolak')}
+              </B2BButton>
+            </div>
+          )
+        }
+      >
+        {selected && (
+          <div className="space-y-4">
+            {/* Premium card */}
+            <div className="rounded-xl p-4" style={{ background: 'linear-gradient(115deg, rgba(5,150,105,0.08), rgba(5,150,105,0.04))', border: '1px solid rgba(5,150,105,0.2)' }}>
+              <div className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest">
+                {t('Annual Premium', 'Premi Tahunan')}
+              </div>
+              <div
+                className="text-2xl font-black text-emerald-700 mt-1 tabular-nums"
+                style={{ fontFamily: '"JetBrains Mono",monospace', letterSpacing: '-0.02em' }}
+              >
+                {formatIDR(selected.premium_amount ?? 0)}
+              </div>
+            </div>
+
+            {/* Status */}
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Status</span>
+              {detailStatus && (
+                <B2BPill tone={detailStatus.tone}>
+                  {lang === Language.EN ? detailStatus.en : detailStatus.id}
+                </B2BPill>
+              )}
+            </div>
+
+            {/* Coverage */}
+            {Object.keys(selected.coverage_details ?? {}).length > 0 && (
+              <div className="border-t border-slate-200/70 pt-3">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">
+                  {t('Coverage', 'Pertanggungan')}
+                </span>
+                <div className="rounded-xl bg-slate-50 border border-slate-200/70 p-3 space-y-2">
+                  {Object.entries(selected.coverage_details).map(([k, v]) => (
+                    <div key={k} className="flex justify-between gap-3 text-xs">
+                      <span className="text-slate-500">{coverageLabel(k, lang)}</span>
+                      <span className="font-bold text-slate-900 text-right">{coverageValue(k, v)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Validity + quoted date */}
+            <div className="border-t border-slate-200/70 pt-3 space-y-2">
+              <div className="flex justify-between text-xs">
+                <span className="text-slate-500">{t('Quoted', 'Ditawarkan')}</span>
+                <span className="font-bold text-slate-900">{fmtDate(selected.created_at, lang)}</span>
+              </div>
+              {selected.valid_until && (
+                <div className="flex justify-between text-xs">
+                  <span className="text-slate-500">{t('Valid until', 'Berlaku s.d.')}</span>
+                  <span className="font-bold text-slate-900">{fmtDate(selected.valid_until, lang)}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Terms */}
+            {selected.terms && (
+              <div className="border-t border-slate-200/70 pt-3">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5 mb-2">
+                  <FileText size={11} />
+                  {t('Terms & Conditions', 'Syarat & Ketentuan')}
+                </span>
+                <div className="rounded-xl bg-slate-50 border border-slate-200/70 p-3 text-xs text-slate-700 leading-relaxed whitespace-pre-wrap">
+                  {selected.terms}
+                </div>
+              </div>
+            )}
+
+            {/* Download PDF */}
+            <B2BButton
+              variant="ghost"
+              icon={FileDown}
+              onClick={handleDownload}
+              disabled={downloading}
+              className="w-full"
+            >
+              {downloading ? t('Preparing PDF…', 'Menyiapkan PDF…') : t('Download Quotation (PDF)', 'Unduh Penawaran (PDF)')}
+            </B2BButton>
+          </div>
+        )}
+      </B2BSidePanel>
     </div>
   );
 };

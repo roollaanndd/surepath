@@ -13,6 +13,9 @@ import { generateB2BBulkSchedulePDF } from '../../services/pdfService';
 interface Props {
   clientId: string;
   lang: Language;
+  // v2.8.1 — Mode pantau MASTER_ADMIN: daftar batch seluruh klien via
+  // b2b_bulk_list_batches {all:true} (dijaga caller.isAdmin di gateway).
+  allClients?: boolean;
 }
 
 const STATUS_LABEL: Record<string, [string, string]> = {
@@ -36,7 +39,7 @@ const STATUS_CLS: Record<string, string> = {
 const fmtIDR = (n: number) => 'Rp ' + Math.round(n).toLocaleString('id-ID');
 const fmtDate = (s?: string | null) => s ? new Date(s).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 
-const B2BBulkBatches: React.FC<Props> = ({ lang }) => {
+const B2BBulkBatches: React.FC<Props> = ({ lang, allClients }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
 
   const [batches, setBatches] = useState<SpB2BBatch[]>([]);
@@ -48,10 +51,10 @@ const B2BBulkBatches: React.FC<Props> = ({ lang }) => {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const data = await getB2BBulkBatches();
+    const data = await getB2BBulkBatches(allClients ? { all: true } : {});
     setBatches(data);
     setLoading(false);
-  }, []);
+  }, [allClients]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -104,6 +107,9 @@ const B2BBulkBatches: React.FC<Props> = ({ lang }) => {
         <div className="flex items-start justify-between gap-2">
           <div>
             <div className="font-mono text-sm font-black">{batch.batch_number}</div>
+            {allClients && batch.company_name && (
+              <div className="text-xs font-bold text-ds-ink2 mt-0.5">{batch.company_name}</div>
+            )}
             <div className="text-xs text-ds-ink3">{fmtDate(batch.created_at)} · {batch.item_count} {t('units', 'unit')}</div>
           </div>
           <span className={`text-2xs font-black uppercase tracking-widest px-2 py-1 rounded-full ${STATUS_CLS[batch.status] ?? ''}`}>
@@ -121,7 +127,7 @@ const B2BBulkBatches: React.FC<Props> = ({ lang }) => {
           </div>
         </div>
 
-        {batch.status === 'SUBMITTED' && (
+        {batch.status === 'SUBMITTED' && !allClients && (
           <button
             disabled={invoiceLoading}
             onClick={handleInvoice}
@@ -132,7 +138,7 @@ const B2BBulkBatches: React.FC<Props> = ({ lang }) => {
           </button>
         )}
 
-        {batch.status === 'INVOICED' && payment?.invoice_url && (
+        {batch.status === 'INVOICED' && payment?.invoice_url && !allClients && (
           <a
             href={payment.invoice_url} target="_blank" rel="noopener noreferrer"
             className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-emerald-500 text-white text-sm font-black"
@@ -232,6 +238,9 @@ const B2BBulkBatches: React.FC<Props> = ({ lang }) => {
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <div className="font-mono text-xs font-black">{b.batch_number}</div>
+                  {allClients && b.company_name && (
+                    <div className="text-2xs font-bold text-ds-ink2 mt-0.5">{b.company_name}</div>
+                  )}
                   <div className="text-2xs text-ds-ink3 mt-0.5">{fmtDate(b.created_at)} · {b.item_count} {t('units', 'unit')}</div>
                 </div>
                 <span className={`text-2xs font-black uppercase tracking-widest px-2 py-0.5 rounded-full flex-shrink-0 ${STATUS_CLS[b.status] ?? ''}`}>

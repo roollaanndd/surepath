@@ -1,6 +1,6 @@
 # SurePath — Changelog
 
-## v2.7.59 — 2026-11-05
+## v2.8.2 — 2026-11-06
 
 ### Insurer Portal: redesign Dashboard + Login (hybrid "Brand hero + Mercury data")
 

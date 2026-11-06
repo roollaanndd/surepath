@@ -279,7 +279,17 @@ const App = ({ initialRoute }: AppProps = {}) => {
       // Keep the visitor on public standalone pages (/q/, /review/, /payment/)
       // — only route to the portal from regular entry points.
       if (!isPublicStandalonePath(window.location.pathname)) {
-        navigate(rolePath(userWithVersion));
+        // v2.8.1 — Hormati layar login tempat pengguna masuk. /b2bapps satu-
+        // satunya layar login per-portal dengan gate peran sendiri: klien B2B
+        // dan MASTER_ADMIN (mode pantau) yang mengetik kredensialnya di sana
+        // berharap mendarat di portal B2B — bukan dipantulkan rolePath ke
+        // CMS admin. Entry path lain tetap memakai rolePath.
+        const entryPath = window.location.pathname;
+        const b2bEntryEligible = userWithVersion.role === UserRole.B2B_CLIENT ||
+                                 userWithVersion.role === UserRole.MASTER_ADMIN;
+        navigate(entryPath === '/b2bapps' && b2bEntryEligible
+          ? '/b2bapps'
+          : rolePath(userWithVersion));
       }
     }, 1400);
   }, [navigate]);

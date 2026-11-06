@@ -44,6 +44,12 @@ export const rolePath = (user: any): string => {
 
 export const hasAppAccess = (user: any, app: 'CUSTOMER' | 'AGENT' | 'OPERATOR' | 'ADMIN' | 'MARKETING' | 'B2B'): boolean => {
   if (!user) return false;
+  // v2.8.0 — MASTER_ADMIN adalah identitas superuser: setiap app boleh
+  // dimasukinya (pantau operasional, bantu proses lintas portal). Ini
+  // sengaja di atas union allowed_apps — stale allowed_apps tidak boleh
+  // mengunci master admin keluar dari app mana pun. Data yang terlihat
+  // tetap dibatasi server-side oleh setiap gateway action.
+  if (user.role === UserRole.MASTER_ADMIN) return true;
   const allowed: string[] | null | undefined = user.allowed_apps;
   if (Array.isArray(allowed) && allowed.length > 0) {
     return allowed.includes(app);

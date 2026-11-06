@@ -3,6 +3,7 @@ import { RevampedPortalLoader as PortalLoader } from '../../routes/RevampedPorta
 import PortalErrorBoundary from '../../routes/PortalErrorBoundary';
 import { ADMIN_ROLES } from '../routeHelpers';
 import type { AppRouteProps } from '../routeHelpers';
+import { UserRole } from '../../../types';
 
 const AdminLogin  = lazy(() => import('../../../components/admin/AdminLogin'));
 const AdminPortal = lazy(() => import('../../../components/admin/AdminPortal'));
@@ -34,6 +35,15 @@ export const AdminRoutes: React.FC<AppRouteProps> = ({
   }
 
   if (ADMIN_ROLES.includes(currentUser.role)) {
+    // v2.8.0 — MASTER_ADMIN kini boleh masuk SEMUA app (hasAppAccess
+    // superuser), jadi CMS hanya mengklaim wilayah /admin-nya sendiri;
+    // pathname lain jatuh ke modul app di bawahnya (guard isolasi memang
+    // sudah mengecualikan ADMIN_ROLES). Role admin lain mempertahankan
+    // perilaku catch-all legacy yang disengaja.
+    if (currentUser.role === UserRole.MASTER_ADMIN &&
+        !(pathname === '/admin' || pathname.startsWith('/admin/'))) {
+      return null;
+    }
     return (
       <PortalErrorBoundary onReset={onLogout}>
         <Suspense fallback={<PortalLoader />}>

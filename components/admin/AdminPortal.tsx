@@ -49,7 +49,7 @@ import { PathyNavIcon } from '../shared/PathyNavIcon';
 import { buildVisibleNav, groupForSection, sectionForLeaf, ADMIN_MENU_ITEMS as MENU_ITEMS } from './navigation';
 // Workspace dashboards per peran (fitur branch redesign — role workspaces):
 // peran tertentu memperoleh dashboard khusus menggantikan DashboardView umum.
-import { getAdminWorkspace } from '../../src/admin/roleConfig';
+import { getAdminWorkspace, type AdminWorkspaceKey } from '../../src/admin/roleConfig';
 import CommandDashboard from './workspaces/command/CommandDashboard';
 import FinanceDashboard from './workspaces/finance/FinanceDashboard';
 import InsurerLiaisonDashboard from './workspaces/insurer/InsurerLiaisonDashboard';
@@ -57,6 +57,11 @@ import CollectionsDashboard from './workspaces/collections/CollectionsDashboard'
 import BusinessSupportDashboard from './workspaces/support/BusinessSupportDashboard';
 import AgentOnboardingDashboard from './workspaces/onboarding/AgentOnboardingDashboard';
 import MarketingDashboard from './workspaces/marketing/MarketingDashboard';
+// v2.8.0 — Pathy assistant view, antrean prospek kontak, dan pengalih
+// workspace untuk MASTER_ADMIN (temuan audit + gap analysis).
+import PathyAiView from './PathyAiView';
+import ContactLeadsAdmin from './ContactLeadsAdmin';
+import AdminWorkspaceSwitcher from './AdminWorkspaceSwitcher';
 import ModuleIcon from '../shared/ModuleIcon';
 
 // Suspense fallback for lazy-loaded admin views
@@ -175,6 +180,8 @@ const AdminPortal = ({
   currentUser?: any;
 }) => {
   const [activeTab, setActiveTab]     = useState('dashboard');
+  // v2.8.0 — master admin boleh membuka workspace mana pun dari tab dashboard.
+  const [wsOverride, setWsOverride]   = useState<AdminWorkspaceKey | null>(null);
   const [isMobile, setIsMobile]       = useState(window.innerWidth < 1024);
   const [mobileMenuOpen, setMobileOpen] = useState(false);
   const [adminStats, setAdminStats]   = useState<AdminStats | null>(null);
@@ -665,22 +672,48 @@ const AdminPortal = ({
     // Role-based workspace routing (branch redesign): peran ber-workspace tetap
     // mendapat dashboard khusus di tab dashboard. Tema workspace mengikuti
     // tema shell (terang tetap — design.md §4).
-    const ws = getAdminWorkspace(userRole);
+    const ws = wsOverride ?? getAdminWorkspace(userRole);
     if (activeTab === 'dashboard' && ws) {
       const dashProps = {
         userRole,
         currentUser,
         onLogout,
       };
-      switch (ws) {
-        case 'command':     return <CommandDashboard {...dashProps} />;
-        case 'finance':     return <FinanceDashboard {...dashProps} />;
-        case 'insurer':     return <InsurerLiaisonDashboard {...dashProps} />;
-        case 'collections': return <CollectionsDashboard {...dashProps} />;
-        case 'support':     return <BusinessSupportDashboard {...dashProps} />;
-        case 'onboarding':  return <AgentOnboardingDashboard {...dashProps} />;
-        case 'marketing':   return <MarketingDashboard {...dashProps} />;
-        // null/peran tak terdaftar jatuh ke switch umum di bawah.
+      const dash = (() => {
+        switch (ws) {
+          case 'command':     return <CommandDashboard {...dashProps} />;
+          // v2.8.0 — 'ops' sebelumnya tanpa komponen (audit low #10): ADMIN
+          // diam-diam jatuh ke dashboard generik. Sekarang eksplisit.
+          case 'ops':         return <AdminDashboard
+            adminStats={adminStats}
+            claims={claimsQueue}
+            withdrawals={withdrawalQueue}
+            tierPending={tierPending}
+            onlineUsers={onlineUsers}
+            notifications={notifications}
+            currentUser={currentUser}
+            onNavigate={goToTab}
+          />;
+          case 'finance':     return <FinanceDashboard {...dashProps} />;
+          case 'insurer':     return <InsurerLiaisonDashboard {...dashProps} />;
+          case 'collections': return <CollectionsDashboard {...dashProps} />;
+          case 'support':     return <BusinessSupportDashboard {...dashProps} />;
+          case 'onboarding':  return <AgentOnboardingDashboard {...dashProps} />;
+          case 'marketing':   return <MarketingDashboard {...dashProps} />;
+          // null/peran tak terdaftar jatuh ke switch umum di bawah.
+          default:            return null;
+        }
+      })();
+      if (dash) {
+        // Master admin: pengalih workspace — empat dashboard orphan kini
+        // terjangkau dari sini (audit high #1).
+        const showSwitcher = userRole === UserRole.MASTER_ADMIN;
+        return (
+          <>
+            {showSwitcher && <AdminWorkspaceSwitcher value={ws} onChange={setWsOverride} />}
+            {dash}
+          </>
+        );
       }
     }
     switch (activeTab) {
@@ -698,6 +731,7 @@ const AdminPortal = ({
           />
         );
       case 'analytics':        return <AnalyticsDashboard />;
+      case 'contact_leads':    return <ContactLeadsAdmin />;
       // Satu layar keputusan: antrean review hanyalah mode "PENDING" dari
       // Pesanan Polis, lengkap dengan dokumen, pembayaran, dan riwayat.
       case 'approvals':        return <PolicyOrdersAdmin initialPending />;
@@ -728,6 +762,7 @@ const AdminPortal = ({
       case 'ai_finance':       return <AIFinanceView />;
       case 'ops_console':      return <OpsConsoleView />;
       case 'pathy_logs':       return <PathyTranscriptsView />;
+      case 'pathy_ai':         return <PathyAiView currentUser={currentUser} />;
       case 'activity_log':     return <ActivityLogView />;
       case 'security':         return <SecurityView />;
       case 'settings':         return <SettingsErrorBoundary><SettingsView products={products} setProducts={setProducts} currentUserRole={userRole} /></SettingsErrorBoundary>;

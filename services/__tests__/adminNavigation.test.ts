@@ -21,7 +21,8 @@ describe('navigasi Admin CMS', () => {
   it('tidak ada view lama yang hilang atau terdaftar dua kali', () => {
     expect(new Set(ALL_CHILD_IDS).size).toBe(ALL_CHILD_IDS.length);
     expect([...ALL_CHILD_IDS].sort()).toEqual([...LEGACY_LEAF_IDS].sort());
-    expect(ALL_CHILD_IDS).toHaveLength(33);
+
+    expect(ALL_CHILD_IDS).toHaveLength(35); // +contact_leads +pathy_ai (v2.8.0) +manual_credit +credit_approvals (v2.7.58)
   });
 
   it('setiap section punya minimal satu view', () => {

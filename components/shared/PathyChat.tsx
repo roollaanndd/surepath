@@ -1083,6 +1083,8 @@ interface Attachment {
   doc: PathyDocument;
   preview: string;
   label: string;
+  /** v2.8.0 — data URI foto terkompresi untuk inspeksi vision Pathy (server). */
+  imageUrl?: string;
 }
 
 /** Fired by a portal to open Pathy from its own chrome (e.g. the bottom-nav
@@ -1098,6 +1100,12 @@ interface PathyChatProps {
 }
 
 // ─── v2.7.11 helpers (session resume, deterministic daily cards) ─────────────
+
+// Ikon pratinjau generik untuk lampiran spreadsheet (dirender sebagai <img>).
+// Level modul: konstanta murni — tidak perlu masuk dep array useCallback.
+const SHEET_PREVIEW = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#059669"/><path d="M8 10h16v3H8zM8 15h7v3H8zM17 15h7v3h-7zM8 20h7v3H8zM17 20h7v3h-7z" fill="#fff"/></svg>',
+);
 
 const RESUME_TEXT_MAX = 400;
 const RESUME_DEPTH = 14;
@@ -1417,6 +1425,81 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
     r.readAsDataURL(file);
   });
 
+  /** v2.8.0 — kecilkan foto ke ≤1.15 MB data URI (batas server 1.8 M char). */
+  const compressForVision = (dataUrl: string): Promise<string> => new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX_EDGE = 1280;
+      const scale = Math.min(1, MAX_EDGE / Math.max(img.width, img.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext('2d');
+      if (!ctx) { resolve(dataUrl); return; }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      let quality = 0.72;
+      let out = canvas.toDataURL('image/jpeg', quality);
+      while (out.length > 1_150_000 && quality > 0.35) {
+        quality -= 0.12;
+        out = canvas.toDataURL('image/jpeg', quality);
+      }
+      resolve(out.length < dataUrl.length ? out : dataUrl);
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+
+  const MAX_SHEET_ROWS_TO_SEND = 200;
+
+  /**
+   * v2.8.0 — lampiran Excel/CSV: di-parse di browser pengguna (formula/script
+   * workbook tidak pernah dievaluasi — hanya nilai sel), lalu dikirim sebagai
+   * lampiran SHEET: header + ringkasan + baris sampel (maks 200). Perhitungan
+   * per baris dilakukan server oleh Pathy (tarif OJK), bukan oleh model.
+   */
+  const attachSpreadsheet = useCallback(async (file: File) => {
+    if (file.size > 10 * 1024 * 1024) {
+      setScanError(t('Filenyanya terlalu besar (maks 10 MB).', 'That file is too large (max 10 MB).'));
+      return;
+    }
+    setScanning(t('Excel', 'spreadsheet'));
+    setScanError(null);
+    try {
+      const { parseBulkFile } = await import('../../services/b2bBulkParser');
+      const parsed = await parseBulkFile(file);
+      if (!parsed.rows.length) {
+        setScanError(t('File terbaca tapi tidak berisi baris data.', 'File read, but it contains no data rows.'));
+        return;
+      }
+      const fields: Record<string, unknown> = {
+        file_name: file.name,
+        rows_total: parsed.rows.length,
+        headers: JSON.stringify(parsed.headers),
+      };
+      parsed.rows.slice(0, MAX_SHEET_ROWS_TO_SEND).forEach((row, i) => {
+        fields[`row_${i + 1}`] = JSON.stringify(row);
+      });
+
+      attachIdRef.current += 1;
+      const attachment: Attachment = {
+        id: `att-${attachIdRef.current}`,
+        preview: SHEET_PREVIEW,
+        label: file.name,
+        doc: { type: 'SHEET', label: file.name, fields },
+      };
+      setPending(prev => [...prev, attachment].slice(-MAX_ATTACHMENTS));
+      pushMessage('bot', t(
+        `File terbaca: ${parsed.rows.length} baris. Mau kubedah? Tulis "bedah file ini" — aku hitung estimasi premi per barisnya.`,
+        `File read: ${parsed.rows.length} rows. Want me to break it down? Say "analyze this file" — I will estimate the premium per row.`,
+      ));
+    } catch (e) {
+      console.error('Pathy spreadsheet attach:', e);
+      setScanError(t('Gagal membaca file. Pastikan formatnya .xlsx/.xls/.csv.', 'Could not read the file. Make sure it is .xlsx/.xls/.csv.'));
+    } finally {
+      setScanning(null);
+    }
+  }, [t, pushMessage]);
+
   /** Object URLs are revoked on unmount so a long chat does not leak them. */
   const previewsRef = useRef<string[]>([]);
   useEffect(() => () => { previewsRef.current.forEach(u => URL.revokeObjectURL(u)); }, []);
@@ -1431,9 +1514,14 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
    * to tell a chat app what kind of paper they are holding.
    */
   const attachDocument = useCallback(async (file: File, hint?: DocKind) => {
+    // v2.8.0 — Excel/CSV masuk jalur parser spreadsheet (Pathy bedah per baris).
+    if (/\.(xlsx|xls|csv)$/i.test(file.name)) {
+      await attachSpreadsheet(file);
+      return;
+    }
     if (!file.type.startsWith('image/')) {
-      setScanError(t('Untuk sekarang aku baru bisa membaca foto/gambar. PDF belum ya.',
-                     'For now I can only read photos or images — PDF not yet.'));
+      setScanError(t('Untuk sekarang aku bisa membaca foto/gambar dan file Excel/CSV. PDF belum ya.',
+                     'For now I can read photos/images and Excel/CSV files — PDF not yet.'));
       return;
     }
     // Phone photos are routinely 5-10 MB; anything past this is not a document
@@ -1458,10 +1546,12 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
       const preview = URL.createObjectURL(file);
       previewsRef.current.push(preview);
       attachIdRef.current += 1;
+      const imageUrl = await compressForVision(dataUrl);
       const attachment: Attachment = {
         id: `att-${attachIdRef.current}`,
         preview,
         label: res.label,
+        imageUrl,
         doc: { type: res.type, label: res.label, fields: res.fields, confidence: res.confidence },
       };
 
@@ -1501,7 +1591,7 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
     } finally {
       setScanning(null);
     }
-  }, [t, pushMessage]);
+  }, [t, pushMessage, attachSpreadsheet]);
 
   // Shared by the composer, the quick-action chips and the client cards so a
   // tap answer is the real, data-backed one rather than a canned paragraph.
@@ -1539,7 +1629,14 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
         }));
       setPending([]);
       setScanError(null);
-      const res = await pathyChat(msg, history, attached.map(a => a.doc));
+      const res = await pathyChat(
+        msg,
+        history,
+        attached.map(a => a.doc),
+        // v2.8.0 — foto terlampir ikut ke mesin vision Pathy (maks 3, sesuai
+        // batas server); spreadsheet tidak punya imageUrl.
+        attached.filter(a => a.imageUrl).slice(0, 3).map(a => ({ label: a.label, dataUrl: a.imageUrl! })),
+      );
       pushMessage('bot', res.reply, {
         cards: res.cards,
         degraded: res.degraded,
@@ -1923,7 +2020,7 @@ const PathyChat: React.FC<PathyChatProps> = ({ lang, currentUser, hideLauncher =
             <input
               ref={uploadRef}
               type="file"
-              accept="image/*"
+              accept="image/*,.xlsx,.xls,.csv"
               className="hidden"
               onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void attachDocument(f, cameraHintRef.current); }}
             />

@@ -4,6 +4,7 @@ import exifr from 'npm:exifr@7.1.3';
 import { Image } from 'npm:imagescript@1.3.0';
 import { corsHeaders } from '../_shared/cors.ts';
 import { verifyAuth } from '../_shared/auth.ts';
+import { inspectWithPrompt } from '../_shared/pathyVision.ts';
 
 // ─── Claim Photo Forensics + Fraud Detection ─────────────────────────────────
 //
@@ -322,34 +323,11 @@ Deno.serve(async (req) => {
       // eksplisit: verdict foto jadi UNANALYZED → klaim minimal REVIEW_REQUIRED.
       let aiUnavailable = false;
       try {
-        const mime = photoUrl.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
-        const orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${openRouterKey}`,
-            'HTTP-Referer': 'https://myinsurepath.com',
-            'X-Title': 'SurePath',
-          },
-          body: JSON.stringify({
-            model: 'openai/gpt-4o',
-            messages: [{
-              role: 'user',
-              content: [
-                { type: 'text', text: DAMAGE_FRAUD_PROMPT },
-                { type: 'image_url', image_url: { url: photoUrl } },
-              ],
-            }],
-            temperature: 0.2,
-            max_tokens: 1200,
-            response_format: { type: 'json_object' },
-          }),
-        });
-        if (orRes.ok) {
-          const orData = await orRes.json();
-          const content: string = orData?.choices?.[0]?.message?.content ?? '';
-          const cleaned = content.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
-          const parsed = JSON.parse(cleaned);
+        // v2.8.0 — panggilan vision lewat SATU mesin vision Pathy
+        // (_shared/pathyVision.ts), sesuai arahan pemilik: semua fitur AI foto
+        // memakai Pathy. Kegagalan tetap ditandai UNANALYZED — tidak fail-open.
+        const parsed = await inspectWithPrompt(openRouterKey, photoUrl, DAMAGE_FRAUD_PROMPT);
+        if (parsed) {
           // FIX v2.7.56 (audit): damageAssessment di-clamp sebelum dipersist —
           // jumlah item, panjang string, dan nominal tetap terkendali.
           const clampDamage = (arr: unknown) =>
@@ -380,10 +358,9 @@ Deno.serve(async (req) => {
             isStockOrDownloaded: Boolean(parsed.isStockOrDownloaded),
             plateVisible: Boolean(parsed.plateVisible),
             confidence: typeof parsed.confidence === 'number' ? Math.max(0, Math.min(100, parsed.confidence)) : 50,
-            severity: ['Ringan', 'Sedang', 'Berat', 'Total Loss'].includes(parsed.severity) ? parsed.severity : 'Sedang',
+            severity: ['Ringan', 'Sedang', 'Berat', 'Total Loss'].includes(String(parsed.severity)) ? parsed.severity as 'Ringan' | 'Sedang' | 'Berat' | 'Total Loss' : 'Sedang',
           };
         } else {
-          console.error('OpenRouter error:', orRes.status, await orRes.text());
           aiUnavailable = true;
         }
       } catch (e) {

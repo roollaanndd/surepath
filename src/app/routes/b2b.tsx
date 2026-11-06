@@ -35,7 +35,10 @@ export const B2BAuthEntryRoutes: React.FC<AppRouteProps> = ({
 export const B2BRoutes: React.FC<AppRouteProps> = ({
   currentUser, onLogout, lang,
 }) => {
-  if (!(currentUser && currentUser.role === UserRole.B2B_CLIENT)) return null;
+  // v2.8.0 — MASTER_ADMIN diizinkan masuk portal B2B (pantau & bantu proses
+  // korporat). B2B_CLIENT sendiri tetap terkunci di app-nya seperti sebelumnya.
+  if (!(currentUser && (currentUser.role === UserRole.B2B_CLIENT ||
+                        currentUser.role === UserRole.MASTER_ADMIN))) return null;
   return (
     <PortalErrorBoundary onReset={onLogout}>
       <Suspense fallback={<PortalLoader />}>

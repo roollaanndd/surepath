@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Loader2, ChevronDown, ChevronUp, FileDown } from 'lucide-react';
 import { Language } from '../../types';
-import { getB2BQuotes, updateB2BQuoteStatus, type SpB2BQuote } from '../../services/supabaseService';
+import { getB2BQuotes, getAllB2BQuotes, updateB2BQuoteStatus, type SpB2BQuote } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { publishAndDownloadQuotation } from '../../services/quotationService';
 import { fromB2BQuote } from '../../services/quotationSlipAdapter';
@@ -10,6 +10,11 @@ interface Props {
   clientId: string;
   lang: Language;
   companyName?: string;
+  // v2.8.1 — Mode pantau MASTER_ADMIN: muat penawaran semua klien korporat,
+  // tampilkan nama perusahaan per kartu, dan sembunyikan aksi Terima/Tolak
+  // (keputusan penawaran tetap milik klien, master admin hanya memantau).
+  allClients?: boolean;
+  companyByClient?: Record<string, string>;
 }
 
 const STATUS_BADGE: Record<string, string> = {
@@ -66,9 +71,10 @@ interface QuoteCardProps {
   lang: Language;
   companyName?: string;
   onAction: (id: string, status: 'ACCEPTED' | 'REJECTED') => Promise<void>;
+  readOnly?: boolean;
 }
 
-const QuoteCard: React.FC<QuoteCardProps> = ({ quote, lang, companyName, onAction }) => {
+const QuoteCard: React.FC<QuoteCardProps> = ({ quote, lang, companyName, onAction, readOnly }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
   const [termsOpen, setTermsOpen] = useState(false);
   const [acting, setActing] = useState(false);
@@ -103,6 +109,9 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ quote, lang, companyName, onActio
       <div className="flex items-start justify-between gap-2">
         <div>
           <div className="font-black text-sm">{quote.insurer_name ?? t('Insurer', 'Penanggung')}</div>
+          {companyName && (
+            <div className="text-[11px] font-bold text-ds-ink2 mt-0.5">{companyName}</div>
+          )}
           <div className="text-[11px] text-ds-ink3 mt-0.5">{t('Quoted', 'Ditawarkan')} {fmtDate(quote.created_at)}</div>
         </div>
         <span className={`text-2xs font-black px-2 py-1 rounded-full flex-shrink-0 ${STATUS_BADGE[quote.status] ?? ''}`}>
@@ -164,8 +173,8 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ quote, lang, companyName, onActio
         {downloading ? t('Preparing PDF…', 'Menyiapkan PDF…') : t('Download Quotation (PDF)', 'Unduh Penawaran (PDF)')}
       </button>
 
-      {/* Actions */}
-      {quote.status === 'PENDING' && (
+      {/* Actions — hidden in master-admin monitor mode */}
+      {quote.status === 'PENDING' && !readOnly && (
         <div className="flex gap-2 pt-1">
           <button
             disabled={acting}
@@ -188,21 +197,23 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ quote, lang, companyName, onActio
   );
 };
 
-const B2BQuotes: React.FC<Props> = ({ clientId, lang, companyName }) => {
+const B2BQuotes: React.FC<Props> = ({ clientId, lang, companyName, allClients, companyByClient }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
   const [quotes, setQuotes] = useState<SpB2BQuote[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterTab>('ALL');
 
   const load = async () => {
-    if (!clientId) return;
+    if (!allClients && !clientId) return;
     setLoading(true);
-    const data = await getB2BQuotes(clientId);
+    const data = allClients ? await getAllB2BQuotes() : await getB2BQuotes(clientId);
     setQuotes(data);
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [clientId]);
+  // `allClients` masuk guard supaya master admin tidak memicu fetch
+  // per-klien dengan clientId kosong sebelum prop terpasang.
+  useEffect(() => { load(); }, [clientId, allClients]);
 
   const handleAction = async (id: string, status: 'ACCEPTED' | 'REJECTED') => {
     const ok = await updateB2BQuoteStatus(id, status);
@@ -246,7 +257,14 @@ const B2BQuotes: React.FC<Props> = ({ clientId, lang, companyName }) => {
       ) : (
         <div className="space-y-3">
           {sorted.map(q => (
-            <QuoteCard key={q.id} quote={q} lang={lang} companyName={companyName} onAction={handleAction} />
+            <QuoteCard
+              key={q.id}
+              quote={q}
+              lang={lang}
+              companyName={companyByClient?.[q.client_id] ?? companyName}
+              onAction={handleAction}
+              readOnly={allClients}
+            />
           ))}
         </div>
       )}

@@ -38,6 +38,7 @@ import { DOCUMENT_TYPES } from './common.ts';
 import { archiveDocuments } from './documents.ts';
 import { turnDisclaimer } from './disclaimers.ts';
 import { catalogSection } from './catalog.ts';
+import { inspectImages } from '../_shared/pathyVision.ts';
 
 const MODEL = 'openai/gpt-4o-mini';
 const MAX_TOOL_ROUNDS = 4;
@@ -50,6 +51,35 @@ const MAX_DOCUMENTS = 4;
 const DOC_TYPE_SET = new Set<string>(DOCUMENT_TYPES);
 const MAX_DOC_FIELDS = 40;
 const MAX_DOC_FIELD_CHARS = 500;
+// v2.8.0 — lampiran SHEET (Excel/CSV) mengirim baris sampel sebagai field
+// row_1..row_N berisi JSON; butuh anggaran field lebih besar dari dokumen OCR.
+const MAX_SHEET_FIELDS = 300;
+const MAX_SHEET_FIELD_CHARS = 700;
+
+// v2.8.0 — lampiran foto (vision). Klien mengirim data URI terkompresi; server
+// menginspeksinya lewat mesin vision Pathy (_shared/pathyVision.ts) SEBELUM
+// model utama berjalan, hasilnya menjadi dokumen virtual yang dibaca lewat
+// read_attachment. Disiplin "fakta hanya lewat tool" tetap utuh.
+const MAX_IMAGES = 3;
+const MAX_IMAGE_CHARS = 1_800_000; // ~1.3 MB biner per foto setelah kompresi klien
+const IMAGE_URL_RE = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
+
+interface PathyImage { label?: string; dataUrl: string }
+
+function sanitizeImages(raw: unknown): PathyImage[] {
+  if (!Array.isArray(raw)) return [];
+  const out: PathyImage[] = [];
+  for (const img of raw.slice(0, MAX_IMAGES)) {
+    if (!img || typeof img !== 'object') continue;
+    const rec = img as Record<string, unknown>;
+    const dataUrl = typeof rec.dataUrl === 'string'
+      ? rec.dataUrl
+      : (typeof rec.data_url === 'string' ? rec.data_url : '');
+    if (!dataUrl || dataUrl.length > MAX_IMAGE_CHARS || !IMAGE_URL_RE.test(dataUrl)) continue;
+    out.push({ label: typeof rec.label === 'string' ? rec.label.slice(0, 80) : undefined, dataUrl });
+  }
+  return out;
+}
 
 /**
  * Keeps only the shape we expect. `type` is a fixed enum (safe to name in the
@@ -71,10 +101,12 @@ function sanitizeDocuments(raw: unknown): PathyDocument[] {
     if (!rec.fields || typeof rec.fields !== 'object' || Array.isArray(rec.fields)) continue;
 
     const fields: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(rec.fields as Record<string, unknown>).slice(0, MAX_DOC_FIELDS)) {
+    const fieldLimit = type === 'SHEET' ? MAX_SHEET_FIELDS : MAX_DOC_FIELDS;
+    const fieldChars = type === 'SHEET' ? MAX_SHEET_FIELD_CHARS : MAX_DOC_FIELD_CHARS;
+    for (const [k, v] of Object.entries(rec.fields as Record<string, unknown>).slice(0, fieldLimit)) {
       if (v === null || v === undefined) continue;
       if (typeof v === 'number' || typeof v === 'boolean') { fields[k.slice(0, 40)] = v; continue; }
-      if (typeof v === 'string') { fields[k.slice(0, 40)] = v.slice(0, MAX_DOC_FIELD_CHARS); continue; }
+      if (typeof v === 'string') { fields[k.slice(0, 40)] = v.slice(0, fieldChars); continue; }
       // Objects and arrays are dropped rather than walked: nothing downstream
       // needs them, and a nested blob is just more surface to store and echo.
     }
@@ -89,9 +121,15 @@ function sanitizeDocuments(raw: unknown): PathyDocument[] {
   return out;
 }
 
-function systemPrompt(role: string, attachedTypes: string[] = []): string {
+function systemPrompt(role: string, attachedTypes: string[] = [], hasPhotos = false): string {
   const attachmentLine = attachedTypes.length > 0
-    ? `\n\nLAMPIRAN\nPengguna melampirkan dokumen berikut di pesan ini: ${attachedTypes.join(', ')}. Panggil read_attachment untuk membacanya — jangan pernah menebak isinya. Setelah dibaca: pakai datanya untuk menjawab/menghitung, sebutkan singkat apa yang kamu baca, dan tawarkan menyimpannya ke akun pengguna (save_document_data) supaya tidak perlu difoto ulang.`
+    ? `\n\nLAMPIRAN\nPengguna melampirkan dokumen berikut di pesan ini: ${attachedTypes.join(', ')}. Panggil read_attachment untuk membacanya — jangan pernah menebak isinya. Setelah dibaca: pakai datanya untuk menjawab/menghitung, sebutkan singkat apa yang kamu baca, dan tawarkan menyimpannya ke akun pengguna (save_document_data) supaya tidak perlu difoto ulang.${hasPhotos ? '\nFoto yang dilampirkan SUDAH diinspeksi oleh mesin vision Pathy — hasil inspeksinya ada di lampiran ber-label "Hasil inspeksi foto". Baca dulu itu sebelum menimpali tentang fotonya.' : ''}${attachedTypes.includes('SHEET') ? '\nLampiran SHEET adalah file Excel/CSV berisi daftar (biasanya daftar kendaraan mitra B2B). Untuk "bedah/hitung/dianalisa file ini": panggil analyze_bulk_pricing — jangan menghitung dari hasil read_attachment sendiri.' : ''}`
+    : '';
+  const adminLine = role === 'MASTER_ADMIN' || role === 'ADMIN'
+    ? `\n\nUNTUK ADMIN (MASTER_ADMIN/ADMIN)\nKamu juga asisten operasional admin — semua angka platform lewat tool, read-only:\n- "Kondisi platform hari ini" → admin_overview.\n- Cari order lintas pengguna → admin_search_orders.\n- Antrean klaim → admin_claim_queue. Prospek form kontak → admin_contact_leads.\n- Cari akun pengguna → admin_user_lookup.\n- KAMU TIDAK BISA mengubah apa pun lewat chat: tidak ada update status, approve, refund, edit data. Untuk aksi tulis, arahkan ke menu CMS yang sesuai. Data keuangan detail (saldo, komisi per orang) tidak tersedia lewat chat.`
+    : '';
+  const b2bLine = role === 'B2B_CLIENT'
+    ? `\n\nUNTUK MITRA B2B\n- Lampirkan Excel/CSV daftar kendaraan armada, lalu minta "bedah file ini" → analyze_bulk_pricing menghitung estimasi premi per baris + total (tarif OJK berjalan). Sampaikan ringkasannya, jangan salin seluruh tabel — kartu sudah menampilkannya.\n- Hasil analisa indikatif: final setelah underwriting insurer. Untuk pengajuan resmi, arahkan ke alur "Buat Pengajuan" di portal, bukan lewat chat.`
     : '';
   return `Kamu adalah Pathy, asisten AI SurePath (PT. Ruang Proteksi Indonesia), platform distribusi asuransi digital di Indonesia yang berizin dan diawasi OJK.
 
@@ -177,7 +215,7 @@ BATASAN
 - Kamu bukan penanggung, bukan surveyor, bukan dokter, dan bukan penasihat hukum. Jangan pernah berbicara seolah-olah mewakili keputusan pihak asuransi.
 - Jangan pernah menampilkan data nasabah lain.
 
-${UNTRUSTED_INPUT_NOTICE}${attachmentLine}`;
+${UNTRUSTED_INPUT_NOTICE}${attachmentLine}${adminLine}${b2bLine}`;
 }
 
 // deno-lint-ignore no-explicit-any
@@ -285,9 +323,29 @@ Deno.serve(async (req) => {
   // read_attachment rather than read out of the prompt.
   const documents = sanitizeDocuments(body?.documents);
 
+  // v2.8.0 — foto terlampir: inspeksi dulu lewat mesin vision Pathy (gpt-4o)
+  // sebelum model utama berjalan. Hasilnya menjadi dokumen virtual "Hasil
+  // inspeksi foto" yang dibaca model lewat read_attachment — sama disiplinnya
+  // dengan OCR teks. Gagal inspeksi tidak pernah menggagalkan giliran.
+  const images = sanitizeImages(body?.images);
+  if (images.length > 0) {
+    try {
+      const inspection = await inspectImages(OPENROUTER_KEY, images.map(i => ({ label: i.label, url: i.dataUrl })), userMessage);
+      if (inspection) {
+        documents.push({
+          type: 'DOC',
+          label: 'Hasil inspeksi foto',
+          fields: { vision_result: JSON.stringify(inspection).slice(0, MAX_SHEET_FIELD_CHARS * 2) },
+        });
+      }
+    } catch (e) {
+      console.error('pathy-agent vision pre-pass failed:', e);
+    }
+  }
+
   // deno-lint-ignore no-explicit-any
   const messages: any[] = [
-    { role: 'system', content: systemPrompt(caller.role, documents.map(d => d.type)) },
+    { role: 'system', content: systemPrompt(caller.role, documents.map(d => d.type), images.length > 0) },
     ...sanitizeHistory(body?.history),
     { role: 'user', content: wrapUserContent(userMessage) },
   ];

@@ -13,6 +13,8 @@ import { MarketingRoutes } from './marketing';
 import { AgentRoutes } from './agent';
 import { B2BRoutes, B2BAuthEntryRoutes } from './b2b';
 import { CustomerRoutes } from './customer';
+import AppSwitcher from '../../../components/shared/AppSwitcher';
+import { UserRole } from '../../../types';
 
 const HomePage = lazy(() => import('../../../src/pages/HomePage'));
 
@@ -37,6 +39,23 @@ const HomePage = lazy(() => import('../../../src/pages/HomePage'));
 // invoked in order and the first non-null result wins; declaring a claim
 // means an earlier module swallowed the path, and null means "not mine".
 export const AppRoutes: React.FC<AppRouteProps> = (props) => {
+  // v2.8.0 — Master admin bisa masuk semua platform; switcher melayang ini
+  // satu-satunya tempat ia berpindah app. Dipasang mulai dari modul portal
+  // ke bawah — halaman recovery/standalone/insuler-token/publik tidak perlu.
+  // `any` di sini sengaja: JSX modul modul ini bertumpuk pada tipe React
+  // yang sama, tapi resolver tipe proyek punya dua versi @types/react yang
+  // membuat ReactNode lintas versi tidak saling assign.
+  // deno-lint-ignore no-explicit-any
+  const withSwitcher = (node: any): React.ReactNode =>
+    props.currentUser?.role === UserRole.MASTER_ADMIN
+      ? (
+        <>
+          {node}
+          <AppSwitcher pathname={props.pathname} navigate={props.navigate} lang={props.lang} />
+        </>
+      )
+      : node;
+
   const recovery = RecoveryGateRoutes(props);
   if (recovery) return recovery;
 
@@ -69,10 +88,10 @@ export const AppRoutes: React.FC<AppRouteProps> = (props) => {
   if (isolation) return isolation;
 
   const admin = AdminRoutes(props);
-  if (admin) return admin;
+  if (admin) return withSwitcher(admin);
 
   const operator = OperatorRoutes(props);
-  if (operator) return operator;
+  if (operator) return withSwitcher(operator);
 
   const authGate = AuthEntryRoutes(props);
   if (authGate) return authGate;
@@ -87,20 +106,20 @@ export const AppRoutes: React.FC<AppRouteProps> = (props) => {
   if (selectApp) return selectApp;
 
   const marketing = MarketingRoutes(props);
-  if (marketing) return marketing;
+  if (marketing) return withSwitcher(marketing);
 
   const agent = AgentRoutes(props);
-  if (agent) return agent;
+  if (agent) return withSwitcher(agent);
 
   const b2b = B2BRoutes(props);
-  if (b2b) return b2b;
+  if (b2b) return withSwitcher(b2b);
 
   const customer = CustomerRoutes(props);
-  if (customer) return customer;
+  if (customer) return withSwitcher(customer);
 
   // Logged-out visitor outside PWA standalone mode → marketing homepage.
   if (!props.appMode) {
-    return (
+    return withSwitcher(
       <React.Fragment>
         <Suspense fallback={<PortalLoader />}>
           <HomePage

@@ -445,6 +445,9 @@ export interface PathyCard {
     | 'policy_explainer' | 'payment_help'
     | 'pipeline' | 'commission_forecast' | 'followup_draft'
     | 'document_saved'
+    // v2.8.0 — kartu server baru: bedah Excel B2B + toolset admin
+    | 'bulk_analysis'
+    | 'admin_overview' | 'admin_orders' | 'admin_claims' | 'admin_leads' | 'admin_users'
     // v2.7.11 — kartu yang DIBUAT CLIENT, bukan server (tidak pernah dikirim
     // oleh pathy-agent; PathyChat merakitnya dari data lokal/deterministik):
     | 'greet' | 'briefing' | 'quote_flow' | 'resume_prompt' | 'renewal_care';
@@ -455,8 +458,11 @@ export interface PathyCard {
  * A document the user attached to a Pathy turn. OCR runs here on the client —
  * it already owns stnk-ocr, the KTP reader and the vehicle price database — so
  * only extracted fields travel to the agent, never the image itself.
+ *
+ * v2.8.0 — SHEET: Excel/CSV di-parse klien (services/b2bBulkParser.ts, formula
+ * tidak pernah dievaluasi) dan dikirim sebagai ringkasan + baris sampel.
  */
-export type PathyDocumentType = 'STNK' | 'KTP' | 'SIM' | 'POLIS' | 'INVOICE' | 'DOC';
+export type PathyDocumentType = 'STNK' | 'KTP' | 'SIM' | 'POLIS' | 'INVOICE' | 'DOC' | 'SHEET';
 
 export interface PathyDocument {
   type: PathyDocumentType;
@@ -500,8 +506,9 @@ export async function pathyChat(
   message: string,
   conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
   documents?: PathyDocument[],
+  images?: PathyImageAttachment[],
 ): Promise<PathyReply> {
-  const reply = await pathyChatInner(message, conversationHistory, documents);
+  const reply = await pathyChatInner(message, conversationHistory, documents, images);
   void recordPathyTurn({
     question: message,
     answer: reply.reply,
@@ -511,10 +518,22 @@ export async function pathyChat(
   return reply;
 }
 
+/**
+ * v2.8.0 — foto terlampir untuk inspeksi Pathy. Data URI terkompresi klien;
+ * server menginspeksi lewat mesin vision Pathy (gpt-4o) sebelum model utama
+ * menjawab. Bukan pengganti OCR dokumen — lapisan tambahan untuk foto bebas
+ * (kerusakan, kondisi unit, dokumen non-standar).
+ */
+export interface PathyImageAttachment {
+  label?: string;
+  dataUrl: string;
+}
+
 async function pathyChatInner(
   message: string,
   conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>,
   documents?: PathyDocument[],
+  images?: PathyImageAttachment[],
 ): Promise<PathyReply> {
   const { data: { session } } = await supabase.auth.getSession();
   const token = session?.access_token;
@@ -543,6 +562,7 @@ async function pathyChatInner(
         message,
         history: conversationHistory ?? [],
         documents: documents ?? [],
+        images: images ?? [],
       }),
       signal: controller.signal,
     });
@@ -559,6 +579,7 @@ async function pathyChatInner(
           message,
           history: conversationHistory ?? [],
           documents: documents ?? [],
+          images: images ?? [],
         }),
         signal: controller2.signal,
       });
@@ -658,6 +679,18 @@ export async function getB2BQuotes(clientId: string): Promise<SpB2BQuote[]> {
     .eq('client_id', clientId)
     .order('created_at', { ascending: false });
   if (error) { console.error('getB2BQuotes:', error); return []; }
+  return (data ?? []) as SpB2BQuote[];
+}
+
+// v2.8.1 — Mode pantau MASTER_ADMIN di portal B2B: ambil penawaran SEMUA
+// klien korporat. Aman untuk role lain juga: RLS sp_b2b_quotes (client_sel /
+// admin_all) yang membatasi hasil sesuai pemanggil, bukan query ini.
+export async function getAllB2BQuotes(): Promise<SpB2BQuote[]> {
+  const { data, error } = await supabase
+    .from('sp_b2b_quotes')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) { console.error('getAllB2BQuotes:', error); return []; }
   return (data ?? []) as SpB2BQuote[];
 }
 

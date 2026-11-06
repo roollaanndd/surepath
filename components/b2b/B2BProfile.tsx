@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, LogOut, Save } from 'lucide-react';
+import { Loader2, LogOut, Save, ShieldCheck, LayoutGrid } from 'lucide-react';
 import { Language } from '../../types';
 import { getB2BProfile, updateB2BProfile, type SpUser } from '../../services/supabaseService';
 
@@ -8,12 +8,15 @@ interface Props {
   clientId: string;
   lang: Language;
   onLogout: () => void;
+  // v2.8.1 — MASTER_ADMIN memantau portal B2B tanpa profil klien: tampilkan
+  // kartu identitas read-only, bukan form profil korporat milik klien.
+  masterView?: boolean;
 }
 
 const INPUT = 'w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40';
 const LABEL = 'block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider';
 
-const B2BProfile: React.FC<Props> = ({ client, clientId, lang, onLogout }) => {
+const B2BProfile: React.FC<Props> = ({ client, clientId, lang, onLogout, masterView }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
 
   const [profile, setProfile] = useState<SpUser | null>(null);
@@ -71,6 +74,51 @@ const B2BProfile: React.FC<Props> = ({ client, clientId, lang, onLogout }) => {
     return (
       <div className="flex justify-center py-24">
         <Loader2 size={28} className="animate-spin text-ds-green" />
+      </div>
+    );
+  }
+
+  // Mode pantau MASTER_ADMIN — identitas read-only, tanpa form profil klien.
+  if (masterView) {
+    const adminName = client?.name || 'Master Admin';
+    const adminInitials = adminName.trim().split(/\s+/).slice(0, 2)
+      .map((w: string) => w[0] ?? '').join('').toUpperCase() || 'MA';
+    return (
+      <div className="px-4 py-6 max-w-lg mx-auto space-y-5">
+        <div className="flex flex-col items-center gap-3 py-2">
+          <div className="w-20 h-20 rounded-3xl bg-indigo-500 flex items-center justify-center text-white text-2xl font-black shadow-xl shadow-indigo-500/25">
+            {adminInitials}
+          </div>
+          <div className="text-center">
+            <div className="font-black text-base">{adminName}</div>
+            <div className="text-xs text-ds-ink3 mt-0.5">{client?.email ?? ''}</div>
+            <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 px-3 py-1 text-2xs font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-300">
+              <ShieldCheck size={12} />
+              {t('Master Admin · Monitor', 'Master Admin · Mode Pantau')}
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl bg-ds-card border border-ds-border p-4 text-xs text-ds-ink2 leading-relaxed space-y-2">
+          <p>
+            {t(
+              'You are viewing the B2B corporate portal as a monitor: all client submissions, quotes and bulk batches are visible under their tabs, without any client-side actions.',
+              'Anda memantau portal korporat B2B: seluruh ajuan, penawaran, dan batch massal semua klien terlihat pada tab masing-masing, tanpa aksi sisi klien.',
+            )}
+          </p>
+          <p className="flex items-center gap-1.5 text-ds-ink3">
+            <LayoutGrid size={12} className="flex-shrink-0" />
+            {t('Use the floating switcher (bottom-left) to move between apps.', 'Gunakan pengalih mengapung (kiri bawah) untuk berpindah aplikasi.')}
+          </p>
+        </div>
+
+        <button
+          onClick={onLogout}
+          className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-rose-200 dark:border-rose-500/30 text-rose-500 font-black text-sm"
+        >
+          <LogOut size={16} />
+          {t('Log Out', 'Keluar')}
+        </button>
       </div>
     );
   }

@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Loader2, ChevronDown, ChevronUp, FileCheck, AlertTriangle, RefreshCw } from 'lucide-react';
 import { Language } from '../../types';
-import { getB2BSubmissions, type SpB2BSubmission } from '../../services/supabaseService';
+import { getB2BSubmissions, getAllB2BSubmissions, type SpB2BSubmission } from '../../services/supabaseService';
 
 interface Props {
   clientId: string;
   lang: Language;
   onNavigate: (tab: string) => void;
+  // v2.8.1 — Mode pantau MASTER_ADMIN: muat ajuan semua klien korporat.
+  // Kartu sudah menampilkan sub.company_name sendiri, jadi label per klien
+  // tidak butuh prop tambahan.
+  allClients?: boolean;
 }
 
 const STATUS_BADGE: Record<string, string> = {
@@ -94,7 +98,7 @@ const SubmissionCard: React.FC<{ sub: SpB2BSubmission; lang: Language; onNavigat
   );
 };
 
-const B2BSubmissions: React.FC<Props> = ({ clientId, lang, onNavigate }) => {
+const B2BSubmissions: React.FC<Props> = ({ clientId, lang, onNavigate, allClients }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
   const [submissions, setSubmissions] = useState<SpB2BSubmission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -106,7 +110,7 @@ const B2BSubmissions: React.FC<Props> = ({ clientId, lang, onNavigate }) => {
     let cancelled = false;
 
     const loadSubmissions = async () => {
-      if (!clientId) {
+      if (!allClients && !clientId) {
         setSubmissions([]);
         setLoading(false);
         setLoadError(false);
@@ -116,7 +120,7 @@ const B2BSubmissions: React.FC<Props> = ({ clientId, lang, onNavigate }) => {
       setLoading(true);
       setLoadError(false);
       try {
-        const data = await getB2BSubmissions(clientId);
+        const data = allClients ? await getAllB2BSubmissions() : await getB2BSubmissions(clientId);
         if (!cancelled) setSubmissions(data);
       } catch (error) {
         console.error('Unable to load B2B submissions:', error);
@@ -128,7 +132,7 @@ const B2BSubmissions: React.FC<Props> = ({ clientId, lang, onNavigate }) => {
 
     void loadSubmissions();
     return () => { cancelled = true; };
-  }, [clientId, reloadKey]);
+  }, [clientId, allClients, reloadKey]);
 
   const filtered = filter === 'ALL' ? submissions : submissions.filter(s => s.status === filter);
   const sorted = filtered.slice().sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());

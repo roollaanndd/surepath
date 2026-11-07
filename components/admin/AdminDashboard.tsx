@@ -11,7 +11,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Area, AreaChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip,
 } from 'recharts';
-import { ArrowDownRight, ArrowUpRight, ChevronRight, Clock, RefreshCw } from 'lucide-react';
+import {
+  ArrowDownRight, ArrowUpRight, ChevronRight, RefreshCw, CheckCircle2,
+} from 'lucide-react';
 import { getAllOrders } from '../../services/orders';
 import type { AdminStats, OnlineUsersResult, SpAdminNotification } from '../../services/supabaseService';
 import type { SpClaim, SpPolicyOrder, Withdrawal } from '../../services/dbTypes';
@@ -20,6 +22,12 @@ import { formatIDRCompact } from '../../src/i18n';
 import { buildDashboardModel, groupProducts, type DashboardTask } from './dashboardData';
 import { adminNotifMeta, adminNotifTimeAgo } from './notifMeta';
 import ModuleIcon from '../shared/ModuleIcon';
+import {
+  AdminStyles, AdminCountUp, AdminSkeletonHero, AdminSkeletonKpiRow,
+  AdminAgePill, AdminLiveDot, AdminRangeToggle,
+  AdminFocusBar, AdminSidePanel, AdminSparkline,
+  currentShift, shiftGreeting,
+} from './dashboard/ui';
 
 interface AdminDashboardProps {
   adminStats: AdminStats | null;
@@ -131,11 +139,39 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     );
   };
 
+  // Per-day series for secondary KPI inline sparklines (last 7 days). Pure
+  // derivation from the already-fetched arrays — no new fetches.
+  const sevenDaySeries = useMemo(() => {
+    const dayKey = (iso: string | null | undefined) => {
+      if (!iso) return '';
+      const d = new Date(iso);
+      return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    };
+    const days: string[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(Date.now() - i * DAY_MS);
+      days.push(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+    }
+    const bucket = (items: { created_at?: string | null }[]) => {
+      const counts: Record<string, number> = Object.fromEntries(days.map(k => [k, 0]));
+      for (const it of items) {
+        const k = dayKey(it.created_at);
+        if (k in counts) counts[k]++;
+      }
+      return days.map(k => counts[k]);
+    };
+    return {
+      orders: bucket(orders ?? []),
+      claims: bucket(claims ?? []),
+      withdrawals: bucket(withdrawals ?? []),
+    };
+  }, [orders, claims, withdrawals]);
+
   const secondaryStats = [
-    { label: 'Total Pesanan', value: String(model.totals.orders), iconId: 'policy_orders', sub: `${model.totals.pendingOrders} perlu keputusan`, tab: 'policy_orders' },
-    { label: 'Klaim Menunggu', value: String(model.totals.pendingClaims), iconId: 'claims_admin', sub: `${claims?.length ?? 0} klaim total`, tab: 'claims_admin' },
-    { label: 'Penarikan Pending', value: String(model.totals.pendingWithdrawals), iconId: 'withdrawals', sub: formatIDRCompact(model.totals.withdrawalAmount), tab: 'withdrawals' },
-    { label: 'Mitra Aktif', value: String(model.totals.activeAgents), iconId: 'agents', sub: `${model.totals.tierPending} tier menunggu`, tab: 'agents' },
+    { label: 'Total Pesanan', value: String(model.totals.orders), iconId: 'policy_orders', sub: `${model.totals.pendingOrders} perlu keputusan`, tab: 'policy_orders', series: sevenDaySeries.orders },
+    { label: 'Klaim Menunggu', value: String(model.totals.pendingClaims), iconId: 'claims_admin', sub: `${claims?.length ?? 0} klaim total`, tab: 'claims_admin', series: sevenDaySeries.claims },
+    { label: 'Penarikan Pending', value: String(model.totals.pendingWithdrawals), iconId: 'withdrawals', sub: formatIDRCompact(model.totals.withdrawalAmount), tab: 'withdrawals', series: sevenDaySeries.withdrawals },
+    { label: 'Mitra Aktif', value: String(model.totals.activeAgents), iconId: 'agents', sub: `${model.totals.tierPending} tier menunggu`, tab: 'agents', series: undefined as number[] | undefined },
   ];
 
   // Mitra terbaik: adminStats.topAgents sudah dihitung server-side (getAdminStats)
@@ -144,13 +180,79 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const recentNotifications = (notifications ?? []).slice(0, 6);
 
-  const hour = now.getHours();
-  const greeting = hour < 11 ? 'Selamat pagi' : hour < 15 ? 'Selamat siang' : hour < 19 ? 'Selamat sore' : 'Selamat malam';
+  const shift = currentShift(now);
+  const greeting = shiftGreeting(shift);
   const firstName = (currentUser?.name ?? currentUser?.email ?? 'Admin').split(' ')[0];
+
+  // ── Contextual shift copy — what matters right now ──────────────────────
+  // Morning: overnight pile. Midday: today's pace. Evening: tomorrow prep.
+  // Numbers are already in `model` / props, not fetched here.
+  const urgentApprovals = (orders ?? []).filter(o =>
+    (o.status === 'SUBMITTED' || o.status === 'UNDER_REVIEW') &&
+    o.created_at && Date.now() - new Date(o.created_at).getTime() > 24 * DAY_MS / 24
+  ).length;
+  const bigWithdrawals = (withdrawals ?? []).filter(w =>
+    (w.status === 'PENDING_L1' || w.status === 'PENDING_L2' || w.status === 'PENDING_L3')
+    && (w.amount ?? 0) >= 25_000_000
+  ).length;
+
+  const shiftLine = shift === 'morning'
+    ? (urgentApprovals > 0
+        ? `${urgentApprovals} approval menumpuk sejak semalam. Mulai dari antrean review untuk membuka hari.`
+        : 'Antrean bersih. Gunakan pagi ini untuk tinjauan tier dan rekonsiliasi.')
+    : shift === 'midday'
+      ? `${model.totals.pendingOrders} ajuan menunggu${bigWithdrawals > 0 ? `, ${bigWithdrawals} penarikan ≥25jt perlu keputusan Anda` : ''}.`
+      : `Rangkum hari ini: ${model.totals.orders} pesanan, ${idr(model.totals.issuedPremium)} premi. Persiapkan antrean besok.`;
+
+  // ── Hero skeleton while the initial orders fetch is in-flight ───────────
+  // The props (adminStats, claims, withdrawals) can still be null on first
+  // render; show the full skeleton stack instead of a half-populated hero.
+  const bootLoading = loading && !orders;
+
+  // ── Smart task sort — age weighted by amount for Tugas Saya queue ───────
+  // Old sort was pure age; a Rp 10jt withdrawal at 2h beats a Rp 500k at 5h.
+  // `model.tasks` already carries amount + ageDays, so we re-rank here only.
+  const smartTasks = useMemo(() => {
+    const score = (t: DashboardTask) => t.ageDays * 0.6 + Math.min(10, (t.amount ?? 0) / 1_000_000) * 0.4;
+    return model.tasks.slice().sort((a, b) => score(b) - score(a));
+  }, [model.tasks]);
+
+  // ── Calendar side panel — opens on day click ────────────────────────────
+  // Uses the same `end_date` field dashboardData.renewalDays groups by,
+  // so the dot count and the panel list stay in sync by construction.
+  const [calendarDay, setCalendarDay] = useState<number | null>(null);
+  const expiringOnDay = useMemo(() => {
+    if (calendarDay === null) return [];
+    return (orders ?? []).filter(o => {
+      if (o.status !== 'ISSUED' || !o.end_date) return false;
+      const d = new Date(o.end_date);
+      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === calendarDay;
+    });
+  }, [calendarDay, orders, now]);
 
   return (
     <div className="space-y-5 animate-fade-in">
+      <AdminStyles />
 
+      {/* Sticky focus bar — only mounts when there are urgent approvals
+          waiting > 24h; dismissible per session so it never nags once an
+          operator has acknowledged it. */}
+      {urgentApprovals > 0 && (
+        <AdminFocusBar
+          message={`${urgentApprovals} approval sudah menunggu lebih dari 24 jam${bigWithdrawals > 0 ? `, ${bigWithdrawals} penarikan ≥25jt butuh keputusan` : ''}.`}
+          actionLabel="Buka antrean"
+          onAction={() => onNavigate('approvals')}
+        />
+      )}
+
+      {bootLoading ? (
+        <>
+          <AdminSkeletonHero />
+          <AdminSkeletonKpiRow count={2} />
+          <AdminSkeletonKpiRow />
+        </>
+      ) : (
+      <>
       {/* ── Executive overview: satu hero editorial, bukan 4 kartu kembar ── */}
       <section
         className="relative overflow-hidden rounded-[1.75rem] p-6 text-white shadow-ds-md sm:p-7"
@@ -159,22 +261,26 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <div aria-hidden className="absolute -right-16 -top-20 h-64 w-64 rounded-full border border-white/10" />
         <div aria-hidden className="absolute -right-32 top-10 h-72 w-72 rounded-full border border-white/5" />
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="text-2xs font-black uppercase tracking-[0.24em] text-ds-admin-lime">
               {greeting}, {firstName}
             </p>
-            <p className="mt-2 text-2xs font-bold uppercase tracking-widest text-white/60">Premi Diterbitkan</p>
-            <p className="mt-1 text-4xl font-black tracking-tight sm:text-5xl">{idr(model.totals.issuedPremium)}</p>
+            {/* Contextual shift line — tells the operator what to work on
+                first, instead of generic "Premi Diterbitkan" above a figure. */}
+            <p className="mt-2 max-w-[560px] text-sm font-semibold text-white/85 sm:text-[15px]">
+              {shiftLine}
+            </p>
+            <p className="mt-5 text-2xs font-bold uppercase tracking-widest text-white/60">Premi Diterbitkan</p>
+            <p className="mt-1 text-4xl font-black tracking-tight sm:text-5xl tabular-nums" style={{ fontVariantNumeric: 'tabular-nums' }}>
+              <AdminCountUp value={model.totals.issuedPremium} format={idr} />
+            </p>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               {deltaBadge(model.deltas.premium)}
               <span className="text-xs text-white/70">vs 30 hari sebelumnya</span>
-              {updatedAt && (
-                <span className="text-2xs text-white/50">
-                  · diperbarui {updatedAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                </span>
-              )}
+              <span className="text-white/30">·</span>
+              <AdminLiveDot updatedAt={updatedAt} />
               {onlineUsers && onlineUsers.total > 0 && (
-                <span className="text-2xs text-white/50">· {onlineUsers.total} pengguna online</span>
+                <span className="text-2xs text-white/50">· {onlineUsers.total} online</span>
               )}
             </div>
           </div>
@@ -211,28 +317,29 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <label className="sr-only" htmlFor="dashboard-range">Rentang data</label>
-            <select
-              id="dashboard-range"
+          <div className="flex items-center gap-2 flex-wrap">
+            <AdminRangeToggle
+              ariaLabel="Rentang data"
               value={range}
-              onChange={e => setRange(Number(e.target.value) as 30 | 90 | 365)}
-              className="h-10 rounded-2xl border border-white/20 bg-white/10 px-3 text-xs font-bold text-white outline-none backdrop-blur-sm focus:border-ds-admin-lime/60"
-            >
-              <option className="text-ds-ink" value={30}>30 hari</option>
-              <option className="text-ds-ink" value={90}>90 hari</option>
-              <option className="text-ds-ink" value={365}>1 tahun</option>
-            </select>
+              onChange={v => setRange(v)}
+              options={[
+                { value: 30, label: '30 hari' },
+                { value: 90, label: '90 hari' },
+                { value: 365, label: '1 tahun' },
+              ]}
+            />
             <button
               onClick={() => void load()}
               aria-label="Muat ulang dashboard"
-              className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/20 bg-white/10 text-white backdrop-blur-sm transition-colors hover:border-ds-admin-lime/50"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white backdrop-blur-sm transition-colors hover:border-ds-admin-lime/50 hover:bg-white/15"
             >
-              <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
+              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
             </button>
           </div>
         </div>
       </section>
+      </>
+      )}
 
       {loadError && (
         <div className="flex items-center justify-between gap-3 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3">
@@ -276,7 +383,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </button>
       </div>
 
-      {/* Statistik sekunder: kompak, bukan 4 kartu identik berulang dari hero */}
+      {/* Statistik sekunder: kompak, dengan sparkline tren 7-hari sebagai
+          rhythm indicator. Sparkline ditampilkan hanya di metric yang punya
+          data per-hari — Mitra Aktif tidak punya breakdown harian jadi
+          tetap tanpa sparkline, sehingga grid tetap konsisten tanpa
+          placeholder bohongan. */}
       <div className="sp-stagger-cards grid grid-cols-2 gap-4 xl:grid-cols-4">
         {secondaryStats.map(kpi => {
           return (
@@ -285,11 +396,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               onClick={() => onNavigate(kpi.tab)}
               className="rounded-[1.5rem] border border-ds-border bg-ds-card p-4 text-left shadow-ds-sm transition-all hover:-translate-y-0.5 hover:shadow-ds-md"
             >
-              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-ds-admin-lime-tint text-ds-admin-forest">
-                <ModuleIcon id={kpi.iconId} size={30} />
-              </span>
+              <div className="flex items-start justify-between gap-2">
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-ds-admin-lime-tint text-ds-admin-forest">
+                  <ModuleIcon id={kpi.iconId} size={30} />
+                </span>
+                {kpi.series && kpi.series.some(v => v > 0) && (
+                  <AdminSparkline data={kpi.series} width={64} height={22} stroke="#076653" className="mt-1" />
+                )}
+              </div>
               <p className="mt-3 text-2xs font-black uppercase tracking-[0.16em] text-ds-ink3">{kpi.label}</p>
-              <p className="mt-1 text-xl font-black tracking-tight text-ds-ink">{kpi.value}</p>
+              <p className="mt-1 text-xl font-black tracking-tight text-ds-ink tabular-nums" style={{ fontVariantNumeric: 'tabular-nums' }}>{kpi.value}</p>
               <p className="mt-1 text-2xs font-semibold text-ds-ink3">{kpi.sub}</p>
             </button>
           );
@@ -404,7 +520,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[520px] text-left">
+                  <table className="adm-table w-full min-w-[560px] text-left">
                     <thead>
                       <tr className="text-2xs uppercase tracking-wider text-ds-ink3">
                         <th className="pb-2 font-black">Nasabah</th>
@@ -417,20 +533,27 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <tbody className="divide-y divide-ds-border">
                       {model.recent.map(o => {
                         const st = STATUS_STYLE[o.status] ?? STATUS_STYLE.SUBMITTED;
+                        const ageMs = o.created_at ? Date.now() - new Date(o.created_at).getTime() : 0;
+                        const ageHours = ageMs / 3_600_000;
+                        // Overdue flag: anything still pending > 24h.
+                        const overdue = (o.status === 'SUBMITTED' || o.status === 'UNDER_REVIEW') && ageHours > 24;
                         return (
                           <tr
                             key={o.id}
                             onClick={() => onNavigate('policy_orders')}
                             className="cursor-pointer text-xs transition-colors hover:bg-ds-card2"
                           >
-                            <td className="py-2.5 pr-3">
+                            <td className="py-2.5 pr-3 pl-3">
                               <p className="truncate font-bold text-ds-ink">{o.client_name ?? '—'}</p>
                               <p className="truncate text-2xs text-ds-ink3">{o.product_name ?? o.product_code ?? '—'}</p>
                             </td>
                             <td className="py-2.5 pr-3 font-mono text-2xs text-ds-ink2">{o.order_number ?? '—'}</td>
-                            <td className="py-2.5 pr-3 text-right font-bold text-ds-ink">{formatIDRCompact(o.total_premium ?? 0)}</td>
+                            <td className="py-2.5 pr-3 text-right font-bold text-ds-ink tabular-nums" style={{ fontVariantNumeric: 'tabular-nums' }}>{formatIDRCompact(o.total_premium ?? 0)}</td>
                             <td className="py-2.5 pr-3 text-right">
-                              <span className={`inline-flex rounded-full border px-2 py-0.5 text-2xs font-black ${st.className}`}>{st.label}</span>
+                              <span className="inline-flex items-center gap-1.5 justify-end">
+                                {overdue && <AdminAgePill hours={ageHours} />}
+                                <span className={`inline-flex rounded-full border px-2 py-0.5 text-2xs font-black ${st.className}`}>{st.label}</span>
+                              </span>
                             </td>
                             <td className="py-2.5 text-right text-2xs text-ds-ink3">{dayLabel(o.created_at)}</td>
                           </tr>
@@ -529,19 +652,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 const day = i + 1;
                 const count = renewalByDay.get(day) ?? 0;
                 const isToday = day === now.getDate();
+                const clickable = count > 0;
                 return (
-                  <div
+                  <button
                     key={day}
-                    className={`relative flex h-8 items-center justify-center rounded-lg text-2xs font-bold ${
-                      isToday ? 'bg-ds-admin-forest text-white' : count > 0 ? 'bg-amber-500/10 text-amber-700' : 'text-ds-ink2'
+                    type="button"
+                    disabled={!clickable}
+                    onClick={() => clickable && setCalendarDay(day)}
+                    className={`relative flex h-8 items-center justify-center rounded-lg text-2xs font-bold transition-all ${
+                      isToday ? 'bg-ds-admin-forest text-white' : count > 0 ? 'bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 hover:scale-110 cursor-pointer' : 'text-ds-ink2 cursor-default'
                     }`}
-                    title={count > 0 ? `${count} polis berakhir` : undefined}
+                    title={count > 0 ? `${count} polis berakhir — klik untuk detail` : undefined}
                   >
                     {day}
                     {count > 0 && !isToday && (
                       <span className="absolute bottom-0.5 h-1 w-1 rounded-full bg-amber-500" />
                     )}
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -570,44 +697,90 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
 
             <div className="mt-4 space-y-2">
-              {model.tasks.length === 0 ? (
+              {smartTasks.length === 0 ? (
                 <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-ds-border py-8">
-                  <ModuleIcon id="security" size={36} />
+                  <CheckCircle2 size={28} className="text-ds-admin-forest" />
                   <p className="mt-2 text-xs font-bold text-ds-ink2">Tidak ada tugas menunggu</p>
                   <p className="text-2xs text-ds-ink3">Semua antrean bersih.</p>
                 </div>
-              ) : model.tasks.map(task => {
+              ) : smartTasks.map(task => {
                 const meta = TASK_META[task.kind];
+                const hours = task.ageDays; // dashboardData stores hours in ageDays, label suffix "h"
                 return (
-                  <button
+                  <div
                     key={task.id}
-                    onClick={() => onNavigate(task.tab)}
-                    className="flex w-full items-center gap-3 rounded-2xl border border-transparent px-2 py-2 text-left transition-colors hover:border-ds-border hover:bg-ds-card2"
+                    className="group flex w-full items-center gap-3 rounded-2xl border border-transparent px-2 py-2 transition-colors hover:border-ds-border hover:bg-ds-card2"
                   >
-                    <span className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${meta.className}`}>
-                      <ModuleIcon id={meta.iconId} size={28} />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="flex items-center gap-1.5">
-                        <span className="truncate text-xs font-bold text-ds-ink">{task.title}</span>
-                        <span className="flex-shrink-0 rounded-full bg-ds-card2 px-1.5 py-0.5 text-2xs font-black uppercase tracking-wider text-ds-ink3">{meta.label}</span>
+                    <button
+                      onClick={() => onNavigate(task.tab)}
+                      className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                    >
+                      <span className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${meta.className}`}>
+                        <ModuleIcon id={meta.iconId} size={28} />
                       </span>
-                      <span className="mt-0.5 flex items-center gap-1.5 text-2xs text-ds-ink3">
-                        <span className="truncate">{task.subtitle}</span>
-                        {task.amount ? <span className="flex-shrink-0">· {formatIDRCompact(task.amount)}</span> : null}
+                      <span className="min-w-0 flex-1">
+                        <span className="flex items-center gap-1.5">
+                          <span className="truncate text-xs font-bold text-ds-ink">{task.title}</span>
+                          <span className="flex-shrink-0 rounded-full bg-ds-card2 px-1.5 py-0.5 text-2xs font-black uppercase tracking-wider text-ds-ink3">{meta.label}</span>
+                        </span>
+                        <span className="mt-0.5 flex items-center gap-1.5 text-2xs text-ds-ink3">
+                          <span className="truncate">{task.subtitle}</span>
+                          {task.amount ? <span className="flex-shrink-0 tabular-nums">· {formatIDRCompact(task.amount)}</span> : null}
+                        </span>
                       </span>
-                    </span>
-                    <span className="flex flex-shrink-0 items-center gap-1 text-2xs font-bold text-ds-ink3">
-                      <Clock size={10} /> {task.ageDays}h
-                    </span>
-                    <ChevronRight size={14} className="flex-shrink-0 text-ds-ink3" />
-                  </button>
+                    </button>
+                    <AdminAgePill hours={hours} />
+                    <button
+                      onClick={() => onNavigate(task.tab)}
+                      aria-label="Buka"
+                      className="p-1 rounded text-ds-ink3 hover:text-ds-admin-forest hover:bg-ds-admin-lime-tint transition-colors"
+                    >
+                      <ChevronRight size={14} />
+                    </button>
+                  </div>
                 );
               })}
             </div>
           </section>
         </div>
       </div>
+
+      {/* Calendar day side panel — opens when the operator clicks a day
+          with expiring policies. Lists the policies that expire that day. */}
+      <AdminSidePanel
+        open={calendarDay !== null}
+        onClose={() => setCalendarDay(null)}
+        title={calendarDay !== null ? `Polis berakhir — ${calendarDay} ${new Intl.DateTimeFormat('id-ID', { month: 'long' }).format(now)}` : ''}
+        subtitle={`${expiringOnDay.length} polis · total ${idr(expiringOnDay.reduce((s, o) => s + (o.total_premium ?? 0), 0))}`}
+      >
+        {expiringOnDay.length === 0 ? (
+          <p className="text-xs text-ds-ink3 text-center py-8">Tidak ada polis yang berakhir hari ini.</p>
+        ) : (
+          <div className="space-y-2">
+            {expiringOnDay.map(o => {
+              const st = STATUS_STYLE[o.status] ?? STATUS_STYLE.SUBMITTED;
+              return (
+                <button
+                  key={o.id}
+                  onClick={() => { setCalendarDay(null); onNavigate('policy_orders'); }}
+                  className="w-full flex items-center justify-between gap-3 rounded-xl border border-ds-border bg-ds-card2/60 p-3 text-left transition-colors hover:border-ds-admin-forest/40 hover:bg-ds-admin-lime-tint/40"
+                >
+                  <div className="min-w-0">
+                    <p className="font-bold text-sm text-ds-ink truncate">{o.client_name ?? '—'}</p>
+                    <p className="text-2xs text-ds-ink3 truncate">
+                      <span className="font-mono">{o.order_number ?? '—'}</span> · {o.product_name ?? o.product_code ?? '—'}
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0 text-right">
+                    <p className="font-black text-sm text-ds-ink tabular-nums" style={{ fontVariantNumeric: 'tabular-nums' }}>{formatIDRCompact(o.total_premium ?? 0)}</p>
+                    <span className={`mt-1 inline-flex rounded-full border px-2 py-0.5 text-2xs font-black ${st.className}`}>{st.label}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </AdminSidePanel>
     </div>
   );
 };

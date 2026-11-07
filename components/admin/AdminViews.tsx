@@ -11,7 +11,7 @@ import {
   getAdminWithdrawals, approveWithdrawal, rejectWithdrawal, triggerDisbursement,
   type Withdrawal,
   registerAgent,
-  createMitra, sendMitraPasswordReset, setMitraTempPassword,
+  sendMitraPasswordReset, setMitraTempPassword,
   getSecurityStats, getSessionActivityByHour,
   getAdminPayments,
 } from '../../services/supabaseService';
@@ -19,13 +19,13 @@ import { useToast } from '../ui';
 import { AdminEmptyState, AdminErrorBanner, AdminPageHeader, AdminStatusBadge } from './adminUI';
 import { FilterBar } from './shared/FilterBar';
 import { DetailDrawer } from './shared/DetailDrawer';
+import AddUserWizard, { type WizardCredential } from './AddUserWizard';
 import { DataTable, type DataTableColumn } from './shared/DataTable';
 import { CLAIM_STATUS_META } from '../../lib/statusMeta';
 import { PERMISSION_MENU_IDS, defaultPermissionsFor, SP_ROLE_PERMISSIONS_KEY } from './navigation';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { UserRole } from '../../types';
 import { AdminModal } from './shared/AdminModal';
-import { createInternalUser } from '../../services/users';
 import { useTierDefinitions, getTierByCode } from '../../hooks/useTierDefinitions';
 import type { BackupRecord } from '../../services/backupService';
 import { listBackups, performBackup, downloadBackup, getLastBackupTime } from '../../services/backupService';
@@ -1308,177 +1308,6 @@ const STATUS_LABEL: Record<string, string> = {
   APPROVED: 'Approved', REJECTED: 'Rejected', PAID: 'Dibayarkan', CLOSED: 'Closed',
 };
 
-// ── Tambah mitra manual ──────────────────────────────────────────────────────
-//
-// `registerAgent`/`admin_register_agent` yang lama hanya menulis baris
-// sp_users tanpa pengguna auth, jadi mitranya tampil di daftar tapi tidak
-// pernah bisa masuk. Modal ini memakai admin_create_mitra, yang membuat
-// keduanya sekaligus.
-const AddMitraModal: React.FC<{
-  canSetTempPassword: boolean;
-  onClose: () => void;
-  onCreated: (
-    agent: SpUser,
-    credential: { name: string; email: string; password?: string | null; note: string } | null,
-  ) => void;
-}> = ({ canSetTempPassword, onClose, onCreated }) => {
-  const [form, setForm] = useState({
-    name: '', email: '', phone: '', ktp: '', address: '', upline_code: '',
-  });
-  const [mode, setMode] = useState<'invite' | 'temp'>('invite');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setForm(prev => ({ ...prev, [k]: e.target.value }));
-
-  const submit = async () => {
-    setError(null);
-    if (!form.name.trim() || !form.email.trim() || !form.phone.trim()) {
-      setError('Nama, email, dan nomor HP wajib diisi.');
-      return;
-    }
-    setBusy(true);
-    try {
-      const res = await createMitra({
-        name: form.name.trim(),
-        email: form.email.trim().toLowerCase(),
-        phone: form.phone.trim(),
-        ktp: form.ktp.trim() || null,
-        address: form.address.trim() || null,
-        upline_code: form.upline_code.trim() || null,
-        mode,
-      });
-      if (res.error || !res.agent) {
-        setError(res.error ?? 'Backend tidak mengembalikan profil mitra. Periksa email dan coba lagi.');
-        return;
-      }
-      onCreated(
-        res.agent,
-        res.tempPassword
-          ? {
-              name: res.agent.name, email: res.agent.email, password: res.tempPassword,
-              note: 'Catat sekarang — kata sandi ini tidak disimpan di mana pun dan tidak bisa ditampilkan lagi. Mitra wajib menggantinya saat login pertama.',
-            }
-          : null,
-      );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Gagal menghubungi server. Coba lagi.');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const inputCls = 'w-full min-w-0 bg-white dark:bg-ds-card2 border border-slate-200 dark:border-ds-border rounded-xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 transition-all';
-  const labelCls = 'block text-2xs font-bold text-slate-600 dark:text-ds-ink3 uppercase tracking-wider mb-1.5';
-
-  return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-5">
-      <div className="absolute inset-0 bg-slate-900/35 dark:bg-black/65 backdrop-blur-[2px]" onClick={onClose} />
-      <div role="dialog" aria-modal="true" aria-labelledby="add-mitra-title" className="relative z-10 w-full max-w-2xl max-h-[92dvh] overflow-y-auto overscroll-contain no-scrollbar bg-white dark:bg-ds-card text-slate-900 dark:text-white border border-slate-200 dark:border-ds-border rounded-2xl sm:rounded-3xl px-5 py-5 sm:px-7 sm:py-6 shadow-[0_24px_80px_rgba(15,23,42,0.22)]">
-        <h3 id="add-mitra-title" className="font-bold tracking-tight text-base sm:text-lg flex items-center gap-3">
-          <UserPlus size={18} className="text-ds-green" /> Tambah Mitra Baru
-        </h3>
-        <p className="mt-1 text-xs text-slate-500 dark:text-ds-ink3">Akun login dan profil mitra dibuat sekaligus dalam satu langkah.</p>
-        {error && (
-          <div className="mt-4 mb-1 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-400 font-bold">{error}</div>
-        )}
-        <div className="mt-5 space-y-6">
-          {/* ── Data mitra ── */}
-          <section className="space-y-3">
-            <p className="flex items-center gap-2 text-2xs font-black uppercase tracking-[0.2em] text-slate-500 dark:text-ds-ink3">
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500/70" />Data Mitra
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="sm:col-span-2">
-                <label className={labelCls}>Nama Lengkap</label>
-                <input type="text" value={form.name} onChange={set('name')} placeholder="Cth: Budi Santoso" className={inputCls} />
-              </div>
-              <div>
-                <label className={labelCls}>Email</label>
-                <input type="email" value={form.email} onChange={set('email')} placeholder="budi@email.com" className={inputCls} />
-              </div>
-              <div>
-                <label className={labelCls}>Nomor HP</label>
-                <input type="tel" value={form.phone} onChange={set('phone')} placeholder="08xxxxxxxxxx" className={inputCls} />
-              </div>
-              <div>
-                <label className={labelCls}>NIK KTP (opsional)</label>
-                <input type="text" value={form.ktp} onChange={set('ktp')} placeholder="16 digit" className={inputCls} />
-              </div>
-              <div>
-                <label className={labelCls}>Kode Upline (opsional)</label>
-                <input type="text" value={form.upline_code} onChange={set('upline_code')} placeholder="SP-AGT-1234" className={inputCls} />
-              </div>
-              <div className="sm:col-span-2">
-                <label className={labelCls}>Alamat (opsional)</label>
-                <input type="text" value={form.address} onChange={set('address')} placeholder="Alamat domisili" className={inputCls} />
-              </div>
-            </div>
-          </section>
-
-          {/* ── Akses pertama ── */}
-          <section className="space-y-3">
-            <p className="flex items-center gap-2 text-2xs font-black uppercase tracking-[0.2em] text-slate-500 dark:text-ds-ink3">
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500/70" />Cara Mitra Masuk Pertama Kali
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setMode('invite')}
-                className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${
-                  mode === 'invite' ? 'border-emerald-500 bg-emerald-500/10' : 'border-ds-border bg-ds-card2 hover:border-emerald-500/40'
-                }`}
-              >
-                <p className="text-xs font-bold text-slate-900 dark:text-white">Email Undangan</p>
-                <p className="text-xs text-slate-600 dark:text-ds-ink3 mt-1">Mitra menerima email dan menyetel kata sandinya sendiri. Disarankan.</p>
-              </button>
-              {canSetTempPassword ? (
-                <button
-                  type="button"
-                  onClick={() => setMode('temp')}
-                  className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${
-                    mode === 'temp' ? 'border-amber-500 bg-amber-500/10' : 'border-ds-border bg-ds-card2 hover:border-amber-500/40'
-                  }`}
-                >
-                  <p className="text-xs font-bold text-slate-900 dark:text-white">Kata Sandi Sementara</p>
-                  <p className="text-xs text-slate-600 dark:text-ds-ink3 mt-1">Ditampilkan sekali dan wajib diganti saat login pertama.</p>
-                </button>
-              ) : (
-                <div className="w-full text-left px-4 py-3 rounded-xl border border-dashed border-ds-border bg-ds-card2/50 opacity-60">
-                  <p className="text-xs font-bold text-slate-900 dark:text-white">Kata Sandi Sementara</p>
-                  <p className="text-xs text-slate-600 dark:text-ds-ink3 mt-1">Hanya MASTER_ADMIN.</p>
-                </div>
-              )}
-            </div>
-          </section>
-
-          <p className="rounded-xl bg-slate-50 dark:bg-ds-card2 px-3.5 py-3 text-xs text-slate-600 dark:text-ds-ink3 leading-relaxed">
-            Mitra dibuat dengan status <span className="font-bold text-amber-700 dark:text-amber-400">belum terverifikasi</span>, komisi
-            10%, dan target bulanan Rp 50 juta — persis seperti mitra yang mendaftar sendiri. Tekan Approve pada
-            barisnya setelah dokumennya diperiksa.
-          </p>
-        </div>
-
-        <div className="flex gap-3 mt-5 sticky bottom-0 bg-white dark:bg-ds-card pt-3 pb-1 border-t border-slate-100 dark:border-ds-border">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2.5 border border-slate-200 dark:border-ds-border text-slate-700 dark:text-ds-ink3 rounded-xl font-semibold text-sm transition-all hover:bg-slate-50 dark:hover:bg-ds-card2"
-          >
-            Batal
-          </button>
-          <button
-            onClick={submit}
-            disabled={busy}
-            className="flex-1 py-2.5 bg-emerald-600 text-white rounded-xl font-semibold text-sm hover:bg-emerald-700 shadow-sm transition-all disabled:opacity-50"
-          >
-            {busy ? 'Menyimpan...' : mode === 'temp' ? 'Buat & Tampilkan Sandi' : 'Buat & Kirim Undangan'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 // ── Kartu kredensial sekali-tampil ───────────────────────────────────────────
 //
@@ -1541,224 +1370,6 @@ const CredentialModal: React.FC<{
   );
 };
 
-// ── Tambah Pengguna Internal (ADMIN/FINANCE/OPERATOR/INSURANCE_ADMIN) ────────
-// v2.7.58: ganti modal "Tambah Admin Baru" yang cuma invite-only dengan modal
-// bermode seperti Tambah Mitra:
-//   'invite'   → ADMIN atau MASTER_ADMIN; penerima menyetel sandi sendiri.
-//   'password' → MASTER_ADMIN only; sandi manual, tampil sekali via
-//                CredentialModal, wajib diganti saat login pertama.
-// Role picker memakai matriks eskalasi yang sama dengan server: role
-// MASTER_ADMIN/ADMIN hanya tampil kalau caller MASTER_ADMIN.
-const AddInternalUserModal: React.FC<{
-  canSetPassword: boolean;
-  callerIsMasterAdmin: boolean;
-  onClose: () => void;
-  onCreated: (
-    user: SpUser,
-    credential: { name: string; email: string; password?: string | null; note: string } | null,
-  ) => void;
-}> = ({ canSetPassword, callerIsMasterAdmin, onClose, onCreated }) => {
-  const [form, setForm] = useState({
-    name: '', email: '', phone: '',
-    role: callerIsMasterAdmin ? UserRole.ADMIN : UserRole.FINANCE,
-    password: '',
-  });
-  const [mode, setMode] = useState<'invite' | 'password'>('invite');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [showPass, setShowPass] = useState(false);
-
-  // Hanya MASTER_ADMIN yang boleh membuat MASTER_ADMIN/ADMIN. Role lain
-  // boleh dibuat ADMIN atau MASTER_ADMIN.
-  const availableRoles: UserRole[] = callerIsMasterAdmin
-    ? [UserRole.ADMIN, UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.FINANCE_MANAGER, UserRole.FINANCE_DIRECTOR, UserRole.INSURANCE_ADMIN, UserRole.OPERATOR]
-    : [UserRole.FINANCE, UserRole.FINANCE_MANAGER, UserRole.FINANCE_DIRECTOR, UserRole.INSURANCE_ADMIN, UserRole.OPERATOR];
-
-  const passwordValid = (p: string): string | null => {
-    if (p.length < 10) return 'Kata sandi minimal 10 karakter';
-    const classes = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^A-Za-z0-9]/].filter((re) => re.test(p)).length;
-    if (classes < 3) return 'Butuh minimal 3 dari 4: huruf kecil, huruf besar, angka, simbol';
-    return null;
-  };
-
-  const submit = async () => {
-    setError(null);
-    if (!form.name.trim() || !form.email.trim()) {
-      setError('Nama dan email wajib diisi.');
-      return;
-    }
-    if (mode === 'password') {
-      const vErr = passwordValid(form.password);
-      if (vErr) { setError(vErr); return; }
-    }
-    setBusy(true);
-    try {
-      const res = await createInternalUser({
-        name: form.name.trim(),
-        email: form.email.trim().toLowerCase(),
-        role: form.role,
-        phone: form.phone.trim() || null,
-        mode,
-        ...(mode === 'password' ? { password: form.password } : {}),
-      });
-      if (res.error || !res.user) {
-        setError(res.error ?? 'Backend tidak mengembalikan profil pengguna.');
-        return;
-      }
-      onCreated(
-        res.user,
-        res.tempPassword
-          ? {
-              name: res.user.name,
-              email: res.user.email,
-              password: res.tempPassword,
-              note: 'Catat sekarang — kata sandi ini tidak disimpan di mana pun dan tidak bisa ditampilkan lagi. Pengguna wajib menggantinya saat login pertama.',
-            }
-          : null,
-      );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Gagal menghubungi server. Coba lagi.');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const inputCls = 'w-full min-w-0 bg-white dark:bg-ds-card2 border border-slate-200 dark:border-ds-border rounded-xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 transition-all';
-  const labelCls = 'block text-2xs font-bold text-slate-600 dark:text-ds-ink3 uppercase tracking-wider mb-1.5';
-
-  return (
-    <AdminModal
-      onClose={busy ? () => {} : onClose}
-      dismissible={!busy}
-      size="2xl"
-      icon={<UserPlus size={18} className="text-ds-green" />}
-      title="Tambah Pengguna Internal"
-      subtitle="Akun login dan profil dibuat sekaligus. Role berikut: Admin, Finance (3 level), Insurance Admin, dan Operator."
-      footer={
-        <div className="flex gap-3">
-          <button
-            onClick={onClose}
-            disabled={busy}
-            className="flex-1 py-2.5 border border-slate-200 dark:border-ds-border text-slate-700 dark:text-ds-ink3 rounded-xl font-semibold text-sm transition-all hover:bg-slate-50 dark:hover:bg-ds-card2 disabled:opacity-50"
-          >
-            Batal
-          </button>
-          <button
-            onClick={submit}
-            disabled={busy}
-            className="flex-1 py-2.5 bg-emerald-600 text-white rounded-xl font-semibold text-sm hover:bg-emerald-700 shadow-sm transition-all disabled:opacity-50"
-          >
-            {busy ? 'Menyimpan...' : mode === 'password' ? 'Buat & Tampilkan Sandi' : 'Buat & Kirim Undangan'}
-          </button>
-        </div>
-      }
-    >
-      {error && (
-        <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-700 dark:text-rose-300 font-semibold">{error}</div>
-      )}
-      <div className="space-y-6">
-        {/* Data pengguna */}
-        <section className="space-y-3">
-          <p className="flex items-center gap-2 text-2xs font-black uppercase tracking-[0.2em] text-slate-500 dark:text-ds-ink3">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500/70" />Data Pengguna
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="sm:col-span-2">
-              <label className={labelCls}>Nama Lengkap</label>
-              <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Cth: Budi Santoso" className={inputCls} />
-            </div>
-            <div>
-              <label className={labelCls}>Email</label>
-              <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="budi@surepath.id" className={inputCls} />
-            </div>
-            <div>
-              <label className={labelCls}>Nomor HP (opsional)</label>
-              <input type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="08xxxxxxxxxx" className={inputCls} />
-            </div>
-            <div className="sm:col-span-2">
-              <label className={labelCls}>Role</label>
-              <select
-                value={form.role}
-                onChange={e => setForm({ ...form, role: e.target.value as UserRole })}
-                className={`${inputCls} [&>option]:bg-white dark:[&>option]:bg-ds-card`}
-              >
-                {availableRoles.map(r => (
-                  <option key={r} value={r}>{r.replace(/_/g, ' ')}</option>
-                ))}
-              </select>
-              <p className="mt-1 text-[11px] text-slate-500 dark:text-ds-ink3">Role MASTER_ADMIN & ADMIN hanya bisa dibuat oleh MASTER_ADMIN.</p>
-            </div>
-          </div>
-        </section>
-
-        {/* Akses pertama */}
-        <section className="space-y-3">
-          <p className="flex items-center gap-2 text-2xs font-black uppercase tracking-[0.2em] text-slate-500 dark:text-ds-ink3">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500/70" />Cara Masuk Pertama Kali
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => setMode('invite')}
-              className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${
-                mode === 'invite' ? 'border-emerald-500 bg-emerald-500/10' : 'border-slate-200 dark:border-ds-border bg-slate-50 dark:bg-ds-card2 hover:border-emerald-500/40'
-              }`}
-            >
-              <p className="text-xs font-bold text-slate-900 dark:text-white">Email Undangan</p>
-              <p className="text-xs text-slate-600 dark:text-ds-ink3 mt-1">Pengguna menerima email dan menyetel sandinya sendiri. Disarankan.</p>
-            </button>
-            {canSetPassword ? (
-              <button
-                type="button"
-                onClick={() => setMode('password')}
-                className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${
-                  mode === 'password' ? 'border-amber-500 bg-amber-500/10' : 'border-slate-200 dark:border-ds-border bg-slate-50 dark:bg-ds-card2 hover:border-amber-500/40'
-                }`}
-              >
-                <p className="text-xs font-bold text-slate-900 dark:text-white">Kata Sandi Manual</p>
-                <p className="text-xs text-slate-600 dark:text-ds-ink3 mt-1">Anda menentukan sandi awal. Ditampilkan sekali, wajib diganti saat login pertama.</p>
-              </button>
-            ) : (
-              <div className="w-full text-left px-4 py-3 rounded-xl border border-dashed border-slate-200 dark:border-ds-border bg-slate-50 dark:bg-ds-card2/50 opacity-60">
-                <p className="text-xs font-bold text-slate-900 dark:text-white">Kata Sandi Manual</p>
-                <p className="text-xs text-slate-600 dark:text-ds-ink3 mt-1">Hanya MASTER_ADMIN.</p>
-              </div>
-            )}
-          </div>
-
-          {mode === 'password' && canSetPassword && (
-            <div className="mt-3">
-              <label className={labelCls}>Kata Sandi Awal</label>
-              <div className="relative">
-                <input
-                  type={showPass ? 'text' : 'password'}
-                  value={form.password}
-                  onChange={e => setForm({ ...form, password: e.target.value })}
-                  placeholder="Minimal 10 karakter, 3 dari 4 kelas"
-                  className={`${inputCls} pr-20 font-mono`}
-                  autoComplete="new-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPass(v => !v)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 text-[11px] font-semibold text-slate-500 hover:text-slate-800 dark:text-ds-ink3 dark:hover:text-white rounded-md"
-                >
-                  {showPass ? 'Sembunyi' : 'Lihat'}
-                </button>
-              </div>
-              <p className="mt-1.5 text-[11px] text-slate-500 dark:text-ds-ink3">Huruf besar + kecil + angka + simbol — minimal 3 dari 4 kelas. Pengguna wajib ganti saat login pertama.</p>
-            </div>
-          )}
-        </section>
-
-        <p className="rounded-xl bg-slate-50 dark:bg-ds-card2 px-3.5 py-3 text-xs text-slate-600 dark:text-ds-ink3 leading-relaxed">
-          Role AGENT dibuat lewat menu <span className="font-bold">Manajemen Mitra → Tambah Mitra</span>; role B2B_CLIENT lewat menu <span className="font-bold">B2B → Tambah Pengguna Korporat</span>.
-        </p>
-      </div>
-    </AdminModal>
-  );
-};
-
 export const AgentManagementView = () => {
   const [agents, setAgents] = useState<SpUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1803,6 +1414,13 @@ export const AgentManagementView = () => {
   useEffect(() => {
     getAllAgents().then(data => { setAgents(data); setLoading(false); });
     getTierChangeRequests('PENDING').then(reqs => setPendingTierRequests(new Map(reqs.map(r => [r.agent_id, (r as any).requested_tier_code ?? '']))));
+  }, []);
+
+  // Refresh helper for AddUserWizard onCreated — v2.8.5 unified flow
+  // doesn't return the agent object, so we re-fetch the authoritative list.
+  const reloadAgents = useCallback(async () => {
+    const data = await getAllAgents();
+    setAgents(data);
   }, []);
 
   const handleVerify = async (agentId: string, verified: boolean) => {
@@ -2077,17 +1695,25 @@ export const AgentManagementView = () => {
     <div className="space-y-8 animate-fade-in">
       {selectedAgentId && <UserDetailModal userId={selectedAgentId} onClose={() => setSelectedAgentId(null)} />}
       {showBulkImport && <BulkImportModal onClose={() => setShowBulkImport(false)} />}
-      {showAddMitra && (
-        <AddMitraModal
-          canSetTempPassword={canSetMitraPassword}
-          onClose={() => setShowAddMitra(false)}
-          onCreated={(agent, cred) => {
-            setAgents(prev => [agent, ...prev]);
-            setShowAddMitra(false);
-            if (cred) setCredential(cred); else toast.success(`Undangan dikirim ke ${agent.email}`);
-          }}
-        />
-      )}
+      {/* v2.8.5 — Unified AddUserWizard menggantikan AddMitraModal lama.
+          Pre-pick role AGENT dari button "Tambah Mitra"; wizard tetap
+          memberi opsi ganti role di step 0 jika admin berubah pikiran. */}
+      <AddUserWizard
+        open={showAddMitra}
+        callerRole={adminRole}
+        defaultRole="AGENT"
+        onClose={() => setShowAddMitra(false)}
+        onCreated={(user, cred, docErrors) => {
+          // Reload list — model lama cuma push ke state tanpa data fresh.
+          void reloadAgents();
+          if (cred) setCredential(cred as WizardCredential);
+          else toast.success(`Undangan dikirim ke ${user.email}`);
+          if (docErrors.length > 0) {
+            toast.error(`Pengguna dibuat, tapi ${docErrors.length} dokumen gagal unggah. Buka detail pengguna untuk retry.`);
+          }
+        }}
+      />
+
       {credential && <CredentialModal {...credential} onClose={() => setCredential(null)} />}
 
       {/* Header actions */}
@@ -2708,22 +2334,23 @@ export const UserManagementView = () => {
         <PartnerDirectorySection />
       )}
 
-      {/* v2.7.58: Tambah Pengguna Internal — modal baru dengan mode
-          invite + password (MASTER_ADMIN only). CredentialModal dipakai
-          kembali untuk menampilkan sandi sekali-tampil. */}
-      {showAddModal && (
-        <AddInternalUserModal
-          canSetPassword={callerIsMasterAdmin}
-          callerIsMasterAdmin={callerIsMasterAdmin}
-          onClose={() => setShowAddModal(false)}
-          onCreated={(user, cred) => {
-            setShowAddModal(false);
-            if (cred) setCredential(cred);
-            toast.success(`${user.name} ditambahkan sebagai ${user.role}.`);
-            load();
-          }}
-        />
-      )}
+      {/* v2.8.5 — Unified AddUserWizard menggantikan AddInternalUserModal.
+          Default role = ADMIN (paling umum dari User Management), tapi
+          operator bisa ganti role di step 0 jika sedang memilih peran lain. */}
+      <AddUserWizard
+        open={showAddModal}
+        callerRole={callerRole}
+        defaultRole={callerIsMasterAdmin ? 'ADMIN' : 'FINANCE'}
+        onClose={() => setShowAddModal(false)}
+        onCreated={(user, cred, docErrors) => {
+          if (cred) setCredential(cred as WizardCredential);
+          toast.success(`${user.name} ditambahkan sebagai ${user.role}.`);
+          if (docErrors.length > 0) {
+            toast.error(`${docErrors.length} dokumen gagal unggah. Buka detail pengguna untuk retry.`);
+          }
+          load();
+        }}
+      />
       {credential && <CredentialModal {...credential} onClose={() => setCredential(null)} />}
     </div>
   );

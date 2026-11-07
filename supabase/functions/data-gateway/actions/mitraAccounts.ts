@@ -656,6 +656,132 @@ export async function handleMitraAccountsAction(
       });
     }
 
+    // ── KYC document upload (v2.8.5) ────────────────────────────────────
+    //
+    // Simpan dokumen KYC yang dikirim AddUserWizard ke bucket privat
+    // kyc-documents dan daftarkan referensinya di sp_users.kyc_docs jsonb.
+    //
+    // Payload base64 dibatasi 3 MB raw (per migration file_size_limit = 10
+    // MB, kita lebih ketat di sini supaya payload Edge Function tidak jebol).
+    // Format path: {user_id}/{doc_type}/{uuid}.{ext}
+    case 'admin_upload_kyc_file': {
+      if (!CAN_MANAGE_MITRA_ACCOUNT.includes(caller.role ?? '')) {
+        return json({ error: 'Forbidden: hanya ADMIN atau MASTER_ADMIN' }, 403);
+      }
+
+      const user_id = String(params.user_id ?? '').trim();
+      const doc_type = String(params.doc_type ?? '').trim();
+      const mime = String(params.mime ?? '').trim();
+      const size = Number(params.size ?? 0);
+      const file_b64 = String(params.file_b64 ?? '');
+      const original_name = String(params.original_name ?? '').trim();
+
+      if (!user_id || !doc_type || !file_b64) {
+        return json({ error: 'user_id, doc_type, file_b64 wajib diisi' }, 400);
+      }
+      if (size > 3 * 1024 * 1024) {
+        return json({ error: 'File terlalu besar (maks 3 MB)' }, 400);
+      }
+      const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+      if (!ACCEPTED.includes(mime)) {
+        return json({ error: `Tipe ${mime} tidak didukung` }, 400);
+      }
+
+      // Validasi doc_type whitelist — tetap senada dengan kycMatrix.ts di
+      // frontend. Daftar ini sengaja dijaga di dua sisi (defense in depth).
+      const ALLOWED_DOC_TYPES = new Set([
+        'ktp', 'npwp', 'selfie_ktp', 'sim', 'foto_profil',
+        'surat_penunjukan', 'surat_penunjukan_insurer', 'akta_kerjasama',
+        'company_npwp', 'company_nib', 'company_siup', 'company_akta', 'company_profile_pdf',
+        'pic_ktp', 'pic_npwp',
+      ]);
+      if (!ALLOWED_DOC_TYPES.has(doc_type)) {
+        return json({ error: `doc_type ${doc_type} tidak dikenal` }, 400);
+      }
+
+      // Pastikan user ada.
+      const { data: target, error: userErr } = await db
+        .from('sp_users').select('id, kyc_docs').eq('id', user_id).maybeSingle();
+      if (userErr || !target) return json({ error: 'user_id tidak ditemukan' }, 404);
+
+      // Decode base64 ke Uint8Array
+      let bytes: Uint8Array;
+      try {
+        const binary = atob(file_b64);
+        bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      } catch {
+        return json({ error: 'file_b64 bukan base64 valid' }, 400);
+      }
+      if (bytes.length !== size) {
+        return json({ error: 'Size tidak cocok dengan payload' }, 400);
+      }
+
+      // Path: {user_id}/{doc_type}/{uuid}.{ext}
+      const ext = mime === 'application/pdf' ? 'pdf'
+        : mime === 'image/jpeg' ? 'jpg'
+        : mime === 'image/png' ? 'png'
+        : mime === 'image/webp' ? 'webp' : 'bin';
+      const uuid = crypto.randomUUID();
+      const path = `${user_id}/${doc_type}/${uuid}.${ext}`;
+
+      const { error: uploadErr } = await db.storage
+        .from('kyc-documents')
+        .upload(path, bytes, { contentType: mime, upsert: false });
+      if (uploadErr) return json({ error: `Upload gagal: ${uploadErr.message}` }, 500);
+
+      // Merge entry baru ke kyc_docs jsonb. Dokumen lama dengan doc_type
+      // yang sama di-overwrite — path lama tetap di bucket (bisa dibersihkan
+      // nanti dengan cron).
+      const existingDocs = (target.kyc_docs ?? {}) as Record<string, unknown>;
+      const nextDocs = {
+        ...existingDocs,
+        [doc_type]: {
+          path,
+          size_bytes: size,
+          mime,
+          original_name: original_name || null,
+          uploaded_at: new Date().toISOString(),
+          uploaded_by: caller.email,
+        },
+      };
+      const { error: updErr } = await db.from('sp_users')
+        .update({ kyc_docs: nextDocs }).eq('id', user_id);
+      if (updErr) {
+        // Rollback upload: hapus file yang baru saja tersimpan.
+        await db.storage.from('kyc-documents').remove([path]).catch(() => {});
+        return json({ error: `Gagal menyimpan referensi: ${updErr.message}` }, 500);
+      }
+
+      return json({
+        data: { path, size_bytes: size, mime, doc_type },
+      });
+    }
+
+    // Admin membaca dokumen KYC yang tersimpan — mengeluarkan signed URL
+    // berumur pendek (5 menit) agar browser bisa menampilkan preview.
+    case 'admin_get_kyc_doc_url': {
+      if (!CAN_MANAGE_MITRA_ACCOUNT.includes(caller.role ?? '')) {
+        return json({ error: 'Forbidden: hanya ADMIN atau MASTER_ADMIN' }, 403);
+      }
+      const user_id = String(params.user_id ?? '').trim();
+      const doc_type = String(params.doc_type ?? '').trim();
+      if (!user_id || !doc_type) {
+        return json({ error: 'user_id dan doc_type wajib diisi' }, 400);
+      }
+      const { data: target } = await db
+        .from('sp_users').select('kyc_docs').eq('id', user_id).maybeSingle();
+      const docs = (target?.kyc_docs ?? {}) as Record<string, { path?: string }>;
+      const entry = docs[doc_type];
+      if (!entry?.path) return json({ error: 'Dokumen tidak ditemukan' }, 404);
+
+      const { data: signed, error } = await db.storage
+        .from('kyc-documents')
+        .createSignedUrl(entry.path, 300); // 5 menit
+      if (error) return json({ error: error.message }, 500);
+      return json({ data: { signed_url: signed?.signedUrl, path: entry.path } });
+    }
+
     default:
       return null;
   }

@@ -1,5 +1,111 @@
 # SurePath — Changelog
 
+## v2.8.5 — 2026-11-07
+
+### Admin: Unified AddUserWizard + KYC Matrix + Animated Charts (PR #1 dari 2)
+
+**Masalah user yang ditangani**: "Untuk penambahan mitra dan penambahan user,
+jika di klik tambah tampilannya jelek dan ga bs bikin pass manual. Perbaiki
+dan sesuaikan kyc yg dibutuhkan untuk masing2 roles atau mitra.. lalu untuk
+b2b jg sesuaikan."
+
+**3 modal lama dengan 3 visual language berbeda** (AddMitraModal, AddInternalUserModal,
+UsersSection inline di B2B) → **satu AddUserWizard** 5-step yang mendispatch
+ke action backend yang tepat berdasarkan role.
+
+#### Database foundation
+- **Migration `20261107120000_kyc_docs_column_and_bucket.sql`**:
+  - `ALTER TABLE sp_users ADD COLUMN kyc_docs jsonb DEFAULT '{}'`
+  - Bucket privat `kyc-documents` (10MB cap, JPG/PNG/WebP/PDF)
+  - RLS policy `service_role only` untuk SELECT/INSERT/UPDATE/DELETE
+    (admin baca via signed URL yang gateway buat setelah role check)
+- **Gateway actions baru** di `mitraAccounts.ts`:
+  - `admin_upload_kyc_file`: base64 upload (max 3MB raw), validasi MIME +
+    doc_type whitelist, merge entry ke sp_users.kyc_docs
+  - `admin_get_kyc_doc_url`: signed URL 5-menit untuk baca dokumen
+
+#### Primitives (components/admin/wizard/ui.tsx, 440 lines)
+- `SmoothModal` — scale + slide enter, backdrop blur fade, esc/body-scroll-lock
+- `StepIndicator` — pill progress (click-back ke step done, no skip forward)
+- `FileUploadField` — click + drag-drop, preview thumbnail, inline progress,
+  size/MIME validation, clear button
+- `PasswordField` — animated strength meter (ease-out color-mix), visibility
+  toggle, "Generate kuat" button, copy clipboard
+- `RoleCard` — big visual picker dengan portal label + perms preview,
+  check-pop animation on select
+- `WizardButton` — ripple pada press, hover lift+shadow
+- CSS keyframes: backdrop-in, panel-in/out, step-forward/back, pulse,
+  pop-check, ripple. All respect `prefers-reduced-motion`.
+
+#### KYC Matrix (components/admin/wizard/kycMatrix.ts, 325 lines)
+Per-role identitas fields + document requirements:
+
+| Role | Required Fields | Required Docs |
+|---|---|---|
+| Mitra | nama, email, phone, KTP, alamat, bank+rekening, nama rek, NPWP | KTP, NPWP |
+| Admin/Master | nama, email, phone, NIP, department | KTP |
+| Finance L1/L2/L3 | nama, email, phone, NIP, dept, approval_limit | KTP |
+| Operator | nama, email, phone, NIP, assigned_insurer | KTP |
+| Insurance Admin | nama, email, phone, NIP, assigned_insurer | KTP, surat penunjukan insurer |
+| B2B Client | pic_name/email/phone/KTP, company_name, NIB, NPWP perusahaan, industri, alamat | NPWP perusahaan, NIB/SIUP, KTP PIC |
+
+ROLE_META mendefinisikan: action backend, caller role yang diizinkan,
+icon, accent color, portal path, canSetManualPassword flag.
+
+#### AddUserWizard (580 lines)
+5-step unified flow:
+1. **Role** — visual card grid, filtered berdasarkan callerRole
+2. **Identitas** — fields dinamis dari FIELD_MATRIX[role]
+3. **Dokumen KYC** — files dari DOC_MATRIX[role], FileUploadField per-doc
+4. **Akses** — invite vs manual password (dengan PasswordField strength meter)
+5. **Review** — summary dengan edit-back per section + "Buat"
+
+Submit flow: create user via createMitra/createInternalUser/adminCreateB2BUser
+→ get user_id → upload each file via uploadKycFile sequential. Partial
+upload failures dilaporkan via onCreated docErrors (user tetap dibuat).
+
+#### Replaced
+- `AddMitraModal` di `AgentManagementView` (deleted ~170 lines)
+- `AddInternalUserModal` di `UserManagementView` (deleted ~210 lines)
+- Inline form di B2B `UsersSection` (deleted ~120 lines)
+
+Semua tiga jalur sekarang memanggil `AddUserWizard` dengan `defaultRole`
+berbeda (AGENT / ADMIN|FINANCE / B2B_CLIENT). Operator tetap bisa ganti
+role di step 0 jika berubah pikiran.
+
+#### Charts animated theme
+`AdminDashboard` Financial Intelligence section:
+- Custom `AdmChartTooltip` (card brand-consistent dengan left accent stripe,
+  fade-up animation, tabular numerals) menggantikan recharts default
+- AreaChart: `animationDuration=900` ease-out, activeDot dengan white ring,
+  cursor dashed 3-3 tipis
+- PieChart: `animationBegin=120` (slight stagger), center label total
+  pesanan + "Pesanan" caption, hover slices via custom tooltip
+- `strokeWidth=2.5` consistent brand green #076653
+
+#### Service wrapper
+`services/kyc.ts`: `uploadKycFile` (base64 encode + gateway call), 3MB cap
+client-side validation, MIME allowlist, file→base64 chunked untuk avoid
+stack overflow pada file besar. `getKycDocSignedUrl` untuk preview.
+
+### Deploy steps (manual — tidak otomatis di Vercel merge)
+1. Apply DB migration: `supabase db push` atau via Supabase MCP (session ini
+   timeout di approval prompt, jadi user perlu run manual atau approve via
+   Supabase dashboard)
+2. Deploy edge function: `supabase functions deploy data-gateway --project-ref uyjgeteelnswphyzkjwi`
+
+### Verifikasi
+- tsc 0 error
+- eslint 2 warning (pola existing)
+- vitest 639/639 pass (termasuk `adminDesignFloor` 11px + light-surface guards)
+- vite build sukses
+
+### Follow-up PR #2 (dashboards marketing/sales/business enhance)
+Scope terpisah sesuai pilihan "Full dalam 2 PR terpisah". PR #2 akan handle:
+- MarketingDashboard: funnel viz, handler leaderboard sparkline, B2B pipeline Kanban
+- SalesDashboard (new): combined view agents + B2B, top performers, revenue breakdown
+- BusinessSupportDashboard: SLA metrics, ticket queue priority sort
+
 ## v2.8.4 — 2026-11-07
 
 ### Admin Dashboard: evolution pass (polish + context + intelligence)

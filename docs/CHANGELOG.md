@@ -1,5 +1,84 @@
 # SurePath — Changelog
 
+## v2.8.4 — 2026-11-07
+
+### Admin Dashboard: evolution pass (polish + context + intelligence)
+
+Admin dashboard di-upgrade **di tempat** — bukan redesign ulang. Struktur
+existing (hero editorial, 2 attention cards, 4 KPI, financial charts,
+pesanan terbaru, mitra terbaik, aktivitas feed, calendar jatuh tempo,
+tugas saya) semua dipertahankan. Yang berubah: polish, context, dan
+beberapa fitur baru untuk operator sehari-hari.
+
+**Primitives baru** (`components/admin/dashboard/ui.tsx`):
+- `AdminCountUp` — smooth 0→value tween (ease-out-quart 800ms), reduced-
+  motion honored.
+- `AdminSkeleton` + variants (Hero/KpiRow/Table) — shimmer indigo-tinted
+  yang mirror shape yang diganti.
+- `AdminPill` + `AdminAgePill` — tone semantic, age-smart (fresh < 2h
+  neutral, 2-6h accent, 6-24h warn, >24h danger).
+- `AdminLiveDot` — pulsing status dot (emerald segar, amber stale > 30s).
+- `AdminRangeToggle` — pill-group yang mengganti `<select>` hero.
+- `AdminToastProvider` + `useAdminToast()` — top-right stack, aria-live.
+- `AdminCommandPalette` — standalone (tidak dipakai di shell karena
+  existing palette sudah ada; disediakan untuk konsumsi future).
+- `AdminFocusBar` — sticky single-row urgent alert, dismissible per
+  session.
+- `AdminSidePanel` — right-slide drawer dengan Esc + backdrop close.
+- `AdminSparkline` — pure SVG, 7-hari inline untuk KPI cards.
+
+**Hero section** (`AdminDashboard.tsx`):
+- Greeting kontekstual shift-aware: pagi menyebut antrean semalam, siang
+  menyebut ajuan + penarikan besar, sore ringkas rangkum hari.
+- `AdminCountUp` pada angka premi (0 → Rp X dalam 800ms).
+- `AdminLiveDot` pulsing di sebelah "diperbarui" (amber jika > 30 detik).
+- `AdminRangeToggle` 30h/90h/1th pill group ganti `<select>` native.
+- Skeleton hero + 2 KPI row saat initial boot load (bukan blank).
+
+**Focus bar sticky**: muncul di atas hero kalau ada > 0 approval menumpuk
+> 24 jam. Dismissible per-session. Tombol "Buka antrean" langsung ke
+`approvals` view.
+
+**KPI cards sekunder**: inline sparkline 7-hari untuk metric yang punya
+per-day data (orders, claims, withdrawals). Mitra Aktif tetap tanpa
+sparkline (tidak meaningful day-over-day).
+
+**Pesanan Terbaru table**:
+- Row hover accent gradient stripe (indigo→lime, 3px, 220ms ease).
+- Overdue badge auto (`AdminAgePill` warn/danger) di row dengan status
+  SUBMITTED/UNDER_REVIEW yang menunggu > 24 jam.
+
+**Tugas Saya queue**:
+- Smart sort: `age × 0.6 + amount × 0.4` — Rp 10jt yang 2 jam lagi
+  berada di atas Rp 500K yang 5 jam.
+- `AdminAgePill` tone-mapped per hours waited.
+- Inline chevron button (bukan hanya baris yang clickable).
+
+**Calendar jatuh tempo**: tiap hari dengan polis jatuh tempo kini
+clickable. Side panel kanan menampilkan daftar polis berakhir hari itu
+(nama nasabah, nomor polis, premi, status).
+
+**Shell integration**: `AdminPortal` sekarang dibungkus `AdminToastProvider`
+sehingga view mana pun bisa panggil `useAdminToast()` untuk feedback
+sukses/error/info tanpa alert/inline bar.
+
+**A11y**:
+- `prefers-reduced-motion` honored semua animation (countup, skeleton,
+  stagger, ripple).
+- Skeleton `role="status"`, toast `aria-live="polite"`, palette/panel
+  `role="dialog"`.
+- Range toggle `role="radiogroup"` dengan `role="radio"` + `aria-checked`.
+- Focus bar `role="alert"`.
+
+**Data flow tidak berubah**: `buildDashboardModel()` + semua props sama.
+Primitives tambahan tidak melakukan fetch baru; sparkline derive dari
+array orders/claims/withdrawals yang sudah di-fetch oleh AdminPortal
+(zero new gateway calls).
+
+Verifikasi: tsc 0 error, eslint 2 warning (pola existing dependencies),
+vitest 639/639 pass (termasuk `adminDesignFloor` yang guard typography
+floor 11px), vite build sukses, screenshot dashboard + palette confirmed.
+
 ## v2.8.3 — 2026-11-06
 
 ### B2B Portal: full dashboard refresh (glassmorphism, Mercury tables)

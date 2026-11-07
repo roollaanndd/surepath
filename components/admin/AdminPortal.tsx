@@ -63,6 +63,7 @@ import PathyAiView from './PathyAiView';
 import ContactLeadsAdmin from './ContactLeadsAdmin';
 import AdminWorkspaceSwitcher from './AdminWorkspaceSwitcher';
 import ModuleIcon from '../shared/ModuleIcon';
+import { AdminToastProvider } from './dashboard/ui';
 
 // Suspense fallback for lazy-loaded admin views
 const AdminViewLoader = () => (
@@ -810,6 +811,7 @@ const AdminPortal = ({
   ) : null;
 
   return (
+    <AdminToastProvider>
     <div className={`sp-modern-app sp-admin-root flex h-[100dvh] overflow-hidden font-sans ${rootBg}`}>
       {/* ── Animated background ───────────────────────────────────────────── */}
       <style>{`
@@ -1253,6 +1255,7 @@ const AdminPortal = ({
         )}
       </main>
     </div>
+    </AdminToastProvider>
   );
 };
 

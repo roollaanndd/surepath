@@ -69,6 +69,44 @@ function withinDays(iso: string | undefined, days: number): boolean {
 }
 
 const idr = (n: number) => formatIDR(Math.round(n));
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Custom chart tooltip — brand-consistent card with tiny slide-in animation.
+   Replaces recharts' default white box. Works for Area (one series) and
+   Pie (per-slice via payload.name).
+────────────────────────────────────────────────────────────────────────── */
+const AdmChartTooltip: React.FC<{
+  active?: boolean;
+  payload?: any[];
+  label?: string;
+  valueFormatter?: (n: number) => string;
+  valueLabel?: string;
+  suffix?: string;
+  accent?: string;
+  useLabelFromPayload?: boolean;
+}> = ({ active, payload, label, valueFormatter, valueLabel, suffix, accent = '#076653', useLabelFromPayload }) => {
+  if (!active || !payload || payload.length === 0) return null;
+  const entry = payload[0];
+  const value = typeof entry.value === 'number' ? entry.value : 0;
+  const displayValue = valueFormatter ? valueFormatter(value) : `${value}${suffix ?? ''}`;
+  const displayLabel = useLabelFromPayload ? (entry.payload?.label ?? entry.name) : label;
+
+  return (
+    <div
+      className="pointer-events-none rounded-xl bg-ds-card border border-ds-border shadow-[0_8px_24px_-12px_rgba(15,23,42,0.25)] px-3 py-2"
+      style={{
+        animation: 'adm-fade-up .18s cubic-bezier(.2,.8,.2,1) both',
+        borderLeft: `3px solid ${accent}`,
+      }}
+    >
+      {displayLabel && <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-widest leading-tight">{displayLabel}</p>}
+      <p className="text-sm font-black tabular-nums mt-0.5" style={{ color: accent, fontVariantNumeric: 'tabular-nums' }}>
+        {displayValue}
+      </p>
+      {valueLabel && <p className="text-2xs text-ds-ink3 mt-0.5">{valueLabel}</p>}
+    </div>
+  );
+};
 const dayLabel = (iso?: string) => {
   if (!iso) return '—';
   const d = new Date(iso);
@@ -438,9 +476,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       </linearGradient>
                     </defs>
                     <Tooltip
-                      formatter={(value: number) => [idr(value), 'Premi']}
-                      labelFormatter={(label: string) => label}
-                      contentStyle={{ borderRadius: 12, border: '1px solid var(--ds-border)', fontSize: 12 }}
+                      cursor={{ stroke: '#076653', strokeOpacity: 0.3, strokeWidth: 1, strokeDasharray: '3 3' }}
+                      content={(props: any) => <AdmChartTooltip {...props} valueFormatter={idr} valueLabel="Premi" accent="#076653" />}
                     />
                     <Area
                       type="monotone"
@@ -448,15 +485,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       stroke="#076653"
                       strokeWidth={2.5}
                       fill="url(#premiumTrend)"
-                      dot={{ r: 3, fill: '#076653' }}
+                      dot={{ r: 3, fill: '#076653', strokeWidth: 0 }}
+                      activeDot={{ r: 5, fill: '#076653', stroke: '#fff', strokeWidth: 2 }}
                       isAnimationActive
+                      animationDuration={900}
+                      animationEasing="ease-out"
                     />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
 
               <div className="flex flex-col items-center gap-3">
-                <div className="h-36 w-36">
+                <div className="relative h-36 w-36">
+                  {pieData.length > 0 && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                      <span className="text-xl font-black tracking-tight tabular-nums text-ds-ink" style={{ fontVariantNumeric: 'tabular-nums' }}>{productTotal}</span>
+                      <span className="text-2xs font-black uppercase tracking-widest text-ds-ink3">Pesanan</span>
+                    </div>
+                  )}
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -467,6 +513,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         outerRadius={64}
                         paddingAngle={2}
                         isAnimationActive
+                        animationDuration={900}
+                        animationBegin={120}
+                        animationEasing="ease-out"
                       >
                         {(pieData.length ? pieData : [{ key: 'empty', fill: '#E5E7EB' }]).map(p => (
                           <Cell key={p.key} fill={p.fill} stroke="none" />
@@ -474,8 +523,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       </Pie>
                       {pieData.length > 0 && (
                         <Tooltip
-                          formatter={(value: number, _n, entry: any) => [`${value} pesanan`, entry?.payload?.label]}
-                          contentStyle={{ borderRadius: 12, border: '1px solid var(--ds-border)', fontSize: 12 }}
+                          content={(props: any) => <AdmChartTooltip {...props} suffix=" pesanan" accent="#076653" useLabelFromPayload />}
                         />
                       )}
                     </PieChart>

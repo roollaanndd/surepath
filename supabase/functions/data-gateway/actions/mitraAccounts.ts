@@ -77,9 +77,12 @@ export async function handleMitraAccountsAction(
         return json({ error: 'Forbidden: hanya ADMIN atau MASTER_ADMIN' }, 403);
       }
 
-      // Hardening v2.8.16: pembuatan akun menerbitkan kredensial — tidak ada
-      // alasan admin membutuhkan lebih dari segelintir per jam. Gagal tertutup.
-      if (!(await checkRateLimit(`admin:${caller.spUser.id}`, 10))) {
+      // Hardening v2.8.16 (typed v2.8.17): pembuatan akun menerbitkan
+      // kredensial — tidak ada alasan admin membutuhkan lebih dari segelintir
+      // per jam. Gagal tertutup. spUser di-narrow eksplisit (deno: TS18047).
+      const adminBucketId = caller.spUser?.id;
+      if (!adminBucketId) return json({ error: 'Sesi admin tidak memiliki profil pengguna.' }, 403);
+      if (!(await checkRateLimit(`admin:${adminBucketId}`, 10))) {
         return json({ error: 'Terlalu banyak pembuatan akun dalam jam ini. Coba lagi nanti.' }, 429);
       }
 
@@ -237,9 +240,11 @@ export async function handleMitraAccountsAction(
         return json({ error: 'Forbidden: hanya ADMIN atau MASTER_ADMIN' }, 403);
       }
 
-      // Hardening v2.8.16: sama seperti admin_create_mitra — akun B2B
-      // menerbitkan sandi manual, dibatasi per admin per jam.
-      if (!(await checkRateLimit(`admin:${caller.spUser.id}`, 10))) {
+      // Hardening v2.8.16 (typed v2.8.17): sama seperti admin_create_mitra —
+      // akun B2B menerbitkan sandi manual, dibatasi per admin per jam.
+      const b2bAdminBucketId = caller.spUser?.id;
+      if (!b2bAdminBucketId) return json({ error: 'Sesi admin tidak memiliki profil pengguna.' }, 403);
+      if (!(await checkRateLimit(`admin:${b2bAdminBucketId}`, 10))) {
         return json({ error: 'Terlalu banyak pembuatan akun dalam jam ini. Coba lagi nanti.' }, 429);
       }
 

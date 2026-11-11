@@ -1,5 +1,42 @@
 # SurePath - Changelog
 
+## v2.8.11 - 2026-11-11
+
+### Sistem ikon global "Aureate Emerald" — ilustrasi premium, custom, bukan AI slop
+
+Permintaan owner: ikon global dibuat premium, SVG ilustratif custom, dan tidak
+berkesan "AI slop".
+
+**Arahan seni baru, satu bahasa untuk seluruh app.** Set fallback baru
+`SurePathPremiumIcon` menggantikan set lama "flat playful" (yang memakai wajah
+kartun ber-mata-senyum dan mobil mainan) di ketiga titik pemakaian:
+`PathyNavIcon`, `ManagedPortalIcon`, dan pratinjau `PortalIconManager`. Aturan
+sistemnya tegas dan dikunci test: canvas 48×48 dengan plate gradient emerald
+bergeometri identik (rx 13), glyph putih presisi stroke 1.9, bentuk pendukung
+mint, dan TEPAT satu aksen emas champagne per ikon — tanpa wajah, tanpa
+warna di luar palet sistem. 22 seni (protection, home, wallet, car, document,
+payment, bell, people, travel, health, settings, help, bank, library, review,
+tier, palette, network, renewal, chart, box, spark) memakai rantai regex yang
+sama dengan set lama, jadi semua id navigasi/upload lama tetap bermakna sama.
+Gradient memakai `useId()` unik per instance — ikon yang sama dirender
+puluhan kali per layar dan id SVG duplikat adalah HTML tidak valid.
+
+**Role selection kini ber-artwork premium.** Tiga kartu tipe akun (Nasabah,
+Mitra, Klien Korporat) pada `RoleSelectionScreen` berganti dari SVG generik
+berwarna biru/neon-hijau/ungu (bukan warna brand) ke `RoleScene` — adegan
+64-canvas dalam bahasa visual yang sama: person+shield, briefcase+growth,
+corporate tower+network node. Banner referral di layar yang sama ganti emoji
+🔗 menjadi ikon link SVG dan berpindah dari biru ke emerald brand; emoji 👋
+pada sapaan `AppSelector` dihapus. Semua ikon tetap murni vektor (tidak ada
+raster/efek 3D), dan ikon upload admin (Icon Manager) tetap menimpa fallback
+— urutan prioritas tidak berubah.
+
+**Guard design-system baru** (`premiumIcons.test.tsx`): setiap key seni
+harus render SVG nyata; semua hex di dalam palet sistem (palet kartun lama
+dilarang); id gradient unik antar-instance; routing id→makna ter-pin per
+keluarga; ketiga konsumen wajib melewati set premium; tiga `RoleScene`
+harus saling berbeda.
+
 ## v2.8.10 - 2026-11-11
 
 ### Portal app terkunci seperti aplikasi native — tidak bisa di-zoom, full screen

@@ -1,11 +1,12 @@
 // Brightness guard for the SurePath brand artwork set.
 //
-// The app uses two artwork families for module icons: the generic illustration
-// set (SurePathIllustrationIcon) whose fills are the bright mint/pale/lime
-// brand palette, and the bespoke brand set (SurePathBrandIcon) which shipped
-// near-black bodies (#06231D/#0C342C/#076653). On any dashboard that mixes the
-// two, some icons render dark and others bright — owner directive v2.7.44:
-// dark module icon bodies must read bright, matching the illustration set.
+// The app uses two artwork families for module icons: the premium fallback
+// set (SurePathPremiumIcon, v2.8.11 — white/mint/gold glyphs on deep-emerald
+// gradient plates) and the bespoke brand set (SurePathBrandIcon). The brand
+// set once shipped near-black bodies (#06231D/#0C342C/#076653); on any
+// dashboard that mixes the two families, some icons render dark and others
+// bright — owner directive v2.7.44: dark module icon bodies must read bright,
+// matching the fallback set's light glyphs.
 //
 // This guard:
 //  1. renders every brand artwork and asserts no banned dark hex remains

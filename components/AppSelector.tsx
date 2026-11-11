@@ -88,7 +88,7 @@ const AppSelector: React.FC<AppSelectorProps> = ({ user, apps, onSelect, onLogou
           Selamat datang kembali
         </p>
         <h1 className="text-2xl font-black tracking-tight text-ds-ink mt-1">
-          {user?.name?.split(' ')[0] ?? 'Pengguna'} 👋
+          {user?.name?.split(' ')[0] ?? 'Pengguna'}
         </h1>
         <p className="text-xs text-ds-ink3 mt-2 max-w-xs">
           Anda memiliki akses ke beberapa aplikasi. Pilih yang ingin Anda buka.

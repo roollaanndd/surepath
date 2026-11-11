@@ -133,6 +133,13 @@ export function initAppViewport(): void {
       window.matchMedia(q).addEventListener('change', () => apply(shouldLock()));
     }
   } catch { /* older Safari has no addEventListener on MediaQueryList */ }
+
+  // v2.8.21 — Some WebView versions land the Capacitor bridge global after ES
+  // module evaluation; a native shell that was invisible during the first
+  // isNativeShell() check would stay zoomable forever. Re-check once the page
+  // has settled. apply() no-ops when the desired state is already active.
+  window.addEventListener('load', () => apply(shouldLock()));
+  window.setTimeout(() => apply(shouldLock()), 300);
 }
 
 // Self-initialising on import, and imported first in index.tsx.

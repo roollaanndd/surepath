@@ -90,6 +90,19 @@ export const AppIsolationGuard: React.FC<AppRouteProps> = ({ pathname, currentUs
   // Alur QR/payment/review tidak pernah dialihkan (invarian isPublicStandalonePath).
   if (isPublicStandalonePath(pathname)) return null;
 
+  // v2.8.21 — Cold start shell Android/PWA memboot di '/' (Capacitor membuka
+  // index.html, bukan path portal terakhir), dan '/' bukan territory mana pun
+  // sehingga guard lama menolaknya — catch-all penutup (CustomerRoutes, sengaja
+  // tanpa role guard) lalu merender UI app nasabah untuk agen yang memaksa-
+  // tutup lalu membuka ulang app. Fix v2.8.9 menutup URL territory; '/' lolos
+  // dari keduanya. Untuk user yang sudah masuk, '/' BUKAN halaman marketing
+  // (MarketingRoutes tidak mengklaimnya; HomePage hanya signed-out) — pantulkan
+  // ke portal miliknya, sama seperti territory yang salah. Halaman publik dan
+  // marketing di atas tetap bebas untuk semua role.
+  if (pathname === '/' || pathname === '/index.html') {
+    return <RedirectHome to={resolvePortalPath(currentUser)} navigate={navigate} />;
+  }
+
   const app = territoryAppForPath(pathname);
   if (!app) return null;
   if (userAllowedInApp(currentUser, app)) return null;

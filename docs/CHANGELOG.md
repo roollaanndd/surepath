@@ -326,6 +326,43 @@ dilarang); id gradient unik antar-instance; routing id→makna ter-pin per
 keluarga; ketiga konsumen wajib melewati set premium; tiga `RoleScene`
 harus saling berbeda.
 
+## v2.8.21 - 2026-11-11
+
+### App nasabah muncul lagi untuk agen setelah app ditutup dan dibuka ulang
+
+Laporan owner: "sy coba sebagai user agen, setelah sy tutup appsnya dan masuk
+lg, saya masuk app nasabah. terjadi lagi" — dan UI itu masih bisa di-zoom.
+
+**Akar masalah: satu akar, dua gejala.** Cold start shell Android/PWA memboot
+di '/' (Capacitor membuka index.html, bukan path portal terakhir). Isolation
+guard v2.7.57 hanya menjaga territory portal (/custapp, /agapps, /admin, …);
+'/' bukan territory mana pun, sehingga catch-all penutup (CustomerRoutes —
+sengaja TANPA role guard, "what `if (currentUser)` rendered") merender UI app
+nasabah untuk agen. Dokumen yang dirender adalah index.html (situs publik,
+tanpa `data-sp-app`), bukan entry portal — jadi lock zoom v2.8.10 pun tidak
+aktif di atasnya: agen melihat "app nasabah yang bisa di-zoom". Fix v2.8.9
+menutup URL territory; '/' lolos dari keduanya.
+
+**Kini guard memantulkan '/' juga.** User yang sudah masuk (kecuali admin —
+CMS-nya memang catch-all di semua pathname) yang membuka '/' atau '/index.html'
+dipantulkan ke portal miliknya (resolvePortalPath) sebelum modul portal mana
+pun mengklaim: agen → /agapps, customer → /custapp, B2B → /b2bapps, multi-app
+→ /select-app. Halaman publik (/q, /review, /payment) dan halaman marketing
+tetap bebas untuk semua role. Delapan unit test guard baru mengunci perilaku
+ini, termasuk regresi v2.8.9 (agen di /custapp).
+
+**Hardening zoom native.** `android.zoomEnabled: false` kini disematkan
+eksplisit di capacitor.config.ts DAN salinan generated Android
+(android/app/src/main/assets/capacitor.config.json — build CI native tidak
+menjalankan `cap sync`, jadi salinan itu yang dibaca APK). appViewport juga
+memeriksa ulang shell saat `load` + 300 ms: injeksi bridge Capacitor yang
+tiba setelah evaluasi modul tidak lagi bisa meninggalkan WebView bisa
+di-zoom; `apply()` no-op bila kondisi sudah aktif, jadi situs publik di tab
+browser tetap zoomable demi WCAG 1.4.4 (keputusan v2.8.10 tidak berubah).
+
+Tidak ada perubahan API, auth, bisnis logika, atau skema DB; APP_VERSION tidak
+di-bump agar sesi ter-simpan tidak dipaksa logout.
+
 ## v2.8.10 - 2026-11-11
 
 ### Portal app terkunci seperti aplikasi native — tidak bisa di-zoom, full screen

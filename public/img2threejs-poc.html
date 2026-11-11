@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#003B2F">
+<title>SurePath | 3D Vehicle Viewer POC</title>
+<style>
+:root{color-scheme:dark;--bg:#07110f;--panel:#0d1d18;--line:#1c3d31;--green:#00c16a;--muted:#9bb5aa}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 10%,#15382a 0,#07110f 58%);color:#f4fbf7;font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,sans-serif;min-height:100vh}
+main{max-width:1040px;margin:auto;padding:24px 16px 40px}.top{display:flex;justify-content:space-between;gap:16px;align-items:center}.brand{font-weight:800;letter-spacing:.14em;color:#d8f9e8;font-size:13px}.pill{border:1px solid #34614d;border-radius:999px;padding:5px 10px;color:#9ee7bc;font-size:11px;letter-spacing:.08em}
+h1{font-size:clamp(28px,5vw,46px);line-height:1.05;letter-spacing:-.04em;margin:34px 0 12px}p{color:var(--muted);max-width:650px;margin:0 0 20px}.viewer{position:relative;border:1px solid var(--line);border-radius:22px;overflow:hidden;background:linear-gradient(180deg,#10271e,#07100d);min-height:360px;box-shadow:0 24px 80px #0005}.canvas{position:absolute;inset:0;width:100%;height:100%;display:block}.overlay{position:absolute;inset:18px 18px auto;display:flex;justify-content:space-between;pointer-events:none;gap:12px}.tag{background:#06130edb;border:1px solid #244a38;border-radius:10px;padding:8px 11px;font-size:12px;color:#d4f4e2}.bottom{position:absolute;bottom:16px;left:16px;right:16px;display:flex;justify-content:space-between;gap:12px;align-items:end;pointer-events:none}.hint{font-size:12px;color:#a8c5b7}.controls{display:flex;gap:8px;pointer-events:auto}button{background:#102a1e;border:1px solid #386b4e;color:#e8fff0;border-radius:10px;padding:10px 13px;font:inherit;font-size:12px;cursor:pointer}button:focus-visible{outline:2px solid var(--green);outline-offset:2px}button:hover{background:#19422e}.status{margin-top:14px;display:flex;gap:10px;align-items:center;font-size:12px;color:#b3c9bf}.dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 12px #00c16a77}.note{margin-top:18px;border:1px solid #234432;border-radius:14px;padding:14px 16px;background:#0b1b14;color:#b8d0c3;font-size:13px}.note strong{color:#f0fff6}.error{color:#ffb4a9}
+@media(max-width:560px){main{padding:18px 12px 28px}.viewer{min-height:420px}.overlay{inset:12px 12px auto}.bottom{left:12px;right:12px;bottom:12px;align-items:end}.hint{max-width:145px}button{padding:10px}.pill{font-size:10px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"}}
+</script>
+</head>
+<body>
+<main>
+  <div class="top"><div class="brand">SUREPATH</div><div class="pill">TECHNOLOGY POC · NOT PRODUCTION</div></div>
+  <h1>Vehicle, in a<br><span style="color:#55e69a">new dimension.</span></h1>
+  <p>Eksperimen visual 3D untuk alur asuransi kendaraan SurePath. Putar model, lihat dari sudut berbeda, dan uji responsivitas di perangkat mobile.</p>
+  <section class="viewer" aria-label="Interactive 3D vehicle preview">
+    <canvas class="canvas" id="scene" aria-label="Model mobil 3D interaktif"></canvas>
+    <div class="overlay"><div class="tag">VEHICLE PREVIEW<br><strong>Procedural model · v0.1</strong></div><div class="tag" id="viewLabel">ORBIT VIEW</div></div>
+    <div class="bottom"><div class="hint">Drag untuk memutar · pinch/scroll untuk zoom</div><div class="controls"><button id="reset" type="button">Reset view</button><button id="spin" type="button" aria-pressed="true">Auto-rotate: On</button></div></div>
+  </section>
+  <div class="status" id="status" role="status"><span class="dot"></span><span>Memuat viewer 3D…</span></div>
+  <div class="note"><strong>Batasan POC:</strong> model mobil ini dibuat secara prosedural untuk menguji rendering dan interaksi Three.js. Ini belum merupakan model hasil rekonstruksi gambar dari pipeline img2threejs. Versi berikutnya harus menggunakan model TypeScript hasil pipeline setelah fidelity visual dan build berhasil diverifikasi.</div>
+</main>
+<script type="module">
+import * as THREE from 'three';
+const canvas=document.querySelector('#scene'),status=document.querySelector('#status'),spinButton=document.querySelector('#spin');
+let renderer,scene,camera,car,autoRotate=true,dragging=false,lastX=0,lastY=0,rotX=-.12,rotY=.65,zoom=1,pointerDistance=0;
+try{
+ renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true,powerPreference:'low-power'});
+ renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.75));
+ renderer.setSize(canvas.clientWidth,canvas.clientHeight,false);
+ renderer.outputColorSpace=THREE.SRGBColorSpace;
+ renderer.toneMapping=THREE.ACESFilmicToneMapping;
+ renderer.toneMappingExposure=1.15;
+ scene=new THREE.Scene();
+ camera=new THREE.PerspectiveCamera(35,1,.1,100);
+ camera.position.set(5.7,3.7,7.4);
+ scene.add(new THREE.HemisphereLight(0xdfffee,0x17241d,2.1));
+ const key=new THREE.DirectionalLight(0xffffff,3.2);key.position.set(4,8,5);scene.add(key);
+ const rim=new THREE.DirectionalLight(0x49f0a1,2);rim.position.set(-5,3,-4);scene.add(rim);
+ const floor=new THREE.Mesh(new THREE.CircleGeometry(5.5,64),new THREE.MeshStandardMaterial({color:0x0b2017,roughness:.95,metalness:0}));
+ floor.rotation.x=-Math.PI/2;floor.position.y=-.69;scene.add(floor);
+ const grid=new THREE.GridHelper(10,24,0x24533b,0x173526);grid.position.y=-.675;scene.add(grid);
+ car=new THREE.Group();scene.add(car);
+ const paint=new THREE.MeshPhysicalMaterial({color:0x00a85b,metalness:.52,roughness:.27,clearcoat:.9,clearcoatRoughness:.18});
+ const glass=new THREE.MeshPhysicalMaterial({color:0x0c1c1b,metalness:.35,roughness:.16,clearcoat:.7});
+ const rubber=new THREE.MeshStandardMaterial({color:0x101513,roughness:.88});
+ const alloy=new THREE.MeshStandardMaterial({color:0xb8d5c8,metalness:.82,roughness:.25});
+ const lamp=new THREE.MeshStandardMaterial({color:0xc8fff0,emissive:0x7affc0,emissiveIntensity:1.6});
+ function box(parent,w,h,d,mat,x,y,z,bevel=0){let mesh;if(bevel){const shape=new THREE.Shape();const r=Math.min(bevel,w/3,h/3);shape.moveTo(-w/2+r,-h/2);shape.lineTo(w/2-r,-h/2);shape.quadraticCurveTo(w/2,-h/2,w/2,-h/2+r);shape.lineTo(w/2,h/2-r);shape.quadraticCurveTo(w/2,h/2,w/2-r,h/2);shape.lineTo(-w/2+r,h/2);shape.quadraticCurveTo(-w/2,h/2,-w/2,h/2-r);shape.lineTo(-w/2,-h/2+r);shape.quadraticCurveTo(-w/2,-h/2,-w/2+r,-h/2);const geo=new THREE.ExtrudeGeometry(shape,{depth:d,bevelEnabled:true,bevelSegments:2,steps:1,bevelSize:bevel*.35,bevelThickness:bevel*.35,curveSegments:4});geo.center();mesh=new THREE.Mesh(geo,mat)}else mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);mesh.position.set(x,y,z);parent.add(mesh);return mesh}
+ box(car,3.25,.53,1.35,paint,0,-.22,0,.18);
+ box(car,2.15,.48,1.13,paint,-.05,.18,0,.22);
+ box(car,1.42,.48,1.05,glass,-.12,.24,0,.18);
+ box(car,.08,.2,1.25,paint,1.25,-.05,0,.03);
+ box(car,.08,.2,1.25,paint,-1.3,-.05,0,.03);
+ for(const x of [-1.08,1.08])for(const z of [-.73,.73]){
+   const tire=new THREE.Mesh(new THREE.CylinderGeometry(.39,.39,.22,24),rubber);tire.rotation.x=Math.PI/2;tire.position.set(x,-.38,z);car.add(tire);
+   const rimMesh=new THREE.Mesh(new THREE.CylinderGeometry(.22,.22,.235,16),alloy);rimMesh.rotation.x=Math.PI/2;rimMesh.position.set(x,-.38,z*1.01);car.add(rimMesh);
+   const hub=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,.245,12),rubber);hub.rotation.x=Math.PI/2;hub.position.set(x,-.38,z*1.02);car.add(hub);
+ }
+ for(const z of [-.42,.42]){box(car,.36,.11,.16,glass,1.53,-.12,z,.035);box(car,.35,.09,.13,lamp,1.62,-.12,z,.025);box(car,.24,.1,.12,new THREE.MeshStandardMaterial({color:0xff493c,emissive:0x68120b}),-1.63,-.13,z,.02)}
+ box(car,1.2,.06,1.12,glass,-.05,.5,0,.08);
+ const shadow=new THREE.Mesh(new THREE.CircleGeometry(1.9,48),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:.3}));shadow.rotation.x=-Math.PI/2;shadow.position.y=-.665;shadow.scale.set(1.2,.48,1);scene.add(shadow);
+ function resize(){const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.position.set(5.7/zoom,3.7/zoom,7.4/zoom);camera.updateProjectionMatrix()}
+ const observer=new ResizeObserver(resize);observer.observe(canvas);
+ canvas.addEventListener('pointerdown',e=>{dragging=true;lastX=e.clientX;lastY=e.clientY;canvas.setPointerCapture(e.pointerId)});
+ canvas.addEventListener('pointermove',e=>{if(!dragging)return;rotY+=(e.clientX-lastX)*.009;rotX=Math.max(-.55,Math.min(.45,rotX+(e.clientY-lastY)*.006));lastX=e.clientX;lastY=e.clientY});
+ const stopDrag=()=>dragging=false;canvas.addEventListener('pointerup',stopDrag);canvas.addEventListener('pointercancel',stopDrag);
+ canvas.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(.72,Math.min(1.55,zoom+(e.deltaY>0?-.06:.06)));resize()},{passive:false});
+ document.querySelector('#reset').addEventListener('click',()=>{rotX=-.12;rotY=.65;zoom=1;resize()});
+ spinButton.addEventListener('click',()=>{autoRotate=!autoRotate;spinButton.textContent='Auto-rotate: '+(autoRotate?'On':'Off');spinButton.setAttribute('aria-pressed',String(autoRotate))});
+ function animate(){requestAnimationFrame(animate);if(autoRotate&&!dragging)rotY+=.0025;car.rotation.set(rotX,rotY,0);renderer.render(scene,camera)}
+ resize();animate();status.innerHTML='<span class="dot"></span><span>Viewer aktif · WebGL berhasil diinisialisasi</span>';
+}catch(error){status.innerHTML='<span class="dot" style="background:#ff6b5e"></span><span class="error">Viewer 3D gagal dimuat. Periksa dukungan WebGL dan koneksi CDN.</span>';console.error('SurePath 3D POC failed:',error)}
+</script>
+</body>
+</html>

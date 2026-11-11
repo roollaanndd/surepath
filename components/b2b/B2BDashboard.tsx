@@ -11,7 +11,7 @@
 // the same lists B2BPortal already fetches and passes down.
 
 import React from 'react';
-import { FileCheck, FilePlus, Layers, Upload, Sparkles, ArrowRight, Clock, TrendingUp } from 'lucide-react';
+import { FileCheck, FilePlus, Layers, Upload, Sparkles, ArrowRight, Clock, TrendingUp, AlertTriangle } from 'lucide-react';
 import { Language } from '../../types';
 import type { SpB2BSubmission, SpB2BQuote, SpB2BBatch } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -32,10 +32,14 @@ interface Props {
   companyByClient?: Record<string, string>;
   lang: Language;
   /** When true, KPI + table areas render shimmering skeletons instead of
-   *  the "0" / "No submissions yet" empty state — distinguishes fetching
+   *  the "0" / "No submissions yet" empty state - distinguishes fetching
    *  from genuinely empty so a first-time client doesn't flash "0" at the
    *  user before their data arrives. */
   loading?: boolean;
+  /** v2.8.6 — portal data failed to load; show an honest banner with a retry
+   *  button instead of a dashboard that silently reads as "no data at all". */
+  loadError?: boolean;
+  onRetry?: () => void;
 }
 
 const STATUS_PILL: Record<string, { tone: B2BPillTone; id: string; en: string }> = {
@@ -66,7 +70,7 @@ const fmtDate = (iso: string, lang: Language) =>
 
 const B2BDashboard: React.FC<Props> = ({
   client, submissions, quotes, bulkBatches, onNavigate, onNavigateBulk,
-  onPathyOpen, companyByClient, lang, loading = false,
+  onPathyOpen, companyByClient, lang, loading = false, loadError, onRetry,
 }) => {
   const t = (en: string, id: string) => (lang === Language.EN ? en : id);
   const companyName = client?.company_name ?? client?.name ?? 'Perusahaan';
@@ -187,6 +191,28 @@ const B2BDashboard: React.FC<Props> = ({
           </B2BButton>
         </div>
       </div>
+
+      {/* ── Banner gagal muat (v2.8.6) — jujur soal data yang tidak lengkap ── */}
+      {loadError && (
+        <div role="alert" className="flex items-start gap-3 rounded-2xl border px-4 py-3"
+          style={{ background: 'rgba(245,158,11,0.08)', borderColor: 'rgba(245,158,11,0.35)' }}>
+          <AlertTriangle size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-amber-800 dark:text-amber-200">
+              {t('Some dashboard data could not be loaded.', 'Sebagian data dashboard belum dapat dimuat.')}
+            </p>
+            <p className="text-xs text-amber-700 dark:text-amber-200/80 mt-0.5">
+              {t('Numbers below may be incomplete.', 'Angka di bawah bisa jadi tidak lengkap.')}
+            </p>
+          </div>
+          {onRetry && (
+            <button type="button" onClick={onRetry}
+              className="flex-shrink-0 rounded-xl bg-indigo-600 px-3.5 py-2 text-2xs font-black uppercase tracking-wider text-white hover:bg-indigo-700 transition-colors">
+              {t('Retry', 'Coba lagi')}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* ── KPI strip ───────────────────────────────────────────────────── */}
       {loading ? (

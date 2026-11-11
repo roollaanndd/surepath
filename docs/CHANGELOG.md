@@ -1,6 +1,48 @@
-# SurePath — Changelog
+# SurePath - Changelog
 
-## v2.8.5 — 2026-11-07
+## v2.8.6 - 2026-11-11
+
+### B2B: login korporat premium + portal yang jujur soal kegagalan data
+
+Port dari PR #371 yang ditutup (branch lama berbasis v2.7.55 tertinggal dari
+desain ulang v2.8.3–v2.8.5) — dua bagian yang masih relevan dipindahkan ke
+branch baru dari main v2.8.5.
+
+**Login B2B premium (split desktop + transisi wipe)**
+
+- Layout split di desktop: panel brand hijau bertema buku besar (motif garis
+  ledger, tiga nilai produk: pengajuan satuan & impor armada, penawaran & PDF,
+  status transparan) di kiri; kartu kaca tetap di kanan — di mobile layout lama
+  dipertahankan.
+- Saat login berhasil: panel hijau **menyapu layar dari kiri ke kanan**
+  ("Selamat datang kembali" + progress bar) sebelum portal termuat di
+  bawahnya — terbaca sebagai login menyerahkan kendali ke portal. Semua
+  animasi hormat `prefers-reduced-motion`.
+- Logika autentifikasi tidak disentuh: pengecualian MASTER_ADMIN (mode pantau
+  v2.8.1), paksa ganti sandi `must_change_password` via email reset, dan
+  penolakan role lain tetap persis perilaku main.
+
+**Portal B2B — gagal muat tidak lagi menyamar jadi "kosong"**
+
+- `getB2BSubmissions`, `getAllB2BSubmissions`, `getB2BQuotes`,
+  `getAllB2BQuotes` (services/website.ts) dan `getB2BBulkBatches`
+  (services/b2bBulk.ts) kini **melempar error** alih-alih menelan jadi `[]`.
+  Array kosong terbaca "belum ada data" dan menyembunyikan kegagalan dari
+  klien; try/catch yang sudah ada di B2BSubmissions ternyata tidak pernah
+  terpicu karena itu.
+- **B2BPortal** menangkap kegagalan → **B2BDashboard** menampilkan banner
+  amber "Sebagian data dashboard belum dapat dimuat" + tombol **Coba lagi**
+  (angka KPI bisa jadi tidak lengkap — jujur soal itu).
+- **B2BQuotes** dan **B2BBulkBatches** (keduanya memuat data sendiri) dapat
+  try/catch + panel error dengan Coba lagi, menyamai pola yang sudah ada di
+  B2BSubmissions. B2BAdminView sudah aman (catch-nya sendiri).
+
+Verifikasi: eslint file terubah 0 error (warning deps pre-existing); vitest
+`services/__tests__/` penuh — 51 file lolos, 3 gagal = pre-existing lokal
+(theme/pwaInstall/onboardingIllustrations), bukan regresi. Versi `2.8.6`,
+Android `versionCode 63`.
+
+## v2.8.5 - 2026-11-07
 
 ### Admin: Unified AddUserWizard + KYC Matrix + Animated Charts (PR #1 dari 2)
 

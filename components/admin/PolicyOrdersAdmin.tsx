@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FileText, CheckCircle, XCircle, Clock, Eye, Upload, ChevronDown, Download, Link } from 'lucide-react';
+import { Upload, ChevronDown, Download, Link } from 'lucide-react';
 import {
   getAllOrders, updateOrderStatus, uploadPolicyDocument,
   addNotification, addCommission, getAgentProfile, getProductConfig, awardCoins,
@@ -18,15 +18,13 @@ import { FilterBar } from './shared/FilterBar';
 import { DetailDrawer } from './shared/DetailDrawer';
 import { AdminEmptyState } from './adminUI';
 import ModuleIcon from '../shared/ModuleIcon';
+import { ORDER_STATUS_META } from '../../lib/statusMeta';
 
-const STATUS_META: Record<SpPolicyOrder['status'], { label: string; color: string; Icon: any }> = {
-  SUBMITTED:    { label: 'Submitted',    color: 'bg-amber-500/10 text-amber-800 dark:text-amber-400',   Icon: Clock },
-  UNDER_REVIEW: { label: 'Under Review', color: 'bg-blue-500/10 text-blue-700 dark:text-blue-400',     Icon: Eye },
-  APPROVED:     { label: 'Approved',     color: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400', Icon: CheckCircle },
-  ISSUED:       { label: 'Issued',       color: 'bg-emerald-500/10 text-ds-green', Icon: FileText },
-  REJECTED:     { label: 'Rejected',     color: 'bg-rose-500/10 text-rose-700 dark:text-rose-300',     Icon: XCircle },
-  CANCELLED:    { label: 'Cancelled',    color: 'bg-slate-500/10 text-ds-ink3',   Icon: XCircle },
-};
+// Label + warna + ikon dari sumber tunggal lib/statusMeta (v2.8.7) — salinan
+// lokal sebelumnya melenceng dari adminUI/OperatorOrders untuk status yang sama.
+const STATUS_META = Object.fromEntries(
+  Object.entries(ORDER_STATUS_META).map(([k, m]) => [k, { label: m.label, color: m.badgeClass, Icon: m.Icon }]),
+) as Record<SpPolicyOrder['status'], { label: string; color: string; Icon: any }>;
 
 const AI_SCORE_COLOR = (score?: number) => {
   if (!score) return 'text-ds-ink3';

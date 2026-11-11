@@ -10,6 +10,7 @@ import { useT } from '../../src/i18n';
 import { getInsurerDashboard, submitInsurerDecisionAuthed, uploadInsurerPolicy, listInsurerOrderDocuments, type InsurerOrder, type InsurerOrderDocument } from '../../services/insurerService';
 import { publishAndDownloadQuotation } from '../../services/quotationService';
 import { fromCustomerOrder } from '../../services/quotationSlipAdapter';
+import { getStatusMeta } from '../../lib/statusMeta';
 import InsurerAIPanel from '../shared/InsurerAIPanel';
 import InsurerBulkBatches from './InsurerBulkBatches';
 import ModuleIcon from '../shared/ModuleIcon';
@@ -257,13 +258,7 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
       ) : (
         <div className="space-y-3">
           {filtered.map(o => {
-            const statusColor = {
-              SUBMITTED:     'bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400',
-              UNDER_REVIEW:  'bg-amber-50 text-ds-amber dark:bg-amber-950/30 dark:text-amber-400',
-              APPROVED:      'bg-emerald-50 text-ds-green dark:bg-emerald-950/30 dark:text-emerald-400',
-              ISSUED:        'bg-emerald-50 text-ds-green dark:bg-emerald-950/30 dark:text-emerald-400',
-              REJECTED:      'bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400',
-            }[o.status] ?? 'bg-ds-card2 text-ds-ink3';
+            const meta = getStatusMeta(o.status);
             return (
               <div key={o.id} className="p-4 rounded-2xl border border-ds-border bg-ds-card">
                 <div className="flex items-start justify-between gap-3">
@@ -273,8 +268,8 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
                     <p className="text-xs text-ds-ink2 mt-0.5">{o.product_name}</p>
                     <p className="text-xs text-ds-ink3 mt-1">{o.coverage_type} · {fmtIdr(o.total_premium)}</p>
                   </div>
-                  <span className={`text-2xs font-black uppercase tracking-wider px-2 py-1 rounded-full ${statusColor}`}>
-                    {o.status.replace('_', ' ')}
+                  <span className={`text-2xs font-black uppercase tracking-wider px-2 py-1 rounded-full ${meta.badgeClass}`}>
+                    {meta.label}
                   </span>
                 </div>
 
@@ -415,13 +410,8 @@ const InsurerOrders: React.FC<Props> = ({ authToken, lang, refreshTick }) => {
                         <p className={`text-2xs font-bold uppercase tracking-wider ${SHEET_TEXT_MUTED}`}>No. Order</p>
                         <p className={`text-sm font-mono font-bold ${SHEET_TEXT} mt-0.5`}>{selectedOrder.order_number ?? selectedOrder.id.slice(0, 8)}</p>
                       </div>
-                      <span className={`text-2xs font-black uppercase tracking-wider px-2 py-1 rounded-full ${
-                        selectedOrder.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
-                        : selectedOrder.status === 'ISSUED' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
-                        : selectedOrder.status === 'REJECTED' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400'
-                        : 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400'
-                      }`}>
-                        {selectedOrder.status.replace('_', ' ')}
+                      <span className={`text-2xs font-black uppercase tracking-wider px-2 py-1 rounded-full ${getStatusMeta(selectedOrder.status).badgeClass}`}>
+                        {getStatusMeta(selectedOrder.status).label}
                       </span>
                     </div>
                     <div className="mt-3 grid grid-cols-2 gap-3 text-xs">

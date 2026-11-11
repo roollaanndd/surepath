@@ -1,5 +1,47 @@
 # SurePath - Changelog
 
+## v2.8.7 - 2026-11-11
+
+### Status satu bahasa lintas app: lib/statusMeta jadi sumber tunggal + badge berbentuk (ikon)
+
+Port sisa kerja branch desain v3 (v2.7.20, tertinggal dari rebuild
+v2.7.35–v2.8.6) yang masih relevan di atas main v2.8.6. Audit menunjukkan
+konsolidasi status lama hanya menjangkau 3 file (adminUI, AdminViews,
+OperatorOrders); lima render site lain masih membawa salinan warna sendiri
+untuk status yang sama.
+
+**Badge status kini satu sumber di semua app**
+
+- `AgentOrderStatus` (Mitra), `PolicyOrdersAdmin` (Admin), `InsurerOrders`
+  (list + sheet) dan `InsurerDashboard` (status pill) tidak lagi memetakan
+  warna/label sendiri — semuanya membaca `lib/statusMeta`. Untuk ISSUED,
+  Mitra sebelumnya menampilkan "Polis Terbit" hijau ds-green sementara
+  Admin/Operator "Polis Aktif" emerald; kini sama.
+- `AdminStatusBadge` merender ikon bentuk dari statusMeta (aria-hidden):
+  status tetap terbaca bagi pengguna buta warna dan ketika dua status
+  berbagi keluarga warna.
+
+**Perbaikan pada peta itu sendiri**
+
+- Bug v2.8.6: ORDER `SUBMITTED` dan `UNDER_REVIEW` punya badgeClass persis
+  sama (amber) — dua status berbeda tak terbedakan. UNDER_REVIEW kini biru,
+  selaras dengan peta klaim.
+- `ISSUED` dan `PAID` sedikit lebih pekat agar tidak identik dengan
+  `APPROVED`; ikon tiap status dibuat unik per peta (Clock/Eye/CheckCircle/
+  FileText/XCircle/Ban/AlertCircle/BadgeCheck).
+- `CLAIM_STATUS_META` menambah `CLOSED` (ada di union `SpClaim['status']`,
+  sebelumnya hanya dipetakan lokal di AgentClaims).
+- Test baru `services/__tests__/statusMeta.test.ts`: peta menutup semua
+  union dbTypes (gagal kompilasi jika union bertambah), badgeClass valid,
+  tidak ada dua status dengan warna/ikon identik, fallback aman.
+
+**Drift versi ditutup total**
+
+- `package.json` tertinggal di "2.7.17" padahal app sudah 2.8.6 — kini ikut
+  disinkronkan. `scripts/sync-android-version.mjs` menjaga ketiga sumber
+  (src/version.ts, build.gradle, package.json); mode `--check` gagal jika
+  salah satu melenceng.
+
 ## v2.8.6 - 2026-11-11
 
 ### B2B: login korporat premium + portal yang jujur soal kegagalan data

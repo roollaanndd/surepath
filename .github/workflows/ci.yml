@@ -117,19 +117,16 @@ jobs:
         run: npm ci
 
       - name: Install Playwright Chromium
-        # v2.8.20: two attempts of the v2.8.20 push failed here with apt
-        # "Temporary failure resolving 'security.ubuntu.com'" — runner DNS
-        # outages last minutes, so retry instead of failing the whole job
-        # (the tests themselves were never reached).
-        timeout-minutes: 20
+        # v2.8.20: three CI attempts failed on apt DNS outages
+        # ("Temporary failure resolving 'security.ubuntu.com'") inside
+        # `--with-deps`, even with retries. The runner image ships Google
+        # Chrome and its shared-library set, so install the browser binary
+        # from the Playwright CDN (no apt) and treat system deps as
+        # best-effort instead of gating the job on a broken apt mirror.
         run: |
-          for i in 1 2 3 4; do
-            npx playwright install --with-deps chromium && exit 0
-            echo "::warning::Chromium install attempt $i failed; retrying in 75s"
-            sleep 75
-          done
-          echo "::error::Chromium install failed after 4 attempts"
-          exit 1
+          npx playwright install chromium
+          npx playwright install-deps chromium \
+            || echo "::warning::apt system deps unavailable (runner DNS outage); relying on preinstalled Chrome libraries"
 
       - name: Run local browser smoke tests
         run: npm run test:e2e

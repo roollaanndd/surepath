@@ -1,5 +1,24 @@
 # SurePath - Changelog
 
+## v2.8.15 - 2026-11-11
+
+### B2B kalender armada — unit mana jatuh tempo kapan, ekspor CSV untuk keuangan
+
+Eksekusi roadmap owner poin #12 (lanjutan alami order unit & bulk yang sudah
+ada di v2.8.8). Tab baru **"Kalender Armada"** di Portal B2B: seluruh polis
+unit milik klien (gateway `get_my_orders` mencakup pemilik agent_id ATAU
+client_id — klien B2B termasuk) mengalir ke antrean mesin retensi v2.8.12,
+lalu dikelompokkan per bulan jatuh tempo dengan chip urgensi berwarna
+(Kedaluwarsa / Segera / Dekat / Sehat). KPI baris atas: unit terlindungi,
+tempo ≤30 hari, kedaluwarsa. Tombol **CSV** mengunduh jadwal perpanjangan
+(nomor polis, produk, tanggal, tier, sisa hari) untuk kalender keuangan —
+deterministik dan aman-kutip (`fleetCsv`, diuji).
+
+Batasan yang diakui terbuka di layar: unit di dalam batch massal baru muncul
+setelah diterbitkan sebagai polis individual — penautan batch_item→
+policy_order adalah migration lanjutan, bukan di-fake di sini. Tidak ada
+perubahan API/DB/permission.
+
 ## v2.8.14 - 2026-11-11
 
 ### Dari log menjadi keputusan — kualitas layanan di dashboard admin + jam SLA di antrean operator

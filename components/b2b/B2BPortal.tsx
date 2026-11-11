@@ -11,7 +11,7 @@
 
 import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import {
-  LayoutDashboard, FileText, FileCheck, Layers, User, Sparkles, ShieldCheck,
+  LayoutDashboard, FileText, FileCheck, Layers, User, Sparkles, ShieldCheck, CalendarDays,
 } from 'lucide-react';
 import { Language, UserRole } from '../../types';
 import {
@@ -27,6 +27,7 @@ import {
   type B2BNavItem,
 } from './dashboard/ui';
 import B2BDashboard from './B2BDashboard';
+import B2BFleetCalendar from './B2BFleetCalendar';
 
 // Lazy-load the heavier screens — each holds its own feature logic (wizards,
 // XLSX parser, PDF builder) that isn't needed on the overview.
@@ -49,6 +50,7 @@ interface Props {
 // multifinance partner jump straight to Bulk without hunting a toggle.
 type Section =
   | 'dashboard'
+  | 'fleet'
   | 'new-unit' | 'new-single' | 'new-bulk'
   | 'submissions' | 'batches'
   | 'quotes'
@@ -112,6 +114,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
 
   const nav: B2BNavItem[] = useMemo(() => [
     { id: 'dashboard', label: t('Dashboard', 'Dashboard'), icon: LayoutDashboard },
+    { id: 'fleet', label: t('Fleet Renewals', 'Kalender Armada'), icon: CalendarDays },
     {
       id: 'submissions', label: t('Requests', 'Pengajuan'), icon: FileText,
       badge: submissions.filter(s => s.status === 'SUBMITTED' || s.status === 'REVIEWING').length,
@@ -138,6 +141,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
   const breadcrumb = useMemo((): string[] => {
     switch (activeId) {
       case 'dashboard':   return [t('Portal B2B', 'Portal B2B'), t('Dashboard', 'Dashboard')];
+      case 'fleet':       return [t('Portal B2B', 'Portal B2B'), t('Fleet Renewals', 'Kalender Armada')];
       case 'new-unit':    return [t('Portal B2B', 'Portal B2B'), t('Create', 'Buat'), t('Unit Order', 'Order Unit')];
       case 'new-single':  return [t('Portal B2B', 'Portal B2B'), t('Create', 'Buat'), t('New Request', 'Pengajuan Baru')];
       case 'new-bulk':    return [t('Portal B2B', 'Portal B2B'), t('Create', 'Buat'), t('Bulk Import', 'Impor Massal')];
@@ -177,6 +181,9 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
     }
 
     switch (activeId) {
+      case 'fleet':
+        return <B2BFleetCalendar lang={lang} />;
+
       case 'dashboard':
         return (
           <B2BDashboard

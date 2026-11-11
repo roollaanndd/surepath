@@ -21,6 +21,7 @@ import {
 } from '../../services/supabaseService';
 import ModuleIcon from '../shared/ModuleIcon';
 import { useConfirmDialog } from '../ui';
+import { getB2BBulkBatch, type SpB2BBatchItem } from '../../services/b2bBulk';
 import AddUserWizard, { type WizardCredential } from './AddUserWizard';
 
 interface InsurerOption { id: string; name: string; }
@@ -408,6 +409,33 @@ const BulkBatchCard: React.FC<{ batch: SpB2BBatch; insurers: InsurerOption[]; on
   const [assigningInsurer, setAssigningInsurer] = useState(false);
   const [err, setErr] = useState('');
 
+  // FIX v2.8.20 (audit 2026-11-11): admin sebelumnya tidak bisa melihat isi
+  // baris batch — kartu hanya menampilkan agregat, padahal aksi gateway
+  // b2b_bulk_get_batch sudah tersedia. Panel detail menampilkan item per baris
+  // (nasabah, unit, zona, TSI, premi, flag) + status faktur terakhir.
+  const [showDetail, setShowDetail] = useState(false);
+  const [detailItems, setDetailItems] = useState<SpB2BBatchItem[] | null>(null);
+  const [detailPayment, setDetailPayment] = useState<{ invoice_url?: string; status?: string } | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailErr, setDetailErr] = useState('');
+
+  const loadDetail = async () => {
+    if (detailLoading) return;
+    setDetailLoading(true);
+    setDetailErr('');
+    const res = await getB2BBulkBatch(batch.id);
+    setDetailLoading(false);
+    if (!res) { setDetailErr('Gagal memuat detail batch. Coba lagi.'); return; }
+    setDetailItems(res.items ?? []);
+    setDetailPayment(res.payment ?? null);
+  };
+
+  const toggleDetail = () => {
+    const next = !showDetail;
+    setShowDetail(next);
+    if (next && !detailItems) void loadDetail();
+  };
+
   const handleAssignInsurer = async (insurerId: string) => {
     if (!insurerId) return;
     setAssigningInsurer(true);
@@ -465,6 +493,84 @@ const BulkBatchCard: React.FC<{ batch: SpB2BBatch; insurers: InsurerOption[]; on
             {insurers.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
           </select>
           {assigningInsurer && <Loader2 size={12} className="animate-spin text-ds-ink3" />}
+        </div>
+      )}
+
+      {/* Detail unit per baris — aksi gateway b2b_bulk_get_batch (admin diizinkan) */}
+      <button
+        onClick={toggleDetail}
+        className="flex items-center gap-2 text-xs font-semibold text-ds-green hover:underline"
+      >
+        {showDetail ? <ChevronUp size={14} /> : <Plus size={14} />}
+        {showDetail ? 'Tutup Detail Unit' : 'Detail Unit'}
+      </button>
+
+      {showDetail && (
+        <div className="mt-1 rounded-2xl border border-ds-border bg-slate-50 dark:bg-ds-card2 p-3 space-y-2">
+          {detailLoading && (
+            <div className="flex items-center gap-2 py-3 text-2xs text-ds-ink3">
+              <Loader2 size={13} className="animate-spin" /> Memuat detail unit…
+            </div>
+          )}
+          {!detailLoading && detailErr && (
+            <div className="flex items-center justify-between gap-2 py-1">
+              <p className="text-2xs font-bold text-rose-700 dark:text-rose-300 flex items-center gap-1"><AlertTriangle size={12} />{detailErr}</p>
+              <button onClick={() => void loadDetail()} className="text-2xs font-bold text-ds-green hover:underline">Coba lagi</button>
+            </div>
+          )}
+          {!detailLoading && detailItems && detailItems.length === 0 && (
+            <p className="text-2xs text-ds-ink3 py-2">Batch ini tidak memiliki baris unit.</p>
+          )}
+          {!detailLoading && detailItems && detailItems.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="w-full text-2xs">
+                <thead>
+                  <tr className="text-left text-ds-ink3 uppercase tracking-wider">
+                    <th className="py-1.5 pr-2 font-black">No</th>
+                    <th className="py-1.5 pr-2 font-black">Nasabah</th>
+                    <th className="py-1.5 pr-2 font-black">Unit</th>
+                    <th className="py-1.5 pr-2 font-black">Plat</th>
+                    <th className="py-1.5 pr-2 font-black">Zona</th>
+                    <th className="py-1.5 pr-2 font-black text-right">TSI</th>
+                    <th className="py-1.5 pr-2 font-black text-right">Premi Total</th>
+                    <th className="py-1.5 pr-2 font-black">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="text-ds-ink2">
+                  {detailItems.map(it => (
+                    <tr key={it.id} className="border-t border-ds-border/60">
+                      <td className="py-1.5 pr-2 font-mono">{it.row_no}</td>
+                      <td className="py-1.5 pr-2 font-bold text-ds-ink dark:text-white max-w-[160px] truncate" title={it.nasabah_name}>{it.nasabah_name}</td>
+                      <td className="py-1.5 pr-2 max-w-[170px] truncate" title={[it.make, it.model, it.model_year].filter(Boolean).join(' ') || it.vehicle_class}>
+                        {[it.make, it.model, it.model_year].filter(Boolean).join(' ') || it.vehicle_class}
+                      </td>
+                      <td className="py-1.5 pr-2 font-mono">{it.plate_no ?? '—'}</td>
+                      <td className="py-1.5 pr-2">{it.zone}</td>
+                      <td className="py-1.5 pr-2 text-right tabular-nums">{fmtIDRBulk(it.financing_value)}</td>
+                      <td className="py-1.5 pr-2 text-right tabular-nums font-bold">{fmtIDRBulk(it.total_premium)}</td>
+                      <td className="py-1.5 pr-2">
+                        {it.flags.length > 0 ? (
+                          <span title={it.flags.join('\n')} className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-1.5 py-0.5 font-black text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                            <AlertTriangle size={10} /> {it.flags.length}
+                          </span>
+                        ) : (
+                          <span className={`rounded-full px-1.5 py-0.5 font-black ${it.status === 'ISSUED' ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-ds-ink2 dark:bg-white/10'}`}>{it.status}</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {!detailLoading && detailPayment && (
+            <p className="text-2xs text-ds-ink3 pt-1 border-t border-ds-border/60">
+              Faktur terakhir: <span className="font-bold">{detailPayment.status ?? '—'}</span>
+              {detailPayment.invoice_url && (
+                <> · <a href={detailPayment.invoice_url} target="_blank" rel="noreferrer" className="font-bold text-ds-green hover:underline">buka tautan</a></>
+              )}
+            </p>
+          )}
         </div>
       )}
 

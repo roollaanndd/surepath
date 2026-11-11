@@ -1,5 +1,61 @@
 # SurePath - Changelog
 
+## v2.8.20 - 2026-11-11
+
+### Hardening alur penawaran B2B + notifikasi pengajuan baru (audit follow-up)
+
+Hasil audit fitur B2B (order satuan & penawaran) 11 Nov 2026 — yang hilang,
+kurang, dan tidak aman kini ditutup:
+
+1. **Sirkuit keputusan penawaran (P0)** — tombol Terima/Tolak di portal B2B
+   dulu menulis satu kolom langsung dari peramban (`updateB2BQuoteStatus`):
+   admin tidak diberi kabar apa pun dan status pengajuan induk selamanya
+   tampak QUOTED. Kini lewat aksi gateway baru **`b2b_decide_quote`**
+   (actions/b2bBulk.ts): hanya `B2B_CLIENT` pemilik penawaran yang boleh
+   memutuskan (MASTER_ADMIN mode pantau ditolak di server, bukan hanya
+   disembunyikan di UI), hanya status `PENDING` yang bisa diputus (keputusan
+   ganda ditolak 409), status pengajuan disinkronkan ke
+   ACCEPTED/REJECTED, dan notifikasi `B2B_QUOTE_DECIDED` masuk ke admin
+   lengkap dengan nama perusahaan, penanggung, dan nilai premi.
+2. **Notifikasi pengajuan baru (P0)** — wizard "Pengajuan Baru" dulu insert
+   langsung tanpa kabar; admin baru tahu kalau kebetulan membuka tab. Trigger
+   `trg_b2b_submission_notify` (AFTER INSERT, SECURITY DEFINER — pola
+   `notify_new_withdrawal`) kini menulis `B2B_SUBMISSION_NEW` untuk setiap
+   jalur insert.
+3. **RLS tiga tabel B2B diganti set deterministik** — policy lama dibuat
+   out-of-band (dashboard) dan tidak terdokumentasi. Migrasi
+   `20261111140000_b2b_quotes_submissions_hardening.sql` me-replace seluruh
+   policy `sp_b2b_quotes` / `sp_b2b_submissions` / `sp_b2b_documents`:
+   klien hanya SELECT (+INSERT pengajuan miliknya), admin hanya SELECT,
+   penulisan lain hanya service_role via gateway. Helper
+   `sp_b2b_own_client_id()` (auth.uid() ATAU email persis — akun legacy, tanpa
+   pattern-match) dan `sp_b2b_is_admin()` (7 role, cermin `ADMIN_ROLES`).
+4. **Trigger integritas pengajuan** — `trg_b2b_submission_integrity`
+   (BEFORE INSERT) memaksa `status='SUBMITTED'`, memvalidasi `product_type`,
+   dan mengosongkan `admin_notes`, sehingga status pengajuan tidak bisa
+   dipalsukan lewat insert langsung.
+5. **FIX bug skema `admin_create_b2b_quote`** — aksi lama membaca
+   `insurer_id`/`premium` padahal UI mengirim `insurer_name`/`premium_amount`/
+   `valid_until`/`terms`: setiap penawaran tersimpan dengan penanggung kosong
+   dan premi Rp 0. Aksi kini menerima bentuk kanonik SpB2BQuote, mengambil
+   `client_id` dari baris pengajuan (bukan params), menvalidasi isian, dan
+   menyeragamkan status pengajuan ke QUOTED di server; kolom yang tidak ada di
+   skema live dilempar progresif (toleran drift).
+6. **Detail unit batch untuk admin (P2)** — kartu batch di tab Bulk Batches
+   dulu hanya agregat; kini ada panel "Detail Unit" yang memanggil
+   `b2b_bulk_get_batch` (aksi sudah ada, UI belum pernah memakainya):
+   tabel per baris (nasabah, unit, plat, zona, TSI, premi total, flag,
+   status item) + status faktur terakhir.
+7. **Migrasi + verifikasi** — `supabase/migrations/20261111140000_*.sql`
+   idempotent (guard `to_regclass` untuk tabel out-of-band); skrip
+   apply-and-verify `scripts/apply_migration_20261111140000.py` (env `SBP`);
+   keadaan dicatat di `docs/DATABASE_STATE.md`. Aksi gateway terdeploy otomatis
+   via integrasi Supabase-GitHub setelah push.
+
+Catatan deploy: migrasi WAJIB diapply sebelum (atau bersamaan dengan) deploy
+aksi `b2b_decide_quote` — tanpa RLS baru tombol Terima/Tolak masih berfungsi,
+tanpa aksi gateway tombol menjadi gagal (fail-closed, bukan fail-open).
+
 ## v2.8.19 - 2026-11-11
 
 ### Mesin premi armada disesuaikan arahan owner (formula eksak)

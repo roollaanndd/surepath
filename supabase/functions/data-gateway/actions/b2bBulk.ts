@@ -246,6 +246,58 @@ export async function handleB2BBulkAction(action: string, ctx: GatewayContext): 
       return ok({ batch: { ...batch, master_policy_signed_url: masterPolicySignedUrl }, items: items ?? [], payment: payment ?? null });
     }
 
+    // ── Client: decide an insurer quote ─────────────────────────────────────
+    // FIX v2.8.20 (audit 2026-11-11): keputusan penawaran sebelumnya ditulis
+    // langsung dari peramban (update satu kolom tanpa verifikasi apa pun) —
+    // tidak ada notifikasi ke admin, status pengajuan induk tidak ikut
+    // berubah, dan keandalan transisinya bergantung sepenuhnya pada RLS.
+    // Kini satu aksi gateway: hanya pemilik penawaran (B2B_CLIENT) yang boleh
+    // memutuskan (MASTER_ADMIN mode pantau sengaja ditolak — sama seperti UI),
+    // hanya PENDING yang boleh diputus (keputusan kedua ditolak), status
+    // pengajuan disinkronkan, dan admin diberi notifikasi.
+    case 'b2b_decide_quote': {
+      if (caller.role !== 'B2B_CLIENT') return err('Forbidden: keputusan penawaran hanya untuk klien korporat pemiliknya', 403);
+      const clientId = caller.spUser?.id;
+      if (!clientId) return err('No B2B profile', 403);
+      const quoteId = String(params.quote_id ?? '');
+      const decision = String(params.decision ?? '').toUpperCase();
+      if (!quoteId) return err('quote_id required', 400);
+      if (decision !== 'ACCEPTED' && decision !== 'REJECTED') return err('decision harus ACCEPTED atau REJECTED', 400);
+
+      const { data: quote, error: qErr } = await db.from('sp_b2b_quotes')
+        .select('id, submission_id, client_id, insurer_name, premium_amount, status')
+        .eq('id', quoteId).maybeSingle();
+      if (qErr) return err(qErr.message, 400);
+      if (!quote) return err('Penawaran tidak ditemukan', 404);
+      if (quote.client_id !== clientId) return err('Forbidden: bukan penawaran Anda', 403);
+      if (quote.status !== 'PENDING') return err(`Penawaran sudah diputuskan sebelumnya (status: ${quote.status})`, 409);
+
+      const ts = new Date().toISOString();
+      const { data: updatedQuote, error: updErr } = await db.from('sp_b2b_quotes')
+        .update({ status: decision, updated_at: ts })
+        .eq('id', quoteId).eq('status', 'PENDING')
+        .select().maybeSingle();
+      if (updErr) return err(updErr.message, 400);
+      if (!updatedQuote) return err('Penawaran sudah diputuskan sebelumnya', 409);
+
+      // Sinkronkan pipeline pengajuan induk — tanpa ini pengajuan selamanya
+      // tampak QUOTED walaupun klien sudah setuju atau menolak.
+      const { data: submission } = await db.from('sp_b2b_submissions')
+        .update({ status: decision, updated_at: ts })
+        .eq('id', quote.submission_id)
+        .select('id, company_name, status').maybeSingle();
+
+      await db.from('sp_admin_notifications').insert({
+        type: 'B2B_QUOTE_DECIDED',
+        title: `Penawaran ${decision === 'ACCEPTED' ? 'Diterima' : 'Ditolak'} — ${submission?.company_name ?? 'Klien B2B'}`,
+        body: `${submission?.company_name ?? 'Klien korporat'} ${decision === 'ACCEPTED' ? 'MENERIMA' : 'menolak'} penawaran ${quote.insurer_name ?? '(tanpa penanggung)'} senilai Rp ${Number(quote.premium_amount ?? 0).toLocaleString('id-ID')}. ${decision === 'ACCEPTED' ? 'Tindak lanjuti: konversi ke order / terbitkan dokumen.' : 'Tidak perlu tindak lanjut.'}`,
+        metadata: { quote_id: quoteId, submission_id: quote.submission_id, decision, premium_amount: quote.premium_amount ?? null },
+        read: false,
+      }).then(() => {}, () => {});
+
+      return ok({ quote: updatedQuote, submission: submission ?? null });
+    }
+
     // ── Admin: issue the master policy for a PAID batch ────────────────────
     // ── Admin: signed upload URL for the master policy file ────────────────
     // b2b-documents' INSERT storage policy only allows

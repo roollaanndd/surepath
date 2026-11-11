@@ -722,10 +722,12 @@ export async function updateB2BQuoteStatus(
   quoteId: string,
   status: 'ACCEPTED' | 'REJECTED'
 ): Promise<boolean> {
-  const { error } = await supabase
-    .from('sp_b2b_quotes')
-    .update({ status, updated_at: new Date().toISOString() })
-    .eq('id', quoteId);
+  // FIX v2.8.20 (audit 2026-11-11): dulu update langsung dari peramban —
+  // tanpa verifikasi kepemilikan, tanpa sinkron status pengajuan, tanpa
+  // notifikasi admin. Sekarang lewat aksi gateway b2b_decide_quote yang
+  // menegaskan ketiganya di server (lihat actions/b2bBulk.ts).
+  const { error } = await callGateway('b2b_decide_quote', { quote_id: quoteId, decision: status })
+    .then(r => r.error ? { error: r.error } : { error: null });
   if (error) { console.error('updateB2BQuoteStatus:', error); return false; }
   return true;
 }

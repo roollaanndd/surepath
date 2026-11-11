@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Clock, Eye, CheckCircle, XCircle, Download, ChevronRight, RefreshCw, CreditCard, Loader2, ExternalLink } from 'lucide-react';
+import { CheckCircle, Download, ChevronRight, RefreshCw, CreditCard, Loader2, ExternalLink } from 'lucide-react';
+import { ORDER_STATUS_META } from '../../lib/statusMeta';
 import { Language } from '../../types';
 import {
   getAgentOrders, getPaymentsByOrderIds,
@@ -17,14 +18,12 @@ interface Props {
   lang: Language;
 }
 
-const STATUS_META: Record<SpPolicyOrder['status'], { en: string; id: string; color: string; Icon: any }> = {
-  SUBMITTED:    { en: 'Submitted',    id: 'Diajukan',    color: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',       Icon: Clock },
-  UNDER_REVIEW: { en: 'In Review',    id: 'Ditinjau',    color: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400',            Icon: Eye },
-  APPROVED:     { en: 'Approved',     id: 'Disetujui',   color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400', Icon: CheckCircle },
-  ISSUED:       { en: 'Policy Issued',id: 'Polis Terbit', color: 'bg-ds-green/10 text-ds-green',                                            Icon: FileText },
-  REJECTED:     { en: 'Rejected',     id: 'Ditolak',     color: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400',             Icon: XCircle },
-  CANCELLED:    { en: 'Cancelled',    id: 'Dibatalkan',  color: 'bg-slate-100 text-slate-500 dark:bg-slate-500/20 dark:text-slate-400',         Icon: XCircle },
-};
+// Label + warna + ikon dari sumber tunggal lib/statusMeta (v2.8.7) — sebelumnya
+// "Polis Terbit" warna ds-green berbeda dari "Polis Aktif" di admin/operator
+// untuk status ISSUED yang sama.
+const STATUS_META = Object.fromEntries(
+  Object.entries(ORDER_STATUS_META).map(([k, m]) => [k, { en: m.labelEn, id: m.label, color: m.badgeClass, Icon: m.Icon }]),
+) as Record<SpPolicyOrder['status'], { en: string; id: string; color: string; Icon: any }>;
 
 // ── Detail Sheet ─────────────────────────────────────────────────────────────
 

@@ -1,9 +1,9 @@
 // AppSelector.tsx — Multi-app picker screen.
-// Shown when a user has more than 1 entry in sp_users.allowed_apps.
-// User picks which app to enter; we then navigate to that app's route.
-//
-// The selected app is remembered in localStorage so the next login auto-routes
-// (until user explicitly logs out, which clears the choice).
+// Shown when a user has more than 1 entry in the normalized effective app
+// list (routeHelpers.effectiveAppsFor — v2.8.9: agents never see a Customer
+// App card here). User picks which app to enter; we then navigate to that
+// app's route. The choice is NOT persisted across sessions — boot routing
+// always re-derives from role + allowed_apps (resolvePortalPath).
 
 import React, { useState } from 'react';
 import { ArrowRight, LogOut } from 'lucide-react';

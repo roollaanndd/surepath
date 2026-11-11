@@ -1,5 +1,157 @@
 # SurePath - Changelog
 
+## v2.8.9 - 2026-11-11
+
+### Jejak aktivitas yang menjawab "apa yang dikerjakan" + agen terkunci di app agen + referral sinkron database
+
+Tiga perbaikan atas komplain owner (11 Nov 2026).
+
+**Log admin sekarang jelas (komplain: hanya "Get My Notifications" tanpa
+detail).** Aksi polling notifikasi yang dinyalakan timer tiap portal terbuka
+(30–60 detik sekali, ratusan baris per jam per perangkat) tidak ditulis lagi
+ke jejak — kebisingannya menenggelamkan aksi bermakna, termasuk kolom "Paling
+Sering" di ringkasan. Setiap baris jejak kini membawa kolom `detail`: ringkasan
+apa yang dikerjakan (nomor order, email target, status, jumlah), dibangun
+dispatcher gateway HANYA dari whitelist kunci aman — stance privasi tidak
+berubah, NIK/foto/kata sandi tetap tidak pernah disalin. Kolom Target juga
+kini mengenali seluruh kunci pengenal umum (dulu hanya 5, mayoritas baris
+kosong). CMS (Jejak Aktivitas → rinci) menampilkan kolom Detail menggantikan
+kolom Parameter yang dulu hanya berisi nama kunci. Migration menambah kolom
+`sp_activity_log.detail`.
+
+**Agen tidak bisa lagi berpindah ke app nasabah (komplain: kadang masih
+terjadi).** Satu-satunya jalan agen masuk app nasabah adalah `allowed_apps`
+yang mengandung 'CUSTOMER' — array basi dari backfill lama atau hibah manual:
+itu yang membuat kartu "Customer App" muncul di selector, guard mengizinkan
+/custapp, dan (terburuk) `hasAppAccess` menolak agen di /agapps sehingga
+catch-all CustomerPortal justru merender di URL milik agen. Kini
+`effectiveAppsFor`/`hasAppAccess`/guard memakai satu aturan role-authoritative
+dari routeHelpers: agen hanya berada di app agen, hibah 'CUSTOMER' diabaikan
+di semua titik; selector memakai daftar yang sama (entri raw-role nama lama
+tidak lagi menjadi kartu hantu). Di server, migration membersihkan 'CUSTOMER'
+dari allowed_apps baris AGENT dan trigger `sync_allowed_apps_with_role`
+diperluas menegakkannya permanen — admin_update_user tidak bisa
+mengintroduksi ulang drift.
+
+**Referral tidak lagi gugup (komplain: kode upline di app tidak sinkron
+dengan database, downline tidak masuk).** Tiga akar masalah ditutup:
+(1) lookup upline memakai `.or().maybeSingle()` — satu kode dicocokkan lebih
+dari satu baris (agent_code 4 digit berbenturan) dan lookup gagal SENYAP;
+kini kandidat diambil semua dan pemenang dipilih deterministik
+(`pickUplineMatch`: referral_code → agent_code → terlama), termasuk di
+pembuatan mitra oleh admin; (2) benturan kode dicegah — data lama didedupe
+migration, unique index dipasang pada agent_code & referral_code, dan
+pembangkit kode baru memverifikasi keunikan sebelum insert (format tetap
+persis, pembangkit kriptografis dari codes.ts); (3) app agen kini membaca
+kode rujukan langsung dari database (`referral_code` kanonik, dibackfill
+dari agent_code) alih-alih memakai salinan sesi yang bisa basi atau fallback
+lokal yang difabrikasi — kode yang dibagikan pasti sama dengan yang
+dicocokkan server, dan pencocokan juga case-insensitive.
+
+Deploy: edge function `data-gateway` berubah (detail, noise-skip, referral,
+kode unik) dan migration harus diterapkan — keduanya berjalan otomatis lewat
+integrasi Supabase-GitHub saat merge ke main.
+
+## v2.8.8 - 2026-11-11
+
+### Order unit B2B (mobil & alat berat) + kata sandi manual permanen + watermark & proteksi layar admin
+
+Tiga permintaan owner (11 Nov 2026): order kendaraan satuan dari portal B2B
+memakai rate/skema yang ada, kata sandi manual B2B yang tidak dipaksa reset,
+serta penguatan dashboard admin (klik animation, watermark logo, anti-print).
+
+**Order Unit di portal B2B — mobil, motor, dan alat berat**
+
+- Layar baru "Buat → Order Unit" (`B2BUnitOrder`): pilih kelas kendaraan
+  (Mobil / Motor / Alat Berat), isi unit (merk, tipe, tahun), plat & wilayah
+  untuk deteksi zona (override manual tersedia), TSI, tenor, dan data
+  nasabah/kontrak — lalu submit satu order tanpa spreadsheet.
+- Preview premi live memakai mesin rating yang sama dengan impor massal
+  (`buildLineItem`/`calcBulkPremium`) dan flag yang sama (zona tak terdeteksi,
+  OTR kosong, dsb.). Server tetap menghitung ulang otoritatif lewat
+  `b2b_bulk_create_batch` — order satuan = batch 1 item, jadi invoice Xendit
+  per batch, status DRAFT→…→ISSUED, dan penerbitan polis induk semuanya
+  berjalan di jalur yang sudah teruji tanpa aksi gateway baru.
+- Rate alat berat (0.85%), rate pickup/truk per zona, diskon standar/heavy,
+  biaya admin per kelas (25rb/45rb/65rb), dan minimum premi semuanya tetap
+  satu sumber: `sp_b2b_fleet_rate_sets`, dapat diubah kapan pun admin lewat
+  CMS → Katalog & Harga → Rate Fleet B2B (versi + aktivasi). Kartu skema aktif
+  ditampilkan di form supaya klien melihat dasar harganya.
+- Master Admin tetap mode pantau: tidak bisa membuat order (konsisten dengan
+  Pengajuan Baru/Impor Massal).
+
+**Kata sandi manual B2B berlaku permanen**
+
+- `admin_create_b2b_user` (mode password) tidak lagi menyetel
+  `must_change_password` — pengguna korporat langsung login dengan sandi yang
+  di-set MASTER_ADMIN, tanpa email reset. Parameter `require_change: true`
+  tersedia bila perilaku lama dibutuhkan.
+- `admin_set_mitra_temp_password` kini menerima target `B2B_CLIENT` (default
+  tanpa wajib ganti, selaras di atas) + parameter kata sandi kustom opsional;
+  layar Pengguna Korporat mendapat tombol "Setel Sandi" per pengguna — sandi
+  baru juga berlaku permanen dan tampil sekali di banner kuning.
+- Teks wizard/banner (AddUserWizard, B2BAdminView) disesuaikan; AGENT dan user
+  internal mempertahankan perilaku wajib ganti. 9 test baru di
+  `mitraAccounts.test.ts` mengunci kontrak ini (30 test modul, semua lulus).
+- Catatan deploy: perubahan ada di edge function `data-gateway` — perlu
+  deploy Supabase seperti biasa.
+
+**Dashboard admin: klik animation, watermark, anti-printscreen**
+
+- Klik animation global: elemen interaktif mengecil halus (scale 0.97) saat
+  ditekan, di admin (`sp-admin-root`) dan portal B2B (`sp-b2b-root`),
+  hormat `prefers-reduced-motion` (portal-modernization.css §5b).
+- Watermark logo SurePath di dashboard admin: fixed, transparan (~5%),
+  non-interaktif, di atas konten di bawah modal — mengikuti logo kustom yang
+  diunggah admin di Pengaturan.
+- Anti-printscreen/anti-print (deteren level UX, bukan keamanan absolut —
+  catatan anti-inspect lama di index.html tetap jadi pegangan): PrintScreen
+  menampilkan shield + menimpa clipboard; Ctrl/Cmd+P diblokir; `@media print`
+  menyembunyikan seluruh root admin dan menggantinya dengan satu baris
+  penjelasan.
+
+## v2.8.7 - 2026-11-11
+
+### Status satu bahasa lintas app: lib/statusMeta jadi sumber tunggal + badge berbentuk (ikon)
+
+Port sisa kerja branch desain v3 (v2.7.20, tertinggal dari rebuild
+v2.7.35–v2.8.6) yang masih relevan di atas main v2.8.6. Audit menunjukkan
+konsolidasi status lama hanya menjangkau 3 file (adminUI, AdminViews,
+OperatorOrders); lima render site lain masih membawa salinan warna sendiri
+untuk status yang sama.
+
+**Badge status kini satu sumber di semua app**
+
+- `AgentOrderStatus` (Mitra), `PolicyOrdersAdmin` (Admin), `InsurerOrders`
+  (list + sheet) dan `InsurerDashboard` (status pill) tidak lagi memetakan
+  warna/label sendiri — semuanya membaca `lib/statusMeta`. Untuk ISSUED,
+  Mitra sebelumnya menampilkan "Polis Terbit" hijau ds-green sementara
+  Admin/Operator "Polis Aktif" emerald; kini sama.
+- `AdminStatusBadge` merender ikon bentuk dari statusMeta (aria-hidden):
+  status tetap terbaca bagi pengguna buta warna dan ketika dua status
+  berbagi keluarga warna.
+
+**Perbaikan pada peta itu sendiri**
+
+- Bug v2.8.6: ORDER `SUBMITTED` dan `UNDER_REVIEW` punya badgeClass persis
+  sama (amber) — dua status berbeda tak terbedakan. UNDER_REVIEW kini biru,
+  selaras dengan peta klaim.
+- `ISSUED` dan `PAID` sedikit lebih pekat agar tidak identik dengan
+  `APPROVED`; ikon tiap status dibuat unik per peta (Clock/Eye/CheckCircle/
+  FileText/XCircle/Ban/AlertCircle/BadgeCheck).
+- `CLAIM_STATUS_META` menambah `CLOSED` (ada di union `SpClaim['status']`,
+  sebelumnya hanya dipetakan lokal di AgentClaims).
+- Test baru `services/__tests__/statusMeta.test.ts`: peta menutup semua
+  union dbTypes (gagal kompilasi jika union bertambah), badgeClass valid,
+  tidak ada dua status dengan warna/ikon identik, fallback aman.
+
+**Drift versi ditutup total**
+
+- `package.json` tertinggal di "2.7.17" padahal app sudah 2.8.6 — kini ikut
+  disinkronkan. `scripts/sync-android-version.mjs` menjaga ketiga sumber
+  (src/version.ts, build.gradle, package.json); mode `--check` gagal jika
+  salah satu melenceng.
+
 ## v2.8.6 - 2026-11-11
 
 ### B2B: login korporat premium + portal yang jujur soal kegagalan data

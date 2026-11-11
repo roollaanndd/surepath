@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Plus, X, ChevronRight, AlertCircle, CheckCircle, Clock, XCircle, Search } from 'lucide-react';
+import { Plus, X, ChevronRight, Search } from 'lucide-react';
+import { CLAIM_STATUS_META } from '../../lib/statusMeta';
 import { Language } from '../../types';
 import {
   getAgentClaims, submitClaim, getAgentPolicies,
@@ -16,16 +17,12 @@ interface Props {
 
 type ClaimStatus = SpClaim['status'] | 'ALL';
 
-const STATUS_META: Record<SpClaim['status'], { label: string; labelId: string; color: string; Icon: any }> = {
-  SUBMITTED:    { label: 'Submitted',    labelId: 'Diajukan',      color: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',   Icon: Clock },
-  UNDER_REVIEW: { label: 'Under Review', labelId: 'Ditinjau',      color: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400',        Icon: AlertCircle },
-  APPROVED:     { label: 'Approved',     labelId: 'Disetujui',     color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400', Icon: CheckCircle },
-  REJECTED:     { label: 'Rejected',     labelId: 'Ditolak',       color: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400',          Icon: XCircle },
-  // FIX 2026-10-26: PAID is the real terminal "claim settled" state the gateway
-  // allows (admin_update_claim allowlist); CLOSED was never accepted upstream.
-  PAID:         { label: 'Paid',         labelId: 'Dibayarkan',    color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400', Icon: CheckCircle },
-  CLOSED:       { label: 'Closed',       labelId: 'Ditutup',       color: 'bg-slate-100 text-slate-500 dark:bg-slate-500/20 dark:text-slate-400',      Icon: FileText },
-};
+// Label + warna + ikon dari sumber tunggal lib/statusMeta (v2.8.7). PAID adalah
+// status akhir klaim yang benar (allowlist admin_update_claim) dan CLOSED kini
+// dipetakan di peta bersama, bukan hanya di sini.
+const STATUS_META = Object.fromEntries(
+  Object.entries(CLAIM_STATUS_META).map(([k, m]) => [k, { label: m.labelEn, labelId: m.label, color: m.badgeClass, Icon: m.Icon }]),
+) as Record<SpClaim['status'], { label: string; labelId: string; color: string; Icon: any }>;
 
 const PRODUCT_ICONS: Record<string, any> = { CAR: moduleIcon('car_protection'), TRAVEL: moduleIcon('travel_safe'), PA: moduleIcon('personal_safety'), MPAR: moduleIcon('item_shield') };
 

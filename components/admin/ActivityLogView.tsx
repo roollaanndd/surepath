@@ -25,6 +25,9 @@ interface LogRow {
   http_status: number | null;
   duration_ms: number | null;
   param_keys: string[] | null;
+  /** Ringkasan aksi dari whitelist kunci aman (v2.8.9) — menjawab "apa yang
+   *  dikerjakan", bukan sekadar nama kunci. */
+  detail: string | null;
   ip: string | null;
   user_agent: string | null;
 }
@@ -89,8 +92,8 @@ function detailColumns(): DataTableColumn<LogRow>[] {
     },
     { id: 'duration', header: 'Durasi', align: 'right', sortAccessor: r => r.duration_ms ?? 0, cell: r => <span className="text-ds-ink3 whitespace-nowrap">{r.duration_ms ?? '—'} ms</span> },
     {
-      id: 'params', header: 'Parameter',
-      cell: r => <span className="text-ds-ink3 max-w-[200px] truncate block" title={(r.param_keys ?? []).join(', ')}>{(r.param_keys ?? []).join(', ') || '—'}</span>,
+      id: 'detail', header: 'Detail', sortAccessor: r => r.detail ?? '',
+      cell: r => <span className="text-ds-ink2 max-w-[320px] truncate block" title={r.detail ?? (r.param_keys ?? []).join(', ')}>{r.detail ?? ((r.param_keys ?? []).join(', ') || '—')}</span>,
     },
     { id: 'ip', header: 'IP', cell: r => <span className="font-mono text-ds-ink3 whitespace-nowrap">{r.ip ?? '—'}</span> },
   ];
@@ -275,7 +278,7 @@ const ActivityLogView: React.FC = () => {
 
           <p className="text-2xs text-ds-ink3 leading-relaxed flex items-start gap-2">
             <ShieldAlert size={12} className="shrink-0 mt-0.5" />
-            Kolom Parameter hanya menampilkan <em>nama</em> kunci permintaan, bukan isinya.
+            Kolom Detail hanya dibangun dari pengenal yang aman (nomor order, email target, status, jumlah).
             Nilai seperti NIK, foto, dan kata sandi sengaja tidak pernah disimpan di tabel ini.
           </p>
         </>

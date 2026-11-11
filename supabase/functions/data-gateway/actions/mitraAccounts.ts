@@ -19,7 +19,7 @@
 // sandi yang bisa dibaca.
 import type { GatewayContext, ActionResult } from './types.ts';
 import { isUntrustedEmail } from '../../_shared/trust.ts';
-import { newAgentCode } from '../../_shared/codes.ts';
+import { sanitizeReferralCode, pickUplineMatch, generateUniqueUserCode } from '../../_shared/referral.ts';
 
 const json = (body: unknown, status = 200): ActionResult => ({ status, body });
 
@@ -147,7 +147,9 @@ export async function handleMitraAccountsAction(
         ktp: params.ktp ?? null,
         address: params.address ?? null,
         role: 'AGENT',
-        agent_code: newAgentCode(),
+        // v2.8.9 — kode mitra dicek unik sebelum dipakai (benturan kode membuat
+        // lookup upline berbasis kode gagal senyap; lihat _shared/referral.ts).
+        agent_code: await generateUniqueUserCode(db, 'AGENT'),
         commission_rate: 0.1,
         monthly_target: 50000000,
         trust_score: 80,
@@ -157,16 +159,21 @@ export async function handleMitraAccountsAction(
         verified: false,
       };
 
-      // Upline opsional — dicocokkan ke agent_code atau referral_code, dengan
+      // Upline opsional — dicocokkan ke referral_code atau agent_code, dengan
       // nilai yang dibersihkan lebih dulu. Interpolasi mentah ke .or() adalah
       // kelas bug injeksi filter yang ditutup di v2.6.18.
-      const rawUpline = String(params.upline_code ?? '').trim();
-      const uplineCode = rawUpline.replace(/[^A-Za-z0-9-]/g, '').slice(0, 32);
+      // v2.8.9 — kandidat diambil semua lalu dipilih deterministik
+      // (pickUplineMatch): kode duplikat dulu membuat maybeSingle() gagal
+      // senyap dan admin melihat "kode tidak ditemukan" untuk kode yang
+      // sebenarnya ada; pencocokan juga kini case-insensitive.
+      const uplineCode = sanitizeReferralCode(params.upline_code);
       if (uplineCode) {
-        const { data: upline } = await db.from('sp_users')
-          .select('id')
-          .or(`agent_code.eq.${uplineCode},referral_code.eq.${uplineCode}`)
-          .maybeSingle();
+        const { data: uplineCandidates } = await db.from('sp_users')
+          .select('id, agent_code, referral_code')
+          .or(`agent_code.ilike.${uplineCode},referral_code.ilike.${uplineCode}`)
+          .order('created_at', { ascending: true })
+          .limit(5);
+        const upline = pickUplineMatch(uplineCandidates, uplineCode);
         if (!upline) {
           await db.auth.admin.deleteUser(authUserId).catch(() => {});
           return json({ error: `Kode upline ${uplineCode} tidak ditemukan`, code: 'UPLINE_NOT_FOUND' }, 400);
@@ -216,7 +223,8 @@ export async function handleMitraAccountsAction(
     // mengikat batch ke client_id. Dua mode, mengikuti konvensi
     // admin_create_mitra:
     //   'password' → admin menyetel kata sandi secara manual (hanya
-    //                MASTER_ADMIN); wajib diganti saat login pertama.
+    //                MASTER_ADMIN). v2.8.8: sandi BERLAKU PERMANEN — tanpa
+    //                wajib ganti — kecuali require_change: true eksplisit.
     //   'invite'   → email undangan; user menyetel sandinya sendiri.
     case 'admin_create_b2b_user': {
       if (!CAN_MANAGE_MITRA_ACCOUNT.includes(caller.role ?? '')) {
@@ -242,6 +250,7 @@ export async function handleMitraAccountsAction(
 
       const mode = params.mode === 'invite' ? 'invite' : 'password';
       let manualPassword: string | null = null;
+      let requireChange = false;
       if (mode === 'password') {
         // Kata sandi manual hanya oleh MASTER_ADMIN — ADMIN memakai invite.
         if (!CAN_SET_MITRA_PASSWORD.includes(caller.role ?? '')) {
@@ -256,6 +265,11 @@ export async function handleMitraAccountsAction(
         if (classes < 3) {
           return json({ error: 'Kata sandi harus memuat minimal 3 dari 4 kelas karakter (huruf kecil, huruf besar, angka, simbol)' }, 400);
         }
+        // v2.8.8 — kata sandi manual B2B berlaku PERMANEN: tanpa
+        // must_change_password, pengguna langsung login dengan sandi yang
+        // di-set admin. require_change: true mengembalikan perilaku lama
+        // bila suatu saat dibutuhkan.
+        requireChange = params.require_change === true;
       }
 
       const { data: existing } = await db.from('sp_users')
@@ -275,7 +289,9 @@ export async function handleMitraAccountsAction(
           email,
           password: manualPassword!,
           email_confirm: true,
-          user_metadata: { ...authMeta, must_change_password: true },
+          // v2.8.8 — tanpa must_change_password: sandi manual B2B berlaku
+          // permanen (kecuali require_change eksplisit, lihat di atas).
+          user_metadata: { ...authMeta, ...(requireChange ? { must_change_password: true } : {}) },
         });
         if (createErr) return json({ error: createErr.message }, 400);
         authUserId = created.user?.id ?? null;
@@ -341,8 +357,8 @@ export async function handleMitraAccountsAction(
         data: profile,
         mode,
         // Kata sandi manual ditampilkan SEKALI di CMS dan tidak pernah
-        // disimpan di tabel mana pun; user wajib menggantinya saat login
-        // pertama (must_change_password).
+        // disimpan di tabel mana pun. v2.8.8: sandi ini berlaku permanen —
+        // pengguna langsung login dengannya tanpa wajib ganti.
         temp_password: mode === 'password' ? manualPassword : null,
       });
     }
@@ -591,12 +607,32 @@ export async function handleMitraAccountsAction(
         .select('id, email, name, role').eq('id', String(params.user_id)).maybeSingle();
       if (targetErr) return json({ error: targetErr.message }, 400);
       if (!target) return json({ error: 'Mitra tidak ditemukan' }, 404);
-      if (target.role !== 'AGENT') {
-        return json({ error: 'Aksi ini hanya untuk akun mitra (AGENT)', code: 'NOT_AN_AGENT' }, 400);
+      // v2.8.8 — klien korporat ikut didukung: MASTER_ADMIN bisa menyetel
+      // ulang kata sandi B2B_CLIENT secara manual, dan sandi itu berlaku
+      // permanen (tanpa wajib ganti) kecuali diminta eksplisit.
+      if (target.role !== 'AGENT' && target.role !== 'B2B_CLIENT') {
+        return json({ error: 'Aksi ini hanya untuk akun mitra (AGENT) atau klien korporat (B2B_CLIENT)', code: 'NOT_AN_AGENT' }, 400);
       }
 
-      const requireChange = params.require_change !== false;
-      const password = generateTempPassword();
+      // Kata sandi kustom opsional — tanpa parameter, generator sementara
+      // dipakai (perilaku lama). Kebijakan sandi sama dengan pembuatan akun.
+      let password = generateTempPassword();
+      if (params.password != null && String(params.password).length > 0) {
+        password = String(params.password);
+        if (password.length < 10) {
+          return json({ error: 'Kata sandi minimal 10 karakter' }, 400);
+        }
+        const classes = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^A-Za-z0-9]/].filter((re) => re.test(password)).length;
+        if (classes < 3) {
+          return json({ error: 'Kata sandi harus memuat minimal 3 dari 4 kelas karakter (huruf kecil, huruf besar, angka, simbol)' }, 400);
+        }
+      }
+
+      // AGENT mempertahankan perilaku lama (default wajib ganti); B2B_CLIENT
+      // default-nya permanen, selaras dengan admin_create_b2b_user.
+      const requireChange = params.require_change != null
+        ? params.require_change !== false
+        : target.role !== 'B2B_CLIENT';
 
       // sp_users.id BISA berbeda dari auth.users.id untuk akun lama (lihat
       // ownerIds di index.ts), jadi akun auth dicari lewat email, bukan id
@@ -635,7 +671,7 @@ export async function handleMitraAccountsAction(
       db.from('sp_admin_notifications').insert({
         type: 'SECURITY',
         title: 'Kata Sandi Sementara Mitra',
-        body: `${caller.email} menyetel kata sandi sementara untuk ${target.name} (${target.email}).`,
+        body: `${caller.email} menyetel kata sandi untuk ${target.name} (${target.email}).`,
         read: false,
         metadata: {
           user_id: target.id, email: target.email,

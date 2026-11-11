@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect } from 'react';
 import { RevampedPortalLoader as PortalLoader } from '../../routes/RevampedPortalLoader';
-import { ADMIN_ROLES, hasAppAccess, isPublicStandalonePath } from '../routeHelpers';
+import { ADMIN_ROLES, hasAppAccess, isPublicStandalonePath, roleToAppId } from '../routeHelpers';
 import type { AppRouteProps } from '../routeHelpers';
 import { UserRole } from '../../../types';
 
@@ -31,15 +31,7 @@ import { UserRole } from '../../../types';
 // mengunci pengguna keluar dari app perannya sendiri — semantik yang sama
 // dengan effectiveApps di App.tsx.
 
-const APP_FOR_ROLE: Record<string, 'OPERATOR' | 'MARKETING' | 'AGENT' | 'CUSTOMER'> = {
-  OPERATOR: 'OPERATOR',
-  MARKETING: 'MARKETING',
-  AGENT: 'AGENT',
-  B2B_CLIENT: 'CUSTOMER',
-};
-
-const roleToAppId = (role: any): string =>
-  ADMIN_ROLES.includes(role) ? 'ADMIN' : APP_FOR_ROLE[role] ?? 'CUSTOMER';
+// roleToAppId sekarang dari routeHelpers (satu sumber kebenaran, v2.8.9).
 
 // Wilayah app: prefix path → id app. Pencocokan persis: `path === prefix`
 // atau `path.startsWith(prefix + '/')` — '/admin' tidak menelan '/adminabc'.
@@ -61,9 +53,12 @@ export const territoryAppForPath = (path: string): Territory['app'] | null => {
   return null;
 };
 
-// Apakah pengguna boleh berada di app tsb. Dua pengecualian eksplisit:
+// Apakah pengguna boleh berada di app tsb. Pengecualian eksplisit:
 //   • B2B_CLIENT — satu-satunya app-nya adalah portal B2B (dicek lebih dulu,
 //     sebelum union sempat memperlakukan role-nya sebagai 'CUSTOMER').
+//   • AGENT (v2.8.9, arahan owner "pastikan agen tidak berpindah ke app
+//     nasabah") — wilayah /custapp ditutup total untuk agen, apa pun isinya
+//     allowed_apps. Guard memantulkan agen kembali ke /agapps.
 //   • CUSTOMER — hasAppAccess legacy memperlakukan CUSTOMER sebagai fallback
 //     universal (baris `if (app === 'CUSTOMER') return true`), yang justru
 //     membuat agen/operator jatuh ke app pelanggan. Wilayah /custapp hanya
@@ -71,6 +66,7 @@ export const territoryAppForPath = (path: string): Territory['app'] | null => {
 export const userAllowedInApp = (user: any, app: Territory['app']): boolean => {
   if (user?.role === UserRole.B2B_CLIENT) return app === 'B2B';
   if (app === 'CUSTOMER') {
+    if (user?.role === UserRole.AGENT) return false;
     return roleToAppId(user?.role) === 'CUSTOMER'
       || (Array.isArray(user?.allowed_apps) && user.allowed_apps.includes('CUSTOMER'));
   }

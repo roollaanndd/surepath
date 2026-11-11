@@ -14,6 +14,56 @@ export const ADMIN_ROLES = [
 export const isPublicStandalonePath = (path: string): boolean =>
   /^\/(q|review)\//.test(path) || path.startsWith('/payment/');
 
+// ── Pemetaan role → id app (v2.8.9, dipindah dari App.tsx + isolation.tsx) ──
+// Satu sumber kebenaran untuk roleToAppId: App.tsx (rolePath/effectiveApps)
+// dan isolation.tsx (userAllowedInApp) semula punya dua salinan yang harus
+// dijaga sinkron.
+export const APP_FOR_ROLE: Record<string, string> = {
+  OPERATOR: 'OPERATOR',
+  MARKETING: 'MARKETING',
+  AGENT: 'AGENT',
+  B2B_CLIENT: 'CUSTOMER',
+};
+
+export const roleToAppId = (role: any): string =>
+  ADMIN_ROLES.includes(role) ? 'ADMIN' : APP_FOR_ROLE[role] ?? 'CUSTOMER';
+
+// Only these ids have a portal route + selector card. The 2026-07-07 backfill
+// wrote RAW role names into allowed_apps (ARRAY[role] → 'MASTER_ADMIN',
+// 'B2B_CLIENT', 'FINANCE_MANAGER', …), so the stored base list must be
+// normalized before it is compared with card ids — otherwise phantom entries
+// inflate the effective list and park users on a one-card selector screen
+// instead of routing them straight into their portal.
+const KNOWN_APP_IDS = ['ADMIN', 'OPERATOR', 'MARKETING', 'AGENT', 'CUSTOMER'];
+
+// ── Effective app list (role-authoritative) ──────────────────────────────────
+// allowed_apps is a convenience overlay, but sp_users.role is the source of
+// truth for a user's PRIMARY app. Bug history: the 2026-07-07 backfill froze
+// allowed_apps = ARRAY[role] once, and nothing re-synced it when an admin
+// later changed a role — so agents with a stale ['CUSTOMER'] array were routed
+// into the customer app (or blocked from /agapps) while their role said AGENT.
+// The server now keeps them in sync (trg_sync_allowed_apps_with_role), and
+// this union makes the client correct even against residual bad data: a
+// user can always reach the app their own role entitles them to.
+//
+// v2.8.9 (arahan owner: "pastikan agen tidak berpindah ke app nasabah"):
+// agen tidak lagi mendapatkan app pelanggan dari allowed_apps — array basi
+// ['CUSTOMER'] maupun hibah eksplisit sama-sama diabaikan. Territory agen
+// adalah app agen; hibah app lain (OPERATOR/MARKETING) yang memang
+// diberikan admin tetap dihormati.
+export const effectiveAppsFor = (user: any): string[] => {
+  const base = (Array.isArray(user?.allowed_apps) ? user.allowed_apps : [])
+    .filter((a): a is string => typeof a === 'string' && KNOWN_APP_IDS.includes(a));
+  if (user?.role === UserRole.AGENT) {
+    const withoutCustomer = base.filter(a => a !== 'CUSTOMER');
+    return withoutCustomer.includes('AGENT') ? withoutCustomer : [...withoutCustomer, 'AGENT'];
+  }
+  const roleApp = roleToAppId(user?.role);
+  // B2B_CLIENT routes through its own branch (role check in the render), so its
+  // role-derived app is CUSTOMER — the union below never grants it /agapps.
+  return base.includes(roleApp) ? base : [...base, roleApp];
+};
+
 export const rolePath = (user: any): string => {
   const app = user?.default_app || user?.active_app;
   if (Array.isArray(user?.allowed_apps) && user.allowed_apps.length >= 2) {
@@ -50,6 +100,14 @@ export const hasAppAccess = (user: any, app: 'CUSTOMER' | 'AGENT' | 'OPERATOR' |
   // mengunci master admin keluar dari app mana pun. Data yang terlihat
   // tetap dibatasi server-side oleh setiap gateway action.
   if (user.role === UserRole.MASTER_ADMIN) return true;
+  // v2.8.9 — role-authoritative, cermin effectiveAppsFor. Dua lubang yang
+  // menutup di sini:
+  //   • Agen dengan array basi ['CUSTOMER'] dulu DITOLAK di /agapps
+  //     (hasAppAccess false) sehingga catch-all CustomerPortal yang merender —
+  //     portal nasabah tampil di URL milik agen, tanpa pengguna pindah.
+  //   • Agen dengan hibah 'CUSTOMER' di array dulu lolos ke /custapp.
+  // Keduanya satu kebijakan: agen hanya berada di app agen.
+  if (user.role === UserRole.AGENT) return app === 'AGENT';
   const allowed: string[] | null | undefined = user.allowed_apps;
   if (Array.isArray(allowed) && allowed.length > 0) {
     return allowed.includes(app);

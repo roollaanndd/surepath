@@ -31,6 +31,7 @@ import { handleAdminAction } from './actions/admin.ts';
 import { handleContactLeadsAction } from './actions/contactLeads.ts';
 import { handleMiscAction } from './actions/misc.ts';
 import { checkRateLimit as sharedCheckRateLimit } from '../_shared/rateLimit.ts';
+import { isNoiseAction, buildActivityDetail, resolveActivityTarget } from '../_shared/activity.ts';
 import { handleTiersAction } from './actions/tiers.ts';
 // migration-apply removed v1.53.0 — the migration it applied has been
 // deployed and a MASTER_ADMIN-only SQL executor via HTTP is unnecessary
@@ -120,10 +121,15 @@ Deno.serve(async (req) => {
     // cakupannya lengkap dengan sendirinya dan tidak bisa dipalsukan klien —
     // alasan yang sama kenapa gerbang kepercayaan juga duduk di titik ini.
     //
-    // NILAI parameter sengaja tidak pernah disimpan. Payload aplikasi ini
-    // membawa NIK, foto base64, dan kata sandi; menyalinnya ke tabel audit
+    // NILAI parameter sengaja tidak pernah disalin mentah. Payload aplikasi
+    // ini membawa NIK, foto base64, dan kata sandi; menyalinnya ke tabel audit
     // justru menciptakan salinan kedua dari data yang sedang kita lindungi.
-    // Nama kuncinya saja sudah menjawab "mengakses apa".
+    // v2.8.9: yang tersimpan adalah `detail` — ringkasan aksi yang dibangun
+    // HANYA dari whitelist kunci aman (pengenal, status, jumlah — lihat
+    // _shared/activity.ts), supaya baris jejak menjawab "apa yang dikerjakan",
+    // bukan sekadar nama kunci. Aksi heartbeat polling (get_my_notifications
+    // tiap 30–60 detik dari setiap portal terbuka) tidak ditulis sama sekali —
+    // ratusan baris per jam menenggelamkan jejak yang bermakna di CMS.
     const reqStartedAt = Date.now();
     const reqIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
       ?? req.headers.get('x-real-ip') ?? null;
@@ -136,18 +142,21 @@ Deno.serve(async (req) => {
     ): void => {
       // Fire-and-forget: an audit write must never fail the request it audits.
       try {
+        // Heartbeat polling tidak bernilai audit — dilewati di sini, bukan
+        // ditulis lalu ditanggung admin menyaringnya.
+        if (isNoiseAction(action)) return;
         const p = params as Record<string, unknown>;
-        const target = p?.id ?? p?.order_id ?? p?.claim_id ?? p?.user_id ?? p?.agent_id ?? null;
         db.from('sp_activity_log').insert({
           actor_id:    actor?.spUser?.id ?? null,
           actor_email: actor?.email || null,
           actor_role:  actor?.role ?? null,
           action,
-          target_id:   target == null ? null : String(target).slice(0, 100),
+          target_id:   resolveActivityTarget(p),
           status,
           http_status: httpStatus,
           duration_ms: Date.now() - reqStartedAt,
           param_keys:  p ? Object.keys(p).slice(0, 40) : [],
+          detail:      buildActivityDetail(p),
           ip:          reqIp,
           user_agent:  reqUserAgent,
         }).then(() => {}, () => {});

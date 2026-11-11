@@ -13,6 +13,7 @@ import { Language } from '../../types';
 import { SkeletonCard, useToast } from '../ui';
 import { useT } from '../../src/i18n';
 import { getInsurerDashboard, type InsurerDashboard as InsurerDashboardData } from '../../services/insurerService';
+import { ORDER_STATUS_META } from '../../lib/statusMeta';
 import InsurerHero, { InsurerHeroChip } from './InsurerHero';
 
 interface Props {
@@ -25,14 +26,11 @@ interface Props {
 const fmtIdr = (n: number | null) =>
   n != null ? 'Rp ' + n.toLocaleString('id-ID') : '-';
 
-// Status pill meta — warna lembut semantik (bukan solid heavy).
-const STATUS_PILL: Record<string, { cls: string; label: string }> = {
-  SUBMITTED:    { cls: 'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300', label: 'SUBMITTED' },
-  UNDER_REVIEW: { cls: 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300', label: 'REVIEW' },
-  APPROVED:     { cls: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300', label: 'APPROVED' },
-  ISSUED:       { cls: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300', label: 'ISSUED' },
-  REJECTED:     { cls: 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300', label: 'REJECTED' },
-};
+// Status pill meta — warna dari sumber tunggal lib/statusMeta (v2.8.7);
+// label pendek khas dashboard dipertahankan.
+const STATUS_PILL: Record<string, { cls: string; label: string }> = Object.fromEntries(
+  Object.entries(ORDER_STATUS_META).map(([k, m]) => [k, { cls: m.badgeClass, label: k === 'UNDER_REVIEW' ? 'REVIEW' : k }]),
+);
 
 const InsurerDashboard: React.FC<Props> = ({ authToken, lang, onNavigate, refreshTick }) => {
   const t = useT(lang);

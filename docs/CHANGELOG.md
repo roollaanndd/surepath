@@ -1,5 +1,18 @@
 # SurePath - Changelog
 
+## v2.8.17 - 2026-11-11
+
+### Perbaikan tipe: guard rate limit v2.8.16 lolos deno check
+
+CI `edge-function-types` menangkap TS18047 (`caller.spUser` possibly null)
+pada dua guard rate limit yang ditambahkan v2.8.16 — check lokal (`tsc`,
+`check-edge-functions.mjs`) tidak memeriksa file Deno, jadi ini lolos di
+lokal. Perbaikan: `spUser` di-narrow eksplisit sebelum dipakai sebagai
+identifier bucket — admin tanpa profil pengguna kini ditolak 403 (semantik
+benar: admin selalu punya profil), bukan error tipe. Tanpa perubahan
+perilaku lain; Deploy Edge Functions untuk v2.8.16 sendiri sudah sukses,
+jadi guard rate limit sudah live sejak v2.8.16.
+
 ## v2.8.16 - 2026-11-11
 
 ### Hardening keamanan — rate limit penerbitan kredensial + disposisi audit dependensi

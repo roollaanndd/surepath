@@ -1,5 +1,63 @@
 # SurePath - Changelog
 
+## v2.8.8 - 2026-11-11
+
+### Order unit B2B (mobil & alat berat) + kata sandi manual permanen + watermark & proteksi layar admin
+
+Tiga permintaan owner (11 Nov 2026): order kendaraan satuan dari portal B2B
+memakai rate/skema yang ada, kata sandi manual B2B yang tidak dipaksa reset,
+serta penguatan dashboard admin (klik animation, watermark logo, anti-print).
+
+**Order Unit di portal B2B — mobil, motor, dan alat berat**
+
+- Layar baru "Buat → Order Unit" (`B2BUnitOrder`): pilih kelas kendaraan
+  (Mobil / Motor / Alat Berat), isi unit (merk, tipe, tahun), plat & wilayah
+  untuk deteksi zona (override manual tersedia), TSI, tenor, dan data
+  nasabah/kontrak — lalu submit satu order tanpa spreadsheet.
+- Preview premi live memakai mesin rating yang sama dengan impor massal
+  (`buildLineItem`/`calcBulkPremium`) dan flag yang sama (zona tak terdeteksi,
+  OTR kosong, dsb.). Server tetap menghitung ulang otoritatif lewat
+  `b2b_bulk_create_batch` — order satuan = batch 1 item, jadi invoice Xendit
+  per batch, status DRAFT→…→ISSUED, dan penerbitan polis induk semuanya
+  berjalan di jalur yang sudah teruji tanpa aksi gateway baru.
+- Rate alat berat (0.85%), rate pickup/truk per zona, diskon standar/heavy,
+  biaya admin per kelas (25rb/45rb/65rb), dan minimum premi semuanya tetap
+  satu sumber: `sp_b2b_fleet_rate_sets`, dapat diubah kapan pun admin lewat
+  CMS → Katalog & Harga → Rate Fleet B2B (versi + aktivasi). Kartu skema aktif
+  ditampilkan di form supaya klien melihat dasar harganya.
+- Master Admin tetap mode pantau: tidak bisa membuat order (konsisten dengan
+  Pengajuan Baru/Impor Massal).
+
+**Kata sandi manual B2B berlaku permanen**
+
+- `admin_create_b2b_user` (mode password) tidak lagi menyetel
+  `must_change_password` — pengguna korporat langsung login dengan sandi yang
+  di-set MASTER_ADMIN, tanpa email reset. Parameter `require_change: true`
+  tersedia bila perilaku lama dibutuhkan.
+- `admin_set_mitra_temp_password` kini menerima target `B2B_CLIENT` (default
+  tanpa wajib ganti, selaras di atas) + parameter kata sandi kustom opsional;
+  layar Pengguna Korporat mendapat tombol "Setel Sandi" per pengguna — sandi
+  baru juga berlaku permanen dan tampil sekali di banner kuning.
+- Teks wizard/banner (AddUserWizard, B2BAdminView) disesuaikan; AGENT dan user
+  internal mempertahankan perilaku wajib ganti. 9 test baru di
+  `mitraAccounts.test.ts` mengunci kontrak ini (30 test modul, semua lulus).
+- Catatan deploy: perubahan ada di edge function `data-gateway` — perlu
+  deploy Supabase seperti biasa.
+
+**Dashboard admin: klik animation, watermark, anti-printscreen**
+
+- Klik animation global: elemen interaktif mengecil halus (scale 0.97) saat
+  ditekan, di admin (`sp-admin-root`) dan portal B2B (`sp-b2b-root`),
+  hormat `prefers-reduced-motion` (portal-modernization.css §5b).
+- Watermark logo SurePath di dashboard admin: fixed, transparan (~5%),
+  non-interaktif, di atas konten di bawah modal — mengikuti logo kustom yang
+  diunggah admin di Pengaturan.
+- Anti-printscreen/anti-print (deteren level UX, bukan keamanan absolut —
+  catatan anti-inspect lama di index.html tetap jadi pegangan): PrintScreen
+  menampilkan shield + menimpa clipboard; Ctrl/Cmd+P diblokir; `@media print`
+  menyembunyikan seluruh root admin dan menggantinya dengan satu baris
+  penjelasan.
+
 ## v2.8.7 - 2026-11-11
 
 ### Status satu bahasa lintas app: lib/statusMeta jadi sumber tunggal + badge berbentuk (ikon)

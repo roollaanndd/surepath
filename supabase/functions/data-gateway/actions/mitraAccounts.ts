@@ -216,7 +216,8 @@ export async function handleMitraAccountsAction(
     // mengikat batch ke client_id. Dua mode, mengikuti konvensi
     // admin_create_mitra:
     //   'password' → admin menyetel kata sandi secara manual (hanya
-    //                MASTER_ADMIN); wajib diganti saat login pertama.
+    //                MASTER_ADMIN). v2.8.8: sandi BERLAKU PERMANEN — tanpa
+    //                wajib ganti — kecuali require_change: true eksplisit.
     //   'invite'   → email undangan; user menyetel sandinya sendiri.
     case 'admin_create_b2b_user': {
       if (!CAN_MANAGE_MITRA_ACCOUNT.includes(caller.role ?? '')) {
@@ -242,6 +243,7 @@ export async function handleMitraAccountsAction(
 
       const mode = params.mode === 'invite' ? 'invite' : 'password';
       let manualPassword: string | null = null;
+      let requireChange = false;
       if (mode === 'password') {
         // Kata sandi manual hanya oleh MASTER_ADMIN — ADMIN memakai invite.
         if (!CAN_SET_MITRA_PASSWORD.includes(caller.role ?? '')) {
@@ -256,6 +258,11 @@ export async function handleMitraAccountsAction(
         if (classes < 3) {
           return json({ error: 'Kata sandi harus memuat minimal 3 dari 4 kelas karakter (huruf kecil, huruf besar, angka, simbol)' }, 400);
         }
+        // v2.8.8 — kata sandi manual B2B berlaku PERMANEN: tanpa
+        // must_change_password, pengguna langsung login dengan sandi yang
+        // di-set admin. require_change: true mengembalikan perilaku lama
+        // bila suatu saat dibutuhkan.
+        requireChange = params.require_change === true;
       }
 
       const { data: existing } = await db.from('sp_users')
@@ -275,7 +282,9 @@ export async function handleMitraAccountsAction(
           email,
           password: manualPassword!,
           email_confirm: true,
-          user_metadata: { ...authMeta, must_change_password: true },
+          // v2.8.8 — tanpa must_change_password: sandi manual B2B berlaku
+          // permanen (kecuali require_change eksplisit, lihat di atas).
+          user_metadata: { ...authMeta, ...(requireChange ? { must_change_password: true } : {}) },
         });
         if (createErr) return json({ error: createErr.message }, 400);
         authUserId = created.user?.id ?? null;
@@ -341,8 +350,8 @@ export async function handleMitraAccountsAction(
         data: profile,
         mode,
         // Kata sandi manual ditampilkan SEKALI di CMS dan tidak pernah
-        // disimpan di tabel mana pun; user wajib menggantinya saat login
-        // pertama (must_change_password).
+        // disimpan di tabel mana pun. v2.8.8: sandi ini berlaku permanen —
+        // pengguna langsung login dengannya tanpa wajib ganti.
         temp_password: mode === 'password' ? manualPassword : null,
       });
     }
@@ -591,12 +600,32 @@ export async function handleMitraAccountsAction(
         .select('id, email, name, role').eq('id', String(params.user_id)).maybeSingle();
       if (targetErr) return json({ error: targetErr.message }, 400);
       if (!target) return json({ error: 'Mitra tidak ditemukan' }, 404);
-      if (target.role !== 'AGENT') {
-        return json({ error: 'Aksi ini hanya untuk akun mitra (AGENT)', code: 'NOT_AN_AGENT' }, 400);
+      // v2.8.8 — klien korporat ikut didukung: MASTER_ADMIN bisa menyetel
+      // ulang kata sandi B2B_CLIENT secara manual, dan sandi itu berlaku
+      // permanen (tanpa wajib ganti) kecuali diminta eksplisit.
+      if (target.role !== 'AGENT' && target.role !== 'B2B_CLIENT') {
+        return json({ error: 'Aksi ini hanya untuk akun mitra (AGENT) atau klien korporat (B2B_CLIENT)', code: 'NOT_AN_AGENT' }, 400);
       }
 
-      const requireChange = params.require_change !== false;
-      const password = generateTempPassword();
+      // Kata sandi kustom opsional — tanpa parameter, generator sementara
+      // dipakai (perilaku lama). Kebijakan sandi sama dengan pembuatan akun.
+      let password = generateTempPassword();
+      if (params.password != null && String(params.password).length > 0) {
+        password = String(params.password);
+        if (password.length < 10) {
+          return json({ error: 'Kata sandi minimal 10 karakter' }, 400);
+        }
+        const classes = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^A-Za-z0-9]/].filter((re) => re.test(password)).length;
+        if (classes < 3) {
+          return json({ error: 'Kata sandi harus memuat minimal 3 dari 4 kelas karakter (huruf kecil, huruf besar, angka, simbol)' }, 400);
+        }
+      }
+
+      // AGENT mempertahankan perilaku lama (default wajib ganti); B2B_CLIENT
+      // default-nya permanen, selaras dengan admin_create_b2b_user.
+      const requireChange = params.require_change != null
+        ? params.require_change !== false
+        : target.role !== 'B2B_CLIENT';
 
       // sp_users.id BISA berbeda dari auth.users.id untuk akun lama (lihat
       // ownerIds di index.ts), jadi akun auth dicari lewat email, bukan id
@@ -635,7 +664,7 @@ export async function handleMitraAccountsAction(
       db.from('sp_admin_notifications').insert({
         type: 'SECURITY',
         title: 'Kata Sandi Sementara Mitra',
-        body: `${caller.email} menyetel kata sandi sementara untuk ${target.name} (${target.email}).`,
+        body: `${caller.email} menyetel kata sandi untuk ${target.name} (${target.email}).`,
         read: false,
         metadata: {
           user_id: target.id, email: target.email,

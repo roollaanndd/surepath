@@ -229,10 +229,14 @@ export async function sendMitraPasswordReset(
 export async function setMitraTempPassword(
   userId: string,
   requireChange = true,
+  // v2.8.8 — kata sandi kustom opsional (MASTER_ADMIN). Tanpa parameter,
+  // gateway memakai generator sementara seperti sebelumnya.
+  password?: string,
 ): Promise<{ tempPassword?: string; email?: string; error?: string }> {
   const res = await callGateway('admin_set_mitra_temp_password', {
     user_id: userId,
     require_change: requireChange,
+    ...(password ? { password } : {}),
   });
   if (res.error) return { error: res.error };
   return { tempPassword: res.temp_password as string, email: res.data?.email };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, ChevronDown, ChevronUp, Plus, Trash2, CheckCircle2, AlertTriangle, FileText, Heart, Upload, Loader2, Building2, Copy } from 'lucide-react';
+import { RefreshCw, ChevronDown, ChevronUp, Plus, Trash2, CheckCircle2, AlertTriangle, FileText, Heart, Upload, Loader2, Building2, Copy, KeyRound } from 'lucide-react';
 import {
   getAllB2BSubmissions,
   updateB2BSubmissionStatus,
@@ -11,6 +11,7 @@ import {
   adminAssignB2BBulkInsurer,
   uploadB2BBulkMasterPolicy,
   adminListB2BUsers,
+  setMitraTempPassword,
   supabase,
   type SpB2BSubmission,
   type SpB2BQuote,
@@ -19,6 +20,7 @@ import {
   type SpB2BUser,
 } from '../../services/supabaseService';
 import ModuleIcon from '../shared/ModuleIcon';
+import { useConfirmDialog } from '../ui';
 import AddUserWizard, { type WizardCredential } from './AddUserWizard';
 
 interface InsurerOption { id: string; name: string; }
@@ -523,6 +525,7 @@ const BulkBatchCard: React.FC<{ batch: SpB2BBatch; insurers: InsurerOption[]; on
 // (must_change_password) — alur ganti sudah ditangani B2BLogin.
 
 const UsersSection: React.FC<{ onToast: (msg: string) => void }> = ({ onToast }) => {
+  const confirm = useConfirmDialog();
   const [showWizard, setShowWizard] = useState(false);
   const [credential, setCredential] = useState<WizardCredential | null>(null);
   const [users, setUsers] = useState<SpB2BUser[]>([]);
@@ -548,10 +551,39 @@ const UsersSection: React.FC<{ onToast: (msg: string) => void }> = ({ onToast })
   const copyCredential = async () => {
     if (!credential?.password) return;
     try {
-      await navigator.clipboard.writeText(`Portal: https://myinsurepath.com/b2bapps\nEmail: ${credential.email}\nKata sandi sementara: ${credential.password}\n(Wajib diganti saat login pertama)`);
+      await navigator.clipboard.writeText(`Portal: https://myinsurepath.com/b2bapps\nEmail: ${credential.email}\nKata sandi: ${credential.password}\n(Berlaku permanen — pengguna bisa langsung login)`);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch { /* clipboard opsional */ }
+  };
+
+  // v2.8.8 — setel ulang kata sandi pengguna korporat secara manual. Sandi
+  // baru berlaku permanen (tanpa wajib ganti), selaras dengan pembuatan akun;
+  // ditampilkan sekali via banner kuning yang sama.
+  const [resettingUserId, setResettingUserId] = useState<string | null>(null);
+  const handleSetPassword = async (u: SpB2BUser) => {
+    if (resettingUserId) return;
+    const ok = await confirm({
+      title: 'Setel Kata Sandi Baru?',
+      description: `Kata sandi baru untuk ${u.name || u.email} akan dibuat dan berlaku permanen. Kata sandi lama langsung tidak berlaku.`,
+      confirmLabel: 'Setel Sandi',
+      cancelLabel: 'Batal',
+    });
+    if (!ok) return;
+    setResettingUserId(u.id);
+    const res = await setMitraTempPassword(u.id, false);
+    setResettingUserId(null);
+    if (res.error || !res.tempPassword) {
+      onToast(res.error ?? 'Gagal menyetel kata sandi.');
+      return;
+    }
+    setCredential({
+      name: u.name || u.email,
+      email: res.email ?? u.email,
+      password: res.tempPassword,
+      note: 'Kata sandi baru ini berlaku permanen — pengguna bisa langsung login dengannya. Tidak disimpan di sistem mana pun.',
+    });
+    onToast(`Kata sandi ${u.name || u.email} disetel ulang — tampil sekali di bawah.`);
   };
 
   return (
@@ -609,7 +641,7 @@ const UsersSection: React.FC<{ onToast: (msg: string) => void }> = ({ onToast })
               Tutup
             </button>
           </div>
-          <p className="text-2xs text-amber-700 dark:text-amber-400">Kredensial ini tidak disimpan di sistem mana pun. Pengguna wajib mengganti kata sandi saat login pertama di /b2bapps.</p>
+          <p className="text-2xs text-amber-700 dark:text-amber-400">{credential.note ?? 'Kredensial ini tidak disimpan di sistem mana pun. Kata sandi berlaku permanen — pengguna bisa langsung login di /b2bapps dan mengganti sandinya kapan saja dari menu Profil.'}</p>
         </div>
       )}
 
@@ -638,6 +670,15 @@ const UsersSection: React.FC<{ onToast: (msg: string) => void }> = ({ onToast })
                 </div>
                 {u.verified !== false && (
                   <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-2xs font-black text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">AKTIF</span>
+                )}
+                {callerRole === 'MASTER_ADMIN' && (
+                  <button
+                    onClick={() => handleSetPassword(u)}
+                    disabled={resettingUserId === u.id}
+                    className="inline-flex items-center gap-1 rounded-lg border border-ds-border bg-ds-card px-2 py-1 text-2xs font-bold text-ds-ink2 hover:border-emerald-400 hover:text-emerald-700 disabled:opacity-50"
+                  >
+                    <KeyRound size={11} /> {resettingUserId === u.id ? 'Menyetel…' : 'Setel Sandi'}
+                  </button>
                 )}
               </div>
             ))}

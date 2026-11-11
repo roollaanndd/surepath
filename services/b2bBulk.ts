@@ -153,8 +153,9 @@ export interface SpB2BUser {
 
 /**
  * Daftarkan pengguna B2B baru. mode 'password': admin menyetel kata sandi
- * secara manual (hanya MASTER_ADMIN; sandi ditampilkan sekali dan wajib
- * diganti saat login pertama). mode 'invite': email undangan dikirim.
+ * secara manual (hanya MASTER_ADMIN; sandi ditampilkan sekali dan berlaku
+ * PERMANEN — pengguna langsung login dengannya, v2.8.8; require_change: true
+ * mengembalikan perilaku wajib-ganti). mode 'invite': email undangan dikirim.
  */
 export async function adminCreateB2BUser(input: {
   name: string;
@@ -165,6 +166,7 @@ export async function adminCreateB2BUser(input: {
   company_industry?: string;
   mode: 'password' | 'invite';
   password?: string;
+  require_change?: boolean;
 }): Promise<{ data?: SpB2BUser & { id: string }; mode?: string; temp_password?: string | null; error?: string }> {
   return await callGateway('admin_create_b2b_user', input);
 }

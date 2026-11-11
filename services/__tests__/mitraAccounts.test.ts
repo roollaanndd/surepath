@@ -178,7 +178,7 @@ describe('admin_set_mitra_temp_password', () => {
     });
   }
 
-  it('menolak target yang bukan AGENT', async () => {
+  it('menolak target yang bukan AGENT/B2B_CLIENT', async () => {
     const { ctx } = makeCtx('MASTER_ADMIN', { user_id: 'x' },
       { byId: { ...AGENT, role: 'MASTER_ADMIN' } });
     const res = await handleMitraAccountsAction('admin_set_mitra_temp_password', ctx);
@@ -211,6 +211,82 @@ describe('admin_set_mitra_temp_password', () => {
     await handleMitraAccountsAction('admin_set_mitra_temp_password', ctx);
     const upd = db.authCalls.find(c => c.fn === 'updateUserById')?.arg as Row;
     expect((upd.user_metadata as Row).must_change_password).toBe(false);
+  });
+});
+
+describe('admin_create_b2b_user — kata sandi manual berlaku permanen (v2.8.8)', () => {
+  const B2B_INPUT = {
+    name: 'PT Korporat', email: 'b2b@korporat.com', phone: '081234567890',
+    company_name: 'PT Korporat Sejahtera', mode: 'password', password: 'SandiKuat12!',
+  };
+
+  it('tanpa require_change: TIDAK ada must_change_password — sandi dipakai langsung saat login', async () => {
+    const { db, ctx } = makeCtx('MASTER_ADMIN', B2B_INPUT);
+    const res = await handleMitraAccountsAction('admin_create_b2b_user', ctx);
+    expect(res?.status).toBe(200);
+    const created = db.authCalls.find(c => c.fn === 'createUser')?.arg as Row;
+    expect((created.user_metadata as Row).must_change_password).toBeUndefined();
+    expect(created.password).toBe('SandiKuat12!');
+    // Profil tetap B2B_CLIENT + verified tanpa verifikasi agen.
+    const profile = db.inserted.find(i => i.table === 'sp_users');
+    expect(profile?.row.role).toBe('B2B_CLIENT');
+    expect(profile?.row.verified).toBe(true);
+  });
+
+  it('require_change: true mengembalikan perilaku lama (wajib ganti)', async () => {
+    const { db, ctx } = makeCtx('MASTER_ADMIN', { ...B2B_INPUT, require_change: true });
+    await handleMitraAccountsAction('admin_create_b2b_user', ctx);
+    const created = db.authCalls.find(c => c.fn === 'createUser')?.arg as Row;
+    expect((created.user_metadata as Row).must_change_password).toBe(true);
+  });
+
+  it('menolak ADMIN memakai kata sandi manual', async () => {
+    const { db, ctx } = makeCtx('ADMIN', B2B_INPUT);
+    const res = await handleMitraAccountsAction('admin_create_b2b_user', ctx);
+    expect(res?.status).toBe(403);
+    expect(db.authCalls).toHaveLength(0);
+  });
+
+  it('menolak kata sandi lemah sebelum membuat apa pun', async () => {
+    const { db, ctx } = makeCtx('MASTER_ADMIN', { ...B2B_INPUT, password: 'lemah' });
+    const res = await handleMitraAccountsAction('admin_create_b2b_user', ctx);
+    expect(res?.status).toBe(400);
+    expect(db.authCalls).toHaveLength(0);
+    expect(db.inserted).toHaveLength(0);
+  });
+});
+
+describe('admin_set_mitra_temp_password untuk B2B_CLIENT (v2.8.8)', () => {
+  const B2B = { id: 'b2b-1', email: 'b2b@korporat.com', name: 'PT Korporat', role: 'B2B_CLIENT' };
+
+  it('default: sandi baru berlaku permanen (must_change_password false)', async () => {
+    const { db, ctx } = makeCtx('MASTER_ADMIN', { user_id: 'b2b-1' }, { byId: B2B });
+    const res = await handleMitraAccountsAction('admin_set_mitra_temp_password', ctx);
+    expect(res?.status).toBe(200);
+    const upd = db.authCalls.find(c => c.fn === 'updateUserById')?.arg as Row;
+    expect((upd.user_metadata as Row).must_change_password).toBe(false);
+  });
+
+  it('kata sandi kustom dipakai dan tervalidasi kebijakannya', async () => {
+    const { db, ctx } = makeCtx('MASTER_ADMIN', { user_id: 'b2b-1', password: 'SandiKustom12!' }, { byId: B2B });
+    const res = await handleMitraAccountsAction('admin_set_mitra_temp_password', ctx);
+    expect(res?.status).toBe(200);
+    const upd = db.authCalls.find(c => c.fn === 'updateUserById')?.arg as Row;
+    expect(upd.password).toBe('SandiKustom12!');
+  });
+
+  it('kata sandi kustom lemah ditolak sebelum menyentuh auth', async () => {
+    const { db, ctx } = makeCtx('MASTER_ADMIN', { user_id: 'b2b-1', password: 'lemah' }, { byId: B2B });
+    const res = await handleMitraAccountsAction('admin_set_mitra_temp_password', ctx);
+    expect(res?.status).toBe(400);
+    expect(db.authCalls.find(c => c.fn === 'updateUserById')).toBeUndefined();
+  });
+
+  it('require_change: true tetap bisa dipaksa untuk B2B', async () => {
+    const { db, ctx } = makeCtx('MASTER_ADMIN', { user_id: 'b2b-1', require_change: true }, { byId: B2B });
+    await handleMitraAccountsAction('admin_set_mitra_temp_password', ctx);
+    const upd = db.authCalls.find(c => c.fn === 'updateUserById')?.arg as Row;
+    expect((upd.user_metadata as Row).must_change_password).toBe(true);
   });
 });
 

@@ -244,7 +244,9 @@ const AddUserWizard: React.FC<Props> = ({ open, onClose, callerRole, defaultRole
         name: createdName,
         email: createdEmail,
         password: tempPassword,
-        note: 'Catat sekarang — kata sandi tidak disimpan di mana pun dan tidak bisa ditampilkan lagi. Pengguna wajib menggantinya saat login pertama.',
+        note: role === 'B2B_CLIENT'
+          ? 'Catat sekarang — kata sandi tidak disimpan di mana pun dan tidak bisa ditampilkan lagi. Kata sandi ini berlaku permanen: pengguna bisa langsung login dengannya.'
+          : 'Catat sekarang — kata sandi tidak disimpan di mana pun dan tidak bisa ditampilkan lagi. Pengguna wajib menggantinya saat login pertama.',
       } : null;
 
       onCreated(
@@ -352,6 +354,7 @@ const AddUserWizard: React.FC<Props> = ({ open, onClose, callerRole, defaultRole
                 password={password}
                 setPassword={setPassword}
                 canManualPassword={!!canManualPassword}
+                permanentPassword={role === 'B2B_CLIENT'}
               />
             )}
             {step === 4 && role && (
@@ -514,7 +517,8 @@ const StepAkses: React.FC<{
   password: string;
   setPassword: (p: string) => void;
   canManualPassword: boolean;
-}> = ({ mode, setMode, password, setPassword, canManualPassword }) => (
+  permanentPassword?: boolean;
+}> = ({ mode, setMode, password, setPassword, canManualPassword, permanentPassword }) => (
   <div>
     <p className="text-xs text-slate-600 dark:text-ds-ink3 mb-4 leading-relaxed">
       Pilih cara pengguna masuk pertama kali.
@@ -558,7 +562,9 @@ const StepAkses: React.FC<{
           <p className="text-sm font-black text-slate-900 dark:text-white">Kata Sandi Manual</p>
         </div>
         <p className="text-xs text-slate-600 dark:text-ds-ink3 leading-relaxed">
-          Anda menentukan sandi awal. Ditampilkan sekali, wajib diganti saat login pertama.
+          {permanentPassword
+            ? 'Anda menentukan sandi awal. Ditampilkan sekali, dan berlaku permanen — pengguna langsung login dengannya.'
+            : 'Anda menentukan sandi awal. Ditampilkan sekali, wajib diganti saat login pertama.'}
           {!canManualPassword && <span className="block mt-1 font-bold text-amber-700 dark:text-amber-400">Hanya MASTER_ADMIN.</span>}
         </p>
       </button>
@@ -641,7 +647,9 @@ const StepReview: React.FC<{
         </p>
         <p className="text-2xs text-slate-500 dark:text-ds-ink3 mt-1">
           {mode === 'password'
-            ? `Sandi akan ditampilkan sekali setelah akun dibuat. Pengguna wajib mengganti saat login.`
+            ? (role === 'B2B_CLIENT'
+              ? 'Sandi ditampilkan sekali setelah akun dibuat, dan berlaku permanen — pengguna bisa langsung login dengannya.'
+              : `Sandi akan ditampilkan sekali setelah akun dibuat. Pengguna wajib mengganti saat login.`)
             : 'Pengguna akan menerima email dengan tautan untuk menyetel sandi sendiri.'}
         </p>
         {mode === 'password' && (

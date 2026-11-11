@@ -1,5 +1,44 @@
 # SurePath - Changelog
 
+## v2.8.10 - 2026-11-11
+
+### Portal app terkunci seperti aplikasi native — tidak bisa di-zoom, full screen
+
+Komplain owner: "di apps mobile semua bisa di zoom, jadi aneh — harusnya
+bertindak just as an app yang tidak bisa di zoom in/out dan clearly on full
+screen mode."
+
+**Akar masalah.** Lock viewport yang sudah ada (`services/appViewport.ts`)
+hanya aktif saat halaman benar-benar berjalan sebagai installed PWA
+(`display-mode: standalone` dst.) atau build Capacitor; di tab browser biasa
+keempat portal sengaja dibiarkan zoomable demi WCAG 1.4.4 (keputusan lama).
+Owner membuka portal di tab browser, jadi pinch-zoom dan double-tap zoom tetap
+hidup dan halaman terasa seperti website, bukan app.
+
+**Kini portal app selalu terkunci (admin, agent, customer, operator).** Keempat
+entry memakai `<html data-sp-app>` — deklarasi di HTML, bukan di JS — sehingga
+lock tidak bergantung cara halaman dibuka: tab browser, PWA ter-install, atau
+WebView Android semuanya menerima viewport
+`maximum-scale=1.0, user-scalable=no, viewport-fit=cover`, class
+`sp-app-locked`, pemblokiran gesture iOS (`gesturestart/change/end`), dan blok
+ctrl/⌘+scroll. CSS `sp-app-locked` naik dari `touch-action: manipulation` ke
+`touch-action: pan-x pan-y` — pinch kini ditolak di level CSS pula
+(touch-action diselesaikan sebagai intersection rantai ancestor, descendant
+tidak bisa menyalakan ulang zoom; double-tap zoom juga tidak termasuk gesture
+yang diizinkan) — plus padding `env(safe-area-inset-top/left/right)` agar
+konten tidak terbenam status bar/notch (iOS black-translucent, Android
+edge-to-edge) tanpa menghitung inset bawah dua kali (itu tetap di
+`.sp-modern-app`). Rubber band/pull-to-refresh tetap mati. Situs publik
+(index.html) sengaja tetap zoomable — di situlah WCAG 1.4.4 paling relevan dan
+pengunjung tidak punya app chrome; kebutuhan teks lebih besar di dalam portal
+dilayani OS (display size / zoom aksesibilitas). Wrapper Android (Capacitor)
+sudah non-zoomable secara default (`zoomableWebView=false`) — tidak diubah.
+Tidak ada perubahan API, auth, bisnis logika, atau permission.
+
+Untuk pengalaman penuh "app", pasang portal dari browser (Install / Add to
+Home Screen) — portal terbuka tanpa chrome browser (standalone; iOS
+black-translucent status bar).
+
 ## v2.8.9 - 2026-11-11
 
 ### Jejak aktivitas yang menjawab "apa yang dikerjakan" + agen terkunci di app agen + referral sinkron database

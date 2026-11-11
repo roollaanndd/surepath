@@ -3,18 +3,19 @@
 // Requirement: inside the app, the screen must not pinch-zoom or double-tap
 // zoom, and must not rubber-band — it should behave like a native app.
 //
-// The one thing worth being explicit about: this is applied ONLY when the page
-// is actually running as an app — an installed PWA (`display-mode: standalone`
-// and friends) or the Capacitor Android build. In a normal browser tab the page
-// stays fully zoomable.
-//
-// That split is deliberate rather than a compromise. `user-scalable=no` on the
-// public website would fail WCAG 1.4.4 (Resize Text) and drop the Lighthouse
-// accessibility score — and someone who needs to magnify text on a marketing
-// page has no app chrome to fall back on. Someone who has installed the app has
-// the OS-level display-size and accessibility-zoom settings instead, and there
-// the browser's own pinch-zoom is what makes a "native-feeling" app feel broken:
-// mistaken pinches leave the layout stranded off-centre with no way back.
+// Since v2.8.10 the lock has two triggers. The app portals (admin, agent,
+// customer, operator — `<html data-sp-app>` in their HTML) are ALWAYS locked,
+// in every launch context: the owner's requirement is that they behave like a
+// native app even when opened in a plain browser tab, and a pinch there breaks
+// that exactly as much as it does in the installed app. The public website
+// (index.html, no attribute) keeps the older behaviour — locked only once it
+// actually runs as an installed PWA or the Capacitor build — because a
+// marketing page is where WCAG 1.4.4 (Resize Text) matters most: someone who
+// needs to magnify text there has no app chrome to fall back on. Anyone who
+// needs bigger text inside the portals has the OS-level display-size and
+// accessibility-zoom settings instead, and there the browser's own pinch-zoom
+// is what makes a "native-feeling" app feel broken: mistaken pinches leave the
+// layout stranded off-centre with no way back.
 
 const LOCKED_VIEWPORT =
   'width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover';
@@ -50,6 +51,20 @@ function isAppDisplay(): boolean {
 
 /** True when this page is running as the app rather than as a web page. */
 export const isAppMode = (): boolean => isNativeShell() || isAppDisplay();
+
+/**
+ * App portals declare themselves in HTML (`<html data-sp-app>`) so the lock
+ * never depends on how the page was launched. See the module header.
+ */
+function isPortalApp(): boolean {
+  if (typeof document === 'undefined') return false;
+  return document.documentElement.hasAttribute('data-sp-app');
+}
+
+/** Portals always lock; the website locks once it runs as an installed app. */
+function shouldLock(): boolean {
+  return isPortalApp() || isAppMode();
+}
 
 function viewportTag(): HTMLMetaElement | null {
   if (typeof document === 'undefined') return null;
@@ -111,11 +126,11 @@ function apply(locked: boolean) {
 export function initAppViewport(): void {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
 
-  apply(isAppMode());
+  apply(shouldLock());
 
   try {
     for (const q of ['(display-mode: standalone)', '(display-mode: fullscreen)', '(display-mode: minimal-ui)']) {
-      window.matchMedia(q).addEventListener('change', () => apply(isAppMode()));
+      window.matchMedia(q).addEventListener('change', () => apply(shouldLock()));
     }
   } catch { /* older Safari has no addEventListener on MediaQueryList */ }
 }

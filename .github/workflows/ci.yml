@@ -101,7 +101,7 @@ jobs:
 
   browser-smoke-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
 
     steps:
       - name: Checkout
@@ -117,7 +117,19 @@ jobs:
         run: npm ci
 
       - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
+        # v2.8.20: two attempts of the v2.8.20 push failed here with apt
+        # "Temporary failure resolving 'security.ubuntu.com'" — runner DNS
+        # outages last minutes, so retry instead of failing the whole job
+        # (the tests themselves were never reached).
+        timeout-minutes: 20
+        run: |
+          for i in 1 2 3 4; do
+            npx playwright install --with-deps chromium && exit 0
+            echo "::warning::Chromium install attempt $i failed; retrying in 75s"
+            sleep 75
+          done
+          echo "::error::Chromium install failed after 4 attempts"
+          exit 1
 
       - name: Run local browser smoke tests
         run: npm run test:e2e

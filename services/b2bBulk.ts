@@ -114,7 +114,8 @@ export async function createB2BBulkBatch(input: {
 
 export async function getB2BBulkBatches(opts: { all?: boolean } = {}): Promise<SpB2BBatch[]> {
   const { data, error } = await callGateway('b2b_bulk_list_batches', opts.all ? { all: true } : {});
-  if (error) { console.error('getB2BBulkBatches:', error); return []; }
+  // v2.8.6 — melempar, bukan []: pemanggil menampilkan panel Coba lagi.
+  if (error) { console.error('getB2BBulkBatches:', error); throw new Error(error); }
   return (data ?? []) as SpB2BBatch[];
 }
 

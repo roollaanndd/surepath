@@ -43,6 +43,9 @@ const B2BBulkBatches: React.FC<Props> = ({ lang, allClients }) => {
 
   const [batches, setBatches] = useState<SpB2BBatch[]>([]);
   const [loading, setLoading] = useState(true);
+  // v2.8.6 — layanan kini melempar; tampilkan panel Coba lagi, bukan tabel
+  // kosong yang terbaca "belum ada batch".
+  const [loadError, setLoadError] = useState(false);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<{ batch: SpB2BBatch; items: SpB2BBatchItem[]; payment: { invoice_url: string | null; status: string } | null } | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -50,10 +53,16 @@ const B2BBulkBatches: React.FC<Props> = ({ lang, allClients }) => {
   const [error, setError] = useState('');
 
   const load = useCallback(async () => {
-    setLoading(true);
-    const data = await getB2BBulkBatches(allClients ? { all: true } : {});
-    setBatches(data);
-    setLoading(false);
+    setLoading(true); setLoadError(false);
+    try {
+      const data = await getB2BBulkBatches(allClients ? { all: true } : {});
+      setBatches(data);
+    } catch (err) {
+      console.error('Unable to load B2B bulk batches:', err);
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
   }, [allClients]);
 
   useEffect(() => { void load(); }, [load]);
@@ -295,13 +304,27 @@ const B2BBulkBatches: React.FC<Props> = ({ lang, allClients }) => {
         {detailLoading && (
           <div className="py-4 text-center"><Loader2 size={18} className="animate-spin text-indigo-500 mx-auto" /></div>
         )}
-        <B2BTable
-          columns={columns}
-          rows={filtered}
-          onRowClick={(b) => openBatch(b.id)}
-          loading={loading}
-          empty={t('No bulk batches yet.', 'Belum ada batch massal.')}
-        />
+        {loadError ? (
+          <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50/70 p-5 flex items-start gap-3">
+            <AlertTriangle size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-bold text-amber-900">{t('Could not load bulk batches.', 'Batch massal belum dapat dimuat.')}</p>
+              <p className="text-xs text-amber-700 mt-1">{t('Check your connection and try again. Nothing was changed.',
+                                                              'Periksa koneksi lalu coba lagi. Tidak ada data yang berubah.')}</p>
+              <B2BButton variant="ghost" icon={RefreshCw} onClick={load} className="mt-3">
+                {t('Try again', 'Coba lagi')}
+              </B2BButton>
+            </div>
+          </div>
+        ) : (
+          <B2BTable
+            columns={columns}
+            rows={filtered}
+            onRowClick={(b) => openBatch(b.id)}
+            loading={loading}
+            empty={t('No bulk batches yet.', 'Belum ada batch massal.')}
+          />
+        )}
       </B2BGlass>
     </div>
   );

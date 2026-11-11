@@ -64,34 +64,45 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
   const [bulkBatches, setBulkBatches] = useState<SpB2BBatch[]>([]);
   const [companyByClient, setCompanyByClient] = useState<Record<string, string>>({});
   const [initialLoading, setInitialLoading] = useState(true);
+  // v2.8.6 — kegagalan muat data portal tidak lagi menyamar jadi "belum ada
+  // data". Banner jujur + tombol coba lagi, baik di dashboard maupun layar
+  // daftar (yang memuat data masing-masing).
+  const [loadError, setLoadError] = useState(false);
 
   const loadData = async () => {
     if (!client?.id) return;
-    if (isMaster) {
-      const [subs, qs, batches, clients] = await Promise.all([
-        getAllB2BSubmissions(),
-        getAllB2BQuotes(),
-        getB2BBulkBatches({ all: true }),
-        adminListB2BUsers(),
+    setLoadError(false);
+    try {
+      if (isMaster) {
+        const [subs, qs, batches, clients] = await Promise.all([
+          getAllB2BSubmissions(),
+          getAllB2BQuotes(),
+          getB2BBulkBatches({ all: true }),
+          adminListB2BUsers(),
+        ]);
+        setSubmissions(subs);
+        setQuotes(qs);
+        setBulkBatches(batches);
+        setCompanyByClient(Object.fromEntries(
+          clients.map(c => [c.id, c.company_name || c.name || '—']),
+        ));
+        setInitialLoading(false);
+        return;
+      }
+      const [subs, qs, batches] = await Promise.all([
+        getB2BSubmissions(client.id),
+        getB2BQuotes(client.id),
+        getB2BBulkBatches(),
       ]);
       setSubmissions(subs);
       setQuotes(qs);
       setBulkBatches(batches);
-      setCompanyByClient(Object.fromEntries(
-        clients.map(c => [c.id, c.company_name || c.name || '—']),
-      ));
       setInitialLoading(false);
-      return;
+    } catch (error) {
+      console.error('Unable to load B2B portal data:', error);
+      setLoadError(true);
+      setInitialLoading(false);
     }
-    const [subs, qs, batches] = await Promise.all([
-      getB2BSubmissions(client.id),
-      getB2BQuotes(client.id),
-      getB2BBulkBatches(),
-    ]);
-    setSubmissions(subs);
-    setQuotes(qs);
-    setBulkBatches(batches);
-    setInitialLoading(false);
   };
 
   useEffect(() => { void loadData(); }, [client?.id, isMaster]);
@@ -176,6 +187,8 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
             companyByClient={companyByClient}
             lang={lang}
             loading={initialLoading}
+            loadError={loadError}
+            onRetry={() => { loadData(); }}
           />
         );
       case 'new-single':

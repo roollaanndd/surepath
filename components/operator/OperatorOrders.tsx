@@ -10,6 +10,8 @@ import { useT } from '../../src/i18n';
 import { listOrders, updateOrderStatus, sendInsurerReviewLink, type OperatorOrder } from '../../services/operatorService';
 import { publishAndDownloadQuotation } from '../../services/quotationService';
 import { fromOperatorOrder } from '../../services/quotationSlipAdapter';
+import { pendingAgeHours } from '../../services/adminMetrics';
+import SlaTimer from '../shared/SlaTimer';
 import ModuleIcon from '../shared/ModuleIcon';
 
 interface Props {
@@ -205,9 +207,15 @@ const OperatorOrders: React.FC<Props> = ({ lang, refreshTick }) => {
                     <p className="text-xs text-ds-ink2 mt-0.5">{o.product_name}</p>
                     <p className="text-xs text-ds-ink3 mt-1">{o.coverage_type} · {fmtIdr(o.total_premium)}</p>
                   </div>
-                  <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${statusColor}`}>
-                    {o.status.replace('_', ' ')}
-                  </span>
+                  <div className="flex flex-col items-end gap-1.5">
+                    <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${statusColor}`}>
+                      {o.status.replace('_', ' ')}
+                    </span>
+                    {/* SLA keputusan 48 jam untuk order yang menunggu keputusan. */}
+                    {(o.status === 'SUBMITTED' || o.status === 'UNDER_REVIEW') && (
+                      <SlaTimer hours={pendingAgeHours(o) ?? 0} targetHours={48} />
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-2 mt-3 pt-3 border-t border-ds-border">

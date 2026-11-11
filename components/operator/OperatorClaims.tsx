@@ -6,6 +6,8 @@ import { AgentArtKeyframes, AgentHero, SpotClaims, AgentEmpty } from '../agent/A
 import { UnderlineTabs, SkeletonCard, useToast, useConfirmDialog } from '../ui';
 import { useT } from '../../src/i18n';
 import { listClaims, updateClaimStatus, type OperatorClaim } from '../../services/operatorService';
+import { claimAgeHours } from '../../services/adminMetrics';
+import SlaTimer from '../shared/SlaTimer';
 
 interface Props {
   operator: any;
@@ -133,9 +135,15 @@ const OperatorClaims: React.FC<Props> = ({ lang, refreshTick }) => {
                     <p className="text-xs text-ds-ink3 mt-1">Estimasi: {fmtIdr(c.amount_estimated)}</p>
                     <p className="text-[10px] text-ds-ink3 mt-1">{new Date(c.created_at).toLocaleString('id-ID')}</p>
                   </div>
-                  <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${statusColor}`}>
-                    {c.status.replace('_', ' ')}
-                  </span>
+                  <div className="flex flex-col items-end gap-1.5">
+                    <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${statusColor}`}>
+                      {c.status.replace('_', ' ')}
+                    </span>
+                    {/* SLA review 24 jam — warna adalah informasi (roadmap #10). */}
+                    {(c.status === 'SUBMITTED' || c.status === 'UNDER_REVIEW') && (
+                      <SlaTimer hours={claimAgeHours(c) ?? 0} targetHours={24} />
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-2 mt-3 pt-3 border-t border-ds-border">

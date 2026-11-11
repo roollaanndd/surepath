@@ -21,6 +21,8 @@ import { formatIDR } from '../car-wizard/WizardUI';
 import { formatIDRCompact } from '../../src/i18n';
 import { buildDashboardModel, groupProducts, type DashboardTask } from './dashboardData';
 import { adminNotifMeta, adminNotifTimeAgo } from './notifMeta';
+import { avgClaimTatHours, oldestOpenClaimHours, renewalRiskCount, conversion7d } from '../../services/adminMetrics';
+import SlaTimer from '../shared/SlaTimer';
 import ModuleIcon from '../shared/ModuleIcon';
 import {
   AdminStyles, AdminCountUp, AdminSkeletonHero, AdminSkeletonKpiRow,
@@ -448,6 +450,40 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </button>
           );
         })}
+      </div>
+
+      {/* Service quality (roadmap #9/#10): from data already in scope — TAT of
+          settled claims, the oldest open claim on an SLA clock, renewal risk
+          from the retention engine's queue, and 7-day conversion. */}
+      <div className="sp-stagger-cards grid grid-cols-2 gap-4 xl:grid-cols-4">
+        <div className="rounded-[1.5rem] border border-ds-border bg-ds-card p-4 shadow-ds-sm">
+          <p className="text-2xs font-black uppercase tracking-[0.16em] text-ds-ink3">Rata-rata TAT Klaim Dibayar</p>
+          <p className="mt-1 text-xl font-black tracking-tight text-ds-ink tabular-nums">
+            {(() => { const h = avgClaimTatHours(claims ?? []); return h === null ? '—' : h >= 48 ? `${(h / 24).toFixed(1)} hari` : `${Math.round(h)} jam`; })()}
+          </p>
+          <p className="mt-1 text-2xs font-semibold text-ds-ink3">diajukan → dibayar</p>
+        </div>
+        <div className="rounded-[1.5rem] border border-ds-border bg-ds-card p-4 shadow-ds-sm">
+          <p className="text-2xs font-black uppercase tracking-[0.16em] text-ds-ink3">Klaim Tertua Menunggu</p>
+          <div className="mt-1.5">
+            {(() => { const h = oldestOpenClaimHours(claims ?? []); return h === null
+              ? <span className="text-xl font-black tracking-tight text-ds-ink">—</span>
+              : <SlaTimer hours={h} targetHours={24} />; })()}
+          </div>
+          <p className="mt-1 text-2xs font-semibold text-ds-ink3">SLA review 24 jam</p>
+        </div>
+        <div className="rounded-[1.5rem] border border-ds-border bg-ds-card p-4 shadow-ds-sm">
+          <p className="text-2xs font-black uppercase tracking-[0.16em] text-ds-ink3">Risiko Perpanjangan</p>
+          <p className="mt-1 text-xl font-black tracking-tight text-ds-ink tabular-nums">{renewalRiskCount(orders ?? [])}</p>
+          <p className="mt-1 text-2xs font-semibold text-ds-ink3">polis ≤7 hari / kedaluwarsa</p>
+        </div>
+        <div className="rounded-[1.5rem] border border-ds-border bg-ds-card p-4 shadow-ds-sm">
+          <p className="text-2xs font-black uppercase tracking-[0.16em] text-ds-ink3">Konversi 7 Hari</p>
+          <p className="mt-1 text-xl font-black tracking-tight text-ds-ink tabular-nums">
+            {(() => { const c = conversion7d(orders ?? []); return c === null ? '—' : `${Math.round(c * 100)}%`; })()}
+          </p>
+          <p className="mt-1 text-2xs font-semibold text-ds-ink3">pesanan → diterbitkan</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">

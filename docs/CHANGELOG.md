@@ -1,5 +1,34 @@
 # SurePath - Changelog
 
+## v2.8.14 - 2026-11-11
+
+### Dari log menjadi keputusan — kualitas layanan di dashboard admin + jam SLA di antrean operator
+
+Eksekusi roadmap owner poin #9/#10: jejak aktivitas (v2.8.9) kini diagregasi
+menjadi metrik yang bisa ditindaklanjuti, dan antrean operator diberi jam.
+
+**Dashboard admin (`AdminDashboard`)** mendapat strip "Kualitas Layanan"
+dari data yang sudah dimuat — tanpa query baru, tanpa permission baru:
+rata-rata TAT klaim yang dibayar (diajukan→dibayar), klaim tertua yang masih
+menunggu (dengan chip SLA 24 jam), jumlah polis berisiko perpanjangan
+(≤7 hari/kedaluwarsa — menghitung ulang antrean dari mesin retensi v2.8.12,
+bukan implementasi kedua), dan konversi pesanan→diterbitkan 7 hari. Definisi
+jujur: skema tidak menyimpan timestamp per tahap, jadi TAT adalah
+created_at→updated_at klaim yang selesai, dan jendela kosong menampilkan "—",
+bukan 0% palsu (`services/adminMetrics.ts`, modul murni).
+
+**Jam SLA operator (`SlaTimer`).** Setiap baris klaim di antrean Operator
+App yang menunggu (SUBMITTED/UNDER_REVIEW) kini membawa chip
+"umur / target 24 jam", dan setiap order yang menunggu keputusan membawa
+chip 48 jam — emerald = aman, amber = paruh kedua anggaran, rose = jebol.
+Warna adalah informasi: operator memprioritaskan berdasarkan angka, bukan
+dengan mengingat kapan tiap baris masuk.
+
+**Guard** (`adminMetrics.test.tsx`): definisi TAT/umur per status, rata-rata
+hanya baris selesai, ambang SLA (≤½ OK, ≤target WARN, >target BREACH), chip
+tiga warna, GWP/konversi berjendela 7 hari (null bila jendela kosong), dan
+risiko perpanjangan menunggangi antrean retensi.
+
 ## v2.8.13 - 2026-11-11
 
 ### Alat agen #2 — QR referral yang bisa di-scan + simulator komisi berbasis riwayat sendiri

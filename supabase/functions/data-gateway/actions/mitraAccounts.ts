@@ -62,7 +62,7 @@ export async function handleMitraAccountsAction(
   action: string,
   ctx: GatewayContext,
 ): Promise<ActionResult | null> {
-  const { db, params, caller, sendTelegram } = ctx;
+  const { db, params, caller, sendTelegram, checkRateLimit } = ctx;
 
   switch (action) {
     // ── Tambah mitra manual ───────────────────────────────────────────────
@@ -75,6 +75,12 @@ export async function handleMitraAccountsAction(
     case 'admin_create_mitra': {
       if (!CAN_MANAGE_MITRA_ACCOUNT.includes(caller.role ?? '')) {
         return json({ error: 'Forbidden: hanya ADMIN atau MASTER_ADMIN' }, 403);
+      }
+
+      // Hardening v2.8.16: pembuatan akun menerbitkan kredensial — tidak ada
+      // alasan admin membutuhkan lebih dari segelintir per jam. Gagal tertutup.
+      if (!(await checkRateLimit(`admin:${caller.spUser.id}`, 10))) {
+        return json({ error: 'Terlalu banyak pembuatan akun dalam jam ini. Coba lagi nanti.' }, 429);
       }
 
       const name = String(params.name ?? '').trim();
@@ -229,6 +235,12 @@ export async function handleMitraAccountsAction(
     case 'admin_create_b2b_user': {
       if (!CAN_MANAGE_MITRA_ACCOUNT.includes(caller.role ?? '')) {
         return json({ error: 'Forbidden: hanya ADMIN atau MASTER_ADMIN' }, 403);
+      }
+
+      // Hardening v2.8.16: sama seperti admin_create_mitra — akun B2B
+      // menerbitkan sandi manual, dibatasi per admin per jam.
+      if (!(await checkRateLimit(`admin:${caller.spUser.id}`, 10))) {
+        return json({ error: 'Terlalu banyak pembuatan akun dalam jam ini. Coba lagi nanti.' }, 429);
       }
 
       const name = String(params.name ?? '').trim();

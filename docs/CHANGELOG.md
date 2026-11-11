@@ -1,5 +1,40 @@
 # SurePath - Changelog
 
+## v2.8.16 - 2026-11-11
+
+### Hardening keamanan — rate limit penerbitan kredensial + disposisi audit dependensi
+
+Eksekusi roadmap owner poin #18, dengan temuan yang jujur.
+
+**Rate limit penerbitan kredensial.** Dua aksi gateway yang menerbitkan
+kredensial — `admin_create_mitra` dan `admin_create_b2b_user` (set sandi
+sementara / sandi manual) — kini dibatasi **10 pembuatan akun per admin per
+jam** melalui rate limiter DB bersama (bucket per jam, gagal-tertutup).
+Sebelumnya hanya terlindungi pagar IP global 60/menit; sebuah sesi admin
+yang bocor kini tidak bisa menyalin akun massal. Alur OTP/password login
+sendiri tidak melewati gateway (langsung GoTrue Supabase yang punya
+rate limit sendiri) — tidak digandakan.
+
+**Disposisi 2 alert Dependabot (moderate & low): keduanya dev-only dan
+belum ada versi perbaikan upstream.** `deepmerge` (prototype poisoning,
+GHSA-gcqx-w48m-w2h4) hanya dipakai jalur build (vite-plugin-pwa →
+workbox-build); `minimatch` (DoS glob) hanya oleh eslint/rimraf/glob.
+Tidak ada jalur runtime produksi untuk keduanya, dan advisory keduanya
+belum punya versi fixed — `npm audit fix`/update tidak menyelesaikan
+(17 sisa adalah rantai @typescript-eslint yang butuh major bump breaking;
+bukan dieksekusi di pass hardening ini demi tidak menstabilkan toolchain).
+Status: risiko diterima & tercatat; otomatis tertutup begitu upstream
+merilis fix. 16 moderate lain identik (dev-only, tanpa jalur runtime).
+
+**Supabase Preview merah di CI bukan regresi** — sudah merah sejak minimal
+v2.8.10; check itu milik integrasi GitHub Supabase (Dashboard), bukan
+workflow repo — perlu dikonfigurasi/diputuskan di dashboard Supabase
+(konek integrasi atau matikan). Semua check milik repo (deploy produksi,
+unit-tests, quality, CodeQL, audit runtime, Android, edge-function-types)
+hijau di semua rilis hari ini. Audit RLS tabel baru dikonfirmasi: RLS
+aktif + policy deny-direct pada sp_b2b_batches & sp_b2b_batch_items
+(sejak v2.8.8).
+
 ## v2.8.15 - 2026-11-11
 
 ### B2B kalender armada — unit mana jatuh tempo kapan, ekspor CSV untuk keuangan

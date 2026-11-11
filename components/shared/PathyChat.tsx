@@ -696,6 +696,71 @@ const PathyCardView: React.FC<{
           )}
         </CardShell>
       );
+    case 'bulk_analysis': {
+      // v2.8.18 — hasil analyze_bulk_pricing. Mode fleet (TLO armada) menampilkan
+      // breakdown uang batch + per baris; mode standar menampilkan total preminya.
+      const rows = (d.rows ?? []) as Array<Record<string, any>>;
+      const errors = (d.errors ?? []) as Array<Record<string, any>>;
+      const fleet = d.mode === 'fleet';
+      const totals = (d.totals ?? null) as Record<string, any> | null;
+      return (
+        <CardShell title={`${fleet ? t('Analisa Armada TLO', 'Fleet TLO Analysis') : t('Analisa File', 'File Analysis')}${d.file ? ` — ${d.file}` : ''}`}>
+          <Row
+            label={t('Unit terhitung', 'Units priced')}
+            value={`${d.berhasil ?? 0}${d.gagal ? ` · ${d.gagal} ${t('gagal', 'failed')}` : ''}`}
+          />
+          {fleet && totals ? (
+            <>
+              <Row label={t('Premi gross', 'Gross premium')} value={rp(totals.premi_gross)} />
+              <Row label={t('Diskon', 'Discount')} value={`-${rp(totals.diskon)}`} />
+              <Row label={t('Setelah diskon', 'After discount')} value={rp(totals.premi_setelah_diskon)} />
+              <Row label={t('Biaya admin', 'Admin fee')} value={rp(totals.biaya_admin)} />
+              <div className="pt-1.5 border-t border-slate-100 dark:border-white/10">
+                <Row
+                  label={t('Total ditagihkan', 'Total to invoice')}
+                  value={<span className="text-ds-green dark:text-emerald-400 font-black">{rp(totals.total_ditagihkan)}</span>}
+                />
+              </div>
+            </>
+          ) : (
+            <Row
+              label={t('Total estimasi premi', 'Total estimated premium')}
+              value={<span className="text-ds-green dark:text-emerald-400 font-black">{rp(d.total_premium)}</span>}
+            />
+          )}
+          {rows.length > 0 && (
+            <div className="pt-2 space-y-1.5">
+              {rows.slice(0, 8).map((r, i) => (
+                <div key={i} className="flex items-center justify-between gap-2 text-[0.62rem]">
+                  <span className="text-slate-600 dark:text-slate-300 truncate">
+                    {r.baris}. {r.nama}{fleet && r.kelas ? ` · ${r.kelas} · Z${r.zona}` : ''}
+                  </span>
+                  <span className="font-bold tabular-nums whitespace-nowrap">
+                    {rp(fleet ? r.total_premi : r.estimasi_premi)}
+                  </span>
+                </div>
+              ))}
+              {rows.length > 8 && (
+                <p className="text-2xs text-slate-400">+{rows.length - 8} {t('baris lainnya', 'more rows')}</p>
+              )}
+            </div>
+          )}
+          {errors.length > 0 && (
+            <div className="pt-2 space-y-1">
+              {errors.slice(0, 5).map((e, i) => (
+                <p key={i} className="text-2xs text-amber-600 dark:text-amber-400">
+                  ⚠ {t('Baris', 'Row')} {e.baris}: {e.error}
+                </p>
+              ))}
+            </div>
+          )}
+          <p className="text-[0.55rem] text-slate-400 leading-snug pt-1">
+            {t('Angka dari mesin hitung platform — bukan perkiraan model. Pengajuan resmi tetap lewat alur Impor Massal.',
+               'Numbers from the platform rating engine — not model guesses. Official submission still goes through Bulk Import.')}
+          </p>
+        </CardShell>
+      );
+    }
     case 'document_read': {
       const f = (d.fields ?? {}) as Record<string, any>;
       const conf = typeof d.confidence === 'number' ? Math.round(d.confidence * 100) : null;

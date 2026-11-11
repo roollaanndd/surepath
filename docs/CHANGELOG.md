@@ -1,5 +1,41 @@
 # SurePath - Changelog
 
+## v2.8.18 - 2026-11-11
+
+### Quotation Excel B2B + Pathy fleet parity
+
+Eksekusi flow mitra B2B: unggah Excel berisi ratusan motor/mobil → premi,
+diskon, dan total premi terisi per baris sesuai zona & cover TLO → file
+Excel quotation kembali ke klien.
+
+**Quotation Excel (file keluar).** Builder baru `services/b2bBulkQuoteExcel.ts`
+(SheetJS): sheet *Quotation* — data unit + kolom `Rate (%)`, `Premi Gross`,
+`Diskon (%)`, `Diskon (Rp)`, `Premi Setelah Diskon`, `Biaya Admin`, `Total
+Premi`, `Catatan` + baris TOTAL; sheet *Ringkasan* — total batch dan breakdown
+per kelas unit. Dua pintu unduh: tombol **Unduh Quotation (Excel)** di layar
+Tinjau Premi (B2BBulkImport, angka preview engine) dan tombol **Quotation
+(Excel)** di detail setiap batch (B2BBulkBatches, semua status; angka apa adanya
+dari `sp_b2b_batch_items` — recompute otoritatif server). Disiplin uang
+dipertahankan: builder murni format, satu-satunya penjumlahan lewat
+`calcBulkTotals` agar identik dengan cara server menjumlahkan.
+
+**Pathy fleet parity.** Tool `analyze_bulk_pricing` kini mendeteksi census
+armada (kolom pembiayaan/tenor) otomatis dan menilai setiap baris dengan
+`calcBulkPremium` — mesin yang sama dengan impor resmi: zona dari plat/wilayah,
+rate per kelas unit, pro-rata tenor, diskon, biaya admin, lantai premi minimum,
+dan **rate set admin yang aktif** (`sp_b2b_fleet_rate_sets`, loader replika
+`loadActiveBulkRateConfig`). Angka Pathy, angka layar Tinjau Premi, dan angka
+server kini satu sumber. Parser angka baru mengerti format uang id-ID
+(`Rp 120.000.000`, `1.250.000,5`) — sebelumnya format ribuan titik membuat
+baris gagal dinilai. Mode polis per-unit (tarif OJK standar) tetap untuk file
+non-fleet. Kartu `bulk_analysis` kini dirender di chat: total premi gross,
+diskon, setelah diskon, biaya admin, total ditagihkan + sampel per baris +
+baris gagal.
+
+**Uji.** `b2bBulkQuoteExcel.test.ts`: rantai penuh engine → workbook → dibaca
+ulang (total sheet ≡ `calcBulkTotals` engine, adapter batch item snake_case,
+flag engine masuk kolom Catatan).
+
 ## v2.8.17 - 2026-11-11
 
 ### Perbaikan tipe: guard rate limit v2.8.16 lolos deno check

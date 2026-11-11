@@ -1,5 +1,35 @@
 # SurePath - Changelog
 
+## v2.8.13 - 2026-11-11
+
+### Alat agen #2 — QR referral yang bisa di-scan + simulator komisi berbasis riwayat sendiri
+
+Eksekusi roadmap owner poin #5/#6/#7. Catatan: **proposal generator sudah
+ada** dan tidak ditulis ulang — `AgentQuoteBuilder` + `quotationSlipPdf`
+sudah menghasilkan slip penawaran eksekutif 4 halaman (jsPDF, QR e-quotation
+`/q/{code}`, kartu agen, rincian premi, instruksi pembayaran).
+
+**QR referral deep-link (`AgentNetwork`).** Kartu kode referral kini
+menampilkan QR dari tautan kanonik yang sama dengan tombol WhatsApp
+(`https://myinsurepath.com?ref=KODE`), digenerate lokal paket `qrcode` tanpa
+panggilan backend, warna emerald brand, plus tombol **Simpan QR** (unduh PNG
+untuk dicetak/stand di lapangan). Prospek scan → site publik memarkir
+`?ref=` ke `SUREPATH_REF` → role selection mengikatnya saat pendaftaran —
+rantai attribution yang sebelumnya bocor karena refcode harus diketik manual
+kini bisa sepenuhnya scan.
+
+**Simulator komisi (`AgentCommission` + `services/commissionSimulator.ts`).**
+"Kalau saya tutup 5 polis sebulan, saya dapat apa" — dua input (polis/bulan,
+rata-rata premi) dan dua output (komisi bulanan/tahunan), dihitung pada
+**rate campuran milik agen sendiri** dari riwayat komisi nyata
+(Σcommission/Σpremi atas baris PAID+PENDING; CANCELLED tidak ikut; fallback
+rate standar 10% bila riwayat belum terukur). Modul murni: input sampah
+ter-clamp (0–500 polis, rate 0–100%), tidak pernah NaN/Infinity.
+
+**Guard** (`commissionSimulator.test.ts`): rate campuran hanya dari baris
+ber-langsung, null bila tanpa premi, matematika ter-clamp. Tidak ada
+perubahan API/DB/permission.
+
 ## v2.8.12 - 2026-11-11
 
 ### Lingkar retensi #1 — mesin perpanjangan satu-tap + timeline klaim yang terlihat bergerak

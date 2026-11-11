@@ -22,7 +22,9 @@ function makeDb(opts: { existingByEmail?: Row | null; upline?: Row | null } = {}
       return {
         select: () => ({
           ilike: () => ({ maybeSingle: async () => ({ data: opts.existingByEmail ?? null }) }),
-          or: () => ({ neq: () => ({ maybeSingle: async () => ({ data: opts.upline ?? null }) }) }),
+          // v2.8.9 — lookup upline kini mengambil kandidat (array), bukan
+          // maybeSingle: or → neq → order → limit.
+          or: () => ({ neq: () => ({ order: () => ({ limit: async () => ({ data: opts.upline ? [opts.upline] : [], error: null }) }) }) }),
         }),
         insert(row: Row) {
           inserted.push({ table, row });
@@ -117,7 +119,9 @@ describe('ensure_profile — account type must be chosen, never assumed', () => 
   });
 
   it('links the upline when a referral code comes along', async () => {
-    const db = makeDb({ upline: { id: 'upline-1' } });
+    // v2.8.9 — kandidat upline harus membawa kode yang benar-benar cocok
+    // (pickUplineMatch memilih referral_code/agent_code yang persis).
+    const db = makeDb({ upline: { id: 'upline-1', agent_code: 'SP-AGT-1234' } });
     const ctx: any = {
       db,
       params: { role: 'CUSTOMER', name: 'Rina', referral_code: 'SP-AGT-1234' },

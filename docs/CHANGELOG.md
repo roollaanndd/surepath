@@ -1,5 +1,57 @@
 # SurePath - Changelog
 
+## v2.8.9 - 2026-11-11
+
+### Jejak aktivitas yang menjawab "apa yang dikerjakan" + agen terkunci di app agen + referral sinkron database
+
+Tiga perbaikan atas komplain owner (11 Nov 2026).
+
+**Log admin sekarang jelas (komplain: hanya "Get My Notifications" tanpa
+detail).** Aksi polling notifikasi yang dinyalakan timer tiap portal terbuka
+(30–60 detik sekali, ratusan baris per jam per perangkat) tidak ditulis lagi
+ke jejak — kebisingannya menenggelamkan aksi bermakna, termasuk kolom "Paling
+Sering" di ringkasan. Setiap baris jejak kini membawa kolom `detail`: ringkasan
+apa yang dikerjakan (nomor order, email target, status, jumlah), dibangun
+dispatcher gateway HANYA dari whitelist kunci aman — stance privasi tidak
+berubah, NIK/foto/kata sandi tetap tidak pernah disalin. Kolom Target juga
+kini mengenali seluruh kunci pengenal umum (dulu hanya 5, mayoritas baris
+kosong). CMS (Jejak Aktivitas → rinci) menampilkan kolom Detail menggantikan
+kolom Parameter yang dulu hanya berisi nama kunci. Migration menambah kolom
+`sp_activity_log.detail`.
+
+**Agen tidak bisa lagi berpindah ke app nasabah (komplain: kadang masih
+terjadi).** Satu-satunya jalan agen masuk app nasabah adalah `allowed_apps`
+yang mengandung 'CUSTOMER' — array basi dari backfill lama atau hibah manual:
+itu yang membuat kartu "Customer App" muncul di selector, guard mengizinkan
+/custapp, dan (terburuk) `hasAppAccess` menolak agen di /agapps sehingga
+catch-all CustomerPortal justru merender di URL milik agen. Kini
+`effectiveAppsFor`/`hasAppAccess`/guard memakai satu aturan role-authoritative
+dari routeHelpers: agen hanya berada di app agen, hibah 'CUSTOMER' diabaikan
+di semua titik; selector memakai daftar yang sama (entri raw-role nama lama
+tidak lagi menjadi kartu hantu). Di server, migration membersihkan 'CUSTOMER'
+dari allowed_apps baris AGENT dan trigger `sync_allowed_apps_with_role`
+diperluas menegakkannya permanen — admin_update_user tidak bisa
+mengintroduksi ulang drift.
+
+**Referral tidak lagi gugup (komplain: kode upline di app tidak sinkron
+dengan database, downline tidak masuk).** Tiga akar masalah ditutup:
+(1) lookup upline memakai `.or().maybeSingle()` — satu kode dicocokkan lebih
+dari satu baris (agent_code 4 digit berbenturan) dan lookup gagal SENYAP;
+kini kandidat diambil semua dan pemenang dipilih deterministik
+(`pickUplineMatch`: referral_code → agent_code → terlama), termasuk di
+pembuatan mitra oleh admin; (2) benturan kode dicegah — data lama didedupe
+migration, unique index dipasang pada agent_code & referral_code, dan
+pembangkit kode baru memverifikasi keunikan sebelum insert (format tetap
+persis, pembangkit kriptografis dari codes.ts); (3) app agen kini membaca
+kode rujukan langsung dari database (`referral_code` kanonik, dibackfill
+dari agent_code) alih-alih memakai salinan sesi yang bisa basi atau fallback
+lokal yang difabrikasi — kode yang dibagikan pasti sama dengan yang
+dicocokkan server, dan pencocokan juga case-insensitive.
+
+Deploy: edge function `data-gateway` berubah (detail, noise-skip, referral,
+kode unik) dan migration harus diterapkan — keduanya berjalan otomatis lewat
+integrasi Supabase-GitHub saat merge ke main.
+
 ## v2.8.8 - 2026-11-11
 
 ### Order unit B2B (mobil & alat berat) + kata sandi manual permanen + watermark & proteksi layar admin

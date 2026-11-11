@@ -5,6 +5,7 @@ import {
   getAgentDownlineTree,
   getOverrideTransactions,
   getAgentOrders,
+  getAgentReferralCode,
   type WalletTransaction,
   type SpPolicyOrder,
   type DownlineNode,
@@ -68,7 +69,16 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
     setLoading(true);
     Promise.all([
       // Fetch referral code directly from agent prop or supabase
-      (async () => agent?.agent_code ?? null)(),
+      // v2.8.9 — kode yang dibagikan HARUS sama dengan yang dicocokkan server.
+      // Salinan sesi (nodeId) bisa berbeda dari sp_users: fallback lokal yang
+      // difabrikasi saat profil belum memuat agent_code, atau kode yang
+      // diganti admin di sisi server. Jadi kode dibaca dulu dari database
+      // (referral_code kanonik, dibackfill migration v2.8.9), fallback ke
+      // agent_code sesi hanya kalau DB gagal dijangkau.
+      (async () => {
+        const fromDb = agentId ? await getAgentReferralCode(agentId).catch(() => null) : null;
+        return fromDb ?? agent?.agent_code ?? null;
+      })(),
       getAgentDownlineTree(agentId),
       getOverrideTransactions(agentId),
     ]).then(([code, dl, txns]) => {
@@ -76,7 +86,7 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
       setDownlines(dl);
       setOverrideTxns(txns);
     }).finally(() => setLoading(false));
-  }, [agentId]);
+  }, [agentId, agent?.agent_code]);
 
   // Fetch issued orders (gateway scopes to the caller's own orders — downline
   // order details are private; downline stats come from override transactions)

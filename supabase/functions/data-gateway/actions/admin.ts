@@ -16,7 +16,7 @@ export async function handleAdminAction(action: string, ctx: GatewayContext): Pr
         if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
         let q = db
           .from('sp_activity_log')
-          .select('id, created_at, actor_id, actor_email, actor_role, action, target_id, status, http_status, duration_ms, param_keys, ip, user_agent')
+          .select('id, created_at, actor_id, actor_email, actor_role, action, target_id, status, http_status, duration_ms, param_keys, detail, ip, user_agent')
           .order('created_at', { ascending: false })
           .limit(Math.min(Number(params.limit ?? 200), 1000));
         if (params.actor_id) q = q.eq('actor_id', String(params.actor_id));

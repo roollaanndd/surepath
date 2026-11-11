@@ -35,7 +35,9 @@ function makeDb(opts: { byEmail?: Row | null; byId?: Row | null; upline?: Row | 
               error: null,
             }),
           }),
-          or: () => ({ maybeSingle: async () => ({ data: opts.upline ?? null }) }),
+          // v2.8.9 — lookup upline kini mengambil kandidat (array), bukan
+          // maybeSingle: or → order → limit.
+          or: () => ({ order: () => ({ limit: async () => ({ data: opts.upline ? [opts.upline] : [], error: null }) }) }),
         }),
         insert(row: Row) {
           inserted.push({ table, row });

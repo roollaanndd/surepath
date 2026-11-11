@@ -19,7 +19,7 @@
 // sandi yang bisa dibaca.
 import type { GatewayContext, ActionResult } from './types.ts';
 import { isUntrustedEmail } from '../../_shared/trust.ts';
-import { newAgentCode } from '../../_shared/codes.ts';
+import { sanitizeReferralCode, pickUplineMatch, generateUniqueUserCode } from '../../_shared/referral.ts';
 
 const json = (body: unknown, status = 200): ActionResult => ({ status, body });
 
@@ -147,7 +147,9 @@ export async function handleMitraAccountsAction(
         ktp: params.ktp ?? null,
         address: params.address ?? null,
         role: 'AGENT',
-        agent_code: newAgentCode(),
+        // v2.8.9 — kode mitra dicek unik sebelum dipakai (benturan kode membuat
+        // lookup upline berbasis kode gagal senyap; lihat _shared/referral.ts).
+        agent_code: await generateUniqueUserCode(db, 'AGENT'),
         commission_rate: 0.1,
         monthly_target: 50000000,
         trust_score: 80,
@@ -157,16 +159,21 @@ export async function handleMitraAccountsAction(
         verified: false,
       };
 
-      // Upline opsional — dicocokkan ke agent_code atau referral_code, dengan
+      // Upline opsional — dicocokkan ke referral_code atau agent_code, dengan
       // nilai yang dibersihkan lebih dulu. Interpolasi mentah ke .or() adalah
       // kelas bug injeksi filter yang ditutup di v2.6.18.
-      const rawUpline = String(params.upline_code ?? '').trim();
-      const uplineCode = rawUpline.replace(/[^A-Za-z0-9-]/g, '').slice(0, 32);
+      // v2.8.9 — kandidat diambil semua lalu dipilih deterministik
+      // (pickUplineMatch): kode duplikat dulu membuat maybeSingle() gagal
+      // senyap dan admin melihat "kode tidak ditemukan" untuk kode yang
+      // sebenarnya ada; pencocokan juga kini case-insensitive.
+      const uplineCode = sanitizeReferralCode(params.upline_code);
       if (uplineCode) {
-        const { data: upline } = await db.from('sp_users')
-          .select('id')
-          .or(`agent_code.eq.${uplineCode},referral_code.eq.${uplineCode}`)
-          .maybeSingle();
+        const { data: uplineCandidates } = await db.from('sp_users')
+          .select('id, agent_code, referral_code')
+          .or(`agent_code.ilike.${uplineCode},referral_code.ilike.${uplineCode}`)
+          .order('created_at', { ascending: true })
+          .limit(5);
+        const upline = pickUplineMatch(uplineCandidates, uplineCode);
         if (!upline) {
           await db.auth.admin.deleteUser(authUserId).catch(() => {});
           return json({ error: `Kode upline ${uplineCode} tidak ditemukan`, code: 'UPLINE_NOT_FOUND' }, 400);

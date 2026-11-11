@@ -1,5 +1,41 @@
 # SurePath - Changelog
 
+## v2.8.12 - 2026-11-11
+
+### Lingkar retensi #1 — mesin perpanjangan satu-tap + timeline klaim yang terlihat bergerak
+
+Eksekusi roadmap owner poin #1 dan #2: renewal adalah pendapatan termurah di
+asuransi, dan klaim yang transparan adalah yang direkomendasikan orang.
+
+**Mesin perpanjangan (`services/renewalEngine.ts`).** Logika murni: antrean
+dari polis ISSUED yang benar-benar punya `end_date`, diurutkan paling genting
+dulu (Kedaluwarsa → ≤7 hari "Segera perpanjang" → ≤30 hari "Jatuh tempo
+dekat" → sehat), dedupe per nomor polis, toleran tanggal rusak (hasilnya
+degradasi ke "tanpa banner", bukan crash). Home Customer App kini punya kartu
+Perpanjangan: countdown, label urgensi berwarna, jumlah polis lain yang
+mendekati jatuh tempo, dan tombol **Perpanjang** yang memarkir snapshot
+kendaraan dari order lama lewat `services/renewalHandoff.ts` (kontrak
+validasi, meniru claimHandoff) lalu membuka wizard mobil — wizard mengonsumsi
+snapshot sekali di mount, langkah Data Mobil terisi otomatis (brand, model,
+tahun, plat, usage, region, provinsi, kondisi), dengan banner "Perpanjangan
+polis ORD-… — data kendaraan sudah dimuat". Nasabah tidak lagi memulai dari
+nol hanya untuk memperpanjang.
+
+**Timeline klaim (`components/shared/ClaimTimeline.tsx`).** Stepper
+Diajukan → Diverifikasi → Disetujui → Dibayar pada setiap baris "Klaim Saya"
+— status berjalan berdenyut, REJECTED mendapat chip terminal merah, CLOSED
+(row historis) dirender rantai penuh, tanggal Diajukan/Diperbarui ditampilkan
+apa adanya (skema hanya menyimpan created_at/updated_at — timeline jujur pada
+yang diketahui, tidak mengarang timestamp per tahap). Varian compact untuk
+baris daftar, full untuk detail.
+
+**Guard** (`services/__tests__/retention.test.tsx`): batas tier (0/7/8/30/31),
+zona waktu kalender (tier berganti di tengah malam, bukan tengah sesi),
+kebersihan antrean, validasi prefill (payload rusak tidak pernah sampai ke
+wizard), dan keadaan timeline (UNDER_REVIEW=2 langkah, PAID/CLOSED=4,
+REJECTED berchip). Tidak ada perubahan API/permission; antarmuka wizard tidak
+berubah bagi alur beli baru (tanpa prefill, state awal identik).
+
 ## v2.8.11 - 2026-11-11
 
 ### Sistem ikon global "Aureate Emerald" — ilustrasi premium, custom, bukan AI slop

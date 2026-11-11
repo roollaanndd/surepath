@@ -28,6 +28,9 @@ import { getCustomerOrders, getCustomerClaims, getNotifications, type SpPolicyOr
 import { HeroCard, AICard, StatCard, SectionLabel, FeaturedCard } from '../shared/cards';
 import { EmptyStateSearch } from '../shared/Illustrations';
 import { CircularActionGrid, ClayCard, ReferralCard } from '../ui';
+import { buildRenewalQueue, TIER_LABEL_ID, TIER_LABEL_EN, TIER_COLOR, formatEndDate } from '../../services/renewalEngine';
+import { parkRenewalPrefill } from '../../services/renewalHandoff';
+import ClaimTimeline from '../shared/ClaimTimeline';
 import PathyChat, { PATHY_OPEN_EVENT } from '../shared/PathyChat';
 import { CLAIM_OPEN_EVENT } from '../../services/claimHandoff';
 import OrderDetailSheet from './OrderDetailSheet';
@@ -189,6 +192,10 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
         const homeRenewalDate = latestPolicy?.end_date
           ? new Date(latestPolicy.end_date).toLocaleDateString(lang === Language.EN ? 'en-GB' : 'id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
           : null;
+        // Retention circle (roadmap #2): the renewal queue drives the
+        // countdown card below — most urgent expiring policy first.
+        const renewalQueue = buildRenewalQueue(customerPolicies);
+        const topRenewal = renewalQueue[0] ?? null;
         return (
           <PageTransition>
             <div className="sp-modern-app space-y-6 pb-32">
@@ -277,6 +284,49 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                   </ClayCard>
                 </div>
               )}
+
+              {/* Renewal — retention circle: countdown + one-tap renew. The
+                  CTA parks the order's vehicle snapshot for the wizard, so
+                  "Perpanjang" arrives pre-filled instead of starting over. */}
+              {topRenewal && (() => {
+                const src = customerPolicies.find(p => p.id === topRenewal.orderId);
+                const label = lang === Language.EN ? TIER_LABEL_EN[topRenewal.tier] : TIER_LABEL_ID[topRenewal.tier];
+                const when = topRenewal.daysLeft < 0
+                  ? t(`Expired ${formatEndDate(topRenewal.endDate)}`, `Kedaluwarsa ${formatEndDate(topRenewal.endDate)}`)
+                  : lang === Language.EN
+                    ? `${topRenewal.daysLeft} days left · until ${formatEndDate(topRenewal.endDate, 'EN')}`
+                    : `${topRenewal.daysLeft} hari lagi · s.d. ${formatEndDate(topRenewal.endDate)}`;
+                return (
+                  <div>
+                    <SectionLabel>{t('Renewal', 'Perpanjangan')}</SectionLabel>
+                    <div className="rounded-2xl border bg-ds-card p-4" style={{ borderColor: `${TIER_COLOR[topRenewal.tier]}55` }}>
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <span className="text-2xs font-black uppercase tracking-wider" style={{ color: TIER_COLOR[topRenewal.tier] }}>{label}</span>
+                          <p className="text-sm font-black text-ds-ink mt-0.5 truncate">{topRenewal.productName}</p>
+                          <p className="text-xs text-ds-ink3 mt-0.5">{when}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!src) return;
+                            parkRenewalPrefill({ order_number: src.order_number, product_name: src.product_name, vehicle: src.vehicle_details });
+                            navigate('buy-car');
+                          }}
+                          className="flex-shrink-0 rounded-xl bg-ds-green px-4 py-2.5 text-xs font-black text-ds-on-green active:scale-95 transition-transform cursor-pointer"
+                        >
+                          {t('Renew', 'Perpanjang')}
+                        </button>
+                      </div>
+                      {renewalQueue.length > 1 && (
+                        <p className="text-2xs text-ds-ink3 mt-2 mb-0">
+                          {t(`${renewalQueue.length - 1} more policy expiring soon`, `${renewalQueue.length - 1} polis lain mendekati jatuh tempo`)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Quick actions — Livin'-style circular action grid */}
               <div>
@@ -575,20 +625,24 @@ const CustomerPortal: React.FC<Props> = ({ currentUser, onLogout, lang, products
                 ) : customerClaims.map((c, i) => {
                   const cmeta = claimStatusMap[c.status] ?? { label: c.status, cls: 'bg-ds-card2 text-ds-ink2' };
                   return (
-                    <div key={i} className="sp-glass rounded-2xl p-4 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-ds-red-lt flex items-center justify-center flex-shrink-0">
-                          <AlertCircle size={18} className="text-ds-red" />
+                    <div key={i} className="sp-glass rounded-2xl p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-ds-red-lt flex items-center justify-center flex-shrink-0">
+                            <AlertCircle size={18} className="text-ds-red" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-black text-ds-ink">{c.policy_number ?? c.claim_number ?? t('Claim','Klaim')}</p>
+                            <p className="text-xs text-ds-ink3">{new Date(c.created_at ?? '').toLocaleDateString('id-ID')} · {c.location}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-black text-ds-ink">{c.policy_number ?? c.claim_number ?? t('Claim','Klaim')}</p>
-                          <p className="text-xs text-ds-ink3">{new Date(c.created_at ?? '').toLocaleDateString('id-ID')} · {c.location}</p>
+                        <div className="text-right flex-shrink-0">
+                          <p className="text-sm font-black text-ds-red">{formatIDR(c.amount_estimated ?? 0)}</p>
+                          <span className={`text-2xs font-black px-2 py-0.5 rounded-full mt-1 inline-block ${cmeta.cls}`}>{cmeta.label}</span>
                         </div>
                       </div>
-                      <div className="text-right flex-shrink-0">
-                        <p className="text-sm font-black text-ds-red">{formatIDR(c.amount_estimated ?? 0)}</p>
-                        <span className={`text-2xs font-black px-2 py-0.5 rounded-full mt-1 inline-block ${cmeta.cls}`}>{cmeta.label}</span>
-                      </div>
+                      {/* Moment-of-truth stepper: the customer sees the claim MOVE. */}
+                      <ClaimTimeline status={c.status} createdAt={c.created_at} updatedAt={c.updated_at} lang={lang} />
                     </div>
                   );
                 })}

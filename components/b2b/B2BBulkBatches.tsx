@@ -48,9 +48,18 @@ const B2BBulkBatches: React.FC<Props> = ({ lang }) => {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const data = await getB2BBulkBatches();
-    setBatches(data);
-    setLoading(false);
+    try {
+      const data = await getB2BBulkBatches();
+      setBatches(data);
+      setError('');
+    } catch (e) {
+      // v2.7.56: getB2BBulkBatches kini melempar error — tampilkan, jangan
+      // diam-diam tampil sebagai daftar batch kosong.
+      console.error('Unable to load B2B bulk batches:', e);
+      setError('Batch belum dapat dimuat. Periksa koneksi lalu tarik ke bawah untuk mencoba lagi.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { load(); }, [load]);

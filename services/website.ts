@@ -626,7 +626,11 @@ export async function getB2BSubmissions(clientId: string): Promise<SpB2BSubmissi
     .select('*')
     .eq('client_id', clientId)
     .order('created_at', { ascending: false });
-  if (error) { console.error('getB2BSubmissions:', error); return []; }
+  // v2.7.56: kegagalan DILEMPAR, bukan ditelan jadi []. Try/catch di
+  // B2BSubmissions sudah ditulis sejak awal, tapi karena fungsi ini selalu
+  // mengembalikan [], layar Ajuan tidak pernah bisa membedakan "belum ada
+  // pengajuan" dari "gagal memuat" — keduanya tampil sebagai daftar kosong.
+  if (error) throw new Error(error.message);
   return (data ?? []) as SpB2BSubmission[];
 }
 
@@ -657,7 +661,9 @@ export async function getB2BQuotes(clientId: string): Promise<SpB2BQuote[]> {
     .select('*')
     .eq('client_id', clientId)
     .order('created_at', { ascending: false });
-  if (error) { console.error('getB2BQuotes:', error); return []; }
+  // v2.7.56: sama dengan getB2BSubmissions — error dilempar supaya layar
+  // Penawaran bisa menampilkan kegagalan, bukan "Belum ada penawaran" palsu.
+  if (error) throw new Error(error.message);
   return (data ?? []) as SpB2BQuote[];
 }
 

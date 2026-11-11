@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { ShieldCheck, ArrowUpRight, Search, FileText, CheckCircle, Check, ShieldAlert, RefreshCw, Globe, FileDown, Upload, Plus, UserPlus, ChevronDown, Pencil, X, Clock, AlertCircle, Send, Sparkles, KeyRound, Copy, MailCheck } from 'lucide-react';
+import { ShieldCheck, ArrowUpRight, Search, FileText, CheckCircle, Check, ShieldAlert, RefreshCw, Globe, FileDown, Upload, Plus, UserPlus, ChevronDown, Pencil, X, Clock, AlertCircle, Send, Sparkles, KeyRound, Copy, MailCheck, Eye, EyeOff, Wand2 } from 'lucide-react';
 import { db, CustomProduct, User } from '../../db';
 import {
   getAllAgents, getAllClaims, updateAgentVerification, updateAgentCommissionRate,
@@ -1281,12 +1281,23 @@ const AddMitraModal: React.FC<{
     credential: { name: string; email: string; password?: string | null; note: string } | null,
   ) => void;
 }> = ({ canSetTempPassword, onClose, onCreated }) => {
+  // v2.7.56 — satu dialog untuk dua tipe akun: Mitra Agen dan Klien B2B.
+  // Field menyesuaikan: B2B tidak punya KTP/upline/alamat domisili, tetapi
+  // wajib punya nama perusahaan (disimpan ke kolom address profil).
+  const [accountType, setAccountType] = useState<'AGENT' | 'B2B_CLIENT'>('AGENT');
   const [form, setForm] = useState({
-    name: '', email: '', phone: '', ktp: '', address: '', upline_code: '',
+    name: '', email: '', phone: '', ktp: '', address: '', upline_code: '', company_name: '',
   });
   const [mode, setMode] = useState<'invite' | 'temp'>('invite');
+  // v2.7.56 — dalam mode kata sandi, admin bisa membiarkan sistem membuatnya
+  // otomatis ATAU mengetik sendiri ('bebas'). Sandi tidak pernah disimpan:
+  // yang tersimpan hanya hash bcrypt di Supabase Auth.
+  const [pwMode, setPwMode] = useState<'auto' | 'custom'>('auto');
+  const [customPw, setCustomPw] = useState('');
+  const [showPw, setShowPw] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isB2b = accountType === 'B2B_CLIENT';
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm(prev => ({ ...prev, [k]: e.target.value }));
@@ -1297,16 +1308,27 @@ const AddMitraModal: React.FC<{
       setError('Nama, email, dan nomor HP wajib diisi.');
       return;
     }
+    if (isB2b && !form.company_name.trim()) {
+      setError('Nama perusahaan wajib diisi untuk Klien B2B.');
+      return;
+    }
+    if (mode === 'temp' && pwMode === 'custom') {
+      if (customPw.length < 8) { setError('Kata sandi buatan admin minimal 8 karakter.'); return; }
+      if (customPw.length > 72) { setError('Kata sandi maksimal 72 karakter.'); return; }
+    }
     setBusy(true);
     try {
       const res = await createMitra({
         name: form.name.trim(),
         email: form.email.trim().toLowerCase(),
         phone: form.phone.trim(),
-        ktp: form.ktp.trim() || null,
-        address: form.address.trim() || null,
-        upline_code: form.upline_code.trim() || null,
+        ktp: isB2b ? null : (form.ktp.trim() || null),
+        address: isB2b ? null : (form.address.trim() || null),
+        upline_code: isB2b ? null : (form.upline_code.trim() || null),
+        role: accountType,
+        company_name: isB2b ? form.company_name.trim() : null,
         mode,
+        password: mode === 'temp' && pwMode === 'custom' ? customPw : null,
       });
       if (res.error || !res.agent) {
         setError(res.error ?? 'Backend tidak mengembalikan profil mitra. Periksa email dan coba lagi.');
@@ -1336,16 +1358,47 @@ const AddMitraModal: React.FC<{
       <div className="absolute inset-0 bg-slate-900/35 dark:bg-black/65 backdrop-blur-[2px]" onClick={onClose} />
       <div role="dialog" aria-modal="true" aria-labelledby="add-mitra-title" className="relative z-10 w-full max-w-3xl max-h-[92dvh] overflow-y-auto overscroll-contain no-scrollbar bg-white dark:bg-ds-card text-slate-900 dark:text-white border border-slate-200 dark:border-ds-border rounded-2xl sm:rounded-3xl px-5 py-5 sm:px-7 sm:py-6 shadow-[0_24px_80px_rgba(15,23,42,0.22)]">
         <h3 id="add-mitra-title" className="font-bold tracking-tight text-base sm:text-lg mb-4 flex items-center gap-3">
-          <UserPlus size={18} className="text-ds-green" /> Tambah Mitra Baru
+          <UserPlus size={18} className="text-ds-green" /> {isB2b ? 'Tambah Klien B2B' : 'Tambah Mitra Baru'}
         </h3>
         {error && (
           <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-400 font-bold">{error}</div>
         )}
         <div className="space-y-3">
           <div>
-            <label className={labelCls}>Nama Lengkap</label>
-            <input type="text" value={form.name} onChange={set('name')} placeholder="Cth: Budi Santoso" className={inputCls} />
+            <label className={labelCls}>Tipe Akun</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setAccountType('AGENT')}
+                className={`w-full text-left px-3.5 py-3 rounded-xl border transition-all ${
+                  !isB2b ? 'border-emerald-500 bg-emerald-500/10' : 'border-ds-border bg-ds-card2'
+                }`}
+              >
+                <p className="text-xs font-bold text-slate-900 dark:text-white">Mitra Agen</p>
+                <p className="text-xs text-slate-600 dark:text-ds-ink3 mt-1">Mendapat kode agen, komisi, target, dan portal /agapps.</p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setAccountType('B2B_CLIENT')}
+                className={`w-full text-left px-3.5 py-3 rounded-xl border transition-all ${
+                  isB2b ? 'border-blue-500 bg-blue-500/10' : 'border-ds-border bg-ds-card2'
+                }`}
+              >
+                <p className="text-xs font-bold text-slate-900 dark:text-white">Klien B2B</p>
+                <p className="text-xs text-slate-600 dark:text-ds-ink3 mt-1">Klien korporasi untuk pengajuan fleet/bonding via portal /b2bapps.</p>
+              </button>
+            </div>
           </div>
+          <div>
+            <label className={labelCls}>{isB2b ? 'Nama PIC' : 'Nama Lengkap'}</label>
+            <input type="text" value={form.name} onChange={set('name')} placeholder={isB2b ? 'Cth: Rina — PIC Mutiara Finance' : 'Cth: Budi Santoso'} className={inputCls} />
+          </div>
+          {isB2b && (
+            <div>
+              <label className={labelCls}>Nama Perusahaan</label>
+              <input type="text" value={form.company_name} onChange={set('company_name')} placeholder="Cth: PT Mutiara Finance" className={inputCls} />
+            </div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={labelCls}>Email</label>
@@ -1356,23 +1409,27 @@ const AddMitraModal: React.FC<{
               <input type="tel" value={form.phone} onChange={set('phone')} placeholder="08xxxxxxxxxx" className={inputCls} />
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className={labelCls}>NIK KTP (opsional)</label>
-              <input type="text" value={form.ktp} onChange={set('ktp')} placeholder="16 digit" className={inputCls} />
-            </div>
-            <div>
-              <label className={labelCls}>Kode Upline (opsional)</label>
-              <input type="text" value={form.upline_code} onChange={set('upline_code')} placeholder="SP-AGT-1234" className={inputCls} />
-            </div>
-          </div>
-          <div>
-            <label className={labelCls}>Alamat (opsional)</label>
-            <input type="text" value={form.address} onChange={set('address')} placeholder="Alamat domisili" className={inputCls} />
-          </div>
+          {!isB2b && (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className={labelCls}>NIK KTP (opsional)</label>
+                  <input type="text" value={form.ktp} onChange={set('ktp')} placeholder="16 digit" className={inputCls} />
+                </div>
+                <div>
+                  <label className={labelCls}>Kode Upline (opsional)</label>
+                  <input type="text" value={form.upline_code} onChange={set('upline_code')} placeholder="SP-AGT-1234" className={inputCls} />
+                </div>
+              </div>
+              <div>
+                <label className={labelCls}>Alamat (opsional)</label>
+                <input type="text" value={form.address} onChange={set('address')} placeholder="Alamat domisili" className={inputCls} />
+              </div>
+            </>
+          )}
 
           <div>
-            <label className={labelCls}>Cara Mitra Masuk Pertama Kali</label>
+            <label className={labelCls}>Cara Akun Masuk Pertama Kali</label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 type="button"
@@ -1399,10 +1456,72 @@ const AddMitraModal: React.FC<{
             </div>
           </div>
 
+          {mode === 'temp' && canSetTempPassword && (
+            <div className="rounded-xl border border-ds-border bg-ds-card2 p-3.5 space-y-2.5">
+              <label className={labelCls}>Isi Kata Sandi</label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPwMode('auto')}
+                  className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-2xs font-black uppercase tracking-wider transition-colors ${
+                    pwMode === 'auto' ? 'bg-amber-500 text-white' : 'bg-white dark:bg-white/5 text-ds-ink3 border border-ds-border'
+                  }`}
+                >
+                  <Wand2 size={12} /> Dibuat otomatis
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPwMode('custom')}
+                  className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-2xs font-black uppercase tracking-wider transition-colors ${
+                    pwMode === 'custom' ? 'bg-amber-500 text-white' : 'bg-white dark:bg-white/5 text-ds-ink3 border border-ds-border'
+                  }`}
+                >
+                  <KeyRound size={12} /> Saya isi sendiri
+                </button>
+              </div>
+              {pwMode === 'custom' && (
+                <div className="relative">
+                  <input
+                    type={showPw ? 'text' : 'password'}
+                    value={customPw}
+                    onChange={e => setCustomPw(e.target.value)}
+                    placeholder="Min. 8 karakter — bebas Anda tentukan"
+                    autoComplete="new-password"
+                    className={inputCls + ' pr-11'}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPw(v => !v)}
+                    title={showPw ? 'Sembunyikan sandi' : 'Tampilkan sandi'}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  >
+                    {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+                </div>
+              )}
+              <p className="text-2xs text-slate-500 dark:text-ds-ink3 leading-relaxed">
+                {pwMode === 'custom'
+                  ? 'Sandi yang Anda ketik dipakai apa adanya. Sistem tidak menyimpannya — yang tersimpan hanya hash di Supabase Auth.'
+                  : 'Sistem membuat sandi acak yang mudah dibacakan lewat telepon (tanpa huruf/angka ambigu).'}
+                {' '}Mitra wajib menggantinya saat login pertama.
+              </p>
+            </div>
+          )}
+
           <p className="mt-3 rounded-xl bg-slate-50 dark:bg-ds-card2 px-3.5 py-3 text-xs text-slate-600 dark:text-ds-ink3 leading-relaxed">
-            Mitra dibuat dengan status <span className="font-bold text-amber-700 dark:text-amber-400">belum terverifikasi</span>, komisi
-            10%, dan target bulanan Rp 50 juta — persis seperti mitra yang mendaftar sendiri. Tekan Approve pada
-            barisnya setelah dokumennya diperiksa.
+            {isB2b ? (
+              <>
+                Klien B2B dibuat dengan status <span className="font-bold text-amber-700 dark:text-amber-400">belum terverifikasi</span> —
+                persis seperti yang mendaftar sendiri lewat pemilihan peran. Ia masuk lewat portal <span className="font-mono font-bold">/b2bapps</span>;
+                tekan Approve pada barisnya setelah data perusahaannya diperiksa.
+              </>
+            ) : (
+              <>
+                Mitra dibuat dengan status <span className="font-bold text-amber-700 dark:text-amber-400">belum terverifikasi</span>, komisi
+                10%, dan target bulanan Rp 50 juta — persis seperti mitra yang mendaftar sendiri. Tekan Approve pada
+                barisnya setelah dokumennya diperiksa.
+              </>
+            )}
           </p>
         </div>
 
@@ -1600,14 +1719,22 @@ export const AgentManagementView = () => {
   };
 
   const handleTempPassword = async (a: SpUser) => {
+    // v2.7.56 — admin bisa mengetik sandinya sendiri, atau mengosongkan untuk
+    // dibuat otomatis (perilaku lama). Cancel = batal, tidak ada yang berubah.
+    const custom = window.prompt(
+      `Setel kata sandi untuk ${a.name}.\n\n` +
+      `Ketik kata sandi khusus (min. 8 karakter), ATAU kosongkan lalu OK untuk dibuat sistem otomatis:`,
+    );
+    if (custom === null) return;
+    if (custom.length > 0 && custom.length < 8) { toast.error('Kata sandi minimal 8 karakter.'); return; }
     const ok = window.confirm(
-      `Setel kata sandi sementara untuk ${a.name}?\n\n` +
+      `Setel kata sandi ${custom ? 'khusus' : 'sementara'} untuk ${a.name}?\n\n` +
       `Kata sandi lamanya langsung tidak berlaku, dan ${a.name} wajib membuat ` +
       `kata sandi baru saat login berikutnya. Tindakan ini tercatat di jejak aktivitas.`,
     );
     if (!ok) return;
     setPwBusy(a.id + '_temp');
-    const res = await setMitraTempPassword(a.id, true);
+    const res = await setMitraTempPassword(a.id, true, custom || null);
     setPwBusy(null);
     if (res.error) { toast.error(res.error); return; }
     setCredential({
@@ -1618,6 +1745,7 @@ export const AgentManagementView = () => {
 
   const pending = agents.filter(a => !(a as any).verified);
   const active  = agents.filter(a => (a as any).verified);
+  const b2bCount = agents.filter(a => a.role === 'B2B_CLIENT').length;
 
   if (loading) return (
     <div className="flex justify-center py-20">
@@ -1644,6 +1772,10 @@ export const AgentManagementView = () => {
     const editing  = editRate[a.id] !== undefined;
     const agentTier = a.tier ?? null;
     const isSavingTier = saving === a.id + '_tier';
+    // v2.7.56 — baris Klien B2B: tanpa tier/komisi/kode agen; identitasnya
+    // nama perusahaan (disimpan di address oleh createB2BClientProfile dan
+    // admin_create_mitra).
+    const isB2b = a.role === 'B2B_CLIENT';
 
     return (
       <Card key={a.id} className="py-5">
@@ -1664,23 +1796,30 @@ export const AgentManagementView = () => {
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <p className="font-black text-sm truncate">{a.name}</p>
-                <TierBadge tier={agentTier} />
+                {isB2b ? (
+                  <span className="px-2 py-0.5 rounded-full text-2xs font-black uppercase tracking-widest bg-blue-500/10 text-blue-700 dark:text-blue-300">Klien B2B</span>
+                ) : (
+                  <TierBadge tier={agentTier} />
+                )}
               </div>
               <p className="text-2xs font-bold text-ds-ink3 uppercase tracking-widest truncate">{a.email}</p>
-              <p className="text-2xs font-bold text-ds-green uppercase tracking-widest">{a.agent_code ?? '-'} · <span className="text-ds-green/70">Lihat detail →</span></p>
-              {(a as any).agreement_no ? (
+              <p className="text-2xs font-bold text-ds-green uppercase tracking-widest truncate">
+                {isB2b ? ((a as any).company_name || a.address || 'Perusahaan belum diisi') : `${a.agent_code ?? '-'} · `}
+                {!isB2b && <span className="text-ds-green/70">Lihat detail →</span>}
+              </p>
+              {!isB2b && ((a as any).agreement_no ? (
                 <p className="mt-1 text-2xs font-semibold text-ds-ink2">
                   <span className="text-ds-ink3">No. Perjanjian:</span> <span className="font-mono text-ds-green">{(a as any).agreement_no}</span>
                   {(a as any).agreement_accepted_at && <span className="ml-2 text-ds-ink3">{new Date((a as any).agreement_accepted_at).toLocaleDateString('id-ID')}</span>}
                 </p>
               ) : (
                 <p className="mt-1 text-2xs text-ds-ink3">Perjanjian belum tercatat</p>
-              )}
+              ))}
             </div>
           </button>
 
-          {/* Tier selector — business manager only */}
-          {canAssignTier && (
+          {/* Tier selector — business manager only, agen saja (B2B tidak bertier) */}
+          {canAssignTier && !isB2b && (
             <div className="flex items-center gap-1.5 flex-shrink-0">
               {pendingTierRequests.has(a.id) && (
                 <span className="px-2 py-1 rounded-lg text-2xs font-black uppercase tracking-widest bg-amber-500/10 text-amber-800 dark:text-amber-400">
@@ -1713,7 +1852,8 @@ export const AgentManagementView = () => {
             </div>
           )}
 
-          {/* Commission rate editor */}
+          {/* Commission rate editor — agen saja */}
+          {!isB2b && (
           <div className="flex items-center gap-2">
             {editing ? (
               <>
@@ -1747,6 +1887,7 @@ export const AgentManagementView = () => {
               </button>
             )}
           </div>
+          )}
 
           {/* Akun & kata sandi */}
           {canManageMitraAccount && (
@@ -1838,6 +1979,7 @@ export const AgentManagementView = () => {
           { label: 'Total Mitra',  value: agents.length, color: 'text-ds-ink' },
           { label: 'Aktif',        value: active.length, color: 'text-emerald-700 dark:text-emerald-400' },
           { label: 'Pending',      value: pending.length, color: 'text-amber-800 dark:text-amber-400' },
+          { label: 'Klien B2B',    value: b2bCount, color: 'text-blue-700 dark:text-blue-400' },
           ...tierCounts,
         ].map(({ label, value, color }) => (
           <Card key={label} className="py-5 text-center">

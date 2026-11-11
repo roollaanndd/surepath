@@ -78,7 +78,8 @@ export async function handleAdminAction(action: string, ctx: GatewayContext): Pr
           .select('id, email, name, phone, role, agent_code, tier, verified, commission_rate, allowed_apps, tc_accepted, tc_accepted_at, tnc_ref_number, created_at, profile_photo_url, ktp_document_url, upline_id, referral_code, address, ktp, trust_score, monthly_target')
           .order('created_at', { ascending: false })
           .limit(Number(params.limit ?? 200));
-        if (params.role) q = q.eq('role', params.role);
+        if (params.roles) q = q.in('role', params.roles);
+        else if (params.role) q = q.eq('role', params.role);
         const { data, error } = await q;
         if (error) return json({ error: error.message }, 400);
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, ChevronDown, ChevronUp, FileDown } from 'lucide-react';
+import { Loader2, ChevronDown, ChevronUp, FileDown, AlertTriangle, RefreshCw } from 'lucide-react';
 import { Language } from '../../types';
 import { getB2BQuotes, updateB2BQuoteStatus, type SpB2BQuote } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
@@ -65,7 +65,9 @@ interface QuoteCardProps {
   quote: SpB2BQuote;
   lang: Language;
   companyName?: string;
-  onAction: (id: string, status: 'ACCEPTED' | 'REJECTED') => Promise<void>;
+  /** Returns false when the decision failed to save — the card shows the
+   *  failure inline instead of silently keeping the stale PENDING badge. */
+  onAction: (id: string, status: 'ACCEPTED' | 'REJECTED') => Promise<boolean>;
 }
 
 const QuoteCard: React.FC<QuoteCardProps> = ({ quote, lang, companyName, onAction }) => {
@@ -73,6 +75,7 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ quote, lang, companyName, onActio
   const [termsOpen, setTermsOpen] = useState(false);
   const [acting, setActing] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [actionError, setActionError] = useState(false);
 
   const handleDownload = async () => {
     if (downloading) return;
@@ -92,9 +95,23 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ quote, lang, companyName, onActio
   };
 
   const handle = async (status: 'ACCEPTED' | 'REJECTED') => {
+    // Keputusan korporat (menerima/menolak penawaran) dikonfirmasi dulu —
+    // sekali klik tanpa konfirmasi terlalu mudah salah sentuh di ponsel.
+    const confirmMsg = status === 'ACCEPTED'
+      ? t(
+          'Accept this quote? The insurer will be notified and this decision is final.',
+          'Terima penawaran ini? Penanggung akan diberi tahu dan keputusan ini final.',
+        )
+      : t(
+          'Reject this quote? You will lose this offer and this decision is final.',
+          'Tolak penawaran ini? Tawaran ini hangus dan keputusan ini final.',
+        );
+    if (!window.confirm(confirmMsg)) return;
+    setActionError(false);
     setActing(true);
-    await onAction(quote.id, status);
+    const ok = await onAction(quote.id, status);
     setActing(false);
+    if (!ok) setActionError(true);
   };
 
   return (
@@ -166,22 +183,32 @@ const QuoteCard: React.FC<QuoteCardProps> = ({ quote, lang, companyName, onActio
 
       {/* Actions */}
       {quote.status === 'PENDING' && (
-        <div className="flex gap-2 pt-1">
-          <button
-            disabled={acting}
-            onClick={() => handle('ACCEPTED')}
-            className="flex-1 flex items-center justify-center gap-1 py-3 rounded-xl bg-ds-green text-ds-on-green text-xs font-black disabled:opacity-60"
-          >
-            {acting ? <Loader2 size={12} className="animate-spin" /> : null}
-            {t('Accept', 'Terima')}
-          </button>
-          <button
-            disabled={acting}
-            onClick={() => handle('REJECTED')}
-            className="flex-1 flex items-center justify-center gap-1 py-3 rounded-xl bg-rose-500 text-white text-xs font-black disabled:opacity-60"
-          >
-            {t('Reject', 'Tolak')}
-          </button>
+        <div className="space-y-2 pt-1">
+          {actionError && (
+            <div role="alert" className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/10 px-3 py-2.5">
+              <AlertTriangle size={14} className="text-ds-amber dark:text-amber-300 flex-shrink-0 mt-0.5" />
+              <p className="text-xs font-bold text-amber-800 dark:text-amber-200">
+                {t('Could not save your decision. Check your connection and try again — the quote is still pending.', 'Keputusan belum tersimpan. Periksa koneksi lalu coba lagi — penawaran masih menunggu keputusan Anda.')}
+              </p>
+            </div>
+          )}
+          <div className="flex gap-2">
+            <button
+              disabled={acting}
+              onClick={() => handle('ACCEPTED')}
+              className="flex-1 flex items-center justify-center gap-1 py-3 rounded-xl bg-ds-green text-ds-on-green text-xs font-black disabled:opacity-60"
+            >
+              {acting ? <Loader2 size={12} className="animate-spin" /> : null}
+              {t('Accept', 'Terima')}
+            </button>
+            <button
+              disabled={acting}
+              onClick={() => handle('REJECTED')}
+              className="flex-1 flex items-center justify-center gap-1 py-3 rounded-xl bg-rose-500 text-white text-xs font-black disabled:opacity-60"
+            >
+              {t('Reject', 'Tolak')}
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -192,23 +219,41 @@ const B2BQuotes: React.FC<Props> = ({ clientId, lang, companyName }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
   const [quotes, setQuotes] = useState<SpB2BQuote[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const [filter, setFilter] = useState<FilterTab>('ALL');
 
-  const load = async () => {
-    if (!clientId) return;
-    setLoading(true);
-    const data = await getB2BQuotes(clientId);
-    setQuotes(data);
-    setLoading(false);
-  };
+  useEffect(() => {
+    let cancelled = false;
 
-  useEffect(() => { load(); }, [clientId]);
+    const load = async () => {
+      if (!clientId) {
+        setQuotes([]);
+        setLoading(false);
+        setLoadError(false);
+        return;
+      }
+      setLoading(true);
+      setLoadError(false);
+      try {
+        const data = await getB2BQuotes(clientId);
+        if (!cancelled) setQuotes(data);
+      } catch (error) {
+        console.error('Unable to load B2B quotes:', error);
+        if (!cancelled) setLoadError(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    void load();
+    return () => { cancelled = true; };
+  }, [clientId, reloadKey]);
 
   const handleAction = async (id: string, status: 'ACCEPTED' | 'REJECTED') => {
     const ok = await updateB2BQuoteStatus(id, status);
-    if (ok) {
-      setQuotes(prev => prev.map(q => q.id === id ? { ...q, status } : q));
-    }
+    if (ok) setQuotes(prev => prev.map(q => q.id === id ? { ...q, status } : q));
+    return ok;
   };
 
   const filtered = filter === 'ALL' ? quotes : quotes.filter(q => q.status === filter);
@@ -238,6 +283,15 @@ const B2BQuotes: React.FC<Props> = ({ clientId, lang, companyName }) => {
       {loading ? (
         <div className="flex justify-center py-16">
           <Loader2 size={28} className="animate-spin text-ds-green" />
+        </div>
+      ) : loadError ? (
+        <div role="alert" className="rounded-2xl border border-amber-200 bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/10 p-5 text-center space-y-3">
+          <AlertTriangle size={24} className="mx-auto text-ds-amber dark:text-amber-300" />
+          <p className="text-sm font-bold text-amber-800 dark:text-amber-200">{t('Could not load quotes.', 'Penawaran belum dapat dimuat.')}</p>
+          <p className="text-xs text-amber-700 dark:text-amber-200/80">{t('Check your connection and try again. No quote was changed.', 'Periksa koneksi lalu coba lagi. Tidak ada penawaran yang berubah.')}</p>
+          <button type="button" onClick={() => setReloadKey(key => key + 1)} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2">
+            <RefreshCw size={14} /> {t('Try again', 'Coba lagi')}
+          </button>
         </div>
       ) : sorted.length === 0 ? (
         <div className="text-center py-16 text-ds-ink3 text-sm">

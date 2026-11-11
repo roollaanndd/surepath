@@ -1081,7 +1081,7 @@ const AdminPortal = ({
                               setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x));
                             }
                             // Navigate to relevant tab if type matches
-                            if (n.type === 'NEW_AGENT') goToTab('agents');
+                            if (n.type === 'NEW_AGENT' || n.type === 'NEW_B2B_CLIENT') goToTab('agents');
                             else if (n.type === 'NEW_CUSTOMER') goToTab('user_mgmt');
                             else if (n.type === 'NEW_ORDER' || n.type === 'ORDER_REJECTED' || n.type === 'ORDER_CANCELLED') goToTab('policy_orders');
                             else if (n.type === 'NEW_CLAIM' || n.type === 'CLAIM_FRAUD_ALERT') goToTab('claims_admin');

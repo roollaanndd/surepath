@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronRight, Upload, Layers } from 'lucide-react';
+import { ChevronRight, Upload, Layers, AlertTriangle } from 'lucide-react';
 import { Language } from '../../types';
 import { type SpB2BSubmission, type SpB2BQuote, type SpB2BBatch } from '../../services/supabaseService';
 import { HeroCard } from '../shared/cards';
@@ -14,6 +14,10 @@ interface Props {
    *  portal. Optional so this component degrades gracefully if a caller
    *  hasn't wired it up yet. */
   bulkBatches?: SpB2BBatch[];
+  /** v2.7.56 — portal data failed to load; show an honest banner with retry
+   *  instead of a home screen that silently reads as "no data at all". */
+  loadError?: boolean;
+  onRetry?: () => void;
   onNavigate: (tab: string) => void;
   /** Navigates to a tab AND switches it into bulk mode (B2BPortal's mode
    *  toggle) — distinct from onNavigate since "Ajuan"/"Buat" each default
@@ -22,9 +26,13 @@ interface Props {
   lang: Language;
 }
 
+// Pemetaan badge status pengajuan — SAMA dengan B2BSubmissions.tsx (satu
+// siklus, satu warna): SUBMITTED kuning (menunggu), REVIEWING biru (dikaji),
+// QUOTED hijau (penawaran siap). Dulu Beranda memakai biru/kuning terbalik,
+// jadi status yang sama berubah warna tergantung layar.
 const STATUS_BADGE: Record<string, string> = {
-  SUBMITTED: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300',
-  REVIEWING: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
+  SUBMITTED: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
+  REVIEWING: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300',
   QUOTED:    'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300',
   ACCEPTED:  'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
   REJECTED:  'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
@@ -51,7 +59,7 @@ const PRODUCT_LABEL: Record<string, string> = {
   GROUP_HEALTH: 'Group Health',
 };
 
-const B2BHome: React.FC<Props> = ({ client, submissions, quotes, bulkBatches = [], onNavigate, onNavigateBulk, lang }) => {
+const B2BHome: React.FC<Props> = ({ client, submissions, quotes, bulkBatches = [], loadError, onRetry, onNavigate, onNavigateBulk, lang }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
 
   const companyName = client?.company_name ?? 'Perusahaan';
@@ -72,6 +80,26 @@ const B2BHome: React.FC<Props> = ({ client, submissions, quotes, bulkBatches = [
     new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   ).slice(0, 3);
 
+  // v2.7.56 — grafik batang 6 bulan (pengajuan per bulan, dari created_at).
+  // Digambar sendiri dengan div + animasi scaleY — tanpa library chart, tetap
+  // satu sistem visual. Mati di prefers-reduced-motion.
+  const monthly = (() => {
+    const out: Array<{ key: string; label: string; count: number }> = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const count = submissions.filter(s => (s.created_at ?? '').startsWith(key)).length;
+      out.push({
+        key,
+        label: d.toLocaleDateString(lang === Language.EN ? 'en-GB' : 'id-ID', { month: 'short' }),
+        count,
+      });
+    }
+    return out;
+  })();
+  const monthlyMax = Math.max(...monthly.map(m => m.count), 1);
+
   const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(
     lang === Language.EN ? 'en-GB' : 'id-ID',
     { day: '2-digit', month: 'short', year: 'numeric' }
@@ -79,6 +107,33 @@ const B2BHome: React.FC<Props> = ({ client, submissions, quotes, bulkBatches = [
 
   return (
     <div className="px-4 py-6 space-y-5 max-w-lg mx-auto">
+      <style>{`
+        @keyframes b2b-bar-grow { from { transform: scaleY(0) } to { transform: scaleY(1) } }
+        .b2b-bar { transform-origin: bottom; animation: b2b-bar-grow .7s cubic-bezier(.2,.8,.2,1) both }
+        @media (prefers-reduced-motion: reduce) { .b2b-bar { animation: none !important } }
+      `}</style>
+      {loadError && (
+        <div role="alert" className="flex items-start gap-2.5 rounded-2xl border border-amber-200 bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/10 px-4 py-3">
+          <AlertTriangle size={16} className="text-ds-amber dark:text-amber-300 flex-shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-bold text-amber-800 dark:text-amber-200">
+              {t('Some portal data could not be loaded.', 'Sebagian data portal belum dapat dimuat.')}
+            </p>
+            <p className="text-2xs text-amber-700 dark:text-amber-200/80 mt-0.5">
+              {t('Numbers below may be incomplete.', 'Angka di bawah bisa jadi tidak lengkap.')}
+            </p>
+          </div>
+          {onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="flex-shrink-0 rounded-lg bg-emerald-600 px-3 py-1.5 text-2xs font-black uppercase tracking-wider text-white hover:bg-emerald-700"
+            >
+              {t('Retry', 'Coba lagi')}
+            </button>
+          )}
+        </div>
+      )}
       {/* Welcome hero */}
       <HeroCard>
         <div className="flex items-center gap-3 mb-3">
@@ -102,12 +157,47 @@ const B2BHome: React.FC<Props> = ({ client, submissions, quotes, bulkBatches = [
           { label: t('Quotes',  'Penawaran'), value: receivedCount, color: 'text-ds-green' },
           { label: t('Accepted','Diterima'),  value: acceptedCount, color: 'text-ds-green' },
         ].map(({ label, value, color }) => (
-          <div key={label} className="rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 p-3 text-center shadow-sm">
+          <div key={label} className="rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 p-3 text-center shadow-sm" style={{ backdropFilter: 'blur(10px) saturate(130%)', WebkitBackdropFilter: 'blur(10px) saturate(130%)' }}>
             <div className={`text-2xl font-black ${color}`}>{value}</div>
             <div className="text-2xs font-bold text-ds-ink3 uppercase tracking-wider mt-0.5 leading-tight">{label}</div>
           </div>
         ))}
       </div>
+
+      {/* Aktivitas 6 bulan — grafik batang digambar sendiri (div + scaleY),
+          animasi berjenjang per batang, mati di prefers-reduced-motion.
+          Bar kosong (0) tetap digambar supaya ritme bulannya terbaca. */}
+      {submissions.length > 0 && (
+        <div className="rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 p-4 shadow-sm" style={{ backdropFilter: 'blur(10px) saturate(130%)', WebkitBackdropFilter: 'blur(10px) saturate(130%)' }}>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-black text-xs uppercase tracking-wide text-slate-700 dark:text-slate-300">
+              {t('Submissions — last 6 months', 'Pengajuan — 6 bulan terakhir')}
+            </h3>
+            <span className="text-2xs font-black text-ds-ink3 uppercase tracking-wider">
+              {submissions.length} {t('total', 'total')}
+            </span>
+          </div>
+          <div className="flex items-end gap-2 h-24" role="img" aria-label={t('Bar chart of submissions per month, last six months', 'Grafik batang pengajuan per bulan, enam bulan terakhir')}>
+            {monthly.map((m, i) => (
+              <div key={m.key} className="flex-1 flex flex-col items-center justify-end gap-1.5 h-full">
+                <div
+                  className="b2b-bar w-full rounded-t-lg"
+                  style={{
+                    height: `${Math.max((m.count / monthlyMax) * 100, m.count > 0 ? 8 : 3)}%`,
+                    background: m.count > 0
+                      ? 'linear-gradient(180deg, #34d399 0%, #059669 100%)'
+                      : undefined,
+                    backgroundColor: m.count > 0 ? undefined : 'rgba(148,163,184,0.25)',
+                    animationDelay: `${i * 70}ms`,
+                  }}
+                  title={`${m.label}: ${m.count}`}
+                />
+                <span className="text-[9px] font-bold text-ds-ink3 uppercase">{m.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* CTAs — single submission (primary) and bulk fleet import (secondary).
           Bulk import previously had no entry point from this screen at all;
@@ -174,9 +264,11 @@ const B2BHome: React.FC<Props> = ({ client, submissions, quotes, bulkBatches = [
           </h3>
           <div className="space-y-3">
             {recentBatches.map(b => (
-              <div
+              <button
                 key={b.id}
-                className="rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 p-4 shadow-sm"
+                type="button"
+                onClick={() => onNavigateBulk?.('submissions')}
+                className="w-full text-left rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 p-4 shadow-sm hover:border-ds-green/40 transition-colors"
               >
                 <div className="flex items-start justify-between">
                   <div>
@@ -185,18 +277,18 @@ const B2BHome: React.FC<Props> = ({ client, submissions, quotes, bulkBatches = [
                       {b.item_count} {t('units', 'unit')} · {fmtIDR(b.total_amount)} · {fmtDate(b.created_at)}
                     </div>
                   </div>
-                  <span className={`text-2xs font-black uppercase tracking-wider px-2 py-1 rounded-full ${BATCH_STATUS_BADGE[b.status] ?? ''}`}>
+                  <span className={`text-2xs font-black uppercase tracking-wider px-2 py-1 rounded-full flex-shrink-0 ${BATCH_STATUS_BADGE[b.status] ?? ''}`}>
                     {lang === Language.EN ? b.status : (BATCH_STATUS_LABEL_ID[b.status] ?? b.status)}
                   </span>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </div>
       )}
 
       {/* Recent submissions */}
-      {recent.length > 0 && (
+      {recent.length > 0 ? (
         <div>
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-black text-sm uppercase tracking-wide text-slate-700 dark:text-slate-300">
@@ -211,9 +303,11 @@ const B2BHome: React.FC<Props> = ({ client, submissions, quotes, bulkBatches = [
           </div>
           <div className="space-y-3">
             {recent.map(sub => (
-              <div
+              <button
                 key={sub.id}
-                className="rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 p-4 shadow-sm"
+                type="button"
+                onClick={() => onNavigate('submissions')}
+                className="w-full text-left rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 p-4 shadow-sm hover:border-ds-green/40 transition-colors"
               >
                 <div className="flex items-start justify-between">
                   <div>
@@ -222,15 +316,41 @@ const B2BHome: React.FC<Props> = ({ client, submissions, quotes, bulkBatches = [
                       {PRODUCT_LABEL[sub.product_type] ?? sub.product_type} · {fmtDate(sub.created_at)}
                     </div>
                   </div>
-                  <span className={`text-2xs font-black uppercase tracking-wider px-2 py-1 rounded-full ${STATUS_BADGE[sub.status] ?? ''}`}>
+                  <span className={`text-2xs font-black uppercase tracking-wider px-2 py-1 rounded-full flex-shrink-0 ${STATUS_BADGE[sub.status] ?? ''}`}>
                     {sub.status}
                   </span>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </div>
-      )}
+      ) : submissions.length === 0 && bulkBatches.length === 0 ? (
+        /* Empty state — sebelumnya Beranda kosong melompong untuk klien baru:
+           tanpa pengajuan, tanpa batch, tanpa petunjuk apa yang harus dilakukan. */
+        <div className="rounded-2xl bg-white dark:bg-white/5 border border-dashed border-ds-green/40 p-6 text-center space-y-3">
+          <div className="w-12 h-12 rounded-2xl bg-ds-green/10 flex items-center justify-center mx-auto">
+            <ModuleIcon id="quotes" size={28} />
+          </div>
+          <div>
+            <p className="font-black text-sm text-slate-800 dark:text-white">
+              {t('No submissions yet', 'Belum ada pengajuan')}
+            </p>
+            <p className="text-xs text-ds-ink3 mt-1 leading-relaxed">
+              {t(
+                'Start with a single submission or import your fleet in bulk — our team will review and send you a quote.',
+                'Mulai dengan pengajuan satuan atau impor armada Anda sekaligus — tim kami akan mengkaji dan mengirim penawaran.',
+              )}
+            </p>
+          </div>
+          <button
+            onClick={() => onNavigate('new')}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-ds-green text-ds-on-green px-5 py-2.5 text-xs font-black active:scale-95 transition-transform"
+          >
+            {t('Create first submission', 'Buat pengajuan pertama')}
+            <ChevronRight size={14} />
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 };

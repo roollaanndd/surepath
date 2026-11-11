@@ -1,5 +1,76 @@
 # SurePath — Changelog
 
+## v2.7.56 — 2026-11-11
+
+### B2B: akun klien buatan admin (sandi bebas), autentifikasi, & portal yang lebih jujur dan hidup
+
+Tiga direktif pemilik: buat user B2B manual dari admin (kini admin bisa
+**mengetik sandinya sendiri**), rapikan autentifikasi pengguna baru, dan
+perbaiki UI/UX portal B2B.
+
+**Admin — membuat akun Klien B2B manual**
+
+- Dialog "Tambah Mitra Baru" kini pemilih tipe akun: **Mitra Agen** atau
+  **Klien B2B**. B2B: nama PIC + nama perusahaan (wajib); KTP, upline, dan
+  alamat disembunyikan — klien B2B tidak punya atribut agen.
+- Edge `admin_create_mitra` menerima `role: 'B2B_CLIENT'` + `company_name`.
+  Profilnya cermin pendaftaran mandiri `createB2BClientProfile`: role
+  B2B_CLIENT, perusahaan di kolom address, trust_score 85, verified false —
+  **tanpa** agent_code/komisi/target/upline. Nilai `role` lain tetap jatuh ke
+  AGENT (backward-compatible).
+- **Kata sandi bebas buatan admin.** Dalam mode kata sandi, admin memilih
+  *dibuat otomatis* atau *diisi sendiri* (input dengan tombol lihat/sembunyi).
+  Di layar daftar, tombol "Sandi" juga menawarkan sandi khusus lewat prompt —
+  kosongkan untuk generator lama. Pagar: minimal 8 karakter, maksimal 72
+  (bcrypt memotong diam-diam di batas itu); tetap **MASTER_ADMIN-only**; tetap
+  tidak pernah disimpan — respons sekali-tampil, mitra wajib ganti saat login
+  pertama (`must_change_password`).
+- Layar Manajemen Mitra kini menampung klien B2B: badge "Klien B2B" biru,
+  nama perusahaan menggantikan kode agen, tanpa tier/komisi; aksi Reset/Sandi
+  tetap tersedia. `admin_list_users` menerima `roles` array;
+  `admin_verify_agent` kini role-aware — akun B2B tidak lagi diberi grant
+  aplikasi AGENT saat di-Approve, dan notifikasinya memakai judul klien B2B.
+- Undangan terarah: redirect email undangan klien B2B ke **/b2bapps**
+  (sebelumnya hardcoded /agapps). Notifikasi admin baru `NEW_B2B_CLIENT`
+  ("Klien B2B Ditambahkan Manual") dengan ikon klien.
+
+**Autentifikasi pengguna baru**
+
+- Mode sandi: akun auth dibuat server-side (`email_confirm`, `must_change_password`)
+  → login pertama di B2BLogin dipaksa ganti sandi via email reset (`?reset=1`).
+  Mode undangan: klien menyetel sandinya sendiri dari email.
+- Verifikasi oleh admin (`Approve`) menyetel trust_score 85 + grant aplikasi
+  sesuai role, dan mengirim notifikasi ke klien.
+
+**Portal B2B — kejujuran data & tampilan yang hidup**
+
+- **Gagal muat tidak lagi menyamar jadi "kosong".** `getB2BSubmissions`,
+  `getB2BQuotes`, `getB2BBulkBatches` kini MELEMPAR error (dulu ditelan jadi
+  `[]` — try/catch yang sudah ada di Ajuan ternyata tidak pernah terpicu).
+  Layar Penawaran mendapat panel error + "Coba lagi" (cermin Ajuan), Beranda
+  menampilkan banner "data belum dapat dimuat" dengan tombol coba, dan layar
+  Batch Massal menampilkan pesan gagalnya.
+- **Terima/Tolak penawaran kini dikonfirmasi** (`window.confirm` dengan
+  konsekuensi "keputusan final") dan **kegagalan simpan terlihat** — panel
+  amber inline di kartu, alih-alih diam-diam tetap PENDING.
+- **Badge status konsisten** antar layar: SUBMITTED kuning (menunggu),
+  REVIEWING biru (dikaji), QUOTED hijau (penawaran siap) — Beranda dulu
+  memakai biru/kuning terbalik. Filter Ajuan kini punya opsi REJECTED.
+- **Beranda berhidup:** kartu statistik bergaya kaca (backdrop-blur), grafik
+  batang pengajuan 6 bulan terakhir yang digambar sendiri dengan animasi
+  berjenjang (mati di prefers-reduced-motion), empty state "Buat pengajuan
+  pertama" untuk klien baru, dan kartu pengajuan/batch terbaru yang bisa
+  diklik ke layarnya.
+- **Login korporat premium:** layout split di desktop — panel brand hijau
+  bertema buku besar (motif garis ledger, tiga nilai produk) di kiri, kartu
+  kaca di kanan. Saat login berhasil, panel hijau **menyapu layar dari kiri
+  ke kanan** ("Selamat datang kembali" + progress bar) sebelum portal
+  termuat di bawahnya. Semua animasi hormat prefers-reduced-motion.
+
+Guard: `services/__tests__/b2bAdminAccounts.test.ts` (16 asersi, merah lebih
+dulu: cabang B2B, sandi kustom, pagar panjang 8–72, gerbang MASTER_ADMIN,
+gerbang reset untuk B2B). Suite `mitraAccounts.test.ts` lama tetap hijau.
+
 ## v2.7.55 — 2026-11-05
 
 ### Portal Mitra: ikon Beranda, STNK setara Nasabah, rentang harga, diskon di step 4, handoff pembelian & approval manual

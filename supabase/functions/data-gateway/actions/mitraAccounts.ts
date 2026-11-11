@@ -1,9 +1,10 @@
-// mitraAccounts.ts — pengelolaan akun mitra (agen) dari CMS admin.
+// mitraAccounts.ts — pengelolaan akun mitra (agen) & klien B2B dari CMS admin.
 //
 // Tiga aksi, semuanya istimewa dan semuanya dijalankan service_role di sini —
 // bukan di browser:
 //
 //   admin_create_mitra            buat akun auth + profil sp_users sekaligus
+//                                 (role AGENT atau B2B_CLIENT — v2.7.56)
 //   admin_send_mitra_reset        dorong email setel ulang kata sandi
 //   admin_set_mitra_temp_password setel kata sandi sementara (MASTER_ADMIN)
 //
@@ -36,6 +37,16 @@ const APP_ORIGIN = 'https://myinsurepath.com';
 const RESET_REDIRECT = `${APP_ORIGIN}?reset=1`;
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+// v2.7.56 — kata sandi buatan admin. 'Bebas' berarti admin yang memilih
+// isinya (bukan generator), tapi tetap ada pagar: minimal 8 karakter, dan
+// maksimal 72 karena bcrypt (Supabase Auth) diam-diam memotong di batas itu
+// — sandi panjang yang terpotong jadi sandi lain yang admin tidak ketahui.
+function validateAdminPassword(pw: string): string | null {
+  if (pw.length < 8) return 'Kata sandi minimal 8 karakter.';
+  if (pw.length > 72) return 'Kata sandi maksimal 72 karakter.';
+  return null;
+}
 
 // `Deno` ada di runtime edge function tapi tidak di program tsc — modul ini
 // ikut ditarik ke dalamnya oleh services/__tests__/mitraAccounts.test.ts, yang
@@ -112,9 +123,32 @@ export async function handleMitraAccountsAction(
       if (mode === 'temp' && !CAN_SET_MITRA_PASSWORD.includes(caller.role ?? '')) {
         return json({ error: 'Forbidden: kata sandi sementara hanya MASTER_ADMIN' }, 403);
       }
+      // Admin boleh mengetik sandinya sendiri ('bebas'), atau mengosongkannya
+      // untuk dibuat otomatis. Validasi sebelum akun auth dibuat supaya tidak
+      // ada akun yatim kalau sandinya ditolak.
+      const customPassword = typeof params.password === 'string' ? params.password : '';
+      if (customPassword) {
+        const pwErr = validateAdminPassword(customPassword);
+        if (pwErr) return json({ error: pwErr }, 400);
+      }
 
-      const tempPassword = mode === 'temp' ? generateTempPassword() : null;
-      const authMeta = { name, phone, role: 'AGENT', created_by_admin: caller.email };
+      // v2.7.56 — tipe akun. Selain AGENT, admin kini bisa membuat akun Klien
+      // B2B langsung dari CMS (sebelumnya B2BLogin mengklaim akunnya
+      // "diprovisioned by admin" padahal tidak ada jalurnya). Nilai lain jatuh
+      // ke AGENT supaya pemanggil lama tetap berperilaku sama.
+      const accountRole = params.role === 'B2B_CLIENT' ? 'B2B_CLIENT' : 'AGENT';
+      const companyName = String(params.company_name ?? '').trim();
+
+      const tempPassword = mode === 'temp'
+        ? (customPassword || generateTempPassword())
+        : null;
+      const authMeta = { name, phone, role: accountRole, created_by_admin: caller.email };
+
+      // Portal tujuan mengikuti tipe akun: undangan agen membuka portal mitra,
+      // undangan klien B2B membuka /b2bapps (B2BLogin.tsx).
+      const inviteRedirect = accountRole === 'B2B_CLIENT'
+        ? `${APP_ORIGIN}/b2bapps`
+        : `${APP_ORIGIN}/agapps`;
 
       let authUserId: string | null = null;
       if (mode === 'temp') {
@@ -128,7 +162,7 @@ export async function handleMitraAccountsAction(
         authUserId = created.user?.id ?? null;
       } else {
         const { data: invited, error: inviteErr } = await db.auth.admin.inviteUserByEmail(email, {
-          redirectTo: `${APP_ORIGIN}/agapps`,
+          redirectTo: inviteRedirect,
           data: authMeta,
         });
         if (inviteErr) return json({ error: inviteErr.message }, 400);
@@ -136,42 +170,54 @@ export async function handleMitraAccountsAction(
       }
       if (!authUserId) return json({ error: 'Gagal membuat akun auth' }, 500);
 
-      // Cerminan cabang AGENT di ensure_profile — nilai default yang sama,
-      // supaya mitra buatan admin tidak berbeda dari mitra yang mendaftar
-      // sendiri.
-      const insertRow: Record<string, unknown> = {
-        id: authUserId,
-        email,
-        name,
-        phone,
-        ktp: params.ktp ?? null,
-        address: params.address ?? null,
-        role: 'AGENT',
-        agent_code: newAgentCode(),
-        commission_rate: 0.1,
-        monthly_target: 50000000,
-        trust_score: 80,
-        // Mitra buatan admin tetap melewati verifikasi seperti yang lain.
-        // Admin yang sama bisa langsung menekan Approve setelahnya; itu
-        // tercatat terpisah lewat admin_verify_agent.
-        verified: false,
-      };
+      // Cerminan cabang yang sama di ensure_profile — nilai default yang sama,
+      // supaya akun buatan admin tidak berbeda dari yang mendaftar sendiri.
+      const insertRow: Record<string, unknown> = accountRole === 'B2B_CLIENT'
+        ? {
+            // Cabang B2B — cermin createB2BClientProfile (services/users.ts):
+            // tanpa agent_code/komisi/target/upline, perusahaan di address.
+            id: authUserId,
+            email,
+            name,
+            phone,
+            address: companyName || null,
+            role: 'B2B_CLIENT',
+            trust_score: 85,
+            verified: false,
+          }
+        : {
+            id: authUserId,
+            email,
+            name,
+            phone,
+            ktp: params.ktp ?? null,
+            address: params.address ?? null,
+            role: 'AGENT',
+            agent_code: newAgentCode(),
+            commission_rate: 0.1,
+            monthly_target: 50000000,
+            trust_score: 80,
+            // Mitra buatan admin tetap melewati verifikasi seperti yang lain.
+            // Admin yang sama bisa langsung menekan Approve setelahnya; itu
+            // tercatat terpisah lewat admin_verify_agent.
+            verified: false,
+          };
 
-      // Upline opsional — dicocokkan ke agent_code atau referral_code, dengan
-      // nilai yang dibersihkan lebih dulu. Interpolasi mentah ke .or() adalah
-      // kelas bug injeksi filter yang ditutup di v2.6.18.
-      const rawUpline = String(params.upline_code ?? '').trim();
-      const uplineCode = rawUpline.replace(/[^A-Za-z0-9-]/g, '').slice(0, 32);
-      if (uplineCode) {
-        const { data: upline } = await db.from('sp_users')
-          .select('id')
-          .or(`agent_code.eq.${uplineCode},referral_code.eq.${uplineCode}`)
-          .maybeSingle();
-        if (!upline) {
-          await db.auth.admin.deleteUser(authUserId).catch(() => {});
-          return json({ error: `Kode upline ${uplineCode} tidak ditemukan`, code: 'UPLINE_NOT_FOUND' }, 400);
+      // Upline hanya untuk agen — klien B2B tidak punya hierarki upline.
+      if (accountRole === 'AGENT') {
+        const rawUpline = String(params.upline_code ?? '').trim();
+        const uplineCode = rawUpline.replace(/[^A-Za-z0-9-]/g, '').slice(0, 32);
+        if (uplineCode) {
+          const { data: upline } = await db.from('sp_users')
+            .select('id')
+            .or(`agent_code.eq.${uplineCode},referral_code.eq.${uplineCode}`)
+            .maybeSingle();
+          if (!upline) {
+            await db.auth.admin.deleteUser(authUserId).catch(() => {});
+            return json({ error: `Kode upline ${uplineCode} tidak ditemukan`, code: 'UPLINE_NOT_FOUND' }, 400);
+          }
+          insertRow.upline_id = upline.id;
         }
-        insertRow.upline_id = upline.id;
       }
 
       const { data: profile, error: profileErr } = await db.from('sp_users')
@@ -185,16 +231,17 @@ export async function handleMitraAccountsAction(
       }
 
       db.from('sp_admin_notifications').insert({
-        type: 'NEW_AGENT',
-        title: 'Mitra Ditambahkan Manual',
+        type: accountRole === 'B2B_CLIENT' ? 'NEW_B2B_CLIENT' : 'NEW_AGENT',
+        title: accountRole === 'B2B_CLIENT' ? 'Klien B2B Ditambahkan Manual' : 'Mitra Ditambahkan Manual',
         body: `${name} (${email}) ditambahkan oleh ${caller.email}.`,
         read: false,
-        metadata: { user_id: profile.id, role: 'AGENT', email, created_by: caller.email, mode },
+        metadata: { user_id: profile.id, role: accountRole, email, created_by: caller.email, mode },
       }).then(() => {}, () => {});
 
       sendTelegram(
-        `Mitra Baru (manual) - SurePath\n\n` +
+        `${accountRole === 'B2B_CLIENT' ? 'Klien B2B' : 'Mitra Baru'} (manual) - SurePath\n\n` +
         `Nama: ${name}\nEmail: ${email}\nHP: ${phone || '-'}\n` +
+        (accountRole === 'B2B_CLIENT' ? `Perusahaan: ${companyName || '-'}\n` : '') +
         `Ditambahkan oleh: ${caller.email}\n` +
         `Mode: ${mode === 'temp' ? 'kata sandi sementara' : 'email undangan'}`,
       );
@@ -220,10 +267,11 @@ export async function handleMitraAccountsAction(
         .select('id, email, name, role').eq('id', String(params.user_id)).maybeSingle();
       if (targetErr) return json({ error: targetErr.message }, 400);
       if (!target) return json({ error: 'Mitra tidak ditemukan' }, 404);
-      // Aksi ini hidup di layar Manajemen Mitra; membiarkannya menyentuh
-      // MASTER_ADMIN atau ADMIN lain menjadikannya alat pengambilalihan akun.
-      if (target.role !== 'AGENT') {
-        return json({ error: 'Aksi ini hanya untuk akun mitra (AGENT)', code: 'NOT_AN_AGENT' }, 400);
+      // v2.7.56: mencakup klien B2B juga — layar Manajemen Akun kini
+      // menampung AGENT dan B2B_CLIENT. Role lain tetap ditolak: membiarkannya
+      // menyentuh MASTER_ADMIN/ADMIN menjadikannya alat pengambilalihan akun.
+      if (target.role !== 'AGENT' && target.role !== 'B2B_CLIENT') {
+        return json({ error: 'Aksi ini hanya untuk akun mitra (AGENT) atau klien B2B (B2B_CLIENT)', code: 'NOT_AN_AGENT' }, 400);
       }
 
       // GoTrue /auth/v1/recover adalah satu-satunya panggilan yang benar-benar
@@ -282,12 +330,22 @@ export async function handleMitraAccountsAction(
         .select('id, email, name, role').eq('id', String(params.user_id)).maybeSingle();
       if (targetErr) return json({ error: targetErr.message }, 400);
       if (!target) return json({ error: 'Mitra tidak ditemukan' }, 404);
-      if (target.role !== 'AGENT') {
-        return json({ error: 'Aksi ini hanya untuk akun mitra (AGENT)', code: 'NOT_AN_AGENT' }, 400);
+      // v2.7.56: mencakup klien B2B juga — layar Manajemen Akun kini
+      // menampung AGENT dan B2B_CLIENT. Role lain tetap ditolak: membiarkannya
+      // menyentuh MASTER_ADMIN/ADMIN menjadikannya alat pengambilalihan akun.
+      if (target.role !== 'AGENT' && target.role !== 'B2B_CLIENT') {
+        return json({ error: 'Aksi ini hanya untuk akun mitra (AGENT) atau klien B2B (B2B_CLIENT)', code: 'NOT_AN_AGENT' }, 400);
       }
 
       const requireChange = params.require_change !== false;
-      const password = generateTempPassword();
+      // v2.7.56 — sandi kustom opsional: kosong = dibuat otomatis (perilaku
+      // lama), diisi = dipakai apa adanya setelah lewat pagar panjang.
+      const customPassword = typeof params.password === 'string' ? params.password : '';
+      if (customPassword) {
+        const pwErr = validateAdminPassword(customPassword);
+        if (pwErr) return json({ error: pwErr }, 400);
+      }
+      const password = customPassword || generateTempPassword();
 
       // sp_users.id BISA berbeda dari auth.users.id untuk akun lama (lihat
       // ownerIds di index.ts), jadi akun auth dicari lewat email, bukan id

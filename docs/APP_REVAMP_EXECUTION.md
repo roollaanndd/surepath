@@ -169,6 +169,39 @@ This record intentionally distinguishes incremental work from the full target.
 
 Append a new entry after each meaningful implementation/verification milestone.
 
+### 2026-11-11 (v2.7.56) — B2B: akun buatan admin (sandi bebas), autentifikasi, portal jujur & hidup, login premium
+
+- **Direktif pemilik:** B2B jadi dashboard end-to-end yang siap pakai (order
+  satuan/bulk Excel, hitung polis, invoice, unduh polis, detail transaksi);
+  admin dashboard harus bisa membuat password secara manual/bebas; pikirkan
+  autentifikasi user baru; UI/UX portal B2B diperbaiki; login page premium
+  dengan transisi kiri→kanan saat sukses.
+- **Fakta riset yang mengikat:** B2BLogin mengklaim akun "diprovisioned by
+  admin" padahal TIDAK ADA jalur pembuatannya (b2bBulk hanya menulis data
+  armada); `admin_create_mitra` memaksa role AGENT; `getB2BSubmissions`/
+  `getB2BQuotes` menelan error jadi `[]` sehingga try/catch di Ajuan tidak
+  pernah terpicu; badge SUBMITTED/REVIEWING terbalik antara Beranda dan Ajuan;
+  `admin_verify_agent` memberi grant 'AGENT' ke siapa pun yang di-Approve.
+- **Akun B2B:** `admin_create_mitra` menerima role B2B_CLIENT + company_name
+  (cermin createB2BClientProfile; tanpa atribut agen; role lain → AGENT).
+  Layar Manajemen Mitra menampung keduanya (badge biru, tanpa tier/komisi);
+  `admin_list_users` dukung `roles[]`; `admin_verify_agent` role-aware.
+- **Sandi:** admin bisa mengetik sandinya sendiri (dialog create + prompt di
+  tombol Sandi) atau membiarkan generator. Pagar 8–72 char, MASTER_ADMIN-only,
+  tak pernah disimpan. Redirect undangan B2B → /b2bapps.
+- **Autentifikasi:** mode temp → auth dibuat server-side dengan
+  must_change_password → login pertama dipaksa reset via email; mode invite →
+  klien setel sendiri; Approve admin menyetel trust 85 + grant sesuai role.
+- **Portal:** error muat ditampilkan + Coba lagi (Penawaran, Beranda, Batch);
+  Terima/Tolak dikonfirmasi + feedback gagal inline; badge konsisten (kuning/
+  biru/hijau) + filter REJECTED; Beranda: kartu kaca, grafik batang 6 bulan
+  animasi (self-drawn, reduced-motion-aware), empty state, kartu terklik.
+- **Login premium:** split desktop (panel brand ledger + kartu kaca), wipe
+  hijau kiri→kanan saat sukses sebelum portal termuat.
+- **Uji:** `b2bAdminAccounts.test.ts` 16 asersi (merah dulu → hijau);
+  `mitraAccounts.test.ts` 22 lama tetap hijau; vitest penuh 50 file lolos
+  (3 file gagal lokal = pre-existing theme/pwa/onboarding, bukan regresi).
+
 ### 2026-11-05 (v2.7.55) — Portal Mitra: ikon Beranda, STNK setara Nasabah, rentang harga, diskon step 4, handoff & approval manual
 
 - **Direktif pemilik (6 poin):** ikon "Klien"/"Profil" diperbagus; UI AI STNK

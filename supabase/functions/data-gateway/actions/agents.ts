@@ -61,6 +61,16 @@ export async function handleAgentsAction(action: string, ctx: GatewayContext): P
         if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
         if (!params.agent_id) return json({ error: 'agent_id required' }, 400);
         const approve = params.approve !== false; // default true
+        // v2.7.56 — layar Manajemen Akun juga menampung Klien B2B, jadi aksi
+        // ini bisa menyentuh keduanya. Union allowed_apps mengikuti role:
+        // memberi grant 'AGENT' ke akun B2B tidak mengubah routing hari ini
+        // (B2B_CLIENT bypass allowed_apps di App.tsx), tapi tetap data yang
+        // salah kalau suatu saat special-case-nya berubah.
+        const { data: targetUser } = await db.from('sp_users')
+          .select('role').eq('id', String(params.agent_id)).maybeSingle();
+        const targetRole = String((targetUser as any)?.role ?? 'AGENT');
+        const isB2bTarget = targetRole === 'B2B_CLIENT';
+        const roleAppId = isB2bTarget ? 'B2B_CLIENT' : 'AGENT';
         // FIX 2026-10-26 (cross-app audit #5): this used to overwrite
         // allowed_apps with ['AGENT'], silently revoking any other grants
         // (e.g. AGENT+CUSTOMER) every time an agent was re-verified — the same
@@ -72,7 +82,7 @@ export async function handleAgentsAction(action: string, ctx: GatewayContext): P
             .eq('id', String(params.agent_id))
             .maybeSingle();
           const existing = Array.isArray((cur as any)?.allowed_apps) ? (cur as any).allowed_apps as string[] : [];
-          allowedApps = existing.includes('AGENT') ? existing : [...existing, 'AGENT'];
+          allowedApps = existing.includes(roleAppId) ? existing : [...existing, roleAppId];
         }
         const { data, error } = await db.from('sp_users')
           .update({
@@ -90,7 +100,9 @@ export async function handleAgentsAction(action: string, ctx: GatewayContext): P
         // Insert admin notification about the decision
         db.from('sp_admin_notifications').insert({
           type: approve ? 'AGENT_VERIFIED' : 'AGENT_REJECTED',
-          title: approve ? 'Agen Diverifikasi' : 'Agen Ditolak',
+          title: approve
+            ? (isB2bTarget ? 'Klien B2B Diverifikasi' : 'Agen Diverifikasi')
+            : (isB2bTarget ? 'Klien B2B Ditolak' : 'Agen Ditolak'),
           body: `${String((data as any)?.name ?? 'Agen')} (${String((data as any)?.email ?? '')}) ${approve ? 'telah diverifikasi' : 'ditolak oleh operator'}.`,
           read: false,
           metadata: { agent_id: params.agent_id, approved: approve, reviewer_id: caller.authId },
@@ -101,7 +113,9 @@ export async function handleAgentsAction(action: string, ctx: GatewayContext): P
           type: approve ? 'AGENT_VERIFIED' : 'AGENT_REJECTED',
           title: approve ? 'Akun Anda Diverifikasi' : 'Verifikasi Ditolak',
           body: approve
-            ? 'Selamat! Akun agen Anda telah diverifikasi. Anda dapat mulai bertransaksi sepenuhnya.'
+            ? (isB2bTarget
+              ? 'Selamat! Akun perusahaan Anda telah diverifikasi. Anda dapat mulai mengajukan penawaran sepenuhnya.'
+              : 'Selamat! Akun agen Anda telah diverifikasi. Anda dapat mulai bertransaksi sepenuhnya.')
             : 'Maaf, verifikasi akun Anda ditolak. Silakan hubungi tim SurePath untuk informasi lebih lanjut.',
           read: false,
           metadata: { agent_id: params.agent_id, approved: approve, reviewer_id: caller.authId },

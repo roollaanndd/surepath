@@ -47,6 +47,10 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
   const [submissions, setSubmissions] = useState<SpB2BSubmission[]>([]);
   const [quotes, setQuotes] = useState<SpB2BQuote[]>([]);
   const [bulkBatches, setBulkBatches] = useState<SpB2BBatch[]>([]);
+  // v2.7.56 — kegagalan muat data portal. Service B2B kini melempar error
+  // alih-alih mengembalikan [] yang membuat Beranda tampak "kosong" padahal
+  // datanya gagal diambil.
+  const [loadError, setLoadError] = useState(false);
   // "Buat"/"Ajuan" each hold two flows (single submission vs. bulk fleet
   // import). A 6th tab would reopen the width bug the comment below the TABS
   // array describes (5 short labels already fill PortalTabBar's budget), so
@@ -55,14 +59,20 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
 
   const loadData = async () => {
     if (!client?.id) return;
-    const [subs, qs, batches] = await Promise.all([
-      getB2BSubmissions(client.id),
-      getB2BQuotes(client.id),
-      getB2BBulkBatches(),
-    ]);
-    setSubmissions(subs);
-    setQuotes(qs);
-    setBulkBatches(batches);
+    try {
+      const [subs, qs, batches] = await Promise.all([
+        getB2BSubmissions(client.id),
+        getB2BQuotes(client.id),
+        getB2BBulkBatches(),
+      ]);
+      setSubmissions(subs);
+      setQuotes(qs);
+      setBulkBatches(batches);
+      setLoadError(false);
+    } catch (error) {
+      console.error('Unable to load B2B portal data:', error);
+      setLoadError(true);
+    }
   };
 
   useEffect(() => { loadData(); }, [client?.id]);
@@ -98,6 +108,8 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
             submissions={submissions}
             quotes={quotes}
             bulkBatches={bulkBatches}
+            loadError={loadError}
+            onRetry={() => { loadData(); }}
             onNavigate={handleTabChange}
             onNavigateBulk={(tab) => { setBulkMode(true); handleTabChange(tab); }}
             lang={lang}

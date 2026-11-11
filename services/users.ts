@@ -125,7 +125,10 @@ export async function getUserByEmail(_email: string): Promise<SpUser | null> {
 // ─── Admin: Agent Management (via data-gateway) ───────────────────────────────
 
 export async function getAllAgents(): Promise<SpUser[]> {
-  const { data, error } = await callGateway('admin_list_users', { role: 'AGENT', limit: 500 });
+  // v2.7.56: layar Manajemen Mitra kini juga menampung Klien B2B buatan admin
+  // (role B2B_CLIENT) supaya aksi reset/kata sandi sementara terjangkau dari
+  // layar yang sama.
+  const { data, error } = await callGateway('admin_list_users', { roles: ['AGENT', 'B2B_CLIENT'], limit: 500 });
   if (error) { console.error('getAllAgents:', error); return []; }
   return (data ?? []) as SpUser[];
 }
@@ -177,8 +180,14 @@ export interface CreateMitraInput {
   ktp?: string | null;
   address?: string | null;
   upline_code?: string | null;
+  /** v2.7.56: tipe akun — 'AGENT' (bawaan) atau 'B2B_CLIENT'. */
+  role?: 'AGENT' | 'B2B_CLIENT';
+  /** Nama perusahaan untuk B2B_CLIENT; disimpan ke kolom address profil. */
+  company_name?: string | null;
   /** 'invite' mengirim email undangan; 'temp' mengembalikan kata sandi sementara (MASTER_ADMIN). */
   mode?: 'invite' | 'temp';
+  /** v2.7.56: sandi buatan admin untuk mode 'temp'. Kosong = dibuat otomatis. */
+  password?: string | null;
 }
 
 export async function createMitra(
@@ -204,10 +213,13 @@ export async function sendMitraPasswordReset(
 export async function setMitraTempPassword(
   userId: string,
   requireChange = true,
+  password?: string | null,
 ): Promise<{ tempPassword?: string; email?: string; error?: string }> {
   const res = await callGateway('admin_set_mitra_temp_password', {
     user_id: userId,
     require_change: requireChange,
+    // v2.7.56: sandi buatan admin opsional — kosong/undefined = generator.
+    password: password || null,
   });
   if (res.error) return { error: res.error };
   return { tempPassword: res.temp_password as string, email: res.data?.email };

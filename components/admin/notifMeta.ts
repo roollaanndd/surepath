@@ -24,6 +24,7 @@ const ADMIN_NOTIF_META: Record<string, AdminNotifMeta> = {
   AGENT_VERIFIED:     { iconId: 'agents', cls: 'text-ds-green' },
   AGENT_REJECTED:     { iconId: 'agents', cls: 'text-rose-700 dark:text-rose-200' },
   NEW_AGENT:          { iconId: 'agents', cls: 'text-ds-green' },
+  NEW_B2B_CLIENT:     { iconId: 'clients', cls: 'text-ds-blue' },
   NEW_CUSTOMER:       { iconId: 'clients', cls: 'text-ds-blue' },
   NEW_ADMIN:          { iconId: 'user_mgmt', cls: 'text-ds-blue' },
   SECURITY:           { iconId: 'security', cls: 'text-rose-700 dark:text-rose-200' },

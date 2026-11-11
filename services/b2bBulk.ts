@@ -114,7 +114,9 @@ export async function createB2BBulkBatch(input: {
 
 export async function getB2BBulkBatches(opts: { all?: boolean } = {}): Promise<SpB2BBatch[]> {
   const { data, error } = await callGateway('b2b_bulk_list_batches', opts.all ? { all: true } : {});
-  if (error) { console.error('getB2BBulkBatches:', error); return []; }
+  // v2.7.56: error dilempar — konsisten dengan getB2BSubmissions/getB2BQuotes;
+  // pemanggilnya (B2BPortal, B2BBulkBatches) kini punya penanganan gagal-muat.
+  if (error) throw new Error(String((error as any).message ?? error));
   return (data ?? []) as SpB2BBatch[];
 }
 

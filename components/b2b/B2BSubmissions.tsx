@@ -12,7 +12,7 @@ interface Props {
 const STATUS_BADGE: Record<string, string> = {
   SUBMITTED: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
   REVIEWING: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300',
-  QUOTED:    'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300',
+  QUOTED:    'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300',
   ACCEPTED:  'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
   REJECTED:  'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
 };
@@ -35,7 +35,7 @@ const PRODUCT_LABEL: Record<string, string> = {
   FLEET_MV: 'Fleet MV', BONDING: 'Bonding', GROUP_HEALTH: 'Group Health',
 };
 
-const FILTER_TABS = ['ALL', 'SUBMITTED', 'REVIEWING', 'QUOTED', 'ACCEPTED'] as const;
+const FILTER_TABS = ['ALL', 'SUBMITTED', 'REVIEWING', 'QUOTED', 'ACCEPTED', 'REJECTED'] as const;
 type FilterTab = typeof FILTER_TABS[number];
 
 const SubmissionCard: React.FC<{ sub: SpB2BSubmission; lang: Language; onNavigate: (t: string) => void }> = ({ sub, lang, onNavigate }) => {

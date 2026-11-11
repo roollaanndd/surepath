@@ -1,5 +1,40 @@
 # SurePath - Changelog
 
+## v2.8.19 - 2026-11-11
+
+### Mesin premi armada disesuaikan arahan owner (formula eksak)
+
+Araahan owner untuk flow bulk B2B (motor + mobil, tenor 3/6/12/18 bulan):
+
+1. **Premi = nilai pencairan × rate × (tenor/12)** — rate OJK acuan 12 bulan,
+   pro-rata tenor. Engine sudah seperti ini; kini dikunci test formula-eksak
+   untuk tenor 3, 6, 12, dan 18 bulan.
+2. **Rate = OJK batas bawah per wilayah** — sudah benar (band `MIN`, tabel
+   lantai per zona); test kini menyamakan `rate` engine langsung dengan tabel
+   lantai OJK (motor via `getBaseRateByBand`, mobil via `CAR_TLO_MIN` per
+   kategori OTR × zona).
+3. **Discount 25% dari premi** — sudah benar untuk motor & mobil.
+4. **Biaya admin flat Rp 25.000** — DEVIASI DIPERBAIKI: default
+   `adminFeeCar` 45.000 → **25.000** (motor memang 25.000; alat berat tetap
+   65.000 per kesepakatan block business, bisa diubah via rate set admin).
+5. **Total = premi − disc + biaya admin** — sudah benar.
+6. **Tanpa lantai premi minimum** — DEVIASI DIPERBAIKI: default
+   `minPremiumGross` 50.000 → **0** (premi kecil kini mengikuti formula penuh;
+   lantai 50rb milik metodologi mitra pilot masih bisa diaktifkan lewat rate
+   set admin — mekanisme + test reproduksinya dipertahankan).
+
+Diterapkan identik di engine browser (`services/b2bFleetRating.ts`) dan mirror
+Deno (`supabase/functions/_shared/b2bFleetRating.ts` — paritas tetap diuji),
+plus form default Rate Set Armada admin. Angka audit referensi PT MMF pada
+test di-update ke default baru (contoh row 1: premi 45.000, disc 11.250,
+admin 25.000, total **58.750**; dengan lantai mitra: 62.500). Contoh hitung
+terverifikasi kode: motor Z2 25jt tenor 12 → premi 450.000, disc 112.500,
+admin 25.000, total **362.500**; tenor 3 → premi 112.500, total **109.375**.
+
+Catatan deployment: kalau ada baris rate set aktif di `sp_b2b_fleet_rate_sets`,
+nilai di baris itu yang berlaku — periksa `adminFeeCar` = 25.000 dan
+`minPremiumGross` = 0 agar sesuai arahan, atau nonaktifkan barisnya.
+
 ## v2.8.18 - 2026-11-11
 
 ### Quotation Excel B2B + Pathy fleet parity

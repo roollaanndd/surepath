@@ -126,9 +126,16 @@ export const DISCOUNT_RATE_STANDARD = 0.25;
 export const DISCOUNT_RATE_HEAVY = 0.15;
 
 export const ADMIN_FEE_MOTORCYCLE = 25_000;
-export const ADMIN_FEE_CAR = 45_000;
+// Araahan owner (2026-11-11): biaya admin FLAT Rp 25.000 untuk motor & mobil
+// (sebelumnya mobil/pickup/truk 45.000). Alat berat tetap 65.000 per
+// kesepakatan block business — bisa diubah lewat rate set admin.
+export const ADMIN_FEE_CAR = 25_000;
 export const ADMIN_FEE_HEAVY = 65_000;
 
+// Nilai lantai premi gross metodologi audit manual mitra pilot. Araahan owner
+// (2026-11-11): premi mengikuti formula penuh TANPA lantai — DEFAULT config
+// memakai 0; konstanta tetap diekspor sebagai dokumentasi historis dan
+// bisa diaktifkan lagi via rate set admin (minPremiumGross).
 export const MIN_PREMIUM_GROSS = 50_000;
 
 // ─── Admin-editable override (sp_b2b_fleet_rate_sets) ──────────────────────
@@ -155,7 +162,9 @@ export const DEFAULT_BULK_RATE_CONFIG: BulkRateConfig = {
   adminFeeMotorcycle: ADMIN_FEE_MOTORCYCLE,
   adminFeeCar: ADMIN_FEE_CAR,
   adminFeeHeavy: ADMIN_FEE_HEAVY,
-  minPremiumGross: MIN_PREMIUM_GROSS,
+  // Araahan owner (2026-11-11): premi = nilai pencairan × rate × tenor/12
+  // tanpa lantai — default 0. Aktifkan lagi via rate set admin bila perlu.
+  minPremiumGross: 0,
 };
 
 let activeBulkRateConfig: BulkRateConfig = DEFAULT_BULK_RATE_CONFIG;

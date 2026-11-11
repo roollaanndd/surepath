@@ -10,7 +10,10 @@ import {
   quoteRowFromLineItem,
   type QuoteExcelRow,
 } from '../b2bBulkQuoteExcel';
-import { buildLineItem, calcBulkPremium, calcBulkTotals } from '../b2bFleetRating';
+import {
+  buildLineItem, calcBulkPremium, calcBulkTotals, DEFAULT_BULK_RATE_CONFIG,
+} from '../b2bFleetRating';
+import { CAR_TLO_MIN, getBaseRateByBand, getVehicleCategory } from '../ojkRates';
 import type { SpB2BBatchItem } from '../b2bBulk';
 
 describe('buildBulkQuoteWorkbook', () => {
@@ -111,22 +114,50 @@ describe('buildBulkQuoteWorkbook', () => {
   });
 });
 
-// Sanity engine: sifat mesin yang bisa diandalkan quotation (bukan asumsi
-// lintas kelas — rate TLO motor di tabel lantai OJK memang lebih tinggi dari
-// mobil pada nilai pembiayaan sama).
+// Sanity engine: arahan owner (2026-11-11) — premi = nilai pencairan × rate
+// OJK batas bawah per zona × tenor/12 (rate acuan 12 bulan); disc = premi ×
+// 25%; biaya admin flat Rp 25.000; total = premi − disc + admin.
 describe('engine smoke', () => {
-  it('pro-rata tenor: tenor 24 > tenor 12 untuk unit sama, angka bulat rupiah', () => {
-    const t12 = calcBulkPremium({ vehicleClass: 'MOTORCYCLE', zone: 1, financingValue: 100_000_000, otr: 0, tenorMonths: 12 });
-    const t24 = calcBulkPremium({ vehicleClass: 'MOTORCYCLE', zone: 1, financingValue: 100_000_000, otr: 0, tenorMonths: 24 });
-    expect(t12.totalPremium).toBeGreaterThan(0);
-    expect(t24.totalPremium).toBeGreaterThan(t12.totalPremium);
-    expect(t12.totalPremium).toBe(Math.round(t12.totalPremium));
-    expect(t24.totalPremium).toBe(Math.round(t24.totalPremium));
+  const motorRate = getBaseRateByBand('MOTORCYCLE', 'TLO', 2, 1, 'MIN');
+
+  it('motor: pro-rata tenor 3/6/12/18 bln dari rate 12 bulan, disc 25%, admin 25rb', () => {
+    expect(motorRate).toBeGreaterThan(0);
+    for (const tenor of [3, 6, 12, 18]) {
+      const p = calcBulkPremium({ vehicleClass: 'MOTORCYCLE', zone: 2, financingValue: 25_000_000, otr: 0, tenorMonths: tenor });
+      expect(p.rate).toBe(motorRate); // rate OJK batas bawah, sesuai zona
+      const premi = Math.round(25_000_000 * motorRate * (tenor / 12));
+      expect(p.premiumGross).toBe(premi);
+      const disc = Math.round(premi * 0.25);
+      expect(p.discountRate).toBe(0.25);
+      expect(p.discountAmount).toBe(disc);
+      expect(p.premiumAfterDiscount).toBe(premi - disc);
+      expect(p.adminFee).toBe(25_000);
+      expect(p.totalPremium).toBe(premi - disc + 25_000);
+    }
   });
 
-  it('lantai premi minimum (Rp 50.000) ditegakkan untuk unit kecil', () => {
-    const kecil = calcBulkPremium({ vehicleClass: 'MOTORCYCLE', zone: 3, financingValue: 2_000_000, otr: 0, tenorMonths: 12 });
-    expect(kecil.premiumGross).toBeGreaterThanOrEqual(50_000);
-    expect(kecil.totalPremium).toBeGreaterThan(0);
+  it('mobil: rate dari tabel lantai TLO OJK (kategori OTR × zona), basis premi tetap nilai pencairan', () => {
+    const cat = getVehicleCategory(150_000_000);
+    const rate = CAR_TLO_MIN[cat][2];
+    const p = calcBulkPremium({ vehicleClass: 'CAR', zone: 2, financingValue: 120_000_000, otr: 150_000_000, tenorMonths: 18 });
+    expect(p.rate).toBe(rate);
+    const premi = Math.round(120_000_000 * rate * (18 / 12));
+    expect(p.premiumGross).toBe(premi);
+    expect(p.discountAmount).toBe(Math.round(premi * 0.25));
+    expect(p.totalPremium).toBe(premi - Math.round(premi * 0.25) + 25_000);
+  });
+
+  it('tanpa lantai: premi kecil mengikuti formula penuh (motor 5jt, 3 bln → Rp 22.500)', () => {
+    const p = calcBulkPremium({ vehicleClass: 'MOTORCYCLE', zone: 2, financingValue: 5_000_000, otr: 0, tenorMonths: 3 });
+    expect(p.premiumGross).toBe(Math.round(5_000_000 * motorRate * (3 / 12)));
+    expect(p.premiumGross).toBe(22_500);
+  });
+
+  it('lantai premi tetap bisa diaktifkan via rate config admin (mekanisme utuh)', () => {
+    const floored = calcBulkPremium(
+      { vehicleClass: 'MOTORCYCLE', zone: 2, financingValue: 5_000_000, otr: 0, tenorMonths: 3 },
+      { ...DEFAULT_BULK_RATE_CONFIG, minPremiumGross: 50_000 },
+    );
+    expect(floored.premiumGross).toBe(50_000);
   });
 });

@@ -1,5 +1,68 @@
 # SurePath - Changelog
 
+## v2.8.23 - 2026-11-12
+
+### Order Unit B2B: tanggal efektif, multi-tahun sampai 6 tahun, dan pilihan diskon
+
+Permintaan owner (8 Nov): klien B2B bisa mengorder kendaraan dengan tanggal
+efektif pertanggungan, polis multi-tahun sampai 6 tahun dengan nilai kendaraan
+menyusut 10% per tahun (lengkap dengan penjelasannya), dan diskon maksimum 25%
+yang bisa dipilih tertera di polis atau tidak. Semuanya masuk ke layar **Order
+Unit** yang sudah ada (menu Buat) — bukan wizard kedua — sehingga tetap memakai
+satu jalur yang sudah teruji: batch 1 item → recompute server → invoice Xendit
+per batch → polis induk.
+
+- **Tanggal efektif** — pilih hari ini sampai 60 hari ke depan; tanggal
+  berakhir dihitung otomatis (tanggal yang sama N bulan kemudian). Server
+  memvalidasi ulang rentangnya.
+- **Jangka waktu** — 6 bln, 1 thn, 18 bln, lalu 2–6 thn. Sebelumnya pemilih
+  tenor untuk mobil penumpang **tidak tampil sama sekali di layar desktop**
+  (hanya dirender dengan `sm:hidden`); kini satu baris tombol untuk semua kelas.
+- **Multi-tahun (> 12 bulan)** — nilai pertanggungan tahun ke-n = TSI ×
+  0,9^(n−1). Rate dikunci dari tahun pertama, biaya admin dikenakan sekali,
+  seluruh premi dibayar di muka. Layar menampilkan penjelasan dan jadwal per
+  tahun (periode, nilai pertanggungan, premi gross). Contoh pickup Zona 1
+  Rp 100 jt, 6 tahun: TSI 100 → 90 → 81 → 72,9 → 65,61 → 59,049 jt; premi gross
+  Rp 4.123.319.
+- **Diskon** — klien boleh menurunkan diskon dari plafon rate set aktif (25%
+  motor/mobil, 15% alat berat); tidak pernah bisa menaikkannya. Centang "Diskon
+  tertera di polis" menentukan apakah polis mencetak rincian diskon atau hanya
+  premi gross. Tagihan tetap dipotong diskon di kedua pilihan.
+- **Impor massal tidak berubah.** Penyusutan hanya berlaku bila item
+  memintanya; baris spreadsheet tetap `nilai × rate × tenor/12` sehingga tetap
+  cocok dengan metodologi audit mitra.
+
+**Disiplin uang.** Klien hanya mengirim pilihan (tanggal, YA/TIDAK multi-tahun,
+besar diskon, YA/TIDAK tertera). Besar penyusutan (10%) dan plafon diskon
+ditentukan server; `calcBulkPremium` di `services/b2bFleetRating.ts` dan
+mirror Deno-nya diubah identik dan diuji paritas.
+
+**Yang melihat datanya.** Detail batch klien (kolom Periode), panel detail
+batch admin (periode, lencana "TSI susut 10%/thn" dengan jadwal di tooltip,
+lencana "diskon tidak tertera di polis"), dan kolom Catatan di quotation Excel.
+
+**Login demo B2B.** Tombol "Masuk sebagai Demo" di halaman login B2B, tampil
+hanya bila `VITE_B2B_DEMO_EMAIL` (dan `VITE_B2B_DEMO_PASSWORD`) diisi saat
+build. Belum aktif di produksi sampai kedua variabel dan akun demonya dibuat.
+
+**Database** (keduanya sudah diterapkan ke produksi 12 Nov):
+
+- `20261112120000_b2b_unit_order_multiyear.sql` — `sp_b2b_batch_items` +
+  `coverage_start_date`, `coverage_end_date`, `depreciation_rate`,
+  `premium_schedule`, `discount_shown_on_policy`.
+- `20261112121000_drop_unused_policy_order_multiyear_columns.sql` — menghapus
+  empat kolom `sp_policy_orders` dari `20261108120000` (untuk wizard terpisah
+  yang tidak jadi dipakai; seluruh baris masih bernilai default).
+
+**Deploy.** `data-gateway` harus ter-deploy (workflow Deploy Edge Functions)
+agar penyusutan, diskon pilihan, dan tanggal efektif dihitung dan disimpan; sampai
+itu terjadi gateway lama mengabaikan field baru dan menghitung tanpa
+penyusutan.
+
+**Uji.** 11 tes baru di `b2bFleetRating.test.ts` (paritas browser/Deno,
+jadwal 6 tahun, 18 bulan, plafon diskon, tanggal). Alur bayar sampai invoice
+Xendit belum diuji end-to-end.
+
 ## v2.8.22 - 2026-11-12
 
 ### Aset brand: OG banner & feature graphic Play Store (dibuat dengan PhotoCraft)

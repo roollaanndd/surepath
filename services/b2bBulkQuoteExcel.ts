@@ -74,8 +74,25 @@ export function quoteRowFromBatchItem(it: SpB2BBatchItem): QuoteExcelRow {
     premiumAfterDiscount: it.premium_after_discount,
     adminFee: it.admin_fee,
     totalPremium: it.total_premium,
-    catatan: it.flags?.length ? it.flags.join(' | ') : undefined,
+    catatan: batchItemNotes(it),
   };
+}
+
+// Catatan baris: flag verifikasi + (order unit, v2.8.23) periode pertanggungan,
+// penyusutan multi-tahun, dan diskon yang tidak dicetak di polis. Murni teks —
+// tidak ada angka premi yang dihitung di sini.
+function batchItemNotes(it: SpB2BBatchItem): string | undefined {
+  const notes: string[] = [...(it.flags ?? [])];
+  if (it.coverage_start_date && it.coverage_end_date) {
+    notes.push(`Periode ${it.coverage_start_date} s/d ${it.coverage_end_date}`);
+  }
+  if (it.depreciation_rate > 0) {
+    notes.push(`Multi-tahun: nilai pertanggungan menyusut ${Number((it.depreciation_rate * 100).toFixed(2))}% per tahun`);
+  }
+  if (it.discount_shown_on_policy === false && it.discount_amount > 0) {
+    notes.push('Diskon tidak tertera di polis');
+  }
+  return notes.length ? notes.join(' | ') : undefined;
 }
 
 /** Preview line item di layar review (B2BBulkImport) + baris mentah → quotation. */

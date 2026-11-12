@@ -244,6 +244,35 @@ export function selectRate(
 
 // ─── Premium calc ───────────────────────────────────────────────────────────
 
+// ─── Order unit multi-tahun ─────────────────────────────────────────────────
+// Arahan owner (2026-11-08): polis sampai 6 tahun, nilai pertanggungan
+// menyusut 10% per tahun (majemuk). Berlaku hanya untuk order unit yang
+// memintanya — impor massal tetap tanpa penyusutan.
+export const MULTI_YEAR_DEPRECIATION_RATE = 0.10;
+export const MULTI_YEAR_MAX_TENOR_MONTHS = 72;
+export const MAX_DEPRECIATION_RATE = 0.5; // pagar pengaman mesin, bukan produk
+
+// Tanggal efektif: "YYYY-MM-DD" yang benar-benar ada di kalender.
+export function isValidIsoDate(iso: string | null | undefined): boolean {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso ?? ''));
+  if (!m) return false;
+  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+  return d.getUTCFullYear() === Number(m[1]) && d.getUTCMonth() === Number(m[2]) - 1 && d.getUTCDate() === Number(m[3]);
+}
+
+// Akhir pertanggungan = tanggal yang sama N bulan kemudian (31 Jan + 1 bulan
+// → 28/29 Feb). Mengembalikan '' untuk input yang bukan tanggal valid.
+export function addMonthsToIsoDate(startIso: string, months: number): string {
+  if (!isValidIsoDate(startIso)) return '';
+  const [y, mo, d] = startIso.split('-').map(Number);
+  const total = (mo - 1) + Math.round(months);
+  const ty = y + Math.floor(total / 12);
+  const tm = ((total % 12) + 12) % 12;
+  const lastDay = new Date(Date.UTC(ty, tm + 1, 0)).getUTCDate();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${ty}-${pad(tm + 1)}-${pad(Math.min(d, lastDay))}`;
+}
+
 export interface BulkPremiumInput {
   vehicleClass: VehicleClass;
   zone: Zone;
@@ -251,6 +280,22 @@ export interface BulkPremiumInput {
   otr: number;            // used only to band passenger-car category
   tenorMonths: number;
   commercialBodyHint?: boolean;
+  // Order unit multi-tahun (v2.8.23): nilai pertanggungan menyusut per tahun
+  // polis. 0/undefined = perilaku lama (impor massal tidak pernah menyusut,
+  // supaya tetap cocok dengan metodologi audit mitra).
+  depreciationRate?: number;
+  // Diskon yang dipilih klien untuk unit ini. Selalu dijepit ke 0..diskon
+  // rate set aktif untuk kelasnya — klien hanya bisa MENURUNKAN, tidak pernah
+  // menaikkan. undefined = pakai diskon rate set (perilaku lama).
+  discountRateOverride?: number;
+}
+
+// Satu baris jadwal premi per tahun polis (hanya terisi bila menyusut).
+export interface PremiumScheduleRow {
+  year: number;         // tahun polis ke-n (mulai 1)
+  months: number;       // bulan yang ditanggung di tahun itu (≤ 12)
+  sumInsured: number;   // nilai pertanggungan tahun itu, setelah penyusutan
+  premiumGross: number; // premi gross tahun itu, rupiah bulat
 }
 
 export interface BulkPremiumResult {
@@ -263,6 +308,8 @@ export interface BulkPremiumResult {
   premiumAfterDiscount: number;
   adminFee: number;
   totalPremium: number;
+  depreciationRate: number;       // yang benar-benar diterapkan (0 bila tenor ≤ 12 bln)
+  schedule: PremiumScheduleRow[]; // kosong bila tidak menyusut
 }
 
 export function calcBulkPremium(input: BulkPremiumInput, rateConfig: BulkRateConfig = activeBulkRateConfig): BulkPremiumResult {
@@ -272,10 +319,31 @@ export function calcBulkPremium(input: BulkPremiumInput, rateConfig: BulkRateCon
   );
 
   const tenor = Math.max(1, Math.round(tenorMonths || 12));
-  const rawGross = financingValue * rate * (tenor / 12);
+
+  // Penyusutan hanya bermakna bila polis melewati tahun pertama. Rate dikunci
+  // dari tahun pertama (kategori OTR saat order), yang menyusut hanya nilai
+  // pertanggungannya: TSI tahun ke-n = TSI × (1 − d)^(n−1).
+  const requestedDep = Number.isFinite(input.depreciationRate) ? (input.depreciationRate as number) : 0;
+  const depreciationRate = tenor > 12 ? Math.min(Math.max(requestedDep, 0), MAX_DEPRECIATION_RATE) : 0;
+  const schedule: PremiumScheduleRow[] = [];
+  let rawGross: number;
+  if (depreciationRate > 0) {
+    const years = Math.ceil(tenor / 12);
+    for (let y = 1; y <= years; y++) {
+      const months = Math.min(12, tenor - 12 * (y - 1));
+      const sumInsured = Math.round(financingValue * Math.pow(1 - depreciationRate, y - 1));
+      schedule.push({ year: y, months, sumInsured, premiumGross: Math.round(sumInsured * rate * (months / 12)) });
+    }
+    rawGross = schedule.reduce((s, r) => s + r.premiumGross, 0);
+  } else {
+    rawGross = financingValue * rate * (tenor / 12);
+  }
   const premiumGross = Math.round(Math.max(rawGross, rateConfig.minPremiumGross));
 
-  const discountRate = vehicleClass === 'HEAVY_EQUIPMENT' ? rateConfig.discountRateHeavy : rateConfig.discountRateStandard;
+  const configDiscount = vehicleClass === 'HEAVY_EQUIPMENT' ? rateConfig.discountRateHeavy : rateConfig.discountRateStandard;
+  const discountRate = Number.isFinite(input.discountRateOverride)
+    ? Math.min(Math.max(input.discountRateOverride as number, 0), configDiscount)
+    : configDiscount;
   const discountAmount = Math.round(premiumGross * discountRate);
   const premiumAfterDiscount = premiumGross - discountAmount;
 
@@ -286,7 +354,7 @@ export function calcBulkPremium(input: BulkPremiumInput, rateConfig: BulkRateCon
 
   const totalPremium = premiumAfterDiscount + adminFee;
 
-  return { rate, category, commercialBody, premiumGross, discountRate, discountAmount, premiumAfterDiscount, adminFee, totalPremium };
+  return { rate, category, commercialBody, premiumGross, discountRate, discountAmount, premiumAfterDiscount, adminFee, totalPremium, depreciationRate, schedule };
 }
 
 // ─── Batch totals ───────────────────────────────────────────────────────────
@@ -341,6 +409,10 @@ export interface RawBulkRow {
   zoneOverride?: Zone;
   vehicleClassOverride?: VehicleClass;
   commercialBodyOverride?: boolean;
+  // Order unit saja — diteruskan apa adanya ke calcBulkPremium (lihat
+  // BulkPremiumInput). Baris impor massal tidak pernah mengisinya.
+  depreciationRate?: number;
+  discountRateOverride?: number;
   // Reference figures already present in the uploaded file (if any) — shown
   // for comparison, never trusted as the final number. Mirrors exactly what
   // the reference partner's own manual audit methodology does: recompute,
@@ -393,6 +465,8 @@ export function buildLineItem(raw: RawBulkRow): BuiltLineItem {
     otr: raw.otr || 0,
     tenorMonths: raw.tenorMonths || 12,
     commercialBodyHint,
+    depreciationRate: raw.depreciationRate,
+    discountRateOverride: raw.discountRateOverride,
   });
 
   if (raw.referenceTotalPremium != null && raw.referenceTotalPremium > 0) {

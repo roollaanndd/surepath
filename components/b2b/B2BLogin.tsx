@@ -14,7 +14,7 @@
 // baton to the portal. All auth logic (must_change_password handoff, profile
 // checks) is untouched by this redesign.
 import React, { useState } from 'react';
-import { ArrowRight, AlertCircle, Mail, Lock, CheckCircle2, Building2, Files, FileCheck, Activity } from 'lucide-react';
+import { ArrowRight, AlertCircle, Mail, Lock, CheckCircle2, Building2, Files, FileCheck, Activity, Sparkle } from 'lucide-react';
 import { supabase } from '../../services/db';
 import { fetchMyProfileForLogin } from '../../services/users';
 import { UserRole } from '../../types';
@@ -462,6 +462,26 @@ const B2BLogin: React.FC<B2BLoginProps> = ({ onLoginSuccess, onBack }) => {
                 )}
               </div>
             </div>
+
+            {/* Login demo: mengisi kredensial akun contoh lalu mengirim form.
+                Hanya tampil bila VITE_B2B_DEMO_EMAIL diisi saat build. */}
+            {(import.meta.env.VITE_B2B_DEMO_EMAIL as string | undefined) && mode === 'LOGIN' && (
+              <div className="mt-5 b2b-stagger-3">
+                <button
+                  type="button"
+                  disabled={loading || success}
+                  onClick={() => {
+                    setEmail(import.meta.env.VITE_B2B_DEMO_EMAIL as string);
+                    setPassword((import.meta.env.VITE_B2B_DEMO_PASSWORD as string | undefined) ?? '');
+                    setTimeout(() => document.querySelector<HTMLFormElement>('form')?.requestSubmit(), 50);
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-transform duration-150 active:scale-[0.97] disabled:opacity-60"
+                  style={{ background: 'rgba(67,56,202,0.08)', border: '1px dashed rgba(67,56,202,0.32)', color: '#4338ca' }}
+                >
+                  <Sparkle size={13} /> Masuk sebagai Demo
+                </button>
+              </div>
+            )}
 
             <div className="mt-6 b2b-stagger-4">
               <p className="text-center flex items-center justify-center gap-2" style={{ fontSize: '0.6875rem', fontWeight: 700, color: '#94a3b8', letterSpacing: '0.1em', textTransform: 'uppercase' }}>

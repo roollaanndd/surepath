@@ -11,7 +11,11 @@
 // (zone/vehicle class/commercial body — things a human can see and
 // override in the review grid) do.
 import type { GatewayContext, ActionResult } from './types.ts';
-import { calcBulkPremium, calcBulkTotals, type VehicleClass, type Zone, type BulkPremiumResult } from '../../_shared/b2bFleetRating.ts';
+import {
+  calcBulkPremium, calcBulkTotals, isValidIsoDate, addMonthsToIsoDate,
+  MULTI_YEAR_DEPRECIATION_RATE, MULTI_YEAR_MAX_TENOR_MONTHS,
+  type VehicleClass, type Zone, type BulkPremiumResult,
+} from '../../_shared/b2bFleetRating.ts';
 import { loadActiveBulkRateConfig } from './b2bSettings.ts';
 
 const json = (body: unknown, status = 200): ActionResult => ({ status, body });
@@ -44,6 +48,28 @@ interface ClientItemInput {
   regionText?: string;
   zone: Zone;
   flags?: string[];
+  // Order unit (v2.8.23) — semuanya opsional; baris impor massal tidak
+  // mengirimnya dan diperlakukan persis seperti sebelumnya.
+  coverageStartDate?: string;      // "YYYY-MM-DD", tanggal efektif pertanggungan
+  multiYearDepreciation?: boolean; // true → TSI menyusut 10%/tahun (rate dari server)
+  discountRate?: number;           // diskon pilihan klien; dijepit ke diskon rate set
+  discountShownOnPolicy?: boolean; // diskon dicetak di polis atau tidak
+}
+
+// Tanggal efektif boleh hari ini s/d 60 hari ke depan. Sehari kelonggaran di
+// kedua ujung karena "hari ini" klien (WIB/WITA/WIT) bisa sudah lewat tengah
+// malam sementara server masih di tanggal UTC sebelumnya.
+const COVERAGE_START_MAX_DAYS_AHEAD = 60;
+function coverageStartError(iso: string): string | null {
+  if (!isValidIsoDate(iso)) return 'tanggal efektif tidak valid (format YYYY-MM-DD).';
+  const dayMs = 86_400_000;
+  const todayUtc = Math.floor(Date.now() / dayMs) * dayMs;
+  const start = Date.parse(`${iso}T00:00:00Z`);
+  if (start < todayUtc - dayMs) return 'tanggal efektif tidak boleh di masa lalu.';
+  if (start > todayUtc + (COVERAGE_START_MAX_DAYS_AHEAD + 1) * dayMs) {
+    return `tanggal efektif paling jauh ${COVERAGE_START_MAX_DAYS_AHEAD} hari dari hari ini.`;
+  }
+  return null;
 }
 
 function validateItem(raw: unknown, index: number): { item: ClientItemInput; error?: string } | { error: string } {
@@ -59,6 +85,23 @@ function validateItem(raw: unknown, index: number): { item: ClientItemInput; err
   if (!Number.isFinite(financingValue) || financingValue <= 0) return { error: `Baris ${index + 1}: nilai pencairan/pembiayaan tidak valid.` };
   const tenorMonths = Number(r.tenorMonths) || 12;
   const otr = Number(r.otr) || 0;
+
+  const coverageStartDate = r.coverageStartDate ? String(r.coverageStartDate).trim() : undefined;
+  if (coverageStartDate) {
+    const dateErr = coverageStartError(coverageStartDate);
+    if (dateErr) return { error: `Baris ${index + 1}: ${dateErr}` };
+  }
+  const multiYearDepreciation = r.multiYearDepreciation === true;
+  if (multiYearDepreciation && tenorMonths > MULTI_YEAR_MAX_TENOR_MONTHS) {
+    return { error: `Baris ${index + 1}: jangka waktu maksimum ${MULTI_YEAR_MAX_TENOR_MONTHS / 12} tahun.` };
+  }
+  let discountRate: number | undefined;
+  if (r.discountRate !== undefined && r.discountRate !== null && r.discountRate !== '') {
+    discountRate = Number(r.discountRate);
+    if (!Number.isFinite(discountRate) || discountRate < 0 || discountRate > 1) {
+      return { error: `Baris ${index + 1}: diskon tidak valid.` };
+    }
+  }
 
   return {
     item: {
@@ -84,6 +127,12 @@ function validateItem(raw: unknown, index: number): { item: ClientItemInput; err
       regionText: r.regionText ? String(r.regionText) : undefined,
       zone,
       flags: Array.isArray(r.flags) ? r.flags.map(String) : [],
+      coverageStartDate,
+      multiYearDepreciation,
+      discountRate,
+      // Tanpa pilihan eksplisit, diskon tetap tertera — sama seperti semua
+      // batch sebelum v2.8.23.
+      discountShownOnPolicy: r.discountShownOnPolicy === undefined ? true : r.discountShownOnPolicy === true,
     },
   };
 }
@@ -125,6 +174,10 @@ export async function handleB2BBulkAction(action: string, ctx: GatewayContext): 
           otr: it.otr ?? 0,
           tenorMonths: it.tenorMonths,
           commercialBodyHint: it.commercialBody,
+          // Klien hanya memilih YA/TIDAK; besar penyusutan ditentukan server.
+          depreciationRate: it.multiYearDepreciation ? MULTI_YEAR_DEPRECIATION_RATE : 0,
+          // calcBulkPremium menjepit ini ke 0..diskon rate set aktif.
+          discountRateOverride: it.discountRate,
         });
         return { ...it, premium };
       });
@@ -177,6 +230,11 @@ export async function handleB2BBulkAction(action: string, ctx: GatewayContext): 
         total_premium: r.premium.totalPremium,
         flags: r.flags ?? [],
         status: 'PENDING',
+        coverage_start_date: r.coverageStartDate ?? null,
+        coverage_end_date: r.coverageStartDate ? addMonthsToIsoDate(r.coverageStartDate, r.tenorMonths) : null,
+        depreciation_rate: r.premium.depreciationRate,
+        premium_schedule: r.premium.schedule,
+        discount_shown_on_policy: r.discountShownOnPolicy ?? true,
       }));
 
       const { error: itemsErr } = await db.from('sp_b2b_batch_items').insert(itemRows);

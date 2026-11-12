@@ -3,6 +3,21 @@
 > ⚠️ Dokumen ini mencatat fakta penting: **migrasi di repo TIDAK semuanya sudah diapply ke production**.
 > Snapshot per 7 Juli 2026 (v1.23.0), project Supabase `uyjgeteelnswphyzkjwi` ("Myinsurepath").
 
+## Order Unit B2B multi-tahun (v2.8.23, migrasi `20261112120000` + `20261112121000`, **SUDAH DITERAPKAN 12 Nov 2026**)
+
+- `20261112120000_b2b_unit_order_multiyear.sql` menambah lima kolom ke
+  `sp_b2b_batch_items`: `coverage_start_date`, `coverage_end_date` (date, boleh
+  NULL), `depreciation_rate` (numeric(5,4), default 0, CHECK 0..0.5),
+  `premium_schedule` (jsonb, default `[]`), `discount_shown_on_policy`
+  (boolean, default true). Semua aditif; baris impor massal memakai default.
+- `20261112121000_drop_unused_policy_order_multiyear_columns.sql` menghapus
+  `duration_years`, `premium_schedule`, `b2b_discount_rate`,
+  `b2b_discount_shown_on_policy` dari `sp_policy_orders`. Keempatnya ditambah
+  oleh `20261108120000_b2b_motor_multiyear_duration.sql` (diterapkan 8 Nov)
+  untuk wizard order terpisah yang tidak pernah sampai ke main; saat dihapus
+  seluruh 5 baris `sp_policy_orders` masih bernilai default. Kedua file tetap
+  ada di repo supaya riwayat migrasi repo sama dengan produksi.
+
 ## B2B quotes/submissions/documents — hardening + notifikasi (v2.8.20, migrasi `20261111140000`, **MENUNGGU APPLY**)
 
 Audit 11 Nov 2026 menemukan: (1) keputusan penawaran B2B ditulis langsung dari

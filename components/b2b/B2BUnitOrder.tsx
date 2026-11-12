@@ -10,15 +10,24 @@
 // klien; server menghitung ulang dari kelas/zona/TSI yang disubmit. Mesin rating
 // dan kebijakan flag identik dengan impor massal (buildLineItem), jadi hasil
 // order satuan dan baris spreadsheet untuk unit yang sama pasti identik.
+//
+// v2.8.23 — tiga hal yang hanya ada di order unit:
+//   • Tanggal efektif pertanggungan (hari ini s/d 60 hari ke depan).
+//   • Multi-tahun sampai 6 tahun: begitu jangka waktu lewat 12 bulan, nilai
+//     pertanggungan menyusut 10% per tahun dan jadwal per tahunnya tampil.
+//   • Diskon bisa diturunkan dari plafon rate set, dan klien memilih apakah
+//     diskon itu tertera di polis.
+// Ketiganya tetap dihitung/divalidasi ulang oleh server.
 
 import React, { useMemo, useState } from 'react';
 import {
   Car, Bike, Construction, Loader2, CheckCircle2, AlertTriangle, ExternalLink,
-  Info, ClipboardList,
+  Info, ClipboardList, CalendarDays, TrendingDown,
 } from 'lucide-react';
 import { Language } from '../../types';
 import {
-  buildLineItem, getActiveBulkRateConfig,
+  buildLineItem, getActiveBulkRateConfig, addMonthsToIsoDate, isValidIsoDate,
+  MULTI_YEAR_DEPRECIATION_RATE,
   type VehicleClass, type Zone, type BuiltLineItem,
 } from '../../services/b2bFleetRating';
 import { createB2BBulkBatch, createB2BBulkInvoice } from '../../services/supabaseService';
@@ -32,6 +41,37 @@ interface Props {
 
 const fmtIDR = (n: number) => 'Rp ' + Math.round(n).toLocaleString('id-ID');
 const fmtPct = (n: number) => `${(n * 100).toFixed(3).replace(/\.?0+$/, '')}%`;
+
+// Jangka waktu: tenor pendek multifinance (6/18 bulan) tetap ada, lalu tahun
+// penuh sampai 6 tahun.
+const DURATION_OPTIONS: Array<{ months: number; en: string; id: string }> = [
+  { months: 6,  en: '6 mo',  id: '6 bln' },
+  { months: 12, en: '1 yr',  id: '1 thn' },
+  { months: 18, en: '18 mo', id: '18 bln' },
+  { months: 24, en: '2 yr',  id: '2 thn' },
+  { months: 36, en: '3 yr',  id: '3 thn' },
+  { months: 48, en: '4 yr',  id: '4 thn' },
+  { months: 60, en: '5 yr',  id: '5 thn' },
+  { months: 72, en: '6 yr',  id: '6 thn' },
+];
+const START_DATE_MAX_DAYS_AHEAD = 60;
+
+const pad2 = (n: number) => String(n).padStart(2, '0');
+const localIsoDate = (d: Date) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+const addDaysIso = (iso: string, days: number) => {
+  const d = new Date(`${iso}T00:00:00`);
+  d.setDate(d.getDate() + days);
+  return localIsoDate(d);
+};
+const fmtDate = (iso: string, lang: Language) =>
+  isValidIsoDate(iso)
+    ? new Date(`${iso}T00:00:00`).toLocaleDateString(lang === Language.EN ? 'en-GB' : 'id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+    : '—';
+
+const fmtMonthYear = (iso: string, lang: Language) =>
+  isValidIsoDate(iso)
+    ? new Date(`${iso}T00:00:00`).toLocaleDateString(lang === Language.EN ? 'en-GB' : 'id-ID', { month: 'short', year: 'numeric' })
+    : '—';
 
 const CLASS_OPTIONS: Array<{ id: VehicleClass; label: string; icon: React.FC<{ size?: number; className?: string }> }> = [
   { id: 'CAR', label: 'Mobil', icon: Car },
@@ -67,16 +107,31 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
   const [financingValue, setFinancingValue] = useState('');
   const [otr, setOtr] = useState('');
   const [commercialBody, setCommercialBody] = useState(false);
-  const [tenorMonths, setTenorMonths] = useState('12');
+  const [tenorMonths, setTenorMonths] = useState(12);
+  const [today] = useState(() => localIsoDate(new Date()));
+  const maxStartDate = addDaysIso(today, START_DATE_MAX_DAYS_AHEAD);
+  const [startDate, setStartDate] = useState(today);
+  // '' = pakai plafon diskon rate set untuk kelas unit ini.
+  const [discountPct, setDiscountPct] = useState('');
+  const [discountShown, setDiscountShown] = useState(true);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [invoiceLoading, setInvoiceLoading] = useState(false);
   const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
-  const [batchResult, setBatchResult] = useState<{ batchId: string; batchNumber: string; total: number } | null>(null);
+  const [batchResult, setBatchResult] = useState<{ batchId: string; batchNumber: string; total: number; period: string } | null>(null);
 
   const isCar = vehicleClass === 'CAR';
   const isHeavy = vehicleClass === 'HEAVY_EQUIPMENT';
+  const isMultiYear = tenorMonths > 12;
+  const discountCap = isHeavy ? rateConfig.discountRateHeavy : rateConfig.discountRateStandard;
+  const discountCapPct = Math.round(discountCap * 10000) / 100;
+  // Diskon yang diminta: kosong → plafon; selain itu dijepit 0..plafon (server
+  // menjepit ulang dengan aturan yang sama).
+  const requestedDiscount = discountPct.trim() === ''
+    ? discountCap
+    : Math.min(Math.max((Number(discountPct.replace(',', '.')) || 0) / 100, 0), discountCap);
+  const endDate = addMonthsToIsoDate(startDate, tenorMonths);
 
   // Preview live — mesin rating yang sama persis dengan impor massal.
   const built: BuiltLineItem = useMemo(() => buildLineItem({
@@ -85,7 +140,7 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
     nasabahPhone: nasabahPhone || undefined,
     nasabahAddress: nasabahAddress || undefined,
     contractNo: contractNo || undefined,
-    tenorMonths: Number(tenorMonths) || 12,
+    tenorMonths,
     financingValue: Number(financingValue) || 0,
     jenisBrg: vehicleClass === 'HEAVY_EQUIPMENT' ? 'ALAT BERAT' : vehicleClass === 'MOTORCYCLE' ? 'MOTOR' : 'MOBIL',
     make: make || undefined,
@@ -97,10 +152,11 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
     vehicleClassOverride: vehicleClass,
     commercialBodyOverride: isCar ? commercialBody : undefined,
     zoneOverride: zoneOverride === '' ? undefined : zoneOverride,
-  }), [vehicleClass, nasabahName, nasabahPhone, nasabahAddress, contractNo, make, model, modelYear, otr, plateNo, regionText, zoneOverride, financingValue, commercialBody, tenorMonths, isCar]);
+    depreciationRate: isMultiYear ? MULTI_YEAR_DEPRECIATION_RATE : 0,
+    discountRateOverride: requestedDiscount,
+  }), [vehicleClass, nasabahName, nasabahPhone, nasabahAddress, contractNo, make, model, modelYear, otr, plateNo, regionText, zoneOverride, financingValue, commercialBody, tenorMonths, isCar, isMultiYear, requestedDiscount]);
 
   const adminFeeForClass = vehicleClass === 'MOTORCYCLE' ? rateConfig.adminFeeMotorcycle : isHeavy ? rateConfig.adminFeeHeavy : rateConfig.adminFeeCar;
-  const discountForClass = isHeavy ? rateConfig.discountRateHeavy : rateConfig.discountRateStandard;
   const zoneLabel = built.zoneSource === 'override'
     ? t(`Zone ${built.zone} (manual)`, `Zona ${built.zone} (manual)`)
     : built.zoneSource === 'plate'
@@ -114,6 +170,18 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
     if (!financingValue || Number(financingValue) <= 0) return t('Sum insured must be greater than zero.', 'Nilai pertanggungan (TSI) harus lebih dari nol.');
     if (isCar && !commercialBody && (!otr || Number(otr) <= 0)) return t('Passenger car needs OTR price for rate banding.', 'Mobil penumpang perlu harga OTR untuk penentuan kategori tarif.');
     if (modelYear && (Number(modelYear) < 1950 || Number(modelYear) > 2100)) return t('Year looks wrong.', 'Tahun kendaraan tidak masuk akal.');
+    if (!isValidIsoDate(startDate) || startDate < today || startDate > maxStartDate) {
+      return t(
+        `Effective date must be between today and ${START_DATE_MAX_DAYS_AHEAD} days ahead.`,
+        `Tanggal efektif harus antara hari ini dan ${START_DATE_MAX_DAYS_AHEAD} hari ke depan.`,
+      );
+    }
+    if (discountPct.trim() !== '') {
+      const d = Number(discountPct.replace(',', '.'));
+      if (!Number.isFinite(d) || d < 0 || d > discountCapPct) {
+        return t(`Discount must be between 0 and ${discountCapPct}%.`, `Diskon harus antara 0 dan ${discountCapPct}%.`);
+      }
+    }
     return null;
   };
 
@@ -131,7 +199,7 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
         nasabahPhone: nasabahPhone.trim() || undefined,
         nasabahAddress: nasabahAddress.trim() || undefined,
         contractNo: contractNo.trim() || undefined,
-        tenorMonths: Number(tenorMonths) || 12,
+        tenorMonths,
         financingValue: Number(financingValue),
         vehicleClass,
         commercialBody: isCar ? commercialBody : undefined,
@@ -143,6 +211,10 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
         regionText: regionText.trim() || undefined,
         zone: built.zone,
         flags: built.flags,
+        coverageStartDate: startDate,
+        multiYearDepreciation: isMultiYear,
+        discountRate: requestedDiscount,
+        discountShownOnPolicy: discountShown,
       }],
     });
     setSubmitting(false);
@@ -151,6 +223,7 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
       batchId: result.batch.id,
       batchNumber: result.batch.batch_number,
       total: result.totals?.totalAmount ?? built.totalPremium,
+      period: `${fmtDate(startDate, lang)} – ${fmtDate(endDate, lang)}`,
     });
   };
 
@@ -173,6 +246,9 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
           <p className="text-sm text-ds-ink2">
             {t('Batch', 'Batch')} <span className="font-mono font-bold">{batchResult.batchNumber}</span>
             {' · '}{fmtIDR(batchResult.total)}
+          </p>
+          <p className="text-xs font-bold text-ds-ink2">
+            {t('Coverage period', 'Periode pertanggungan')}: {batchResult.period}
           </p>
           <p className="text-2xs text-ds-ink3 leading-relaxed">
             {t(
@@ -234,7 +310,7 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
               : isCar
                 ? <>Rate mobil mengikuti tabel TLO OJK (penumpang) / {fmtPct(rateConfig.pickupTruckTloMin[built.zone as 1 | 2 | 3])} (pickup/truk) · </>
                 : <>Rate motor mengikuti tabel TLO OJK · </>}
-            {t('discount', 'diskon')} <b>{fmtPct(discountForClass)}</b> · {t('admin fee', 'biaya admin')} <b>{fmtIDR(adminFeeForClass)}</b> · {t('minimum', 'minimum')} <b>{fmtIDR(rateConfig.minPremiumGross)}</b>
+            {t('discount', 'diskon')} <b>{t('up to', 's/d')} {fmtPct(discountCap)}</b> · {t('admin fee', 'biaya admin')} <b>{fmtIDR(adminFeeForClass)}</b> · {t('minimum', 'minimum')} <b>{fmtIDR(rateConfig.minPremiumGross)}</b>
           </p>
         </div>
       </div>
@@ -314,28 +390,151 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
             <label className={labelCls}>{t('Sum insured (TSI)', 'Nilai pertanggungan (TSI)')} *</label>
             <input className={inputCls} inputMode="numeric" value={financingValue} onChange={e => setFinancingValue(e.target.value.replace(/\D/g, ''))} placeholder="250000000" />
           </div>
-          {isCar && !commercialBody ? (
+          {isCar && !commercialBody && (
             <div>
               <label className={labelCls}>{t('OTR price', 'Harga OTR')} *</label>
               <input className={inputCls} inputMode="numeric" value={otr} onChange={e => setOtr(e.target.value.replace(/\D/g, ''))} placeholder="280000000" />
             </div>
-          ) : (
-            <div>
-              <label className={labelCls}>{t('Tenor', 'Tenor')}</label>
-              <select className={inputCls} value={tenorMonths} onChange={e => setTenorMonths(e.target.value)}>
-                {[6, 12, 18, 24, 36].map(m => <option key={m} value={m}>{m} {t('months', 'bulan')}</option>)}
-              </select>
-            </div>
           )}
         </div>
-        {isCar && !commercialBody && (
-          <div className="sm:hidden">
-            <label className={labelCls}>{t('Tenor', 'Tenor')}</label>
-            <select className={inputCls} value={tenorMonths} onChange={e => setTenorMonths(e.target.value)}>
-              {[6, 12, 18, 24, 36].map(m => <option key={m} value={m}>{m} {t('months', 'bulan')}</option>)}
-            </select>
+      </div>
+
+      {/* Periode pertanggungan */}
+      <div className="rounded-2xl border border-ds-border bg-white dark:bg-ds-card2 p-5 space-y-4">
+        <p className={labelCls}>{t('Coverage period', 'Periode pertanggungan')}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className={labelCls} htmlFor="unit-start-date">{t('Effective date', 'Tanggal efektif')} *</label>
+            <input
+              id="unit-start-date"
+              type="date"
+              className={inputCls}
+              value={startDate}
+              min={today}
+              max={maxStartDate}
+              onChange={e => setStartDate(e.target.value)}
+            />
+            <p className="text-2xs text-ds-ink3 mt-1">
+              {t(`Today up to ${START_DATE_MAX_DAYS_AHEAD} days ahead.`, `Hari ini sampai ${START_DATE_MAX_DAYS_AHEAD} hari ke depan.`)}
+            </p>
+          </div>
+          <div>
+            <span className={labelCls}>{t('Ends', 'Berakhir')}</span>
+            <div className="rounded-xl border border-dashed border-ds-border px-3 py-2.5 text-sm font-bold text-ds-ink dark:text-white flex items-center gap-2">
+              <CalendarDays size={14} className="text-ds-ink3" /> {fmtDate(endDate, lang)}
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <span className={labelCls}>{t('Duration', 'Jangka waktu')}</span>
+          <div className="grid grid-cols-4 sm:grid-cols-8 gap-2" role="radiogroup" aria-label={t('Duration', 'Jangka waktu')}>
+            {DURATION_OPTIONS.map(opt => {
+              const active = tenorMonths === opt.months;
+              return (
+                <button
+                  key={opt.months}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => setTenorMonths(opt.months)}
+                  className={`rounded-xl border-2 px-1 py-2 text-xs font-black transition-all active:scale-95 ${
+                    active
+                      ? 'border-emerald-500 bg-emerald-50/60 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
+                      : 'border-ds-border bg-white text-ds-ink2 hover:border-emerald-400 dark:bg-ds-card2'
+                  }`}
+                >
+                  {lang === Language.EN ? opt.en : opt.id}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {isMultiYear && (
+          <div className="rounded-xl border border-sky-200 bg-sky-50 dark:border-sky-900 dark:bg-sky-950/30 p-4 space-y-3">
+            <div className="flex items-start gap-2.5">
+              <TrendingDown size={15} className="mt-0.5 flex-shrink-0 text-sky-700 dark:text-sky-300" />
+              <div className="text-xs leading-relaxed text-sky-900 dark:text-sky-100">
+                <p className="font-black mb-0.5">{t('Multi-year policy', 'Polis multi-tahun')}</p>
+                <p>{t(
+                  `The sum insured decreases ${MULTI_YEAR_DEPRECIATION_RATE * 100}% each policy year from the previous year's value, following the vehicle's depreciation. A claim is paid against the value of the year it happens in. The rate is locked from year one, the admin fee is charged once, and the whole premium is paid upfront.`,
+                  `Nilai pertanggungan turun ${MULTI_YEAR_DEPRECIATION_RATE * 100}% setiap tahun polis dari nilai tahun sebelumnya, mengikuti penyusutan kendaraan. Klaim dibayar berdasarkan nilai pada tahun kejadian. Rate dikunci dari tahun pertama, biaya admin dikenakan sekali, dan seluruh premi dibayar di muka.`,
+                )}</p>
+              </div>
+            </div>
+            {built.schedule.length > 0 && (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="text-left text-2xs font-black uppercase tracking-widest text-sky-800/70 dark:text-sky-200/70">
+                      <th className="py-1.5 pr-3">{t('Year', 'Tahun')}</th>
+                      <th className="py-1.5 pr-3 hidden sm:table-cell">{t('Period', 'Periode')}</th>
+                      <th className="py-1.5 pr-3 text-right">{t('Sum insured', 'Nilai pertanggungan')}</th>
+                      <th className="py-1.5 text-right">{t('Gross premium', 'Premi gross')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {built.schedule.map(row => {
+                      const from = addMonthsToIsoDate(startDate, 12 * (row.year - 1));
+                      const to = addMonthsToIsoDate(startDate, 12 * (row.year - 1) + row.months);
+                      return (
+                        <tr key={row.year} className="border-t border-sky-200/70 dark:border-sky-900 text-sky-950 dark:text-sky-50">
+                          <td className="py-1.5 pr-3 font-black whitespace-nowrap">
+                            {row.year}
+                            {row.months < 12 && <span className="font-bold text-sky-800/70 dark:text-sky-200/70"> ({row.months} {t('mo', 'bln')})</span>}
+                            {/* Di layar sempit kolom Periode disembunyikan — tahun mulainya cukup. */}
+                            <span className="sm:hidden block text-2xs font-bold text-sky-800/70 dark:text-sky-200/70">{fmtMonthYear(from, lang)}</span>
+                          </td>
+                          <td className="py-1.5 pr-3 whitespace-nowrap hidden sm:table-cell">
+                            {fmtDate(from, lang)} – {fmtDate(to, lang)}
+                          </td>
+                          <td className="py-1.5 pr-3 text-right font-bold tabular-nums whitespace-nowrap">{fmtIDR(row.sumInsured)}</td>
+                          <td className="py-1.5 text-right font-bold tabular-nums whitespace-nowrap">{fmtIDR(row.premiumGross)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
+      </div>
+
+      {/* Diskon */}
+      <div className="rounded-2xl border border-ds-border bg-white dark:bg-ds-card2 p-5 space-y-3">
+        <p className={labelCls}>{t('Discount', 'Diskon')}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
+          <div>
+            <label className={labelCls} htmlFor="unit-discount">{t(`Discount % (max ${discountCapPct}%)`, `Diskon % (maks. ${discountCapPct}%)`)}</label>
+            <input
+              id="unit-discount"
+              className={inputCls}
+              inputMode="decimal"
+              value={discountPct}
+              onChange={e => setDiscountPct(e.target.value.replace(/[^\d.,]/g, '').slice(0, 5))}
+              placeholder={String(discountCapPct)}
+            />
+            <p className="text-2xs text-ds-ink3 mt-1">
+              {t('Leave empty to use the maximum.', 'Kosongkan untuk memakai diskon maksimum.')}
+            </p>
+          </div>
+          <label className="flex items-start gap-2.5 cursor-pointer sm:pt-6">
+            <input
+              type="checkbox"
+              checked={discountShown}
+              onChange={e => setDiscountShown(e.target.checked)}
+              className="w-4 h-4 mt-0.5 accent-emerald-600"
+            />
+            <span className="text-xs leading-relaxed text-ds-ink2">
+              <span className="font-black text-ds-ink dark:text-white block">{t('Show the discount on the policy', 'Diskon tertera di polis')}</span>
+              {discountShown
+                ? t('The policy prints the gross premium, the discount, and the net premium.', 'Polis mencetak premi gross, diskon, dan premi setelah diskon.')
+                : t('The policy prints the gross premium only. Your invoice is still reduced by the discount.', 'Polis hanya mencetak premi gross. Tagihan Anda tetap dipotong diskon.')}
+            </span>
+          </label>
+        </div>
       </div>
 
       {/* Nasabah / kontrak */}
@@ -371,9 +570,12 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1.5 text-xs">
           <PreviewRow label={t('Zone', 'Zona')} value={String(built.zone)} />
           <PreviewRow label={t('Rate (TLO)', 'Rate (TLO)')} value={fmtPct(built.rate)} />
-          <PreviewRow label={t('Tenor', 'Tenor')} value={`${Number(tenorMonths) || 12} ${t('mo', 'bln')}`} />
+          <PreviewRow label={t('Period', 'Periode')} value={`${fmtDate(startDate, lang)} – ${fmtDate(endDate, lang)}`} />
           <PreviewRow label={t('Gross premium', 'Premi gross')} value={fmtIDR(built.premiumGross)} />
-          <PreviewRow label={`${t('Discount', 'Diskon')} (${fmtPct(built.discountRate)})`} value={`−${fmtIDR(built.discountAmount)}`} />
+          <PreviewRow
+            label={`${t('Discount', 'Diskon')} (${fmtPct(built.discountRate)}${discountShown ? '' : t(', not on policy', ', tidak tertera')})`}
+            value={`−${fmtIDR(built.discountAmount)}`}
+          />
           <PreviewRow label={t('Admin fee', 'Biaya admin')} value={fmtIDR(built.adminFee)} />
         </div>
         <div className="pt-2 border-t border-emerald-400/30 flex items-center justify-between">

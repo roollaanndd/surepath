@@ -227,6 +227,7 @@ const B2BBulkBatches: React.FC<Props> = ({ lang, allClients }) => {
                   <th className="py-2.5 px-3 font-bold text-[10px] text-slate-500 uppercase tracking-widest text-left">{t('Name', 'Nama')}</th>
                   <th className="py-2.5 px-3 font-bold text-[10px] text-slate-500 uppercase tracking-widest text-left hidden md:table-cell">{t('Vehicle', 'Kendaraan')}</th>
                   <th className="py-2.5 px-3 font-bold text-[10px] text-slate-500 uppercase tracking-widest text-left hidden lg:table-cell">{t('Plate', 'Plat')}</th>
+                  <th className="py-2.5 px-3 font-bold text-[10px] text-slate-500 uppercase tracking-widest text-left hidden md:table-cell">{t('Period', 'Periode')}</th>
                   <th className="py-2.5 px-3 font-bold text-[10px] text-slate-500 uppercase tracking-widest text-right">{t('Premium', 'Premi')}</th>
                 </tr>
               </thead>
@@ -239,6 +240,23 @@ const B2BBulkBatches: React.FC<Props> = ({ lang, allClients }) => {
                       {[it.make, it.model].filter(Boolean).join(' ') || '—'}
                     </td>
                     <td className="py-2.5 px-3 text-slate-500 font-mono hidden lg:table-cell">{it.plate_no || '—'}</td>
+                    <td className="py-2.5 px-3 text-slate-600 hidden md:table-cell">
+                      <span className="whitespace-nowrap tabular-nums">
+                        {it.coverage_start_date && it.coverage_end_date
+                          ? `${fmtDate(it.coverage_start_date)} – ${fmtDate(it.coverage_end_date)}`
+                          : `${it.tenor_months} ${t('mo', 'bln')}`}
+                      </span>
+                      {it.depreciation_rate > 0 && (
+                        <span className="block text-[10px] text-sky-700 font-bold mt-0.5">
+                          {t('Sum insured decreases', 'Nilai pertanggungan turun')} {Number((it.depreciation_rate * 100).toFixed(2))}%{t('/yr', '/thn')}
+                        </span>
+                      )}
+                      {it.discount_shown_on_policy === false && it.discount_amount > 0 && (
+                        <span className="block text-[10px] text-slate-500 mt-0.5">
+                          {t('Discount not shown on policy', 'Diskon tidak tertera di polis')}
+                        </span>
+                      )}
+                    </td>
                     <td className="py-2.5 px-3 text-right font-bold text-slate-900 tabular-nums" style={{ fontFamily: '"JetBrains Mono",monospace' }}>
                       {fmtIDR(it.total_premium)}
                     </td>

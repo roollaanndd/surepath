@@ -1,5 +1,38 @@
 # SurePath Session Context
-**Updated:** 2026-11-05 (v2.7.52 — B2B fleet rates/T&C admin controls + insurer dashboard connection; v2.7.51 fully deployed)
+**Updated:** 2026-11-12 (v2.8.23 — Order Unit B2B: tanggal efektif, multi-tahun 6 thn, pilihan diskon)
+
+## Terakhir dikerjakan (12 Nov 2026) — v2.8.23
+
+**Order Unit B2B diperluas** (`components/b2b/B2BUnitOrder.tsx`): tanggal efektif
+(hari ini s/d +60 hari), jangka waktu 6 bln–6 thn, penyusutan TSI 10%/tahun untuk
+tenor > 12 bln (jadwal per tahun tampil), diskon bisa diturunkan dari plafon rate
+set, dan pilihan "diskon tertera di polis". Mesin: `calcBulkPremium` di
+`services/b2bFleetRating.ts` + mirror `supabase/functions/_shared/b2bFleetRating.ts`
+(field opsional `depreciationRate`, `discountRateOverride`; hasil kini membawa
+`depreciationRate` + `schedule`). Impor massal tidak berubah. Detail:
+`docs/CHANGELOG.md` v2.8.23.
+
+- Wizard terpisah `B2BMotorOrderWizard` + `calcMultiYearPremium` (PR #373 versi
+  awal) **dibuang** — keputusan owner: satu layar order, bukan dua.
+- Migrasi `20261112120000` (kolom baru `sp_b2b_batch_items`) dan `20261112121000`
+  (hapus 4 kolom tak terpakai di `sp_policy_orders`) **sudah diterapkan ke produksi**.
+- Tombol "Masuk sebagai Demo" di `B2BLogin` hanya tampil bila
+  `VITE_B2B_DEMO_EMAIL`/`VITE_B2B_DEMO_PASSWORD` diisi di Vercel — **belum diisi,
+  akun demo belum dibuat**.
+- Belum diuji: alur order unit → invoice Xendit → PAID → polis induk.
+- `services/__tests__/b2bBulkEndToEnd.test.ts` hanya jalan bila ada fixture
+  `/tmp/xlsx_inspect/data.xlsx` (di CI di-skip). Sejak arahan owner 11 Nov (biaya
+  admin flat 25rb, tanpa lantai premi) totalnya memang berselisih ~7% dari audit
+  referensi lama; toleransi 2% di tes itu sudah usang.
+
+## Backlog yang masih terbuka (per 12 Nov 2026)
+
+- Dashboard marketing/sales/business (funnel, leaderboard, SLA) — belum dimulai.
+- Migrasi hardening `20261111140000` (v2.8.20) belum diterapkan ke produksi.
+- `www.myinsurepath.com` belum diarahkan ke apex di Vercel (aksi owner).
+- Portal insurer: layar Orders/Claims/Payments/Profile belum di-redesign.
+- Dari audit CEO 12 Nov: 4 order APPROVED tidak pernah dibayar; 0 pembayaran
+  nyata di produksi — prioritas bisnis nomor satu.
 
 ## Terakhir dikerjakan (5 Nov 2026)
 

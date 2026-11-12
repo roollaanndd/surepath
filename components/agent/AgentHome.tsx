@@ -1,22 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, Target } from 'lucide-react';
 import AgentPromoBanner from './AgentPromoBanner';
-import ModuleIcon from '../shared/ModuleIcon';
-import { motion, useReducedMotion } from 'motion/react';
 import { Language } from '../../types';
 import { formatIDR } from '../car-wizard/WizardUI';
 import { formatIDRCompact } from '../../src/i18n';
 import RenewalAlerts from './RenewalAlerts';
 import { PathyMascot } from '../shared/cards';
-import { ClayCard } from '../ui';
 import { PATHY_OPEN_EVENT } from '../shared/PathyChat';
-import SuperAppHeader from '../shared/superapp/SuperAppHeader';
-import ProtectionSummaryCard from '../shared/superapp/ProtectionSummaryCard';
-import ServiceGrid, { type ServiceTile } from '../shared/superapp/ServiceGrid';
-import ContentRail, { type RailItem } from '../shared/superapp/ContentRail';
-import { IcQuote, IcWallet, IcRank, IcCoin } from './AgentIcons';
-import { useTierDefinitions, getTierByCode } from '../../hooks/useTierDefinitions';
-import '../../src/styles/portal-modernization.css';
+import {
+  AgGlass, AgSection, AgButton, AgChip, AgTile, AgRow, AgEmpty, AgCountUp, AgIcon,
+  type AgIconName, type AgChipTone,
+} from './ui/kit';
 
 interface Props {
   agent: any;
@@ -28,45 +21,34 @@ interface Props {
   agentTier?: string | null;
   /** Saldo dompet komisi; null selama dimuat atau bila gagal dibaca. */
   walletBalance: number | null;
-  unreadCount: number;
-  darkMode: boolean;
-  onToggleDark: () => void;
-  onBellClick: () => void;
 }
 
-/* ─── Beranda Mitra dalam bahasa super app (v2.7.35) ────────────────────────
+/* ─── Beranda Mitra "Kaca Pagi" (v2.9.0) ────────────────────────────────────
  *
- * Acuan: tangkapan layar super app yang diberikan roland, 31 Okt 2026. Lima
- * bagiannya dipetakan ke produk ini, bukan disalin:
+ * Dibangun ulang dari nol di atas primitive components/agent/ui. Sapaan, bel,
+ * tema, dan avatar pindah ke bar kaca di AgentPortal (AgTopBar) sehingga
+ * Beranda langsung dibuka oleh hal yang paling dicari mitra: uangnya.
  *
- *   pita sapaan bergradasi   → SuperAppHeader (sapaan, kode mitra, tier)
- *   kartu "Balance"          → ProtectionSummaryCard: saldo dompet komisi
- *                              yang MEMANG ada di sp_agent_wallets, plus
- *                              empat aksi cepat
- *   grid layanan 2×4         → ServiceGrid "Fitur Mitra" — delapan tujuan
- *                              portal yang sama persis seperti sebelumnya
- *   rail konten mendatar     → ContentRail "Produk untuk dijual"
- *   nav 5 tab                → PortalTabBar variant="flat" (di AgentPortal)
+ *   kartu saldo      — hijau tua berkaca, garis "jalur" yang menggambar
+ *                      dirinya menuju satu titik oranye; tiga aksi dompet
+ *                      dan tiga angka bulan ini di dalam kartu yang sama
+ *   jual sekarang    — rel produk; tiap kartu membuka pembuat penawaran
+ *   promo            — AgentPromoBanner (CMS + kartu bawaan), tidak berubah
+ *   fitur mitra      — delapan tujuan yang sama, ikon keluarga Jalur
+ *   kinerja          — GWP estimasi + cincin konversi
+ *   Pathy            — tip harian + satu tombol bertanya
+ *   perpanjangan, komisi terbaru — dipertahankan
  *
- * Tidak ada aset, warna, atau merek dari gambar acuan yang ikut: seluruh
- * nilai berasal dari token --ds-*, dan ikonnya dari sistem ikon ilustratif
- * SurePath sendiri (Icon Manager tetap bisa menimpanya).
- *
- * Yang dipertahankan utuh dari beranda sebelumnya — tidak satu pun tujuan,
- * alat, atau angka dihapus: banner draf penawaran, PromoBanner, kedelapan
- * tujuan "Fitur Mitra", keempat "Lainnya", GWP & konversi, pelatih Pathy,
- * RenewalAlerts, dan daftar komisi terbaru.
+ * Tidak ada tujuan atau angka yang hilang dari beranda sebelumnya. "Lainnya"
+ * (Dompet, Komisi, Pathy, Profil) tidak lagi berupa grid kedua karena
+ * keempatnya kini satu ketukan dari mana pun: dock, top menu, dan kartu saldo.
  */
 
 const AgentHome: React.FC<Props> = ({
-  agent, agentId, stats, recentCommissions, onNavigate, lang, agentTier,
-  walletBalance, unreadCount, darkMode, onToggleDark, onBellClick,
+  agent, agentId, stats, recentCommissions, onNavigate, lang, walletBalance,
 }) => {
   const t = (en: string, id: string) => lang === Language.EN ? en : id;
   const [savedDraftProduct, setSavedDraftProduct] = useState<string | null>(null);
-  const reduce = useReducedMotion();
-  const { tiers } = useTierDefinitions();
-  const myTierDef = getTierByCode(tiers, agentTier);
 
   useEffect(() => {
     if (!agentId) return;
@@ -79,256 +61,267 @@ const AgentHome: React.FC<Props> = ({
     }
   }, [agentId]);
 
-  const conversion = stats.clientsCount ? Math.round((stats.policiesCount / stats.clientsCount) * 100) : 0;
+  const conversion = stats.clientsCount ? Math.min(100, Math.round((stats.policiesCount / stats.clientsCount) * 100)) : 0;
 
-  const reveal = (i: number) =>
-    reduce
-      ? {}
-      : {
-          initial: { opacity: 0, y: 18 },
-          animate: { opacity: 1, y: 0 },
-          transition: { duration: 0.5, delay: i * 0.07, ease: [0.16, 1, 0.3, 1] as const },
-        };
-
-  const statusColor: Record<string, string> = {
-    PAID: 'bg-ds-green-tint text-ds-green',
-    PENDING: 'bg-ds-amber-lt text-ds-amber',
-    CANCELLED: 'bg-ds-red-lt text-ds-red',
+  const statusTone: Record<string, AgChipTone> = { PAID: 'green', PENDING: 'spark', CANCELLED: 'danger' };
+  const statusLabel: Record<string, string> = {
+    PAID: t('Paid', 'Dibayar'), PENDING: t('Pending', 'Menunggu'), CANCELLED: t('Cancelled', 'Batal'),
   };
-
   const productLabel: Record<string, string> = {
     CAR: t('Auto', 'Mobil'),
     TRAVEL: t('Travel', 'Perjalanan'),
     PA: t('Personal Acc.', 'Kecelakaan Diri'),
     MPAR: t('Gadget', 'Gadget'),
   };
+  const productIcon: Record<string, AgIconName> = { CAR: 'car', TRAVEL: 'travel', PA: 'health', MPAR: 'gadget' };
 
   const salesTips = [
-    t('Clients who buy Travel insurance are 3A- more likely to add a PA policy within 6 months.', 'Klien Travel 3A- lebih mungkin tambah polis PA dalam 6 bulan. Follow up sekarang!'),
-    t('Follow up with a prospect within 24 hours to increase conversion by 60%.', 'Follow-up dalam 24 jam tingkatkan konversi 60%. Hubungi 3 prospek hari ini.'),
-    t('Referrals close 4A- faster than cold leads. Ask every happy client for one.', 'Referral 4A- lebih cepat closing. Minta referensi dari setiap klien puas hari ini.'),
-    t('Cross-selling MPAR to car insurance clients adds avg Rp 90k commission per deal.', 'Cross-sell MPAR ke klien asuransi mobil = tambahan komisi Rp 90rb per deal!'),
+    t('Clients who buy Travel insurance are 3× more likely to add a PA policy within 6 months.', 'Klien Travel 3× lebih mungkin menambah polis PA dalam 6 bulan. Follow up sekarang.'),
+    t('Follow up with a prospect within 24 hours to increase conversion by 60%.', 'Follow-up dalam 24 jam menaikkan konversi 60%. Hubungi 3 prospek hari ini.'),
+    t('Referrals close 4× faster than cold leads. Ask every happy client for one.', 'Referral 4× lebih cepat closing. Minta referensi dari setiap klien yang puas.'),
+    t('Cross-selling MPAR to car insurance clients adds avg Rp 90k commission per deal.', 'Cross-sell MPAR ke klien asuransi mobil menambah komisi rata-rata Rp 90rb per deal.'),
   ];
   const dailyTip = salesTips[new Date().getDate() % salesTips.length];
   const dailyContactGoal = 3;
 
-  const greeting = () => {
-    const h = new Date().getHours();
-    if (h < 11) return t('Good Morning', 'Selamat Pagi');
-    if (h < 15) return t('Good Afternoon', 'Selamat Siang');
-    if (h < 18) return t('Good Evening', 'Selamat Sore');
-    return t('Good Night', 'Selamat Malam');
-  };
-
   const openPathy = () => window.dispatchEvent(new Event(PATHY_OPEN_EVENT));
 
-  // Delapan tujuan "Fitur Mitra" — sama persis dengan beranda sebelumnya,
-  // kini dalam grid 2×4 bergaya acuan.
-  const featureTiles: ServiceTile[] = [
-    { id: 'quotes',       label: t('New quote', 'Quotation'),    onClick: () => onNavigate('quotes') },
-    { id: 'policy',       label: t('Policies', 'Polis'),         onClick: () => onNavigate('policy') },
-    { id: 'clients',      label: t('Clients', 'Klien'),          onClick: () => onNavigate('clients') },
-    { id: 'claims',       label: t('Claims', 'Klaim'),           onClick: () => onNavigate('claims') },
-    { id: 'renewals',     label: t('Renewals', 'Perpanjangan'),  onClick: () => onNavigate('renewals') },
-    { id: 'network',      label: t('Network', 'Jaringan'),       onClick: () => onNavigate('network') },
-    { id: 'leaderboard',  label: t('Ranking', 'Peringkat'),      onClick: () => onNavigate('leaderboard') },
-    { id: 'endorsements', label: t('Endorsements', 'Endorsemen'), onClick: () => onNavigate('endorsements') },
+  const heroActions: Array<{ id: string; label: string; icon: AgIconName; target: string }> = [
+    { id: 'withdraw',   label: t('Withdraw', 'Tarik dana'), icon: 'withdraw',   target: 'wallet' },
+    { id: 'commission', label: t('Commission', 'Komisi'),   icon: 'commission', target: 'commission' },
+    { id: 'rank',       label: t('Ranking', 'Peringkat'),   icon: 'rank',       target: 'leaderboard' },
   ];
 
-  const otherTiles: ServiceTile[] = [
-    { id: 'wallet',     label: t('Wallet', 'Dompet'),     onClick: () => onNavigate('wallet') },
-    { id: 'commission', label: t('Commission', 'Komisi'), onClick: () => onNavigate('commission') },
-    { id: 'pathy',      label: 'Pathy',                   onClick: openPathy },
-    { id: 'profile',    label: t('Profile', 'Profil'),    onClick: () => onNavigate('profile') },
+  const products: Array<{ id: string; icon: AgIconName; title: string; note: string }> = [
+    { id: 'car',    icon: 'car',    title: t('Car', 'Mobil'),               note: t('Comprehensive & TLO', 'Comprehensive & TLO') },
+    { id: 'motor',  icon: 'motor',  title: t('Motorcycle', 'Motor'),        note: t('Official OJK rates', 'Tarif resmi OJK') },
+    { id: 'travel', icon: 'travel', title: t('Travel', 'Perjalanan'),       note: t('Global medical cover', 'Proteksi medis global') },
+    { id: 'pa',     icon: 'health', title: t('Accident', 'Kecelakaan Diri'), note: t('60-second signup', 'Daftar 60 detik') },
+    { id: 'gadget', icon: 'gadget', title: t('Gadgets', 'Gadget'),          note: t('Devices & valuables', 'Gawai & barang berharga') },
   ];
 
-  // Rail produk — tiap kartu membuka pembuat penawaran, tujuan yang sudah ada.
-  const railItems: RailItem[] = [
-    { id: 'car',    title: t('Motor & car', 'Mobil & Motor'),     subtitle: t('Comprehensive and TLO, priced off the active OJK rate set.', 'Comprehensive dan TLO, memakai tarif OJK yang berlaku.'), onClick: () => onNavigate('quotes') },
-    { id: 'travel', title: t('Travel', 'Perjalanan'),             subtitle: t('Global medical cover and delay payouts for your clients.', 'Proteksi medis global dan santunan keterlambatan untuk klienmu.'), onClick: () => onNavigate('quotes') },
-    { id: 'health', title: t('Personal accident', 'Kecelakaan Diri'), subtitle: t('Sixty-second signup, fast approval — an easy first policy.', 'Pendaftaran 60 detik, persetujuan cepat — polis pertama yang mudah.'), onClick: () => onNavigate('quotes') },
-    { id: 'box',    title: t('Items & gadgets', 'Barang & Gadget'),   subtitle: t('Cover for devices, electronics and valuables.', 'Proteksi gadget, elektronik, dan barang berharga.'), onClick: () => onNavigate('quotes') },
+  // Delapan tujuan "Fitur Mitra" — sama persis dengan beranda sebelumnya.
+  const features: Array<{ id: string; label: string; icon: AgIconName }> = [
+    { id: 'quotes',       label: t('Quote', 'Penawaran'),         icon: 'quote' },
+    { id: 'policy',       label: t('Policies', 'Polis'),          icon: 'policy' },
+    { id: 'clients',      label: t('Clients', 'Klien'),           icon: 'clients' },
+    { id: 'claims',       label: t('Claims', 'Klaim'),            icon: 'claims' },
+    { id: 'renewals',     label: t('Renewals', 'Perpanjangan'),   icon: 'renewals' },
+    { id: 'network',      label: t('Network', 'Jaringan'),        icon: 'network' },
+    { id: 'leaderboard',  label: t('Ranking', 'Peringkat'),       icon: 'rank' },
+    { id: 'endorsements', label: t('Endorsements', 'Endorsemen'), icon: 'endorsements' },
   ];
+
+  const RING = 2 * Math.PI * 26;
 
   return (
-    <div className="sp-agent-home pb-28">
-      <SuperAppHeader
-        greeting={greeting()}
-        name={agent?.name?.split(' ')[0] ?? 'Mitra'}
-        subtitle={agent?.agent_code ?? 'SP-AGT'}
-        badge={myTierDef && !myTierDef.is_default ? (
-          // Lencana ini sekarang duduk di atas pita hijau korporat, jadi
-          // warnanya kaca putih, bukan kartu terang di atas latar terang.
-          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-2xs font-black uppercase tracking-wider text-white ring-1 ring-white/25">
-            <span aria-hidden="true">{myTierDef.emoji}</span> {myTierDef.name}
-          </span>
-        ) : undefined}
-        unreadCount={unreadCount}
-        darkMode={darkMode}
-        onBellClick={onBellClick}
-        onToggleDark={onToggleDark}
-        onAvatarClick={() => onNavigate('profile')}
-        labels={{
-          notifications: t('Notifications', 'Notifikasi'),
-          theme: t('Toggle theme', 'Ganti tema'),
-          profile: t('Profile', 'Profil'),
-        }}
-      />
+    <div className="space-y-7 pb-6 pt-3">
+      {/* ── Kartu saldo ──────────────────────────────────────────────────── */}
+      <div className="ag-rise px-5">
+        <div className="ag-hero p-5">
+          <span className="ag-hero__sheen" aria-hidden="true" />
+          {/* Jalur menuju titik tujuan — ukuran tetap di pojok kanan atas, tidak
+              ikut melar dengan tinggi kartu dan tidak melintasi tombol. */}
+          <svg className="ag-hero__path" viewBox="0 0 190 96" fill="none" aria-hidden="true">
+            <path d="M4 92 C 52 88, 70 58, 108 52 S 150 40, 170 20" stroke="rgba(255,255,255,0.34)" strokeWidth="1.5" strokeLinecap="round" />
+            <circle cx="170" cy="20" r="4.5" fill="#f97316" stroke="rgba(255,255,255,0.92)" strokeWidth="2" />
+          </svg>
 
-      <ProtectionSummaryCard
-        label={t('Wallet balance', 'Saldo Dompet')}
-        unit="IDR"
-        value={walletBalance === null ? '—' : formatIDRCompact(walletBalance, lang)}
-        caption={walletBalance === null
-          ? t('Balance not available right now', 'Saldo belum bisa dibaca saat ini')
-          : t('Commission ready to withdraw', 'Komisi siap ditarik')}
-        openLabel={t('Open wallet', 'Buka dompet')}
-        onOpen={() => onNavigate('wallet')}
-        actions={[
-          { id: 'withdraw', label: t('Withdraw', 'Tarik Dana'), icon: IcWallet, color: 'var(--ds-primary)', onClick: () => onNavigate('wallet') },
-          { id: 'commission', label: t('Commission', 'Komisi'), icon: IcCoin,  color: 'var(--ds-info)',    onClick: () => onNavigate('commission') },
-          { id: 'quote', label: t('New quote', 'Quotation'),    icon: IcQuote,  color: 'var(--ds-accent)',  onClick: () => onNavigate('quotes') },
-          { id: 'rank', label: t('Ranking', 'Peringkat'),       icon: IcRank,   color: 'var(--ds-warning)', onClick: () => onNavigate('leaderboard') },
-        ]}
-      />
-
-      <div className="space-y-6 pt-6">
-        {savedDraftProduct && (
-          <div className="sp-agent-home__draft mx-5 flex items-center gap-3 rounded-2xl border border-ds-green/25 bg-ds-green-tint p-4" role="status">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ds-card"><ModuleIcon id="quotes" size={30} /></div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold text-ds-ink">{t('Continue your saved quote', 'Lanjutkan draf penawaran')}</p>
-              <p className="mt-0.5 text-xs text-ds-ink2">{t('Your progress is saved for this session.', 'Progres tersimpan untuk sesi ini.')}</p>
-            </div>
-            <button type="button" onClick={() => onNavigate('quotes')} className="min-h-10 rounded-xl bg-ds-green px-3 text-xs font-black text-ds-on-green">{t('Resume', 'Lanjutkan')}</button>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[0.8125rem] font-medium text-white/75">{t('Wallet balance', 'Saldo dompet')}</p>
           </div>
-        )}
 
-        {/* Fitur Mitra — grid layanan 2×4, jantung layar acuan */}
-        <motion.section className="sp-agent-home__fitur px-5" aria-label={t('Partner features', 'Fitur Mitra')} {...reveal(1)}>
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-sm font-black tracking-tight text-ds-ink">{t('Partner Features', 'Fitur Mitra')}</h3>
-            <button onClick={() => onNavigate('policy')} className="rounded text-xs font-bold text-ds-green focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green">
-              {t('View More', 'Selengkapnya')}
-            </button>
+          <button
+            type="button"
+            onClick={() => onNavigate('wallet')}
+            aria-label={t('Open wallet', 'Buka dompet')}
+            className="ag-press mt-2 flex items-end gap-2 text-left"
+          >
+            <span className="ag-display text-[clamp(1.75rem,8.6vw,2.375rem)] text-white">
+              {walletBalance === null ? '—' : <AgCountUp value={walletBalance} format={formatIDR} />}
+            </span>
+            <AgIcon name="chevron" size={18} strokeWidth={2.2} className="mb-1.5 text-white/60" />
+          </button>
+          <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-white/70">
+            {walletBalance === null
+              ? t('Balance not available right now', 'Saldo belum bisa dibaca saat ini')
+              : t('Commission ready to withdraw', 'Komisi siap ditarik')}
+            <span className="ag-hero__glass rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold tracking-wide text-white/90">
+              {agent?.agent_code ?? 'SP-AGT'}
+            </span>
+          </p>
+
+          <div className="mt-5 grid grid-cols-3 gap-2" style={{ ['--ag-icon-accent' as string]: '#fdba74' }}>
+            {heroActions.map(a => (
+              <button
+                key={a.id}
+                type="button"
+                onClick={() => onNavigate(a.target)}
+                className="ag-hero__glass ag-press flex flex-col items-center gap-1.5 rounded-[18px] px-2 py-3 text-xs font-semibold text-white"
+              >
+                <AgIcon name={a.icon} size={22} />
+                {a.label}
+              </button>
+            ))}
           </div>
-          <ServiceGrid tiles={featureTiles} />
-        </motion.section>
 
-        {/* Lainnya — baris kedua, alat yang bukan alur penjualan */}
-        <motion.section className="sp-agent-home__lainnya px-5" aria-label={t('Other tools', 'Lainnya')} {...reveal(2)}>
-          <h3 className="mb-3 text-sm font-black tracking-tight text-ds-ink">{t('Other Tools', 'Lainnya')}</h3>
-          <ServiceGrid tiles={otherTiles} />
-        </motion.section>
-
-        <div className="px-5">
-          <AgentPromoBanner lang={lang} onCta={() => onNavigate('quotes')} />
-        </div>
-
-        {/* Rail produk — padanan bagian konten mendatar di acuan */}
-        <motion.div {...reveal(3)}>
-          <ContentRail
-            title={t('Products to sell', 'Produk untuk Dijual')}
-            action={{ label: t('All', 'Semua'), onClick: () => onNavigate('quotes') }}
-            items={railItems}
-          />
-        </motion.div>
-
-        {/* GWP & konversi — dipertahankan dari beranda sebelumnya */}
-        <motion.div className="sp-agent-home__gwp px-5" {...reveal(4)}>
-          <div className="sp-glass flex items-center rounded-[1.5rem] p-5">
-            <div className="flex-1 pr-5">
-              <div className="mb-1.5 flex items-center gap-1.5">
-                <TrendingUp size={13} className="text-ds-green" />
-                <p className="text-2xs font-medium uppercase tracking-wider text-ds-ink3">{t('GWP / Month', 'GWP Bulan Ini')}</p>
+          <dl className="mt-4 grid grid-cols-3 gap-2 border-t border-white/15 pt-4">
+            {[
+              { k: t('This month', 'Bulan ini'), v: formatIDRCompact(stats.totalCommissionMonth ?? 0, lang) },
+              { k: t('Policies', 'Polis'),       v: String(stats.policiesCount ?? 0) },
+              { k: t('Clients', 'Klien'),        v: String(stats.clientsCount ?? 0) },
+            ].map(s => (
+              <div key={s.k} className="min-w-0">
+                <dt className="truncate text-[0.6875rem] text-white/60">{s.k}</dt>
+                <dd className="ag-num mt-0.5 truncate text-[0.9375rem] font-bold text-white">{s.v}</dd>
               </div>
-              <p className="whitespace-nowrap font-mono text-xl font-black leading-none tabular-nums text-ds-ink"
-                title={formatIDR(stats.totalCommissionMonth * 8)}>
+            ))}
+          </dl>
+        </div>
+      </div>
+
+      {savedDraftProduct && (
+        <div className="ag-rise px-5" style={{ ['--i' as string]: 1 }} role="status">
+          <AgGlass strong className="flex items-center gap-3 p-3.5">
+            <AgTile icon="quote" size={42} />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold" style={{ color: 'var(--ag-ink)' }}>{t('Continue your saved quote', 'Lanjutkan draf penawaran')}</p>
+              <p className="ag-caption mt-0.5">{t('Your progress is saved for this session.', 'Progres tersimpan untuk sesi ini.')}</p>
+            </div>
+            <AgButton variant="spark" size="sm" onClick={() => onNavigate('quotes')}>{t('Resume', 'Lanjutkan')}</AgButton>
+          </AgGlass>
+        </div>
+      )}
+
+      {/* ── Jual sekarang ────────────────────────────────────────────────── */}
+      <AgSection title={t('Sell now', 'Jual sekarang')} action={{ label: t('All products', 'Semua produk'), onClick: () => onNavigate('quotes') }} index={1}>
+        <div className="flex gap-3 overflow-x-auto px-5 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ scrollSnapType: 'x proximity' }}>
+          {products.map(p => (
+            <AgGlass
+              key={p.id}
+              strong
+              onClick={() => onNavigate('quotes')}
+              ariaLabel={`${t('Create a quote for', 'Buat penawaran')} ${p.title}`}
+              className="!w-[8.5rem] shrink-0 p-3.5"
+              style={{ scrollSnapAlign: 'start' }}
+            >
+              <AgTile icon={p.icon} size={46} />
+              <span className="mt-3 block text-sm font-semibold" style={{ color: 'var(--ag-ink)' }}>{p.title}</span>
+              <span className="ag-caption mt-0.5 block leading-snug">{p.note}</span>
+            </AgGlass>
+          ))}
+        </div>
+      </AgSection>
+
+      {/* ── Promo ────────────────────────────────────────────────────────── */}
+      <div className="ag-rise px-5" style={{ ['--i' as string]: 2 }}>
+        <AgentPromoBanner lang={lang} onCta={() => onNavigate('quotes')} />
+      </div>
+
+      {/* ── Fitur mitra ──────────────────────────────────────────────────── */}
+      <AgSection title={t('Partner features', 'Fitur mitra')} index={3}>
+        <div className="grid grid-cols-4 gap-x-2 gap-y-4 px-5">
+          {features.map(f => (
+            <button
+              key={f.id}
+              type="button"
+              onClick={() => onNavigate(f.id)}
+              className="ag-press flex flex-col items-center gap-2 rounded-2xl py-1"
+            >
+              <AgTile icon={f.icon} size={56} iconSize={26} managedId={f.id} />
+              <span className="w-full truncate text-center text-[0.6875rem] font-medium" style={{ color: 'var(--ag-ink2)' }}>{f.label}</span>
+            </button>
+          ))}
+        </div>
+      </AgSection>
+
+      {/* ── Kinerja ──────────────────────────────────────────────────────── */}
+      <AgSection title={t('This month', 'Kinerja bulan ini')} index={4}>
+        <div className="px-5">
+          <AgGlass className="flex items-center gap-4 p-5">
+            <div className="min-w-0 flex-1">
+              <p className="ag-caption flex items-center gap-1.5"><AgIcon name="trend" size={14} /> {t('Estimated GWP', 'Estimasi GWP')}</p>
+              <p className="ag-display mt-1.5 truncate text-[1.625rem]" style={{ color: 'var(--ag-ink)' }} title={formatIDR(stats.totalCommissionMonth * 8)}>
                 {formatIDRCompact(stats.totalCommissionMonth * 8, lang)}
               </p>
-              <p className="mt-1 text-2xs text-ds-ink3">{t('estimated', 'estimasi')}</p>
+              <p className="ag-caption mt-1">{t('from commission earned this month', 'dari komisi bulan ini')}</p>
             </div>
-            <div className="flex-1 border-l border-ds-border pl-5">
-              <div className="mb-1.5 flex items-center gap-1.5">
-                <Target size={13} className="text-ds-amber" />
-                <p className="text-2xs font-medium uppercase tracking-wider text-ds-ink3">{t('Conversion', 'Konversi')}</p>
-              </div>
-              <p className="font-mono text-xl font-black leading-none text-ds-ink">{conversion}%</p>
-              <p className="mt-1 text-2xs text-ds-ink3">{t('clients to policies', 'klien → polis')}</p>
+            <div className="relative grid h-[76px] w-[76px] shrink-0 place-items-center" role="img" aria-label={`${t('Conversion', 'Konversi')} ${conversion}%`}>
+              <svg viewBox="0 0 64 64" className="absolute inset-0 -rotate-90" aria-hidden="true">
+                <circle cx="32" cy="32" r="26" fill="none" stroke="var(--ag-hairline)" strokeWidth="6" />
+                <circle
+                  cx="32" cy="32" r="26" fill="none" stroke="var(--ag-green)" strokeWidth="6" strokeLinecap="round"
+                  strokeDasharray={RING} strokeDashoffset={RING * (1 - conversion / 100)}
+                  style={{ transition: 'stroke-dashoffset 900ms var(--ag-ease)' }}
+                />
+              </svg>
+              <span className="text-center leading-none">
+                <span className="ag-num block text-base font-bold" style={{ color: 'var(--ag-ink)' }}>{conversion}%</span>
+                <span className="ag-caption mt-0.5 block text-[0.625rem]">{t('conversion', 'konversi')}</span>
+              </span>
+            </div>
+          </AgGlass>
+        </div>
+      </AgSection>
+
+      {/* ── Pathy ────────────────────────────────────────────────────────── */}
+      <div className="ag-rise px-5" style={{ ['--i' as string]: 5 }}>
+        <AgGlass className="p-5">
+          <div className="flex items-start gap-3.5">
+            <span className="ag-tile h-12 w-12 shrink-0"><PathyMascot size={30} /></span>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold" style={{ color: 'var(--ag-green-ink)' }}>{t("Pathy's tip for today", 'Tip Pathy hari ini')}</p>
+              <p className="mt-1 text-[0.9375rem] font-semibold leading-snug" style={{ color: 'var(--ag-ink)' }}>{dailyTip}</p>
             </div>
           </div>
-        </motion.div>
-
-        {/* Pelatih penjualan Pathy — dipertahankan */}
-        <motion.div className="sp-agent-home__coach px-5" {...reveal(5)}>
-          <div className="sp-glass rounded-[1.5rem] p-5">
-            <div className="flex items-start gap-3">
-              <div className="animate-float flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl p-1"
-                style={{ background: 'linear-gradient(135deg, rgba(0,193,106,0.16), rgba(253,224,71,0.20))', boxShadow: 'inset 0 0 0 1.5px rgba(0,193,106,0.25)' }}>
-                <PathyMascot size={32} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="mb-1.5 text-2xs font-black uppercase tracking-wider text-ds-green">{t('AI Sales Coach — Pathy', 'Pelatih AI — Pathy')}</p>
-                <p className="text-sm font-bold leading-snug text-ds-ink">{dailyTip}</p>
-              </div>
-            </div>
-            <div className="mt-4 flex items-center gap-2.5 border-t border-ds-border pt-4">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-ds-green-tint">
-                <ModuleIcon id="tier_promo" size={30} />
-              </div>
-              <div>
-                <p className="text-2xs font-medium text-ds-ink3">{t('Daily Goal', 'Target Harian')}</p>
-                <p className="text-xs font-black text-ds-ink">{t(`Contact ${dailyContactGoal} clients`, `Hubungi ${dailyContactGoal} klien`)}</p>
-              </div>
-            </div>
+          <div className="ag-divider my-4" />
+          <div className="flex items-center justify-between gap-3">
+            <p className="ag-caption flex min-w-0 items-center gap-2">
+              <AgIcon name="target" size={18} className="shrink-0" style={{ color: 'var(--ag-green-ink)' }} />
+              <span className="truncate">{t(`Today's goal: contact ${dailyContactGoal} clients`, `Target hari ini: hubungi ${dailyContactGoal} klien`)}</span>
+            </p>
+            <AgButton variant="glass" size="sm" icon="chat" onClick={openPathy} ariaLabel={t('Ask Pathy', 'Tanya Pathy')}>
+              {t('Ask', 'Tanya')}
+            </AgButton>
           </div>
-        </motion.div>
+        </AgGlass>
+      </div>
 
-        {/* Pengingat perpanjangan — dipertahankan */}
-        <motion.div {...reveal(6)}>
-          <RenewalAlerts agentId={agentId} lang={lang} onNavigate={onNavigate} />
-        </motion.div>
+      {/* ── Perpanjangan ─────────────────────────────────────────────────── */}
+      <div className="ag-rise" style={{ ['--i' as string]: 6 }}>
+        <RenewalAlerts agentId={agentId} lang={lang} onNavigate={onNavigate} />
+      </div>
 
-        {/* Komisi terbaru — dipertahankan */}
-        <motion.div className="sp-agent-home__commissions px-5" {...reveal(7)}>
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-sm font-black tracking-tight text-ds-ink">{t('Recent Commissions', 'Komisi Terbaru')}</h3>
-            <button onClick={() => onNavigate('commission')} className="rounded text-xs font-bold text-ds-green focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green">
-              {t('View All', 'Semua')}
-            </button>
-          </div>
-          <ClayCard padding="none" className="overflow-hidden">
+      {/* ── Komisi terbaru ───────────────────────────────────────────────── */}
+      <AgSection title={t('Recent commissions', 'Komisi terbaru')} action={{ label: t('All', 'Semua'), onClick: () => onNavigate('commission') }} index={7}>
+        <div className="px-5">
+          <AgGlass strong className="overflow-hidden">
             {recentCommissions.length === 0 ? (
-              <div className="flex flex-col items-center gap-2 p-8 text-center">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-ds-green-tint">
-                  <ModuleIcon id="commission" size={34} />
-                </div>
-                <p className="text-sm font-bold text-ds-ink">{t('No commissions yet', 'Belum ada komisi')}</p>
-                <p className="max-w-[14rem] text-xs text-ds-ink3">{t('Close your first policy to start earning.', 'Tutup polis pertamamu untuk mulai dapat komisi.')}</p>
-              </div>
+              <AgEmpty
+                icon="commission"
+                title={t('No commissions yet', 'Belum ada komisi')}
+                body={t('Close your first policy to start earning.', 'Tutup polis pertamamu untuk mulai dapat komisi.')}
+                action={{ label: t('Create a quote', 'Buat penawaran'), onClick: () => onNavigate('quotes') }}
+              />
             ) : (
-              recentCommissions.slice(0, 3).map((c, i) => (
-                <div
+              recentCommissions.slice(0, 3).map(c => (
+                <AgRow
                   key={c.id}
-                  className={`flex items-center gap-3 px-4 py-3.5 ${i < Math.min(recentCommissions.length, 3) - 1 ? 'border-b border-ds-border' : ''}`}
-                >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-ds-green-tint">
-                    <TrendingUp size={16} className="text-ds-green" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-bold text-ds-ink">{productLabel[c.product_type] ?? c.product_type}</p>
-                    <p className="text-2xs text-ds-ink3">{new Date(c.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-black text-ds-green">+{formatIDR(c.amount)}</p>
-                    <span className={`rounded-full px-1.5 py-0.5 text-2xs font-bold ${statusColor[c.status] ?? 'bg-ds-card2 text-ds-ink2'}`}>{c.status}</span>
-                  </div>
-                </div>
+                  icon={productIcon[c.product_type] ?? 'commission'}
+                  title={productLabel[c.product_type] ?? c.product_type ?? t('Commission', 'Komisi')}
+                  subtitle={new Date(c.created_at).toLocaleDateString(lang === Language.EN ? 'en-GB' : 'id-ID', { day: 'numeric', month: 'short' })}
+                  trailing={(
+                    <span className="shrink-0 text-right">
+                      <span className="ag-num block text-sm font-bold" style={{ color: 'var(--ag-green-ink)' }}>+{formatIDR(c.amount ?? c.commission_amount ?? 0)}</span>
+                      <AgChip tone={statusTone[c.status] ?? 'mute'} className="mt-1">{statusLabel[c.status] ?? c.status}</AgChip>
+                    </span>
+                  )}
+                />
               ))
             )}
-          </ClayCard>
-        </motion.div>
-      </div>
+          </AgGlass>
+        </div>
+      </AgSection>
     </div>
   );
 };

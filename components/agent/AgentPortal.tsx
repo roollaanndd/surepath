@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import '../../src/styles/portal-modernization.css';
+// Harus SETELAH portal-modernization.css: lapisan "Kaca Pagi" menimpa kanvas
+// dan permukaan lama di bawah .ag-app.
+import '../../src/styles/agent-glass.css';
 import { Language } from '../../types';
-import { House, FileText, Plus, Wallet, UserRound } from 'lucide-react';
-import PortalHeader from '../shared/PortalHeader';
-import PortalTabBar, { type PortalTab } from '../shared/PortalTabBar';
+import { AgTopBar, AgDock, type AgDockTab, type AgMenuItem } from './ui/shell';
+import { AgHomeSkeleton, AgIcon } from './ui/kit';
 import { scrollPortalToTop } from '../shared/scrollReset';
 import {
   supabase,
@@ -33,12 +35,11 @@ import RenewalManager from './RenewalManager';
 import AgentNetwork from './AgentNetwork';
 import AgentEndorsements from './AgentEndorsements';
 import AgentOrderStatus from './AgentOrderStatus';
-import PathyChat from '../shared/PathyChat';
+import PathyChat, { PATHY_OPEN_EVENT } from '../shared/PathyChat';
 import { SectionLabel } from '../shared/cards';
 import OnboardingFlow, { needsOnboarding } from '../OnboardingFlow';
 import { useTierDefinitions, getTierByCode } from '../../hooks/useTierDefinitions';
 import { useDarkMode } from '../shared/theme';
-import ModuleIcon from '../shared/ModuleIcon';
 
 interface Props {
   agent: any;
@@ -46,17 +47,21 @@ interface Props {
   lang: Language;
 }
 
-// Lima tab sederajat, tanpa tombol tengah yang menonjol — bahasa navigasi
-// super app pada acuan (v2.7.35). Pathy, yang dulu tidak ada di bar ini, kini
-// punya tombol mengambang sendiri di atas bar, sehingga tidak ada tujuan yang
-// hilang. Tujuan dan urutan tabnya sendiri tidak berubah.
-const TABS: PortalTab[] = [
-  { id: 'home',       label: 'Beranda', Icon: House },
-  { id: 'policy',     label: 'Polis',   Icon: FileText },
-  { id: 'quotes',     label: 'Buat',    Icon: Plus },
-  { id: 'commission', label: 'Dompet',  Icon: Wallet },
-  { id: 'profile',    label: 'Profil',  Icon: UserRound },
+// Dock "Kaca Pagi" (v2.9.0): lima tujuan yang sama dengan sebelumnya, urutan
+// yang sama. Empat tab sederajat dengan pil hijau yang meluncur ke tab aktif;
+// "Buat" menjadi tombol oranye di tengah — aksi utama mitra, dan satu-satunya
+// oranye di navigasi.
+const TABS: AgDockTab[] = [
+  { id: 'home',       label: 'Beranda', icon: 'home' },
+  { id: 'policy',     label: 'Polis',   icon: 'policy' },
+  { id: 'quotes',     label: 'Buat',    icon: 'plus', create: true },
+  { id: 'commission', label: 'Dompet',  icon: 'wallet' },
+  { id: 'profile',    label: 'Profil',  icon: 'profile' },
 ];
+
+// Urutan layar untuk arah transisi: pindah ke layar yang lebih kanan masuk
+// dari kanan, sebaliknya dari kiri.
+const SCREEN_ORDER = ['home', 'clients', 'claims', 'renewals', 'network', 'leaderboard', 'endorsements', 'policy', 'quotes', 'commission', 'wallet', 'profile'];
 
 // Tab yang aksi intinya ditolak server selama akun belum diverifikasi:
 // "Buat" menerbitkan order (create_policy_order) dan "Dompet" memindahkan uang
@@ -113,6 +118,7 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
   // sah dari fitur yang sebenarnya boleh mereka pakai.
   const [pendingVerification, setPendingVerification] = useState(false);
   const [tabKey, setTabKey] = useState(0);
+  const [screenDir, setScreenDir] = useState<'forward' | 'back'>('forward');
   const [darkMode, setDarkMode] = useDarkMode();
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -294,10 +300,47 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
   }, [agent?.id]);
 
   const handleTabChange = (tab: string) => {
+    setScreenDir(SCREEN_ORDER.indexOf(tab) < SCREEN_ORDER.indexOf(activeTab) ? 'back' : 'forward');
     setTabKey(k => k + 1);
     setActiveTab(tab);
     scrollPortalToTop();
   };
+
+  // Top menu: tujuan yang sebelumnya hanya bisa dicapai lewat ubin Beranda,
+  // kini satu ketukan dari layar mana pun. Item pertama sengaja bernama
+  // "Ringkasan", bukan "Beranda" — nama itu milik dock.
+  const menu: AgMenuItem[] = [
+    { id: 'home',         label: t('Overview', 'Ringkasan'),     icon: 'spark' },
+    { id: 'clients',      label: t('Clients', 'Klien'),          icon: 'clients' },
+    { id: 'claims',       label: t('Claims', 'Klaim'),           icon: 'claims' },
+    { id: 'renewals',     label: t('Renewals', 'Perpanjangan'),  icon: 'renewals' },
+    { id: 'network',      label: t('Network', 'Jaringan'),       icon: 'network' },
+    { id: 'leaderboard',  label: t('Ranking', 'Peringkat'),      icon: 'rank' },
+    { id: 'endorsements', label: t('Endorsements', 'Endorsemen'), icon: 'endorsements' },
+    { id: 'wallet',       label: t('Withdraw', 'Tarik Dana'),    icon: 'withdraw' },
+    { id: 'pathy',        label: 'Pathy',                        icon: 'pathy', onPress: () => window.dispatchEvent(new Event(PATHY_OPEN_EVENT)) },
+  ];
+
+  const screenTitle: Record<string, string> = {
+    policy: t('Policies & quotes', 'Polis & Penawaran'),
+    clients: t('Clients', 'Klien'),
+    quotes: t('New quote', 'Buat Penawaran'),
+    claims: t('Claims', 'Klaim'),
+    commission: t('Commission', 'Komisi'),
+    wallet: t('Wallet', 'Dompet'),
+    leaderboard: t('Ranking', 'Peringkat'),
+    renewals: t('Renewals', 'Perpanjangan'),
+    network: t('Network', 'Jaringan'),
+    endorsements: t('Endorsements', 'Endorsemen'),
+    profile: t('Profile', 'Profil'),
+  };
+  const hour = new Date().getHours();
+  const greeting = hour < 11 ? t('Good morning', 'Selamat pagi')
+    : hour < 15 ? t('Good afternoon', 'Selamat siang')
+    : hour < 18 ? t('Good evening', 'Selamat sore')
+    : t('Good night', 'Selamat malam');
+  const firstName = (agent?.name ?? 'Mitra').split(' ')[0];
+  const openNotifications = () => { setNotificationPopup(null); setShowNotifications(true); };
 
   const renderTab = () => {
     const lockedLabel = pendingVerification ? LOCKED_WHILE_PENDING[activeTab] : undefined;
@@ -322,10 +365,6 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
             lang={lang}
             agentTier={agentTier}
             walletBalance={walletBalance}
-            unreadCount={unreadCount}
-            darkMode={darkMode}
-            onToggleDark={() => setDarkMode(!darkMode)}
-            onBellClick={() => { setNotificationPopup(null); setShowNotifications(true); }}
           />
         );
       case 'policy':
@@ -409,96 +448,77 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
   }
 
   return (
-    <div className="sp-modern-app sp-agent-premium min-h-screen bg-ds-bg dark:bg-ds-dk-bg text-ds-ink dark:text-ds-dk-ink transition-colors duration-300 font-sora">
-      <div aria-hidden className="sp-ambient" />
+    <div className="sp-modern-app sp-agent-premium ag-app min-h-screen text-ds-ink dark:text-ds-dk-ink transition-colors duration-300 font-sora">
+      {/* Cahaya di belakang kaca: tiga bercak buram yang bergeser sangat pelan. */}
+      <div aria-hidden className="ag-aurora"><i /><i /><i /></div>
       {showOnboarding && agreementOk && (
         <OnboardingFlow role="AGENT" lang={lang === Language.EN ? 'EN' : 'ID'} onComplete={() => setShowOnboarding(false)} />
       )}
-      <style>{`
-        @keyframes spFadeIn {
-          from { opacity: 0; transform: translateY(6px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          [data-sp-anim] { animation: none !important; }
-        }
-      `}</style>
 
-      {/* Beranda membawa pita sapaannya sendiri yang ikut menggulung
-          (SuperAppHeader), sesuai acuan super app; bar tetap di atas layar
-          hanya dipasang di layar selain beranda supaya tidak ada dua header
-          bertumpuk. Semua tombolnya — bel, tema, avatar — ada di kedua
-          bentuk, jadi tidak ada aksi yang hilang di beranda. */}
-      {activeTab !== 'home' && (
-      <PortalHeader
-        portalLabel={t('Agent', 'Mitra')}
-        userName={agent?.name ?? 'Agent'}
-        userCode={agent?.agent_code ?? 'SP-AGT'}
-        userMeta={myTierDef && !myTierDef.is_default ? (
-          <div className="text-[8px] font-black uppercase tracking-widest" style={{ color: myTierDef.color }}>
-            {myTierDef.emoji} {myTierDef.name}
-          </div>
+      {/* Satu bar kaca untuk semua layar. Di Beranda ia menyapa; di layar lain
+          ia menyebut layarnya, supaya mitra selalu tahu sedang berada di mana. */}
+      <AgTopBar
+        eyebrow={activeTab === 'home' ? `${greeting},` : `${t('SurePath Partner', 'SurePath Mitra')} · ${agent?.agent_code ?? 'SP-AGT'}`}
+        title={activeTab === 'home' ? firstName : (screenTitle[activeTab] ?? firstName)}
+        initial={(agent?.name?.[0] ?? 'M').toUpperCase()}
+        badge={myTierDef && !myTierDef.is_default ? (
+          <span className="ag-chip shrink-0" style={{ color: myTierDef.color, background: `${myTierDef.color}1f` }}>
+            <span aria-hidden="true">{myTierDef.emoji}</span> {myTierDef.name}
+          </span>
         ) : undefined}
         unreadCount={unreadCount}
-        onBellClick={() => { setNotificationPopup(null); setShowNotifications(true); }}
         darkMode={darkMode}
+        onBellClick={openNotifications}
         onToggleDark={() => setDarkMode(!darkMode)}
         onAvatarClick={() => handleTabChange('profile')}
         labels={{
           notifications: t('Notifications', 'Notifikasi'),
           theme: t('Toggle theme', 'Ganti tema'),
           profile: t('Profile', 'Profil'),
+          menu: t('Feature menu', 'Menu fitur'),
         }}
+        menu={menu}
+        activeId={activeTab}
+        onSelect={handleTabChange}
       />
-      )}
 
       {/* Main Content */}
       <main
-        className="relative z-10 pb-48 min-h-screen"
-        style={{ paddingTop: activeTab === 'home' ? 0 : 'calc(4rem + env(safe-area-inset-top, 0px))' }}
+        className="relative z-10 pb-36 min-h-screen"
+        style={{ paddingTop: 'calc(6.75rem + env(safe-area-inset-top, 0px))' }}
       >
         {loading && activeTab === 'home' ? (
-          <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
-            <div className="w-12 h-12 rounded-full border-4 border-ds-green/20 border-t-ds-green animate-spin motion-reduce:animate-none" />
-            <p className="text-ds-ink3 text-sm font-bold">{t('Loading your dashboard…', 'Memuat dashboard…')}</p>
-          </div>
+          <AgHomeSkeleton label={t('Loading your dashboard…', 'Memuat dashboard…')} />
         ) : (
           <>
             {dataLoadError && (
-              <div
-                role="alert"
-                aria-live="polite"
-                className="mx-5 mb-4 rounded-2xl border border-ds-amber/30 bg-ds-amber/10 p-4"
-                style={activeTab === 'home' ? { marginTop: 'calc(1rem + env(safe-area-inset-top, 0px))' } : undefined}
-              >
-                <p className="text-sm font-bold text-ds-ink">{t('Some dashboard data could not be refreshed.', 'Sebagian data dashboard belum berhasil dimuat.')}</p>
-                <p className="mt-1 text-xs text-ds-ink3">{t('You can keep using available sections or retry the refresh.', 'Kamu tetap bisa menggunakan bagian yang tersedia atau mencoba memuat ulang.')}</p>
-                <button type="button" onClick={() => void loadData()} disabled={loading} className="mt-3 min-h-10 rounded-xl bg-ds-green px-4 py-2 text-xs font-black text-ds-on-green disabled:opacity-50">
+              <div role="alert" aria-live="polite" className="ag-glass ag-glass--strong mx-5 mb-4 mt-3 p-4">
+                <p className="text-sm font-semibold" style={{ color: 'var(--ag-ink)' }}>{t('Some dashboard data could not be refreshed.', 'Sebagian data dashboard belum berhasil dimuat.')}</p>
+                <p className="ag-caption mt-1">{t('You can keep using available sections or retry the refresh.', 'Kamu tetap bisa menggunakan bagian yang tersedia atau mencoba memuat ulang.')}</p>
+                <button type="button" onClick={() => void loadData()} disabled={loading} className="ag-btn ag-btn--primary ag-btn--sm ag-press mt-3">
                   {t('Retry refresh', 'Coba muat ulang')}
                 </button>
               </div>
             )}
             {pendingVerification && (
-              <div style={activeTab === 'home' && !dataLoadError ? { paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))' } : undefined}>
+              <div className="pt-3">
                 <AgentVerificationBanner
                   lang={lang}
                   onOpenProfile={activeTab === 'profile' ? undefined : () => handleTabChange('profile')}
                 />
               </div>
             )}
-            <div key={tabKey} data-sp-anim className="sp-page-enter">
+            <div key={tabKey} data-sp-anim data-dir={screenDir} className="ag-screen">
               {renderTab()}
             </div>
           </>
         )}
       </main>
 
-      <PortalTabBar
+      <AgDock
         tabs={TABS}
         activeId={activeTab}
         onSelect={handleTabChange}
-        modernIcons
-        variant="flat"
         lockedIds={pendingVerification ? Object.keys(LOCKED_WHILE_PENDING) : undefined}
         lockedHint={t('awaiting verification', 'menunggu verifikasi')}
       />
@@ -520,16 +540,16 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
 
       {notificationPopup && !showNotifications && !showOnboarding && (
         <div className="fixed right-4 z-[60] w-[min(22rem,calc(100vw-2rem))] animate-in fade-in slide-in-from-bottom-2"
-          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 6.5rem)' }}
+          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 6.75rem)' }}
           role="status" aria-live="polite">
-          <div className="rounded-2xl border border-ds-border bg-ds-card p-4 shadow-2xl">
+          <div className="ag-glass ag-glass--strong p-4" style={{ boxShadow: 'var(--ag-shadow-lift)' }}>
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 shrink-0 rounded-xl bg-ds-green-tint flex items-center justify-center text-ds-green">
-                <ModuleIcon id="notifications" size={30} />
+              <div className="ag-tile h-10 w-10 shrink-0">
+                <AgIcon name="bell" size={20} managedId="notifications" />
               </div>
               <button type="button" className="min-w-0 flex-1 text-left"
                 onClick={() => { setNotificationPopup(null); setShowNotifications(true); }}>
-                <span className="block text-[10px] font-black uppercase tracking-widest text-ds-green">{t('New notification', 'Notifikasi baru')}</span>
+                <span className="block text-xs font-semibold" style={{ color: 'var(--ag-orange-ink)' }}>{t('New notification', 'Notifikasi baru')}</span>
                 <span className="mt-1 block text-sm font-bold text-ds-ink">{notificationPopup.title}</span>
                 <span className="mt-0.5 block text-xs leading-relaxed text-ds-ink2">{notificationPopup.body}</span>
                 <span className="mt-2 block text-xs font-bold text-ds-green">{t('View notifications', 'Lihat notifikasi')}</span>

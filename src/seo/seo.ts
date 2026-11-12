@@ -15,7 +15,7 @@
 export const SITE = {
   origin: 'https://myinsurepath.com',
   name: 'SurePath',
-  defaultOgImage: 'https://myinsurepath.com/surepath-logo.png',
+  defaultOgImage: 'https://myinsurepath.com/og-banner.png',
   twitter: '@SurePathID',
 } as const;
 

@@ -1,5 +1,35 @@
 # SurePath - Changelog
 
+## v2.8.22 - 2026-11-12
+
+### Aset brand: OG banner & feature graphic Play Store (dibuat dengan PhotoCraft)
+
+Craft aset promosi memakai **PhotoCraft v0.22.0** (editor open-source
+storytold/photocraft, mode headless CLI) yang diinstall portabel; komposisi
+disusun manual per-layer di atas logo asli `public/logo.png` — tidak ada aset
+eksternal yang masuk ke bundle app, jadi sistem ikon SVG in-code (termasuk
+"Aureate Emerald" v2.8.11) dan guard test `onboardingIllustrations` tidak
+tersentuh.
+
+- **`public/og-banner.png` (baru, 1200×630)** — social card sungguhan untuk
+  `og:image`/`twitter:image`. Sebelumnya kedua meta menunjuk logo polos yang
+  dideklarasikan 1200×630 (tidak cocok). Desain: latar gelap #0a0f0a + glow
+  radial emerald, logo perisai, wordmark "Sure" (putih) + "Path" (#22c55e),
+  tagline "Asuransi Digital Indonesia" letterspaced, domain myinsurepath.com,
+  garis aksen mengapit tagline. `index.html` + 4 entry HTML per-route
+  (admin/agent/customer/operator) + `defaultOgImage` di `src/seo/seo.ts`
+  diarahkan ke `https://myinsurepath.com/og-banner.png` — kini deklarasi
+  `og:image:width/height` 1200×630 benar-benar sesuai filenya.
+- **`public/play-store-feature-graphic.png` (redesign, 1024×500)** — file
+  lama 11 KB berisi kanvas nyaris kosong. Komposisi baru: logo kiri + blok teks
+  kanan dengan palet yang sama.
+- **Ikon PWA/launcher/favicon tidak diubah** — sudah konsisten diturunkan
+  dari logo dan guard ikon in-bundle mengharuskan vektor in-code; melukis ulang
+  ikon raster justru berisiko merusak konsistensi.
+
+Tidak ada logika aplikasi yang berubah. Penomoran v2.8.22 (versionCode 75)
+menutup drift versi (version.ts 2.8.19 / gradle 2.8.17-74 di main).
+
 ## v2.8.20 - 2026-11-11
 
 ### Hardening alur penawaran B2B + notifikasi pengajuan baru (audit follow-up)

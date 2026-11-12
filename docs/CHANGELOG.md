@@ -1,5 +1,71 @@
 # SurePath - Changelog
 
+## v2.8.24 - 2026-11-12
+
+### B2B: impor Excel yang benar-benar membaca file, Comprehensive, dan pilihan merk/tipe
+
+Tiga laporan owner (12 Nov) dari portal B2B, semuanya direproduksi dulu lalu
+diperbaiki.
+
+**1. "Menu upload data Excel tidak bisa membaca data sama sekali."**
+Penyebab: pembaca selalu menganggap **baris pertama** file sebagai judul kolom.
+Ekspor multifinance hampir selalu punya judul laporan, periode, dan baris
+kosong di atasnya — akibatnya tidak satu kolom pun dikenali, daftar pemetaan
+manual berisi potongan judul laporan, dan tombol lanjut terkunci. Nama kolom
+yang sedikit berbeda dari file mitra pilot ("Nama Konsumen", "Merek", "Nopol",
+"Nilai Pertanggungan") juga tidak dikenali.
+
+- Baris judul kolom dicari otomatis di 40 baris pertama (baris dengan kolom
+  terkenali terbanyak), di sheet yang paling cocok — bukan sekadar sheet
+  terpanjang.
+- Kamus nama kolom diperluas (±3× lipat) dan dicocokkan per kata: "OTR" tidak
+  lagi cocok dengan "KONTRAK", "NAMA CABANG" tidak lagi dianggap nama nasabah,
+  dan satu kolom tidak bisa dipakai dua field.
+- Hanya **nama nasabah** dan **nilai pertanggungan** yang wajib (OTR boleh
+  mewakili nilai pertanggungan). Tenor kosong → 12 bulan, jenis barang kosong →
+  Mobil (bisa diubah per baris), OTR kosong → baris ditandai. Setiap bawaan yang
+  dipakai diberitahukan di layar.
+- Angka `150,000,000`, `Rp 150.000.000`, `1.234.567,89` terbaca benar; baris
+  TOTAL/tanda tangan di kaki tabel dibuang; tenor dalam tahun dikonversi; CSV
+  dengan BOM, titik koma, atau tab terbaca.
+- Layar pemetaan kini menampilkan sheet dan baris tempat judul kolom ditemukan
+  serta **pratinjau tiga baris pertama sebagaimana terbaca**.
+
+**2. "Order polis satuan tidak ada yang Comprehensive."**
+Order Unit kini punya pilihan **Comprehensive** atau **TLO** untuk mobil dan
+motor (bawaan Comprehensive). Tarif Comprehensive = batas bawah SEOJK No.
+6/SEOJK.05/2017 Lampiran IV Tabel IV.A: mobil penumpang per kategori OTR dan
+zona, pickup/truk 2,42% / 2,39% / 2,23%, motor 3,18%. Alat berat tetap TLO
+(tidak ada tarif comprehensive OJK). Diskon, biaya admin, multi-tahun, dan
+tanggal efektif berlaku sama. Server menghitung ulang dan menolak Comprehensive
+untuk alat berat. **Impor massal tetap TLO.**
+
+**3. "Tidak muncul pilihan merk dan tipe mobil seperti di database."**
+Merk dan tipe sekarang dipilih dari database kendaraan yang sama dengan apps
+mitra (38 merk mobil, 5 merk motor; harga kelolaan admin tetap menang). Memilih
+merk, tipe, dan tahun menampilkan harga pasar referensi berikut rentang ±5% dan
+mengisikannya ke OTR dan nilai pertanggungan — keduanya tetap bisa disunting,
+dan angka yang sudah diketik pengguna tidak ditimpa. Tipe pickup/truk otomatis
+ditandai bodi komersial. Kendaraan yang tidak ada di daftar bisa diketik manual
+("Lainnya").
+
+Jenis pertanggungan tampil di detail batch klien, panel detail admin, dan kolom
+Catatan quotation Excel.
+
+**Tidak ada perubahan database** — `sp_b2b_batch_items.coverage_type` sudah
+ada sejak awal (sebelumnya selalu diisi `'TLO'`).
+
+**Deploy.** `data-gateway` harus ter-deploy (workflow Deploy Edge Functions)
+agar Comprehensive dihitung server; gateway lama mengabaikan field `coverage`
+dan menghitung TLO.
+
+**Uji.** 11 tes baru pembaca Excel, 9 tes tarif Comprehensive (termasuk
+paritas browser/Deno untuk semua kelas × zona × kategori). Diuji di browser:
+empat file contoh (standar, judul di atas header, nama kolom lain, uang sebagai
+teks) terbaca dengan total identik; Order Unit dicoba mobil/motor/alat berat/
+manual di desktop dan mobile. Belum diuji: submit sungguhan ke gateway produksi
+dan invoice Xendit.
+
 ## v2.8.23 - 2026-11-12
 
 ### Order Unit B2B: tanggal efektif, multi-tahun sampai 6 tahun, dan pilihan diskon

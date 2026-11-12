@@ -238,6 +238,9 @@ const B2BBulkBatches: React.FC<Props> = ({ lang, allClients }) => {
                     <td className="py-2.5 px-3 font-bold text-slate-900 max-w-[200px] truncate">{it.nasabah_name}</td>
                     <td className="py-2.5 px-3 text-slate-600 hidden md:table-cell">
                       {[it.make, it.model].filter(Boolean).join(' ') || '—'}
+                      <span className={`block text-[10px] font-bold mt-0.5 ${it.coverage_type === 'COMPREHENSIVE' ? 'text-indigo-700' : 'text-slate-500'}`}>
+                        {it.coverage_type === 'COMPREHENSIVE' ? 'Comprehensive' : 'TLO'}
+                      </span>
                     </td>
                     <td className="py-2.5 px-3 text-slate-500 font-mono hidden lg:table-cell">{it.plate_no || '—'}</td>
                     <td className="py-2.5 px-3 text-slate-600 hidden md:table-cell">

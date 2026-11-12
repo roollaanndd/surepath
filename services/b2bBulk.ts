@@ -3,7 +3,7 @@
 // Xendit invoice edge function for a batch. See services/b2bFleetRating.ts
 // for the rating engine and services/b2bBulkParser.ts for the file reader.
 import { callGateway, supabase } from './db';
-import type { VehicleClass, Zone } from './b2bFleetRating';
+import type { VehicleClass, Zone, FleetCoverage } from './b2bFleetRating';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 
@@ -109,6 +109,8 @@ export interface CreateB2BBulkItemInput {
   multiYearDepreciation?: boolean;
   discountRate?: number;
   discountShownOnPolicy?: boolean;
+  /** 'COMPREHENSIVE' hanya mobil & motor; bawaan TLO. */
+  coverage?: FleetCoverage;
 }
 
 export async function createB2BBulkBatch(input: {

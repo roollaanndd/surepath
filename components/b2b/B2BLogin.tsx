@@ -8,7 +8,7 @@
 // institutional/fleet finance (multifinance companies), not retail, so it
 // reads as "ledger/corporate" rather than borrowing another portal's mark.
 import React, { useState } from 'react';
-import { ArrowRight, AlertCircle, Mail, Lock, CheckCircle2, Building2 } from 'lucide-react';
+import { ArrowRight, AlertCircle, Mail, Lock, CheckCircle2, Building2, Sparkle } from 'lucide-react';
 import { supabase } from '../../services/db';
 import { fetchMyProfileForLogin } from '../../services/users';
 import { UserRole } from '../../types';
@@ -340,6 +340,48 @@ const B2BLogin: React.FC<B2BLoginProps> = ({ onLoginSuccess, onBack }) => {
               )}
             </div>
           </div>
+
+          {/* v2.9.0 — Fast Demo Login: tombol auto-fill + submit kredensial
+              demo B2B. Dipakai sales + reviewer untuk cepat lihat portal
+              tanpa provisioning akun. Email + password diset via env var
+              (VITE_B2B_DEMO_EMAIL / VITE_B2B_DEMO_PASSWORD). Tombol
+              tersembunyi jika env belum terisi — kalau mau selalu terlihat,
+              seed akun demo di CMS dan set env di Vercel. */}
+          {(import.meta.env.VITE_B2B_DEMO_EMAIL as string | undefined) && mode === 'LOGIN' && (
+            <div className="mt-5 b2b-stagger-3">
+              <div className="relative flex items-center gap-3">
+                <span className="flex-1 h-px" style={{ background: 'rgba(148,163,184,0.25)' }} />
+                <span style={{ fontSize: '0.6rem', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.18em', textTransform: 'uppercase' }}>atau</span>
+                <span className="flex-1 h-px" style={{ background: 'rgba(148,163,184,0.25)' }} />
+              </div>
+              <button
+                type="button"
+                disabled={loading || success}
+                onClick={() => {
+                  const demoEmail = import.meta.env.VITE_B2B_DEMO_EMAIL as string;
+                  const demoPass = (import.meta.env.VITE_B2B_DEMO_PASSWORD as string) ?? '';
+                  setEmail(demoEmail);
+                  setPassword(demoPass);
+                  // defer submit so React applies the state first
+                  setTimeout(() => {
+                    const form = document.querySelector<HTMLFormElement>('form');
+                    form?.requestSubmit();
+                  }, 50);
+                }}
+                className="mt-4 w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all duration-150 active:scale-[0.97] hover:scale-[1.01] disabled:opacity-60"
+                style={{
+                  background: 'rgba(67,56,202,0.08)',
+                  border: '1px dashed rgba(67,56,202,0.32)',
+                  color: '#4338ca',
+                }}
+              >
+                <Sparkle size={13} /> Masuk sebagai Demo
+              </button>
+              <p className="mt-2 text-center" style={{ fontSize: '0.625rem', color: '#94a3b8', fontWeight: 600 }}>
+                Akun contoh — data batch dan polis sudah terisi untuk eksplorasi.
+              </p>
+            </div>
+          )}
 
           <div className="mt-6 b2b-stagger-4">
             <p className="text-center flex items-center justify-center gap-2" style={{ fontSize: '0.6875rem', fontWeight: 700, color: '#94a3b8', letterSpacing: '0.1em', textTransform: 'uppercase' }}>

@@ -31,6 +31,7 @@ import B2BDashboard from './B2BDashboard';
 // Lazy-load the heavier screens — each holds its own feature logic (wizards,
 // XLSX parser, PDF builder) that isn't needed on the overview.
 const B2BNewSubmission = lazy(() => import('./B2BNewSubmission'));
+const B2BMotorOrderWizard = lazy(() => import('./B2BMotorOrderWizard'));
 const B2BBulkImport    = lazy(() => import('./B2BBulkImport'));
 const B2BSubmissions   = lazy(() => import('./B2BSubmissions'));
 const B2BBulkBatches   = lazy(() => import('./B2BBulkBatches'));
@@ -48,7 +49,7 @@ interface Props {
 // multifinance partner jump straight to Bulk without hunting a toggle.
 type Section =
   | 'dashboard'
-  | 'new-single' | 'new-bulk'
+  | 'new-single' | 'new-bulk' | 'new-motor'
   | 'submissions' | 'batches'
   | 'quotes'
   | 'profile';
@@ -113,9 +114,10 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
       badge: quotes.filter(q => q.status === 'PENDING').length,
     },
     {
-      id: 'new-single', label: t('Create', 'Buat'), icon: Layers,
+      id: 'new-motor', label: t('Create', 'Buat'), icon: Layers,
       children: [
-        { id: 'new-single', label: t('New Request', 'Pengajuan Baru') },
+        { id: 'new-motor',  label: t('Motor Vehicle', 'Kendaraan Bermotor') },
+        { id: 'new-single', label: t('Other Request', 'Ajuan Lainnya') },
         { id: 'new-bulk',   label: t('Bulk Import', 'Impor Massal') },
       ],
     },
@@ -125,7 +127,8 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
   const breadcrumb = useMemo((): string[] => {
     switch (activeId) {
       case 'dashboard':   return [t('Portal B2B', 'Portal B2B'), t('Dashboard', 'Dashboard')];
-      case 'new-single':  return [t('Portal B2B', 'Portal B2B'), t('Create', 'Buat'), t('New Request', 'Pengajuan Baru')];
+      case 'new-motor':   return [t('Portal B2B', 'Portal B2B'), t('Create', 'Buat'), t('Motor Vehicle', 'Kendaraan Bermotor')];
+      case 'new-single':  return [t('Portal B2B', 'Portal B2B'), t('Create', 'Buat'), t('Other Request', 'Ajuan Lainnya')];
       case 'new-bulk':    return [t('Portal B2B', 'Portal B2B'), t('Create', 'Buat'), t('Bulk Import', 'Impor Massal')];
       case 'submissions': return [t('Portal B2B', 'Portal B2B'), t('Requests', 'Pengajuan'), t('Single', 'Satuan')];
       case 'batches':     return [t('Portal B2B', 'Portal B2B'), t('Requests', 'Pengajuan'), t('Bulk Fleet', 'Armada Massal')];
@@ -145,7 +148,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
   const openPathy = () => window.dispatchEvent(new CustomEvent(PATHY_OPEN_EVENT));
 
   const renderContent = () => {
-    if (isMaster && (activeId === 'new-single' || activeId === 'new-bulk')) {
+    if (isMaster && (activeId === 'new-single' || activeId === 'new-bulk' || activeId === 'new-motor')) {
       return (
         <div className="max-w-md mx-auto mt-8">
           <B2BGlass className="p-6 text-center space-y-3">
@@ -177,6 +180,22 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
             lang={lang}
             loading={initialLoading}
           />
+        );
+      case 'new-motor':
+        return (
+          <Suspense fallback={<div className="text-sm text-slate-400 text-center py-16">Memuat…</div>}>
+            <B2BMotorOrderWizard
+              client={{
+                id: client.id,
+                name: client.name,
+                email: client.email,
+                company_name: client.company_name,
+                phone: client.phone,
+              }}
+              onDone={() => handleSelect('submissions')}
+              lang={lang}
+            />
+          </Suspense>
         );
       case 'new-single':
         return (

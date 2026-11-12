@@ -69,6 +69,14 @@ export interface SpB2BBatchItem {
   status: B2BBatchItemStatus;
   policy_number: string | null;
   certificate_document_url: string | null;
+  // v2.8.23 (order unit): periode pertanggungan, penyusutan multi-tahun, dan
+  // apakah diskon dicetak di polis. Baris lama/impor massal: tanggal null,
+  // depreciation_rate 0, premium_schedule [], discount_shown_on_policy true.
+  coverage_start_date: string | null;
+  coverage_end_date: string | null;
+  depreciation_rate: number;
+  premium_schedule: Array<{ year: number; months: number; sumInsured: number; premiumGross: number }>;
+  discount_shown_on_policy: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -96,6 +104,11 @@ export interface CreateB2BBulkItemInput {
   regionText?: string;
   zone: Zone;
   flags?: string[];
+  // Order unit saja (lihat actions/b2bBulk.ts → ClientItemInput).
+  coverageStartDate?: string;
+  multiYearDepreciation?: boolean;
+  discountRate?: number;
+  discountShownOnPolicy?: boolean;
 }
 
 export async function createB2BBulkBatch(input: {

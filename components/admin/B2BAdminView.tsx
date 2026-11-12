@@ -531,6 +531,7 @@ const BulkBatchCard: React.FC<{ batch: SpB2BBatch; insurers: InsurerOption[]; on
                     <th className="py-1.5 pr-2 font-black">Unit</th>
                     <th className="py-1.5 pr-2 font-black">Plat</th>
                     <th className="py-1.5 pr-2 font-black">Zona</th>
+                    <th className="py-1.5 pr-2 font-black">Periode</th>
                     <th className="py-1.5 pr-2 font-black text-right">TSI</th>
                     <th className="py-1.5 pr-2 font-black text-right">Premi Total</th>
                     <th className="py-1.5 pr-2 font-black">Status</th>
@@ -546,6 +547,29 @@ const BulkBatchCard: React.FC<{ batch: SpB2BBatch; insurers: InsurerOption[]; on
                       </td>
                       <td className="py-1.5 pr-2 font-mono">{it.plate_no ?? '—'}</td>
                       <td className="py-1.5 pr-2">{it.zone}</td>
+                      {/* v2.8.23 — order unit: periode, penyusutan multi-tahun, dan
+                          apakah diskon dicetak di polis. Penerbit polis perlu
+                          ketiganya; baris impor massal hanya punya tenor. */}
+                      <td className="py-1.5 pr-2">
+                        <span className="whitespace-nowrap">
+                          {it.coverage_start_date && it.coverage_end_date
+                            ? `${it.coverage_start_date} → ${it.coverage_end_date}`
+                            : `${it.tenor_months} bln`}
+                        </span>
+                        {it.depreciation_rate > 0 && (
+                          <span
+                            title={(it.premium_schedule ?? []).map(r => `Tahun ${r.year} (${r.months} bln): TSI ${fmtIDRBulk(r.sumInsured)} · premi gross ${fmtIDRBulk(r.premiumGross)}`).join('\n')}
+                            className="ml-1 inline-block whitespace-nowrap rounded-full bg-sky-100 px-1.5 py-0.5 font-black text-sky-800 dark:bg-sky-900/30 dark:text-sky-300"
+                          >
+                            TSI susut {Number((it.depreciation_rate * 100).toFixed(2))}%/thn
+                          </span>
+                        )}
+                        {it.discount_shown_on_policy === false && it.discount_amount > 0 && (
+                          <span className="ml-1 inline-block whitespace-nowrap rounded-full bg-amber-100 px-1.5 py-0.5 font-black text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                            diskon tidak tertera di polis
+                          </span>
+                        )}
+                      </td>
                       <td className="py-1.5 pr-2 text-right tabular-nums">{fmtIDRBulk(it.financing_value)}</td>
                       <td className="py-1.5 pr-2 text-right tabular-nums font-bold">{fmtIDRBulk(it.total_premium)}</td>
                       <td className="py-1.5 pr-2">

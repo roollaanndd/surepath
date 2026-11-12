@@ -96,6 +96,8 @@ describe('buildBulkQuoteWorkbook', () => {
       discount_amount: 24_000, premium_after_discount: 72_000, admin_fee: 25_000,
       total_premium: 97_000, flags: [], status: 'PENDING' as const,
       policy_number: null, certificate_document_url: null,
+      coverage_start_date: null, coverage_end_date: null, depreciation_rate: 0,
+      premium_schedule: [], discount_shown_on_policy: true,
       created_at: '', updated_at: '',
     } satisfies SpB2BBatchItem;
     const row = quoteRowFromBatchItem(item);

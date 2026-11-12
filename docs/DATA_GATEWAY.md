@@ -43,7 +43,7 @@ Origin yang diizinkan:
 ### B2B Bulk Fleet TLO (v2.7.51 — `actions/b2bBulk.ts`)
 | Action | Fungsi |
 |---|---|
-| `b2b_bulk_create_batch` | B2B_CLIENT (atau admin) submit baris hasil review; **premi dihitung ulang server-side** dari `services/b2bFleetRating.ts` (mirror Deno) — angka uang tidak pernah dipercaya dari klien, hanya input kategorikal (zona/jenis kendaraan/pickup). Masuk `ACTION_MIN_TIER` (akun harus terverifikasi) |
+| `b2b_bulk_create_batch` | B2B_CLIENT (atau admin) submit baris hasil review; **premi dihitung ulang server-side** dari `services/b2bFleetRating.ts` (mirror Deno) — angka uang tidak pernah dipercaya dari klien, hanya input kategorikal (zona/jenis kendaraan/pickup). Masuk `ACTION_MIN_TIER` (akun harus terverifikasi). **v2.8.23 (order unit):** item boleh membawa `coverageStartDate` (YYYY-MM-DD, hari ini s/d +60 hari), `multiYearDepreciation` (true → TSI menyusut 10%/tahun untuk tenor > 12 bln, maks. 72 bln; besarnya ditentukan server), `discountRate` (dijepit ke 0..diskon rate set aktif — klien hanya bisa menurunkan), dan `discountShownOnPolicy`. Disimpan ke `coverage_start_date`/`coverage_end_date`/`depreciation_rate`/`premium_schedule`/`discount_shown_on_policy` |
 | `b2b_bulk_list_batches` | Batch milik klien sendiri; admin + `params.all` lihat semua |
 | `b2b_bulk_get_batch` | Header + items + ringkasan payment terakhir (untuk link invoice) — kepemilikan diverifikasi via `client_id` |
 | `admin_b2b_bulk_issue` | Admin unggah polis induk asli (nomor + URL dokumen di bucket `b2b-documents`) untuk batch PAID → set ISSUED, tandai semua item ISSUED |

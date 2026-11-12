@@ -32,7 +32,6 @@ import B2BFleetCalendar from './B2BFleetCalendar';
 // Lazy-load the heavier screens — each holds its own feature logic (wizards,
 // XLSX parser, PDF builder) that isn't needed on the overview.
 const B2BNewSubmission = lazy(() => import('./B2BNewSubmission'));
-const B2BMotorOrderWizard = lazy(() => import('./B2BMotorOrderWizard'));
 const B2BUnitOrder     = lazy(() => import('./B2BUnitOrder'));
 const B2BBulkImport    = lazy(() => import('./B2BBulkImport'));
 const B2BSubmissions   = lazy(() => import('./B2BSubmissions'));
@@ -52,7 +51,7 @@ interface Props {
 type Section =
   | 'dashboard'
   | 'fleet'
-  | 'new-unit' | 'new-motor' | 'new-single' | 'new-bulk'
+  | 'new-unit' | 'new-single' | 'new-bulk'
   | 'submissions' | 'batches'
   | 'quotes'
   | 'profile';
@@ -132,7 +131,6 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
       id: 'new-single', label: t('Create', 'Buat'), icon: Layers,
       children: [
         { id: 'new-unit',   label: t('Unit Order (Car & Heavy Equipment)', 'Order Unit (Mobil & Alat Berat)') },
-        { id: 'new-motor',  label: t('Multi-Year Vehicle Policy', 'Polis Kendaraan Multi-Tahun') },
         { id: 'new-single', label: t('New Request', 'Pengajuan Baru') },
         { id: 'new-bulk',   label: t('Bulk Import', 'Impor Massal') },
       ],
@@ -146,7 +144,6 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
       case 'fleet':       return [t('Portal B2B', 'Portal B2B'), t('Fleet Renewals', 'Kalender Armada')];
       case 'new-unit':    return [t('Portal B2B', 'Portal B2B'), t('Create', 'Buat'), t('Unit Order', 'Order Unit')];
       case 'new-single':  return [t('Portal B2B', 'Portal B2B'), t('Create', 'Buat'), t('New Request', 'Pengajuan Baru')];
-      case 'new-motor':   return [t('Portal B2B', 'Portal B2B'), t('Create', 'Buat'), t('Multi-Year Vehicle Policy', 'Polis Kendaraan Multi-Tahun')];
       case 'new-bulk':    return [t('Portal B2B', 'Portal B2B'), t('Create', 'Buat'), t('Bulk Import', 'Impor Massal')];
       case 'submissions': return [t('Portal B2B', 'Portal B2B'), t('Requests', 'Pengajuan'), t('Single', 'Satuan')];
       case 'batches':     return [t('Portal B2B', 'Portal B2B'), t('Requests', 'Pengajuan'), t('Bulk Fleet', 'Armada Massal')];
@@ -166,7 +163,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
   const openPathy = () => window.dispatchEvent(new CustomEvent(PATHY_OPEN_EVENT));
 
   const renderContent = () => {
-    if (isMaster && (activeId === 'new-unit' || activeId === 'new-motor' || activeId === 'new-single' || activeId === 'new-bulk')) {
+    if (isMaster && (activeId === 'new-unit' || activeId === 'new-single' || activeId === 'new-bulk')) {
       return (
         <div className="max-w-md mx-auto mt-8">
           <B2BGlass className="p-6 text-center space-y-3">
@@ -211,22 +208,6 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
               clientId={client?.id ?? ''}
               client={client}
               onDone={() => { loadData(); handleSelect('batches'); }}
-              lang={lang}
-            />
-          </Suspense>
-        );
-      case 'new-motor':
-        return (
-          <Suspense fallback={<div className="text-sm text-slate-400 text-center py-16">Memuat…</div>}>
-            <B2BMotorOrderWizard
-              client={{
-                id: client?.id ?? '',
-                name: client?.name,
-                email: client?.email,
-                company_name: client?.company_name,
-                phone: client?.phone,
-              }}
-              onDone={() => { loadData(); handleSelect('submissions'); }}
               lang={lang}
             />
           </Suspense>

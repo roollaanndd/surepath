@@ -3,7 +3,7 @@
 // buttons; quotes still belong to the client, master admin only watches.
 
 import React, { useState, useEffect } from 'react';
-import { FileDown, ThumbsUp, ThumbsDown, FileText } from 'lucide-react';
+import { FileDown, ThumbsUp, ThumbsDown, FileText, AlertTriangle, RefreshCw } from 'lucide-react';
 import { Language } from '../../types';
 import {
   getB2BQuotes, getAllB2BQuotes, updateB2BQuoteStatus, type SpB2BQuote,
@@ -75,6 +75,10 @@ const B2BQuotes: React.FC<Props> = ({ clientId, lang, companyName, allClients, c
   const toast = useB2BToast();
   const [quotes, setQuotes] = useState<SpB2BQuote[]>([]);
   const [loading, setLoading] = useState(true);
+  // v2.8.6 — layanan kini melempar; tangkap dan tampilkan panel Coba lagi
+  // alih-alih menyamar jadi "tidak ada penawaran".
+  const [loadError, setLoadError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const [filter, setFilter] = useState<string>('ALL');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<SpB2BQuote | null>(null);
@@ -83,12 +87,18 @@ const B2BQuotes: React.FC<Props> = ({ clientId, lang, companyName, allClients, c
 
   const load = async () => {
     if (!allClients && !clientId) return;
-    setLoading(true);
-    const data = allClients ? await getAllB2BQuotes() : await getB2BQuotes(clientId);
-    setQuotes(data);
-    setLoading(false);
+    setLoading(true); setLoadError(false);
+    try {
+      const data = allClients ? await getAllB2BQuotes() : await getB2BQuotes(clientId);
+      setQuotes(data);
+    } catch (err) {
+      console.error('Unable to load B2B quotes:', err);
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
   };
-  useEffect(() => { void load(); }, [clientId, allClients]);
+  useEffect(() => { void load(); }, [clientId, allClients, reloadKey]);
 
   const handleAction = async (status: 'ACCEPTED' | 'REJECTED') => {
     if (!selected) return;
@@ -198,13 +208,27 @@ const B2BQuotes: React.FC<Props> = ({ clientId, lang, companyName, allClients, c
           ))}
         </div>
 
-        <B2BTable
-          columns={columns}
-          rows={filtered}
-          onRowClick={(q) => setSelected(q)}
-          loading={loading}
-          empty={t('No quotes match your filter.', 'Tidak ada penawaran dengan filter ini.')}
-        />
+        {loadError ? (
+          <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50/70 p-5 flex items-start gap-3">
+            <AlertTriangle size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-bold text-amber-900">{t('Could not load quotes.', 'Penawaran belum dapat dimuat.')}</p>
+              <p className="text-xs text-amber-700 mt-1">{t('Check your connection and try again. Nothing was changed.',
+                                                              'Periksa koneksi lalu coba lagi. Tidak ada data yang berubah.')}</p>
+              <B2BButton variant="ghost" icon={RefreshCw} onClick={() => setReloadKey(k => k + 1)} className="mt-3">
+                {t('Try again', 'Coba lagi')}
+              </B2BButton>
+            </div>
+          </div>
+        ) : (
+          <B2BTable
+            columns={columns}
+            rows={filtered}
+            onRowClick={(q) => setSelected(q)}
+            loading={loading}
+            empty={t('No quotes match your filter.', 'Tidak ada penawaran dengan filter ini.')}
+          />
+        )}
       </B2BGlass>
 
       <B2BSidePanel

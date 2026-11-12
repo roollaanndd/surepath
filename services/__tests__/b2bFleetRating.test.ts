@@ -40,14 +40,24 @@ describe('b2bFleetRating — browser/Deno parity', () => {
 });
 
 describe('b2bFleetRating — matches the PT MMF reference audit', () => {
-  it('row 1: DENI KASSUARI — motor, Zona 2, 12 bulan, floor premium', () => {
+  it('row 1: DENI KASSUARI — motor, Zona 2, 12 bulan — formula penuh tanpa lantai', () => {
+    // Araahan owner (2026-11-11): premi = nilai pencairan × rate × tenor/12,
+    // TANPA lantai premi minimum (default minPremiumGross = 0).
     const r = browser.calcBulkPremium({ vehicleClass: 'MOTORCYCLE', zone: 2, financingValue: 2_500_000, otr: 6_000_000, tenorMonths: 12 });
     expect(r.rate).toBeCloseTo(0.018, 6);
-    expect(r.premiumGross).toBe(50_000); // 2,500,000 * 0.018 = 45,000 < floor
-    expect(r.discountAmount).toBe(12_500);
-    expect(r.premiumAfterDiscount).toBe(37_500);
+    expect(r.premiumGross).toBe(45_000); // 2,500,000 * 0.018 * 12/12
+    expect(r.discountAmount).toBe(11_250); // 25%
+    expect(r.premiumAfterDiscount).toBe(33_750);
     expect(r.adminFee).toBe(25_000);
-    expect(r.totalPremium).toBe(62_500);
+    expect(r.totalPremium).toBe(58_750);
+    // Metodologi audit manual mitra pilot memakai lantai premi gross 50rb —
+    // mekanismenya tetap ada, direproduksi via rate config eksplisit.
+    const floored = browser.calcBulkPremium(
+      { vehicleClass: 'MOTORCYCLE', zone: 2, financingValue: 2_500_000, otr: 6_000_000, tenorMonths: 12 },
+      { ...browser.DEFAULT_BULK_RATE_CONFIG, minPremiumGross: 50_000 },
+    );
+    expect(floored.premiumGross).toBe(50_000);
+    expect(floored.totalPremium).toBe(62_500);
   });
 
   it('row 2: RITA TJUNG — alat berat, Zona 3, 3 bulan', () => {
@@ -70,8 +80,8 @@ describe('b2bFleetRating — matches the PT MMF reference audit', () => {
     expect(r.premiumGross).toBe(218_400);
     expect(r.discountAmount).toBe(54_600);
     expect(r.premiumAfterDiscount).toBe(163_800);
-    expect(r.adminFee).toBe(45_000);
-    expect(r.totalPremium).toBe(208_800);
+    expect(r.adminFee).toBe(25_000); // arahan owner 2026-11-11: flat 25rb motor & mobil
+    expect(r.totalPremium).toBe(188_800);
   });
 
   it('row 197: SUZUKI CARRY — pickup, Zona 1, 24 bulan tenor pro-rata', () => {
@@ -79,16 +89,16 @@ describe('b2bFleetRating — matches the PT MMF reference audit', () => {
     const r = browser.calcBulkPremium({ vehicleClass: 'CAR', zone: 1, financingValue: 23_000_000, otr: 48_000_000, tenorMonths: 24, commercialBodyHint: true });
     expect(r.rate).toBeCloseTo(0.0088, 6);
     expect(r.premiumGross).toBe(404_800); // 23,000,000 * 0.0088 * 24/12
-    expect(r.totalPremium).toBe(348_600);
+    expect(r.totalPremium).toBe(328_600);
   });
 
-  it('row 231: MITSUBISHI MAVEN — passenger car (category 1), Zona 1, floor premium', () => {
+  it('row 231: MITSUBISHI MAVEN — passenger car (category 1), Zona 1, formula penuh', () => {
     expect(browser.isLikelyCommercialBody('MITSUBISHI MAVEN SDX 2005')).toBe(false);
     const r = browser.calcBulkPremium({ vehicleClass: 'CAR', zone: 1, financingValue: 10_000_000, otr: 46_000_000, tenorMonths: 12, commercialBodyHint: false });
     expect(r.category).toBe(1);
     expect(r.rate).toBeCloseTo(0.0047, 6);
-    expect(r.premiumGross).toBe(50_000); // 10,000,000 * 0.0047 = 47,000 < floor
-    expect(r.totalPremium).toBe(82_500);
+    expect(r.premiumGross).toBe(47_000); // 10,000,000 * 0.0047 — tanpa lantai (arahan owner)
+    expect(r.totalPremium).toBe(60_250);
   });
 
   it('row 246: MITSUBISHI L300 — pickup/van, Zona 3 (Samarinda)', () => {
@@ -96,7 +106,7 @@ describe('b2bFleetRating — matches the PT MMF reference audit', () => {
     const r = browser.calcBulkPremium({ vehicleClass: 'CAR', zone: 3, financingValue: 17_000_000, otr: 46_000_000, tenorMonths: 12, commercialBodyHint: true });
     expect(r.rate).toBeCloseTo(0.0081, 6);
     expect(r.premiumGross).toBe(137_700);
-    expect(r.totalPremium).toBe(148_275);
+    expect(r.totalPremium).toBe(128_275);
   });
 
   it('zone detection: BG plate (Sumsel) and A plate (Banten) match the reference audit zones', () => {
@@ -116,7 +126,7 @@ describe('b2bFleetRating — matches the PT MMF reference audit', () => {
     ];
     const totals = browser.calcBulkTotals(items);
     expect(totals.itemCount).toBe(2);
-    expect(totals.totalAmount).toBe(62_500 + 1_871_250);
+    expect(totals.totalAmount).toBe(58_750 + 1_871_250);
     expect(totals.totalAmount).toBe(items[0].totalPremium + items[1].totalPremium);
   });
 });

@@ -1,11 +1,14 @@
 
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-sp-app>
   <head>
     <meta charset="UTF-8" />
-    <!-- Zoom left enabled for accessibility (WCAG 1.4.4) — user-scalable=no was an
-         a11y + Lighthouse SEO/best-practices fail. viewport-fit=cover kept for notch. -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- App portal: always in app mode — no pinch/double-tap zoom, full screen
+         under notches (owner decision 11 Nov 2026). data-sp-app keeps the lock
+         on in every launch context; the public website (index.html) stays
+         zoomable for WCAG 1.4.4. services/appViewport.ts enforces the same
+         values in JS. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <!-- Brand theme color — dark emerald for status bar when installed as PWA -->
     <meta name="theme-color" content="#003B2F" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#080B12" media="(prefers-color-scheme: dark)" />
@@ -69,10 +72,10 @@
     <meta property="og:description" content="SurePath – platform asuransi digital terpercaya di Indonesia. Beli asuransi mobil, jiwa, perjalanan, dan properti online. Klaim mudah lewat HP, premi terjangkau, didukung teknologi AI. Daftar agen asuransi gratis sekarang." />
     <meta property="og:url" content="https://myinsurepath.com/" />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://myinsurepath.com/surepath-logo.png" />
+    <meta property="og:image" content="https://myinsurepath.com/og-banner.png" />
     <meta name="twitter:title" content="SurePath | Asuransi Mobil, Jiwa &amp; Properti Online — Klaim Cepat" />
     <meta name="twitter:description" content="SurePath – platform asuransi digital terpercaya di Indonesia. Beli asuransi mobil, jiwa, perjalanan, dan properti online. Klaim mudah lewat HP, premi terjangkau, didukung teknologi AI. Daftar agen asuransi gratis sekarang." />
-    <meta name="twitter:image" content="https://myinsurepath.com/surepath-logo.png" />
+    <meta name="twitter:image" content="https://myinsurepath.com/og-banner.png" />
     <!-- seo:per-route:end -->
     <meta name="author" content="SurePath" />
     <!-- Hero video: do NOT preload — 1+ MB blocks first paint on 3G.

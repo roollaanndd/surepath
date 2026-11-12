@@ -1,6 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import { RevampedPortalLoader as PortalLoader } from '../../routes/RevampedPortalLoader';
 import type { AppRouteProps } from '../routeHelpers';
+import { effectiveAppsFor } from '../routeHelpers';
 
 const AuthGate   = lazy(() => import('../../../components/AuthGate'));
 const AppSelector = lazy(() => import('../../../components/AppSelector'));
@@ -59,21 +60,26 @@ export const SelectAppRoutes: React.FC<AppRouteProps> = ({
   pathname, navigate, currentUser, onLogout, resolvePortalPath,
 }) => {
   if (pathname !== '/select-app' || !currentUser) return null;
-  const allowed: string[] = Array.isArray(currentUser.allowed_apps) ? currentUser.allowed_apps : [];
+  // v2.8.9 — normalisasi lewat effectiveAppsFor, bukan allowed_apps mentah:
+  // entri raw-role nama lama tidak menjadi kartu hantu, agen tidak pernah
+  // melihat kartu Customer App (territory /custapp tertutup untuk agen), dan
+  // guard/selector memakai aturan yang sama persis dengan routing.
+  const allowed: string[] = effectiveAppsFor(currentUser);
   if (allowed.length <= 1) {
     // Single app or no allowed_apps — redirect to the right place
     navigate(resolvePortalPath(currentUser));
     return null;
   }
-  const handleAppSelect = (app: 'CUSTOMER' | 'AGENT' | 'OPERATOR' | 'ADMIN') => {
+  const handleAppSelect = (app: 'CUSTOMER' | 'AGENT' | 'OPERATOR' | 'ADMIN' | 'MARKETING') => {
     const target = app === 'ADMIN' ? '/admin'
       : app === 'OPERATOR' ? '/operatorapp'
+      : app === 'MARKETING' ? '/marketingapp'
       : app === 'AGENT' ? '/agapps' : '/custapp';
     navigate(target);
   };
   return (
     <Suspense fallback={<PortalLoader />}>
-      <AppSelector user={currentUser} onSelect={handleAppSelect} onLogout={onLogout} />
+      <AppSelector user={currentUser} apps={allowed} onSelect={handleAppSelect} onLogout={onLogout} />
     </Suspense>
   );
 };

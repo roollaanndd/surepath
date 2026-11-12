@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, useCallback, Component, lazy, Suspense } from 'react';
 import '../../src/styles/portal-modernization.css';
-import { LogOut, Search, Menu, Bell, CheckCircle, X, Upload, Loader2, RefreshCw, PanelLeftClose, PanelLeftOpen, CornerDownLeft, Keyboard } from 'lucide-react';
+import { LogOut, Search, Menu, Bell, CheckCircle, X, Upload, Loader2, RefreshCw, PanelLeftClose, PanelLeftOpen, CornerDownLeft, Keyboard, ShieldAlert } from 'lucide-react';
 import { adminNotifMeta, adminNotifTimeAgo } from './notifMeta';
 // ── Performance: lazy-load all admin views ──────────────────────────────────
 // AdminPortal chunk was 724 KB (largest in the app). Each admin view is
@@ -378,6 +378,44 @@ const AdminPortal = ({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  // ── Anti-printscreen & anti-print (v2.8.8) ─────────────────────────────────
+  // Deteren level UX, bukan keamanan absolut: OS selalu bisa menangkap layar,
+  // dan keamanan sesungguhnya tetap di RLS + auth edge function (lihat catatan
+  // anti-inspect di index.html). Yang dilakukan di sini: PrintScreen → konten
+  // disembunyikan sesaat + clipboard ditimpa; Ctrl/Cmd+P → diblokir; dan
+  // @media print menyembunyikan seluruh root (portal-modernization.css).
+  const [privacyShield, setPrivacyShield] = useState(false);
+  const shieldTimerRef = useRef<number | null>(null);
+  useEffect(() => {
+    const tripShield = () => {
+      setPrivacyShield(true);
+      if (shieldTimerRef.current) window.clearTimeout(shieldTimerRef.current);
+      shieldTimerRef.current = window.setTimeout(() => setPrivacyShield(false), 1600);
+      // PrintScreen menyalin layar ke clipboard (Windows) — timpa isinya bila
+      // browser mengizinkan; di browser lain panggilan ini diabaikan.
+      navigator.clipboard?.writeText(
+        'Konten dashboard SurePath dilindungi — tangkapan layar tidak diizinkan.',
+      ).catch(() => {});
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'PrintScreen') {
+        e.preventDefault();
+        tripShield();
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'p' && e.type === 'keydown') {
+        e.preventDefault();
+        tripShield();
+      }
+    };
+    // PrintScreen di Windows sering hanya memicu keyup — pasang keduanya.
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('keyup', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('keyup', onKey);
+      if (shieldTimerRef.current) window.clearTimeout(shieldTimerRef.current);
+    };
   }, []);
 
   // ── Role-based menu with localStorage overrides ────────────────────────────
@@ -847,6 +885,25 @@ const AdminPortal = ({
       <div style={{ position:'fixed', top:'10%', left:'5%', width:600, height:600, borderRadius:'50%', background:'rgba(16,185,129,0.07)', filter:'blur(120px)', animation:'orb1 18s ease-in-out infinite', pointerEvents:'none', zIndex:0 }} />
       <div style={{ position:'fixed', top:'30%', right:'8%', width:500, height:500, borderRadius:'50%', background:'rgba(59,130,246,0.05)', filter:'blur(120px)', animation:'orb2 24s ease-in-out infinite', pointerEvents:'none', zIndex:0 }} />
       <div style={{ position:'fixed', bottom:'10%', left:'40%', width:700, height:700, borderRadius:'50%', background:'rgba(245,158,11,0.05)', filter:'blur(120px)', animation:'orb3 20s ease-in-out infinite', pointerEvents:'none', zIndex:0 }} />
+
+      {/* ── Watermark SurePath (v2.8.8) — penanda kepemilikan layar admin.
+          Non-interaktif dan transparan, selalu di atas konten (di bawah modal),
+          mengikuti logo kustom yang diunggah admin di Pengaturan. ─────────── */}
+      <div aria-hidden className="sp-admin-watermark pointer-events-none select-none fixed inset-0 z-40 flex items-center justify-center overflow-hidden">
+        <div className="flex flex-col items-center opacity-[0.05] dark:opacity-[0.08]">
+          <SurePathLogo className="w-52 h-auto" />
+          <span className="mt-1 text-2xl font-black uppercase tracking-[0.35em] text-ds-ink dark:text-white">SurePath</span>
+        </div>
+      </div>
+
+      {/* ── Privacy shield (v2.8.8) — reaksi atas PrintScreen / Ctrl+P ──────── */}
+      {privacyShield && (
+        <div className="sp-fade-in pointer-events-none fixed inset-0 z-[1200] bg-emerald-950/95 backdrop-blur-md flex flex-col items-center justify-center gap-2.5 text-center px-6">
+          <ShieldAlert size={40} className="text-emerald-300" />
+          <p className="text-base font-black text-white">Tangkapan layar dinonaktifkan</p>
+          <p className="text-xs text-emerald-200/80">Konten dashboard SurePath dilindungi.</p>
+        </div>
+      )}
 
       {/* ── Desktop sidebar ────────────────────────────────────────────────── */}
       {!isMobile && (

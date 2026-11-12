@@ -81,16 +81,62 @@ ${UNTRUSTED_INPUT_NOTICE}`;
       }
 
     case 'admin_create_b2b_quote': {
+        // FIX v2.8.20 (audit 2026-11-11): aksi lama membaca insurer_id/premium
+        // dan membuang sisanya, padahal UI (B2BAdminView QuoteForm → website.ts
+        // createB2BQuote) mengirim bentuk kanonik SpB2BQuote — insurer_name,
+        // premium_amount, valid_until, terms. Hasilnya setiap penawaran
+        // tersimpan dengan penanggung kosong dan premi Rp 0. Aksi kini menerima
+        // bentuk kanonik, mengambil client_id dari baris pengajuan (bukan dari
+        // params), menvalidasi isi, dan menyeragamkan status pengajuan ke
+        // QUOTED di sisi server. Jika skema live masih menyimpan sisa kolom
+        // lama, kolom yang tidak ada dilempar progresif sampai insert cocok.
         if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
-        const { data, error } = await db.from('sp_b2b_quotes').insert({
-          submission_id: String(params.submission_id ?? ''),
-          insurer_id: String(params.insurer_id ?? ''),
-          premium: Number(params.premium ?? 0),
-          coverage_details: params.coverage_details ?? {},
+        const submissionId = String(params.submission_id ?? '');
+        if (!submissionId) return json({ error: 'submission_id required' }, 400);
+        const { data: submission, error: subErr } = await db.from('sp_b2b_submissions')
+          .select('id, client_id, company_name').eq('id', submissionId).maybeSingle();
+        if (subErr) return json({ error: subErr.message }, 400);
+        if (!submission) return json({ error: 'Submission not found' }, 404);
+
+        const insurerName = String(params.insurer_name ?? params.insurer_id ?? '').trim();
+        const premiumAmount = Number(params.premium_amount ?? params.premium ?? 0);
+        const validUntil = params.valid_until ? String(params.valid_until) : null;
+        const terms = params.terms !== undefined && params.terms !== null ? String(params.terms) : '';
+        if (!insurerName) return json({ error: 'insurer_name wajib diisi' }, 400);
+        if (!Number.isFinite(premiumAmount) || premiumAmount <= 0) return json({ error: 'premium_amount harus lebih besar dari nol' }, 400);
+        if (!validUntil) return json({ error: 'valid_until wajib diisi' }, 400);
+
+        let quoteRow: Record<string, unknown> = {
+          submission_id: submissionId,
+          client_id: submission.client_id,
+          insurer_name: insurerName,
+          premium_amount: premiumAmount,
+          coverage_details: (params.coverage_details && typeof params.coverage_details === 'object') ? params.coverage_details : {},
+          valid_until: validUntil,
+          terms,
           status: 'PENDING',
-        }).select().single();
-        if (error) return json({ error: error.message }, 400);
-        return json({ data });
+        };
+        // Toleransi drift skema: buang kolom yang tidak ada di tabel live satu
+        // per satu berdasarkan pesan error PostgREST (maksimal 5 iterasi).
+        let quote: Record<string, unknown> | null = null;
+        let lastErr: { message: string } | null = null;
+        for (let attempt = 0; attempt < 5 && !quote; attempt++) {
+          const { data, error } = await db.from('sp_b2b_quotes').insert(quoteRow).select().single();
+          if (!error) { quote = data; break; }
+          lastErr = error;
+          const m = error.message.match(/column ["']?([a-z_]+)["']? .*does not exist/i) ?? error.message.match(/["']([a-z_]+)["'] .*does not exist/i);
+          const missing = m?.[1];
+          if (!missing || !(missing in quoteRow)) break;
+          delete quoteRow[missing];
+        }
+        if (!quote) return json({ error: lastErr?.message ?? 'Gagal menyimpan penawaran' }, 400);
+
+        // Selaraskan status pengajuan — panggilan admin_update_b2b_submission
+        // dari UI tetap aman karena idempoten.
+        await db.from('sp_b2b_submissions').update({ status: 'QUOTED', updated_at: new Date().toISOString() })
+          .eq('id', submissionId).then(() => {}, () => {});
+
+        return json({ data: quote });
       }
 
     case 'admin_update_life_application': {

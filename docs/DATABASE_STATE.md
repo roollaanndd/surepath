@@ -3,6 +3,42 @@
 > ⚠️ Dokumen ini mencatat fakta penting: **migrasi di repo TIDAK semuanya sudah diapply ke production**.
 > Snapshot per 7 Juli 2026 (v1.23.0), project Supabase `uyjgeteelnswphyzkjwi` ("Myinsurepath").
 
+## B2B quotes/submissions/documents — hardening + notifikasi (v2.8.20, migrasi `20261111140000`, **MENUNGGU APPLY**)
+
+Audit 11 Nov 2026 menemukan: (1) keputusan penawaran B2B ditulis langsung dari
+peramban tanpa verifikasi, (2) pengajuan B2B baru tidak pernah memberi
+notifikasi ke admin, (3) policy lama tiga tabel B2B dibuat out-of-band
+(dashboard) dan tidak terdokumentasi di repo. Migrasi
+`20261111140000_b2b_quotes_submissions_hardening.sql` mengganti seluruh policy
+ketiga tabel dengan set deterministik. **Belum diapply** — jalankan
+`SBP=<token> python3 /home/z/my-project/scripts/apply_migration_20261111140000.py`.
+
+| Tabel | Policy set baru | Aturan |
+|---|---|---|
+| `sp_b2b_quotes` | `client_sel`, `admin_sel` | Klien: SELECT miliknya via `sp_b2b_own_client_id()` (auth.uid() atau email persis — tanpa pattern match). Admin (7 role, cermin `ADMIN_ROLES` gateway): SELECT. **Tidak ada INSERT/UPDATE/DELETE langsung** — penulisan hanya via gateway service_role (`admin_create_b2b_quote`, `b2b_decide_quote`) |
+| `sp_b2b_submissions` | `client_sel`, `client_ins`, `admin_sel` | Klien: SELECT + INSERT miliknya (WITH CHECK ownership). Admin: SELECT. Update status hanya via gateway |
+| `sp_b2b_documents` | `client_sel`, `client_ins`, `admin_sel` | Ownership via pengajuan induk; tabel dibuat out-of-band — migrasi melewatkannya bila belum ada |
+
+Fungsi helper baru (SECURITY DEFINER, execute dibatasi `authenticated`):
+`sp_b2b_own_client_id()`, `sp_b2b_is_admin()` (7 role, cermin `ADMIN_ROLES`).
+
+Trigger baru pada `sp_b2b_submissions`:
+- `trg_b2b_submission_integrity` (BEFORE INSERT): paksa `status='SUBMITTED'`,
+  validasi `product_type`, kosongkan `admin_notes` — status tidak bisa
+  dipalsukan lewat insert langsung.
+- `trg_b2b_submission_notify` (AFTER INSERT, SECURITY DEFINER): notifikasi
+  `B2B_SUBMISSION_NEW` ke `sp_admin_notifications` — pola sama dengan
+  `notify_new_withdrawal` / `notify_paid_payment` di bawah.
+
+Aksi gateway pendamping (deploy edge functions via GitHub Actions):
+- `b2b_decide_quote` (actions/b2bBulk.ts) — hanya `B2B_CLIENT` pemilik, hanya
+  status `PENDING`, sinkron status pengajuan, notifikasi `B2B_QUOTE_DECIDED`.
+- `admin_create_b2b_quote` (actions/misc.ts) — **diperbaiki**: dulu menulis
+  `insurer_id`/`premium` (kolom yang tidak dikirim UI → penawaran tersimpan
+  penanggung kosong, premi Rp 0); kini menerima bentuk kanonik SpB2BQuote
+  (`insurer_name`, `premium_amount`, `valid_until`, `terms`), `client_id`
+  diambil dari baris pengajuan, toleran drift skema kolom.
+
 ## Rekaman Pathy — `sp_pathy_messages` (diapply 15 September 2026, v2.5.17)
 
 Tabel rekaman percakapan Pathy. **Diapply langsung ke produksi** lewat MCP.

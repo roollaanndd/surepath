@@ -4,6 +4,8 @@ import type { GatewayContext, ActionResult } from './types.ts';
 import { isUntrustedEmail, deriveTier } from '../../_shared/trust.ts';
 import { linkOrdersToNewCustomer } from './clientLink.ts';
 import { getActiveTncVersion } from './b2bSettings.ts';
+import { sanitizeReferralCode, pickUplineMatch } from '../../_shared/referral.ts';
+import { generateUniqueUserCode } from '../../_shared/referral.ts';
 
 // json() helper — returns ActionResult (main index.ts converts to Response)
 const json = (body: unknown, status = 200): ActionResult => ({ status, body });
@@ -186,6 +188,10 @@ export async function handleUsersAction(action: string, ctx: GatewayContext): Pr
           }, 409);
         }
         const role = reqRole === 'AGENT' ? 'AGENT' : 'CUSTOMER';
+        // v2.8.9 — kode diverifikasi unik sebelum dipakai (lihat
+        // _shared/referral.ts): benturan kode lama membuat lookup upline
+        // gagal senyap dan referral tidak masuk downline.
+        const agentCode = await generateUniqueUserCode(db, role as 'AGENT' | 'CUSTOMER');
         const insertRow: Record<string, unknown> = {
           id: caller.authId,
           email: caller.email,
@@ -196,9 +202,7 @@ export async function handleUsersAction(action: string, ctx: GatewayContext): Pr
           role,
           trust_score: role === 'AGENT' ? 80 : 85,
           verified: role !== 'AGENT',
-          agent_code: role === 'AGENT'
-            ? 'SP-AGT-' + String(Math.floor(1000 + Math.random() * 9000))
-            : 'SP-' + String(Math.floor(Math.random() * 99999)).padStart(5, '0'),
+          agent_code: agentCode,
         };
         if (role === 'AGENT') {
           insertRow.commission_rate = 0.1;
@@ -206,25 +210,30 @@ export async function handleUsersAction(action: string, ctx: GatewayContext): Pr
         }
         // Referral linkage — code travels in signup metadata (survives the
         // email-confirmation flow, even on another device) or explicit param.
-        // Matches the upline's agent_code OR referral_code.
-        // SECURITY: sanitize the ref code before interpolating into a PostgREST
-        // .or() string — otherwise a value like "xyz,id.eq.<admin_uuid>" would
-        // extend the filter and match arbitrary rows (filter injection).
-        const rawRefCode = String(params.referral_code ?? meta.referral_code ?? '').trim();
-        const refCode = rawRefCode.replace(/[^A-Za-z0-9-]/g, '').slice(0, 32);
+        // Matches the upline's referral_code OR agent_code.
+        // SECURITY: refCode is sanitized (alphanumeric + dash only, max 32 chars)
+        // so it's safe to interpolate into the PostgREST .or() string filter.
+        // The array form .or([{...}, {...}]) is NOT supported by the Supabase
+        // JS client — it only accepts a string. Using the array form causes a
+        // silent crash that breaks registration.
+        //
+        // v2.8.9 — lookup kini mengambil SEMUA kandidat (bukan maybeSingle()
+        // yang gagal senyap saat kode dicocokkan lebih dari satu baris) dan
+        // pemenang dipilih deterministik di _shared/referral.ts; pencocokan
+        // juga case-insensitive.
+        const refCode = sanitizeReferralCode(params.referral_code ?? meta.referral_code);
         if (refCode) {
-          // SECURITY: refCode is sanitized (alphanumeric + dash only, max 32 chars)
-          // so it's safe to interpolate into the PostgREST .or() string filter.
-          // The array form .or([{...}, {...}]) is NOT supported by the Supabase
-          // JS client — it only accepts a string. Using the array form causes a
-          // silent crash that breaks registration.
-          const { data: upline } = await db
+          const { data: uplineCandidates, error: uplineErr } = await db
             .from('sp_users')
-            .select('id')
-            .or(`agent_code.eq.${refCode},referral_code.eq.${refCode}`)
+            .select('id, agent_code, referral_code')
+            .or(`agent_code.ilike.${refCode},referral_code.ilike.${refCode}`)
             .neq('id', caller.authId)
-            .maybeSingle();
-          if (upline) insertRow.upline_id = upline.id;
+            .order('created_at', { ascending: true })
+            .limit(5);
+          if (!uplineErr) {
+            const upline = pickUplineMatch(uplineCandidates, refCode);
+            if (upline) insertRow.upline_id = upline.id;
+          }
         }
         const { data, error } = await db.from('sp_users').insert(insertRow).select().single();
         if (error) return json({ error: error.message }, 400);
@@ -270,17 +279,21 @@ export async function handleUsersAction(action: string, ctx: GatewayContext): Pr
         if (!caller.spUser) return json({ error: 'No profile' }, 403);
         // SECURITY: sanitize the code — PostgREST .or() string interpolation
         // is otherwise vulnerable to filter injection.
-        const rawCode = String(params.code ?? '').trim();
-        const code = rawCode.replace(/[^A-Za-z0-9-]/g, '').slice(0, 32);
+        // v2.8.9 — kandidat diambil semua (bukan maybeSingle yang gagal senyap
+        // saat kode duplikat) dan pemenangnya deterministik; pencocokan
+        // case-insensitive (ilike) diikuti pickUplineMatch di sisi JS.
+        const code = sanitizeReferralCode(params.code);
         if (!code) return json({ error: 'Missing code' }, 400);
         if (caller.spUser.upline_id) return json({ data: { upline_id: caller.spUser.upline_id, already_set: true } });
-        const { data: upline, error: lookupErr } = await db
+        const { data: uplineCandidates, error: lookupErr } = await db
           .from('sp_users')
-          .select('id')
-          .or(`agent_code.eq.${code},referral_code.eq.${code}`)
+          .select('id, agent_code, referral_code')
+          .or(`agent_code.ilike.${code},referral_code.ilike.${code}`)
           .neq('id', caller.spUser.id)
-          .maybeSingle();
+          .order('created_at', { ascending: true })
+          .limit(5);
         if (lookupErr) return json({ error: lookupErr.message }, 400);
+        const upline = pickUplineMatch(uplineCandidates, code);
         if (!upline) return json({ error: 'Invalid referral code' }, 404);
         const { error } = await db
           .from('sp_users')

@@ -11,7 +11,7 @@
 
 import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import {
-  LayoutDashboard, FileText, FileCheck, Layers, User, Sparkles, ShieldCheck,
+  LayoutDashboard, FileText, FileCheck, Layers, User, Sparkles, ShieldCheck, CalendarDays,
 } from 'lucide-react';
 import { Language, UserRole } from '../../types';
 import {
@@ -27,11 +27,13 @@ import {
   type B2BNavItem,
 } from './dashboard/ui';
 import B2BDashboard from './B2BDashboard';
+import B2BFleetCalendar from './B2BFleetCalendar';
 
 // Lazy-load the heavier screens — each holds its own feature logic (wizards,
 // XLSX parser, PDF builder) that isn't needed on the overview.
 const B2BNewSubmission = lazy(() => import('./B2BNewSubmission'));
 const B2BMotorOrderWizard = lazy(() => import('./B2BMotorOrderWizard'));
+const B2BUnitOrder     = lazy(() => import('./B2BUnitOrder'));
 const B2BBulkImport    = lazy(() => import('./B2BBulkImport'));
 const B2BSubmissions   = lazy(() => import('./B2BSubmissions'));
 const B2BBulkBatches   = lazy(() => import('./B2BBulkBatches'));
@@ -49,7 +51,8 @@ interface Props {
 // multifinance partner jump straight to Bulk without hunting a toggle.
 type Section =
   | 'dashboard'
-  | 'new-single' | 'new-bulk' | 'new-motor'
+  | 'fleet'
+  | 'new-unit' | 'new-motor' | 'new-single' | 'new-bulk'
   | 'submissions' | 'batches'
   | 'quotes'
   | 'profile';
@@ -65,34 +68,45 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
   const [bulkBatches, setBulkBatches] = useState<SpB2BBatch[]>([]);
   const [companyByClient, setCompanyByClient] = useState<Record<string, string>>({});
   const [initialLoading, setInitialLoading] = useState(true);
+  // v2.8.6 — kegagalan muat data portal tidak lagi menyamar jadi "belum ada
+  // data". Banner jujur + tombol coba lagi, baik di dashboard maupun layar
+  // daftar (yang memuat data masing-masing).
+  const [loadError, setLoadError] = useState(false);
 
   const loadData = async () => {
     if (!client?.id) return;
-    if (isMaster) {
-      const [subs, qs, batches, clients] = await Promise.all([
-        getAllB2BSubmissions(),
-        getAllB2BQuotes(),
-        getB2BBulkBatches({ all: true }),
-        adminListB2BUsers(),
+    setLoadError(false);
+    try {
+      if (isMaster) {
+        const [subs, qs, batches, clients] = await Promise.all([
+          getAllB2BSubmissions(),
+          getAllB2BQuotes(),
+          getB2BBulkBatches({ all: true }),
+          adminListB2BUsers(),
+        ]);
+        setSubmissions(subs);
+        setQuotes(qs);
+        setBulkBatches(batches);
+        setCompanyByClient(Object.fromEntries(
+          clients.map(c => [c.id, c.company_name || c.name || '—']),
+        ));
+        setInitialLoading(false);
+        return;
+      }
+      const [subs, qs, batches] = await Promise.all([
+        getB2BSubmissions(client.id),
+        getB2BQuotes(client.id),
+        getB2BBulkBatches(),
       ]);
       setSubmissions(subs);
       setQuotes(qs);
       setBulkBatches(batches);
-      setCompanyByClient(Object.fromEntries(
-        clients.map(c => [c.id, c.company_name || c.name || '—']),
-      ));
       setInitialLoading(false);
-      return;
+    } catch (error) {
+      console.error('Unable to load B2B portal data:', error);
+      setLoadError(true);
+      setInitialLoading(false);
     }
-    const [subs, qs, batches] = await Promise.all([
-      getB2BSubmissions(client.id),
-      getB2BQuotes(client.id),
-      getB2BBulkBatches(),
-    ]);
-    setSubmissions(subs);
-    setQuotes(qs);
-    setBulkBatches(batches);
-    setInitialLoading(false);
   };
 
   useEffect(() => { void loadData(); }, [client?.id, isMaster]);
@@ -101,6 +115,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
 
   const nav: B2BNavItem[] = useMemo(() => [
     { id: 'dashboard', label: t('Dashboard', 'Dashboard'), icon: LayoutDashboard },
+    { id: 'fleet', label: t('Fleet Renewals', 'Kalender Armada'), icon: CalendarDays },
     {
       id: 'submissions', label: t('Requests', 'Pengajuan'), icon: FileText,
       badge: submissions.filter(s => s.status === 'SUBMITTED' || s.status === 'REVIEWING').length,
@@ -114,10 +129,11 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
       badge: quotes.filter(q => q.status === 'PENDING').length,
     },
     {
-      id: 'new-motor', label: t('Create', 'Buat'), icon: Layers,
+      id: 'new-single', label: t('Create', 'Buat'), icon: Layers,
       children: [
-        { id: 'new-motor',  label: t('Motor Vehicle', 'Kendaraan Bermotor') },
-        { id: 'new-single', label: t('Other Request', 'Ajuan Lainnya') },
+        { id: 'new-unit',   label: t('Unit Order (Car & Heavy Equipment)', 'Order Unit (Mobil & Alat Berat)') },
+        { id: 'new-motor',  label: t('Multi-Year Vehicle Policy', 'Polis Kendaraan Multi-Tahun') },
+        { id: 'new-single', label: t('New Request', 'Pengajuan Baru') },
         { id: 'new-bulk',   label: t('Bulk Import', 'Impor Massal') },
       ],
     },
@@ -127,8 +143,10 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
   const breadcrumb = useMemo((): string[] => {
     switch (activeId) {
       case 'dashboard':   return [t('Portal B2B', 'Portal B2B'), t('Dashboard', 'Dashboard')];
-      case 'new-motor':   return [t('Portal B2B', 'Portal B2B'), t('Create', 'Buat'), t('Motor Vehicle', 'Kendaraan Bermotor')];
-      case 'new-single':  return [t('Portal B2B', 'Portal B2B'), t('Create', 'Buat'), t('Other Request', 'Ajuan Lainnya')];
+      case 'fleet':       return [t('Portal B2B', 'Portal B2B'), t('Fleet Renewals', 'Kalender Armada')];
+      case 'new-unit':    return [t('Portal B2B', 'Portal B2B'), t('Create', 'Buat'), t('Unit Order', 'Order Unit')];
+      case 'new-single':  return [t('Portal B2B', 'Portal B2B'), t('Create', 'Buat'), t('New Request', 'Pengajuan Baru')];
+      case 'new-motor':   return [t('Portal B2B', 'Portal B2B'), t('Create', 'Buat'), t('Multi-Year Vehicle Policy', 'Polis Kendaraan Multi-Tahun')];
       case 'new-bulk':    return [t('Portal B2B', 'Portal B2B'), t('Create', 'Buat'), t('Bulk Import', 'Impor Massal')];
       case 'submissions': return [t('Portal B2B', 'Portal B2B'), t('Requests', 'Pengajuan'), t('Single', 'Satuan')];
       case 'batches':     return [t('Portal B2B', 'Portal B2B'), t('Requests', 'Pengajuan'), t('Bulk Fleet', 'Armada Massal')];
@@ -148,7 +166,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
   const openPathy = () => window.dispatchEvent(new CustomEvent(PATHY_OPEN_EVENT));
 
   const renderContent = () => {
-    if (isMaster && (activeId === 'new-single' || activeId === 'new-bulk' || activeId === 'new-motor')) {
+    if (isMaster && (activeId === 'new-unit' || activeId === 'new-motor' || activeId === 'new-single' || activeId === 'new-bulk')) {
       return (
         <div className="max-w-md mx-auto mt-8">
           <B2BGlass className="p-6 text-center space-y-3">
@@ -166,6 +184,9 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
     }
 
     switch (activeId) {
+      case 'fleet':
+        return <B2BFleetCalendar lang={lang} />;
+
       case 'dashboard':
         return (
           <B2BDashboard
@@ -179,20 +200,33 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
             companyByClient={companyByClient}
             lang={lang}
             loading={initialLoading}
+            loadError={loadError}
+            onRetry={() => { loadData(); }}
           />
+        );
+      case 'new-unit':
+        return (
+          <Suspense fallback={<div className="text-sm text-slate-400 text-center py-16">Memuat…</div>}>
+            <B2BUnitOrder
+              clientId={client?.id ?? ''}
+              client={client}
+              onDone={() => { loadData(); handleSelect('batches'); }}
+              lang={lang}
+            />
+          </Suspense>
         );
       case 'new-motor':
         return (
           <Suspense fallback={<div className="text-sm text-slate-400 text-center py-16">Memuat…</div>}>
             <B2BMotorOrderWizard
               client={{
-                id: client.id,
-                name: client.name,
-                email: client.email,
-                company_name: client.company_name,
-                phone: client.phone,
+                id: client?.id ?? '',
+                name: client?.name,
+                email: client?.email,
+                company_name: client?.company_name,
+                phone: client?.phone,
               }}
-              onDone={() => handleSelect('submissions')}
+              onDone={() => { loadData(); handleSelect('submissions'); }}
               lang={lang}
             />
           </Suspense>

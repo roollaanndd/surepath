@@ -169,6 +169,32 @@ This record intentionally distinguishes incremental work from the full target.
 
 Append a new entry after each meaningful implementation/verification milestone.
 
+### 2026-11-11 (v2.8.6) — B2B: login premium + portal jujur soal kegagalan data
+
+- **Latar:** PR #371 (akun B2B buatan admin, sandi manual, UX portal, login
+  premium — branch berbasis v2.7.55) tidak bisa di-merge: main maju ke
+  v2.8.5 lewat 9 commit lain, fitur akun/sandi manual sudah masuk lewat jalur
+  berbeda (`admin_create_b2b_user`, `AddUserWizard`) dan portal B2B sudah
+  didesain ulang total (v2.8.3, B2BHome diganti B2BDashboard). PR ditutup
+  sebagai draft; dua bagian yang masih relevan di-port ke branch baru dari
+  main (keputusan pemilik).
+- **Login premium:** split desktop — panel brand hijau bertema buku besar
+  (motif garis ledger + tiga nilai produk) di kiri, kartu kaca di kanan; saat
+  sukses panel hijau menyapu layar kiri→kanan ("Selamat datang kembali" +
+  progress bar) sebelum portal termuat di bawahnya. Hormat
+  prefers-reduced-motion. Logika auth main dipertahankan utuh termasuk
+  pengecualian MASTER_ADMIN mode pantau (v2.8.1).
+- **Kejujuran error:** lima layanan B2B (`getB2BSubmissions`,
+  `getAllB2BSubmissions`, `getB2BQuotes`, `getAllB2BQuotes`,
+  `getB2BBulkBatches`) melempar alih-alih menelan jadi `[]`; B2BPortal +
+  B2BDashboard dapat banner amber + Coba lagi; B2BQuotes & B2BBulkBatches
+  dapat try/catch + panel error (menyamai pola B2BSubmissions yang sudah ada;
+  catch-nya dulu tidak pernah terpicu karena layanan menelan). B2BAdminView
+  sudah punya catch sendiri — aman.
+- **Uji:** eslint file terubah 0 error; vitest `services/__tests__/` penuh —
+  51 file lolos, 3 gagal = pre-existing (theme/pwaInstall/
+  onboardingIllustrations), bukan regresi. Versi 2.8.6, versionCode 63.
+
 ### 2026-11-05 (v2.7.55) — Portal Mitra: ikon Beranda, STNK setara Nasabah, rentang harga, diskon step 4, handoff & approval manual
 
 - **Direktif pemilik (6 poin):** ikon "Klien"/"Profil" diperbagus; UI AI STNK

@@ -439,8 +439,10 @@ describe('claim handoff', () => {
 
 // ─── App-mode viewport lock ──────────────────────────────────────────────────
 //
-// The split that matters: locked inside the installed app, free in a browser
-// tab. Locking the public website would fail WCAG 1.4.4.
+// Since v2.8.10: the app portals (`<html data-sp-app>`) are locked in EVERY
+// context — a plain browser tab included, per the owner's "act like a native
+// app" requirement. The public website keeps the split: locked inside the
+// installed app, free in a browser tab (WCAG 1.4.4).
 
 describe('app viewport lock', () => {
   const stubMedia = (standalone: boolean) => {
@@ -455,6 +457,7 @@ describe('app viewport lock', () => {
 
   beforeEach(() => {
     document.documentElement.className = '';
+    document.documentElement.removeAttribute('data-sp-app');
     document.head.innerHTML = '<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">';
     delete (window as unknown as { Capacitor?: unknown }).Capacitor;
   });
@@ -466,6 +469,22 @@ describe('app viewport lock', () => {
     m.initAppViewport();
     expect(document.querySelector('meta[name=viewport]')?.getAttribute('content')).not.toMatch(/user-scalable=no/);
     expect(document.documentElement.classList.contains('sp-app-locked')).toBe(false);
+  });
+
+  it('locks an app portal even in a plain browser tab (data-sp-app)', async () => {
+    stubMedia(false);
+    document.documentElement.setAttribute('data-sp-app', '');
+    const m = await load();
+    // The lock comes from the portal declaration, not from display-mode:
+    expect(m.isAppMode()).toBe(false);
+    m.initAppViewport();
+    const content = document.querySelector('meta[name=viewport]')?.getAttribute('content') ?? '';
+    expect(content).toMatch(/user-scalable=no/);
+    expect(content).toMatch(/maximum-scale=1\.0/);
+    expect(document.documentElement.classList.contains('sp-app-locked')).toBe(true);
+    const e = new Event('gesturestart', { cancelable: true, bubbles: true });
+    document.dispatchEvent(e);
+    expect(e.defaultPrevented).toBe(true);
   });
 
   it('locks zoom once running as an installed app', async () => {

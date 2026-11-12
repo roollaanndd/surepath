@@ -17,6 +17,7 @@ import {
 import { lookupPlate } from '../services/plateCodes';
 import { createXenditInvoice } from '../services/paymentService';
 import { attachOrderDocuments } from '../services/orderDocuments';
+import { consumeRenewalPrefill } from '../services/renewalHandoff';
 
 // Import Steps
 import StepVehicle from './car-wizard/StepVehicle';
@@ -68,12 +69,19 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
   const [invoiceFailed, setInvoiceFailed] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const [vehicle, setVehicle] = useState({
-    brand: '', model: '', year: new Date().getFullYear(), isOther: false,
-    price: 0, basePrice: 0, manualPrice: false, plate: '',
-    vin: '', engine: '', color: '',
-    region: '3' as '1'|'2'|'3', regionName: 'Region Lainnya', usage: 'PRIVATE', condition: 'NEW',
-    province: '' as string, // CMS-backed province name (drives zone via getZone)
+  // One-tap renewal (v2.8.12): the customer portal's RenewalCard parks the
+  // expiring order's vehicle snapshot; consuming it here ONCE at mount
+  // pre-fills the vehicle step so renewal doesn't start from scratch.
+  const [renewalPrefill] = useState(consumeRenewalPrefill);
+  const [vehicle, setVehicle] = useState(() => {
+    const p = renewalPrefill?.vehicle;
+    return {
+      brand: p?.brand ?? '', model: p?.model ?? '', year: p?.year ?? new Date().getFullYear(), isOther: false,
+      price: 0, basePrice: 0, manualPrice: false, plate: p?.plate ?? '',
+      vin: '', engine: '', color: '',
+      region: (p?.region ?? '3') as '1'|'2'|'3', regionName: 'Region Lainnya', usage: p?.usage ?? 'PRIVATE', condition: p?.condition ?? 'NEW',
+      province: (p?.province ?? '') as string, // CMS-backed province name (drives zone via getZone)
+    };
   });
 
   // Auto-populate price from admin vehicle DB when brand/model/year change.
@@ -728,6 +736,15 @@ const CarInsuranceWizard = ({ onComplete, currentUser, lang }: { onComplete: () 
 
        {/* MAIN CONTENT AREA */}
        <div className="px-5 py-4">
+          {renewalPrefill && step === 0 && (
+            <div className="mb-4 flex items-center gap-2.5 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.07] px-4 py-3">
+              <ShieldCheck size={16} className="text-emerald-500 shrink-0" />
+              <p className="text-xs text-ds-ink2 m-0">
+                Perpanjangan polis <strong>{renewalPrefill.orderNumber}</strong>
+                {renewalPrefill.productName ? ` · ${renewalPrefill.productName}` : ''} — data kendaraan dari polis sebelumnya sudah dimuat. Periksa dan lanjutkan.
+              </p>
+            </div>
+          )}
           {step === 0 && <StepVehicle vehicle={vehicle} setVehicle={setVehicle} entryMode={entryMode} setEntryMode={setEntryMode} handlePlateChange={handlePlateChange} formatInputCurrency={(val) => new Intl.NumberFormat('id-ID').format(parseInt(val || "0"))} loading={loading} setLoading={setLoading} loadingType={loadingType} setLoadingType={setLoadingType} setStnkResult={setStnkResult} />}
           {step === 1 && <StepCoverage coverage={coverage} setCoverage={setCoverage} premiumBreakdown={premiumBreakdown} maxDiscountPercent={premiumBreakdown?.maxDiscountPercent ?? 25} />}
           {step === 2 && <StepProviders sortBy={sortBy} setSortBy={setSortBy} sortedProviders={availableProducts} selectedProviderId={selectedProductId} setSelectedProviderId={setSelectedProductId} premiumBreakdown={premiumBreakdown} isAgentVerified={isAgentVerified} showProviderBreakdown={showProviderBreakdown} setShowProviderBreakdown={setShowProviderBreakdown} />}

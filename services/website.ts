@@ -647,7 +647,10 @@ export async function getB2BSubmissions(clientId: string): Promise<SpB2BSubmissi
     .select('*')
     .eq('client_id', clientId)
     .order('created_at', { ascending: false });
-  if (error) { console.error('getB2BSubmissions:', error); return []; }
+  // v2.8.6 — melempar alih-alih menelan jadi []: array kosong terbaca
+  // "belum ada ajuan" dan menyembunyikan kegagalan dari klien. Pemanggil
+  // (B2BPortal, B2BSubmissions) menangkapnya dan menampilkan panel Coba lagi.
+  if (error) { console.error('getB2BSubmissions:', error); throw new Error(error.message); }
   return (data ?? []) as SpB2BSubmission[];
 }
 
@@ -656,7 +659,7 @@ export async function getAllB2BSubmissions(): Promise<SpB2BSubmission[]> {
     .from('sp_b2b_submissions')
     .select('*')
     .order('created_at', { ascending: false });
-  if (error) { console.error('getAllB2BSubmissions:', error); return []; }
+  if (error) { console.error('getAllB2BSubmissions:', error); throw new Error(error.message); }
   return (data ?? []) as SpB2BSubmission[];
 }
 
@@ -678,11 +681,12 @@ export async function getB2BQuotes(clientId: string): Promise<SpB2BQuote[]> {
     .select('*')
     .eq('client_id', clientId)
     .order('created_at', { ascending: false });
-  if (error) { console.error('getB2BQuotes:', error); return []; }
+  // v2.8.6 — melempar, bukan [] (lihat getB2BSubmissions).
+  if (error) { console.error('getB2BQuotes:', error); throw new Error(error.message); }
   return (data ?? []) as SpB2BQuote[];
 }
 
-// v2.8.1 — Mode pantau MASTER_ADMIN di portal B2B: ambil penawaran SEMUA
+// v2.8.1 - Mode pantau MASTER_ADMIN di portal B2B: ambil penawaran SEMUA
 // klien korporat. Aman untuk role lain juga: RLS sp_b2b_quotes (client_sel /
 // admin_all) yang membatasi hasil sesuai pemanggil, bukan query ini.
 export async function getAllB2BQuotes(): Promise<SpB2BQuote[]> {
@@ -690,7 +694,7 @@ export async function getAllB2BQuotes(): Promise<SpB2BQuote[]> {
     .from('sp_b2b_quotes')
     .select('*')
     .order('created_at', { ascending: false });
-  if (error) { console.error('getAllB2BQuotes:', error); return []; }
+  if (error) { console.error('getAllB2BQuotes:', error); throw new Error(error.message); }
   return (data ?? []) as SpB2BQuote[];
 }
 
@@ -718,10 +722,12 @@ export async function updateB2BQuoteStatus(
   quoteId: string,
   status: 'ACCEPTED' | 'REJECTED'
 ): Promise<boolean> {
-  const { error } = await supabase
-    .from('sp_b2b_quotes')
-    .update({ status, updated_at: new Date().toISOString() })
-    .eq('id', quoteId);
+  // FIX v2.8.20 (audit 2026-11-11): dulu update langsung dari peramban —
+  // tanpa verifikasi kepemilikan, tanpa sinkron status pengajuan, tanpa
+  // notifikasi admin. Sekarang lewat aksi gateway b2b_decide_quote yang
+  // menegaskan ketiganya di server (lihat actions/b2bBulk.ts).
+  const { error } = await callGateway('b2b_decide_quote', { quote_id: quoteId, decision: status })
+    .then(r => r.error ? { error: r.error } : { error: null });
   if (error) { console.error('updateB2BQuoteStatus:', error); return false; }
   return true;
 }

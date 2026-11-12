@@ -5,6 +5,7 @@ import {
   getAgentDownlineTree,
   getOverrideTransactions,
   getAgentOrders,
+  getAgentReferralCode,
   type WalletTransaction,
   type SpPolicyOrder,
   type DownlineNode,
@@ -14,6 +15,7 @@ import { formatIDR } from '../car-wizard/WizardUI';
 import { AgentArtKeyframes, AgentHero, SpotNetwork } from './AgentArt';
 import { useTierDefinitions, getTierByCode } from '../../hooks/useTierDefinitions';
 import ModuleIcon from '../shared/ModuleIcon';
+import QRCode from 'qrcode';
 
 interface Props {
   agentId: string;
@@ -68,7 +70,16 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
     setLoading(true);
     Promise.all([
       // Fetch referral code directly from agent prop or supabase
-      (async () => agent?.agent_code ?? null)(),
+      // v2.8.9 — kode yang dibagikan HARUS sama dengan yang dicocokkan server.
+      // Salinan sesi (nodeId) bisa berbeda dari sp_users: fallback lokal yang
+      // difabrikasi saat profil belum memuat agent_code, atau kode yang
+      // diganti admin di sisi server. Jadi kode dibaca dulu dari database
+      // (referral_code kanonik, dibackfill migration v2.8.9), fallback ke
+      // agent_code sesi hanya kalau DB gagal dijangkau.
+      (async () => {
+        const fromDb = agentId ? await getAgentReferralCode(agentId).catch(() => null) : null;
+        return fromDb ?? agent?.agent_code ?? null;
+      })(),
       getAgentDownlineTree(agentId),
       getOverrideTransactions(agentId),
     ]).then(([code, dl, txns]) => {
@@ -76,7 +87,7 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
       setDownlines(dl);
       setOverrideTxns(txns);
     }).finally(() => setLoading(false));
-  }, [agentId]);
+  }, [agentId, agent?.agent_code]);
 
   // Fetch issued orders (gateway scopes to the caller's own orders — downline
   // order details are private; downline stats come from override transactions)
@@ -86,6 +97,19 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
   }, [downlines, agentId]);
 
   const referralLink = `https://myinsurepath.com?ref=${referralCode ?? ''}`;
+
+  // Roadmap #6 — the QR a prospect can SCAN off the agent's phone screen.
+  // Same canonical link as the WhatsApp share; scan → ?ref= lands on the
+  // public site, App.tsx parks it in SUREPATH_REF, RoleSelectionScreen binds
+  // it at signup. Generated locally (qrcode pkg), no backend call.
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!referralCode) { setQrDataUrl(null); return; }
+    QRCode.toDataURL(referralLink, { width: 512, margin: 2, color: { dark: '#07362C', light: '#FFFFFF' } })
+      .then(setQrDataUrl)
+      .catch(() => setQrDataUrl(null));
+  }, [referralCode, referralLink]);
+
   const totalOverride = overrideTxns.reduce((s, tx) => s + tx.amount, 0);
   const l1Count = downlines.length;
   const l2Count = downlines.reduce((s, d) => s + d.l2.length, 0);
@@ -202,6 +226,23 @@ const AgentNetwork: React.FC<Props> = ({ agentId, lang, agent }) => {
         <div className="text-4xl font-black tracking-widest my-3 bg-white/10 rounded-2xl py-3 px-4 text-center">
           {referralCode ?? '—'}
         </div>
+
+        {qrDataUrl && referralCode && (
+          <div className="mt-3 flex items-center gap-3 bg-white/5 rounded-2xl p-3">
+            <img src={qrDataUrl} alt={t('Referral QR code', 'Kode QR referral')} width={92} height={92}
+              className="rounded-xl bg-white p-1.5 shrink-0" draggable={false} />
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-black uppercase tracking-widest opacity-70 m-0">
+                {t('Scan to register', 'Scan untuk daftar')}
+              </p>
+              <p className="text-[10px] opacity-60 m-0 break-all leading-snug">{referralLink}</p>
+              <a href={qrDataUrl} download={`SurePath-QR-${referralCode}.png`}
+                className="inline-flex items-center gap-1.5 mt-2 py-1.5 px-3 bg-white/20 hover:bg-white/30 rounded-lg font-black text-[10px] uppercase tracking-widest transition-all">
+                {t('Save QR', 'Simpan QR')}
+              </a>
+            </div>
+          </div>
+        )}
 
         <div className="flex gap-2 mt-3">
           <button

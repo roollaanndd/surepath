@@ -47,10 +47,12 @@ const emptyDraft = (): Omit<SpB2BFleetRateSet, 'id' | 'created_at' | 'updated_at
     heavyEquipmentRate: 0.0085,
     discountRateStandard: 0.25,
     discountRateHeavy: 0.15,
+    // Araahan owner (2026-11-11): admin fee flat 25rb motor & mobil, premi
+    // formula penuh tanpa lantai (minPremiumGross 0).
     adminFeeMotorcycle: 25_000,
-    adminFeeCar: 45_000,
+    adminFeeCar: 25_000,
     adminFeeHeavy: 65_000,
-    minPremiumGross: 50_000,
+    minPremiumGross: 0,
   },
   notes: '',
 });

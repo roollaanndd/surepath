@@ -3,6 +3,7 @@ import { RefreshCw, ArrowDownToLine, TrendingUp, Clock } from 'lucide-react';
 import { Language } from '../../types';
 import { getAgentCommissions, getAgentCoinBalance, getAgentCoinLedger, getMyWithdrawals, type SpCommission, type SpCoinLedger } from '../../services/supabaseService';
 import { formatIDR } from '../car-wizard/WizardUI';
+import { effectiveCommissionRate, simulateCommission } from '../../services/commissionSimulator';
 import { AgentArtKeyframes, SpotWallet, AgentEmpty } from './AgentArt';
 import { IcWallet, IcCoin } from './AgentIcons';
 import ModuleIcon from '../shared/ModuleIcon';
@@ -89,6 +90,13 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang, onNavigate }) => {
 
   const monthGrowth = lastMonth > 0 ? Math.round(((thisMonth - lastMonth) / lastMonth) * 100) : 0;
 
+  // Roadmap #7 — the simulator runs at the agent's OWN blended rate from real
+  // commission history; standard 10% only when history is too thin to measure.
+  const histRate = effectiveCommissionRate(commissions);
+  const [simCount, setSimCount] = useState(5);
+  const [simPremium, setSimPremium] = useState(5_000_000);
+  const sim = simulateCommission({ countPerMonth: simCount, avgPremium: simPremium, ratePct: histRate ?? 10 });
+
   // By product aggregation
   const byProduct = ['CAR', 'TRAVEL', 'PA', 'MPAR'].map(type => ({
     type,
@@ -163,6 +171,46 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang, onNavigate }) => {
           <ArrowDownToLine size={14} />
           {t('Request Withdrawal', 'Minta Pencairan')}
         </button>
+      </div>
+
+      {/* Commission Simulator — motivation that is measurable */}
+      <div className="mx-4 mt-3 sp-glass rounded-[1.5rem] p-5">
+        <p className="text-ds-ink2 text-xs font-black uppercase tracking-widest">{t('Commission Simulator', 'Simulator Komisi')}</p>
+        <p className="text-ds-ink3 text-[10px] mt-1 mb-3">
+          {histRate !== null
+            ? t(`Rate from your history: ${histRate.toFixed(1)}%`, `Rate dari riwayat Anda: ${histRate.toFixed(1)}%`)
+            : t('Using the standard rate of 10%', 'Memakai rate standar 10%')}
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          <label className="block">
+            <span className="text-[10px] font-black text-ds-ink3 uppercase tracking-widest">{t('Policies / month', 'Polis / bulan')}</span>
+            <input
+              type="number" min={0} max={200} value={simCount}
+              onChange={e => setSimCount(Number(e.target.value))}
+              className="w-full mt-1 h-11 px-3 rounded-xl border border-ds-border bg-ds-card text-ds-ink text-sm font-black focus:outline-none focus:ring-2 focus:ring-ds-green/40"
+              inputMode="numeric"
+            />
+          </label>
+          <label className="block">
+            <span className="text-[10px] font-black text-ds-ink3 uppercase tracking-widest">{t('Avg premium', 'Rata-rata premi')}</span>
+            <input
+              type="number" min={0} step={500000} value={simPremium}
+              onChange={e => setSimPremium(Number(e.target.value))}
+              className="w-full mt-1 h-11 px-3 rounded-xl border border-ds-border bg-ds-card text-ds-ink text-sm font-black focus:outline-none focus:ring-2 focus:ring-ds-green/40"
+              inputMode="numeric"
+            />
+          </label>
+        </div>
+        <div className="grid grid-cols-2 gap-2 mt-3">
+          <div className="rounded-2xl px-4 py-3" style={{ background: 'rgba(0,193,106,0.10)' }}>
+            <p className="text-[10px] font-black uppercase tracking-widest text-ds-green">{t('Per month', 'Per bulan')}</p>
+            <p className="text-lg font-black font-mono text-ds-ink mt-0.5">{formatIDR(sim.monthlyCommission)}</p>
+          </div>
+          <div className="rounded-2xl px-4 py-3" style={{ background: 'rgba(0,193,106,0.10)' }}>
+            <p className="text-[10px] font-black uppercase tracking-widest text-ds-green">{t('Per year', 'Per tahun')}</p>
+            <p className="text-lg font-black font-mono text-ds-ink mt-0.5">{formatIDR(sim.yearlyCommission)}</p>
+          </div>
+        </div>
       </div>
 
       {/* Coins Balance Card */}

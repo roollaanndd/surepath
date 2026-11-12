@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getPortalIconMap, subscribePortalIcons } from '../../services/portalIcons';
-import SurePathIllustrationIcon from './SurePathIllustrationIcon';
+import SurePathPremiumIcon from './SurePathPremiumIcon';
 import SurePathBrandIcon, { hasBrandArt } from './SurePathBrandIcon';
 
 /** Canonical artwork keys understood by the SurePath SVG icon library. */
@@ -70,6 +70,6 @@ export default function ManagedPortalIcon({ id, glyph, size = 24, fallback, clas
   return <span className={className} style={{ width: size, height: size, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
     {hasBrandArt(id)
       ? <SurePathBrandIcon id={id} size={size} className={imageClassName} />
-      : <SurePathIllustrationIcon id={artworkId} size={size} className={imageClassName} />}
+      : <SurePathPremiumIcon id={artworkId} size={size} className={imageClassName} />}
   </span>;
 }

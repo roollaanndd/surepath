@@ -101,7 +101,8 @@ export const AdminStatusBadge: React.FC<{
       ? 'px-2 py-0.5 rounded-full text-2xs font-black uppercase tracking-widest transition-colors duration-150'
       : 'px-2.5 py-1 rounded-full text-2xs font-black uppercase tracking-widest transition-colors duration-150';
   return (
-    <span className={`${cls} ${meta.badgeClass} border border-black/5 whitespace-nowrap`}>
+    <span className={`${cls} ${meta.badgeClass} border border-black/5 whitespace-nowrap inline-flex items-center gap-1`}>
+      {meta.Icon && <meta.Icon size={12} strokeWidth={2.5} aria-hidden />}
       {meta.label}
     </span>
   );

@@ -13,6 +13,7 @@ import {
   type SpB2BBatch, type SpB2BBatchItem,
 } from '../../services/supabaseService';
 import { generateB2BBulkSchedulePDF } from '../../services/pdfService';
+import { downloadBulkQuoteExcel, quoteRowFromBatchItem } from '../../services/b2bBulkQuoteExcel';
 import {
   B2BGlass, B2BTable, B2BPill, B2BSectionHeader, B2BSearchInput, B2BButton, useB2BToast,
   type B2BColumn, type B2BPillTone,
@@ -105,6 +106,18 @@ const B2BBulkBatches: React.FC<Props> = ({ lang, allClients }) => {
     });
   };
 
+  // v2.8.18 — quotation Excel per batch. Kolom uang diambil apa adanya dari
+  // sp_b2b_batch_items (recompute otoritatif server saat batch dibuat) —
+  // tersedia di semua status, dari SUBMITTED sampai ISSUED.
+  const handleDownloadQuote = () => {
+    if (!selected) return;
+    const { fileName } = downloadBulkQuoteExcel(selected.items.map(quoteRowFromBatchItem), {
+      companyName: selected.batch.company_name,
+      batchNumber: selected.batch.batch_number,
+    });
+    toast.success(t(`Quotation diunduh: ${fileName}`, `Quotation downloaded: ${fileName}`));
+  };
+
   /* ── Detail view ──────────────────────────────────────────────────────── */
   if (selected) {
     const { batch, items, payment } = selected;
@@ -159,6 +172,9 @@ const B2BBulkBatches: React.FC<Props> = ({ lang, allClients }) => {
                   <ExternalLink size={13} /> {t('Master Policy', 'Polis Induk')}
                 </a>
               )}
+              <B2BButton variant="ghost" icon={FileDown} onClick={handleDownloadQuote}>
+                {t('Quotation (Excel)', 'Quotation (Excel)')}
+              </B2BButton>
               {batch.status === 'ISSUED' && (
                 <B2BButton variant="ghost" icon={FileDown} onClick={handleDownloadSchedule}>
                   {t('Vehicle Schedule', 'Lampiran Kendaraan')}

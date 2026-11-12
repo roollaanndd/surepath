@@ -11,6 +11,7 @@ vi.mock('../../routes/RevampedPortalLoader', () => ({
 }));
 
 import { AppIsolationGuard, territoryAppForPath, userAllowedInApp } from '../../src/app/routes/isolation';
+import { effectiveAppsFor, hasAppAccess } from '../../src/app/routeHelpers';
 import type { AppRouteProps } from '../../src/app/routeHelpers';
 import { Language } from '../../types';
 
@@ -143,10 +144,10 @@ describe('AppIsolationGuard — deliberate exemptions preserved', () => {
   });
 
   it('multi-app users may visit every app in their allowed list', () => {
-    const agent = { role: 'AGENT', name: 'Budi', allowed_apps: ['AGENT', 'CUSTOMER'] };
-    stayedPut(mount('/agapps', agent));
-    stayedPut(mount('/custapp', agent));
-    expect(redirectedTo(mount('/admin', agent))).toBe('/agapps');
+    const op = { role: 'OPERATOR', name: 'Ops', allowed_apps: ['OPERATOR', 'MARKETING'] };
+    stayedPut(mount('/operatorapp', op));
+    stayedPut(mount('/marketingapp', op));
+    expect(redirectedTo(mount('/agapps', op))).toBe('/operatorapp');
   });
 
   it('signed-out users are untouched (entry gates own those paths)', () => {
@@ -162,11 +163,51 @@ describe('AppIsolationGuard — deliberate exemptions preserved', () => {
   });
 });
 
+describe('AppIsolationGuard — v2.8.9 agen tak bisa masuk app nasabah', () => {
+  it('AGENT dengan hibah CUSTOMER di allowed_apps tetap dipantulkan ke /agapps', async () => {
+    const agent = { role: 'AGENT', name: 'Budi', allowed_apps: ['AGENT', 'CUSTOMER'] };
+    const { props } = mount('/custapp', agent);
+    await waitFor(() => expect(props.navigate).toHaveBeenCalledWith('/agapps'));
+  });
+
+  it('AGENT dengan array basi [CUSTOMER] saja juga dipantulkan (dan /agapps tetap bisa dijangkau)', async () => {
+    const agent = { role: 'AGENT', name: 'Budi', allowed_apps: ['CUSTOMER'] };
+    const { props } = mount('/custapp', agent);
+    await waitFor(() => expect(props.navigate).toHaveBeenCalledWith('/agapps'));
+    stayedPut(mount('/agapps', agent));
+  });
+});
+
 describe('userAllowedInApp', () => {
   it('B2B_CLIENT only ever matches the B2B app', () => {
     const b2b = { role: 'B2B_CLIENT' };
     expect(userAllowedInApp(b2b, 'B2B')).toBe(true);
     expect(userAllowedInApp(b2b, 'CUSTOMER')).toBe(false);
     expect(userAllowedInApp(b2b, 'ADMIN')).toBe(false);
+  });
+});
+
+describe('routeHelpers — effectiveAppsFor & hasAppAccess (v2.8.9)', () => {
+  it('agen tidak pernah mendapatkan Customer App dari allowed_apps', () => {
+    expect(effectiveAppsFor({ role: 'AGENT', allowed_apps: ['AGENT', 'CUSTOMER'] })).toEqual(['AGENT']);
+    expect(effectiveAppsFor({ role: 'AGENT', allowed_apps: ['CUSTOMER'] })).toEqual(['AGENT']);
+    expect(effectiveAppsFor({ role: 'AGENT' })).toEqual(['AGENT']);
+  });
+
+  it('hibah app lain yang diberikan admin kepada agen tetap dihormati', () => {
+    expect(effectiveAppsFor({ role: 'AGENT', allowed_apps: ['AGENT', 'OPERATOR'] })).toEqual(['AGENT', 'OPERATOR']);
+  });
+
+  it('role lain tetap mendapat union role + allowed_apps', () => {
+    expect(effectiveAppsFor({ role: 'OPERATOR', allowed_apps: ['OPERATOR'] })).toEqual(['OPERATOR']);
+    expect(effectiveAppsFor({ role: 'CUSTOMER', allowed_apps: ['CUSTOMER', 'MARKETING'] })).toEqual(['CUSTOMER', 'MARKETING']);
+  });
+
+  it('hasAppAccess role-authoritative: agen selalu boleh di app agen, tidak pernah di app nasabah', () => {
+    expect(hasAppAccess({ role: 'AGENT', allowed_apps: ['CUSTOMER'] }, 'AGENT')).toBe(true);
+    expect(hasAppAccess({ role: 'AGENT', allowed_apps: ['AGENT', 'CUSTOMER'] }, 'CUSTOMER')).toBe(false);
+    expect(hasAppAccess({ role: 'AGENT' }, 'CUSTOMER')).toBe(false);
+    expect(hasAppAccess({ role: 'CUSTOMER' }, 'CUSTOMER')).toBe(true);
+    expect(hasAppAccess({ role: 'MASTER_ADMIN' }, 'AGENT')).toBe(true);
   });
 });

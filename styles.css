@@ -725,8 +725,10 @@ textarea:focus-visible {
 
 
 /* ─── App-mode viewport lock (services/appViewport.ts) ───────────────────────
-   Applied only when the page runs as an installed PWA or the Android build, so
-   the public website stays zoomable (WCAG 1.4.4). See that module for why. */
+   Applied when the page runs as an installed PWA or the Android build, and
+   ALWAYS on the app portals (`<html data-sp-app>`: admin, agent, customer,
+   operator) so they behave like native apps in every launch context. The public
+   website stays zoomable (WCAG 1.4.4). See that module for why. */
 html.sp-app-locked,
 html.sp-app-locked body {
   height: 100%;
@@ -734,10 +736,19 @@ html.sp-app-locked body {
   overscroll-behavior: none;
 }
 html.sp-app-locked body {
-  /* Kills double-tap zoom while keeping taps, scrolls and pans responsive. */
-  touch-action: manipulation;
+  /* pan-x pan-y (not just `manipulation`) also refuses the pinch gesture at
+     the CSS layer: touch-action resolves as an intersection up the ancestor
+     chain, so descendants can narrow it but never re-enable zoom. Double-tap
+     zoom is excluded too — it is not in the allowed gesture set. */
+  touch-action: pan-x pan-y;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  /* Full screen under notches and status bars (iOS black-translucent,
+     edge-to-edge Android). Bottom inset stays with .sp-modern-app so the same
+     inset is not counted twice. */
+  padding-top: env(safe-area-inset-top);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 }
 /* Text selection is left ON: users copy policy and claim numbers out of the
    app, and taking that away buys nothing towards the no-zoom requirement. */

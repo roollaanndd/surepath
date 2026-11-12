@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, ChevronDown, ChevronUp, Plus, Trash2, CheckCircle2, AlertTriangle, FileText, Heart, Upload, Loader2, Building2, Copy } from 'lucide-react';
+import { RefreshCw, ChevronDown, ChevronUp, Plus, Trash2, CheckCircle2, AlertTriangle, FileText, Heart, Upload, Loader2, Building2, Copy, KeyRound } from 'lucide-react';
 import {
   getAllB2BSubmissions,
   updateB2BSubmissionStatus,
@@ -11,6 +11,7 @@ import {
   adminAssignB2BBulkInsurer,
   uploadB2BBulkMasterPolicy,
   adminListB2BUsers,
+  setMitraTempPassword,
   supabase,
   type SpB2BSubmission,
   type SpB2BQuote,
@@ -19,6 +20,8 @@ import {
   type SpB2BUser,
 } from '../../services/supabaseService';
 import ModuleIcon from '../shared/ModuleIcon';
+import { useConfirmDialog } from '../ui';
+import { getB2BBulkBatch, type SpB2BBatchItem } from '../../services/b2bBulk';
 import AddUserWizard, { type WizardCredential } from './AddUserWizard';
 
 interface InsurerOption { id: string; name: string; }
@@ -406,6 +409,33 @@ const BulkBatchCard: React.FC<{ batch: SpB2BBatch; insurers: InsurerOption[]; on
   const [assigningInsurer, setAssigningInsurer] = useState(false);
   const [err, setErr] = useState('');
 
+  // FIX v2.8.20 (audit 2026-11-11): admin sebelumnya tidak bisa melihat isi
+  // baris batch — kartu hanya menampilkan agregat, padahal aksi gateway
+  // b2b_bulk_get_batch sudah tersedia. Panel detail menampilkan item per baris
+  // (nasabah, unit, zona, TSI, premi, flag) + status faktur terakhir.
+  const [showDetail, setShowDetail] = useState(false);
+  const [detailItems, setDetailItems] = useState<SpB2BBatchItem[] | null>(null);
+  const [detailPayment, setDetailPayment] = useState<{ invoice_url?: string; status?: string } | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailErr, setDetailErr] = useState('');
+
+  const loadDetail = async () => {
+    if (detailLoading) return;
+    setDetailLoading(true);
+    setDetailErr('');
+    const res = await getB2BBulkBatch(batch.id);
+    setDetailLoading(false);
+    if (!res) { setDetailErr('Gagal memuat detail batch. Coba lagi.'); return; }
+    setDetailItems(res.items ?? []);
+    setDetailPayment(res.payment ?? null);
+  };
+
+  const toggleDetail = () => {
+    const next = !showDetail;
+    setShowDetail(next);
+    if (next && !detailItems) void loadDetail();
+  };
+
   const handleAssignInsurer = async (insurerId: string) => {
     if (!insurerId) return;
     setAssigningInsurer(true);
@@ -466,6 +496,84 @@ const BulkBatchCard: React.FC<{ batch: SpB2BBatch; insurers: InsurerOption[]; on
         </div>
       )}
 
+      {/* Detail unit per baris — aksi gateway b2b_bulk_get_batch (admin diizinkan) */}
+      <button
+        onClick={toggleDetail}
+        className="flex items-center gap-2 text-xs font-semibold text-ds-green hover:underline"
+      >
+        {showDetail ? <ChevronUp size={14} /> : <Plus size={14} />}
+        {showDetail ? 'Tutup Detail Unit' : 'Detail Unit'}
+      </button>
+
+      {showDetail && (
+        <div className="mt-1 rounded-2xl border border-ds-border bg-slate-50 dark:bg-ds-card2 p-3 space-y-2">
+          {detailLoading && (
+            <div className="flex items-center gap-2 py-3 text-2xs text-ds-ink3">
+              <Loader2 size={13} className="animate-spin" /> Memuat detail unit…
+            </div>
+          )}
+          {!detailLoading && detailErr && (
+            <div className="flex items-center justify-between gap-2 py-1">
+              <p className="text-2xs font-bold text-rose-700 dark:text-rose-300 flex items-center gap-1"><AlertTriangle size={12} />{detailErr}</p>
+              <button onClick={() => void loadDetail()} className="text-2xs font-bold text-ds-green hover:underline">Coba lagi</button>
+            </div>
+          )}
+          {!detailLoading && detailItems && detailItems.length === 0 && (
+            <p className="text-2xs text-ds-ink3 py-2">Batch ini tidak memiliki baris unit.</p>
+          )}
+          {!detailLoading && detailItems && detailItems.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="w-full text-2xs">
+                <thead>
+                  <tr className="text-left text-ds-ink3 uppercase tracking-wider">
+                    <th className="py-1.5 pr-2 font-black">No</th>
+                    <th className="py-1.5 pr-2 font-black">Nasabah</th>
+                    <th className="py-1.5 pr-2 font-black">Unit</th>
+                    <th className="py-1.5 pr-2 font-black">Plat</th>
+                    <th className="py-1.5 pr-2 font-black">Zona</th>
+                    <th className="py-1.5 pr-2 font-black text-right">TSI</th>
+                    <th className="py-1.5 pr-2 font-black text-right">Premi Total</th>
+                    <th className="py-1.5 pr-2 font-black">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="text-ds-ink2">
+                  {detailItems.map(it => (
+                    <tr key={it.id} className="border-t border-ds-border/60">
+                      <td className="py-1.5 pr-2 font-mono">{it.row_no}</td>
+                      <td className="py-1.5 pr-2 font-bold text-ds-ink dark:text-white max-w-[160px] truncate" title={it.nasabah_name}>{it.nasabah_name}</td>
+                      <td className="py-1.5 pr-2 max-w-[170px] truncate" title={[it.make, it.model, it.model_year].filter(Boolean).join(' ') || it.vehicle_class}>
+                        {[it.make, it.model, it.model_year].filter(Boolean).join(' ') || it.vehicle_class}
+                      </td>
+                      <td className="py-1.5 pr-2 font-mono">{it.plate_no ?? '—'}</td>
+                      <td className="py-1.5 pr-2">{it.zone}</td>
+                      <td className="py-1.5 pr-2 text-right tabular-nums">{fmtIDRBulk(it.financing_value)}</td>
+                      <td className="py-1.5 pr-2 text-right tabular-nums font-bold">{fmtIDRBulk(it.total_premium)}</td>
+                      <td className="py-1.5 pr-2">
+                        {it.flags.length > 0 ? (
+                          <span title={it.flags.join('\n')} className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-1.5 py-0.5 font-black text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                            <AlertTriangle size={10} /> {it.flags.length}
+                          </span>
+                        ) : (
+                          <span className={`rounded-full px-1.5 py-0.5 font-black ${it.status === 'ISSUED' ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-ds-ink2 dark:bg-white/10'}`}>{it.status}</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {!detailLoading && detailPayment && (
+            <p className="text-2xs text-ds-ink3 pt-1 border-t border-ds-border/60">
+              Faktur terakhir: <span className="font-bold">{detailPayment.status ?? '—'}</span>
+              {detailPayment.invoice_url && (
+                <> · <a href={detailPayment.invoice_url} target="_blank" rel="noreferrer" className="font-bold text-ds-green hover:underline">buka tautan</a></>
+              )}
+            </p>
+          )}
+        </div>
+      )}
+
       {batch.status === 'ISSUED' && (
         <div className="text-xs text-ds-green dark:text-emerald-400 font-semibold">
           Polis: {batch.master_policy_number} {batch.insurer_name ? `· ${batch.insurer_name}` : ''}
@@ -523,6 +631,7 @@ const BulkBatchCard: React.FC<{ batch: SpB2BBatch; insurers: InsurerOption[]; on
 // (must_change_password) — alur ganti sudah ditangani B2BLogin.
 
 const UsersSection: React.FC<{ onToast: (msg: string) => void }> = ({ onToast }) => {
+  const confirm = useConfirmDialog();
   const [showWizard, setShowWizard] = useState(false);
   const [credential, setCredential] = useState<WizardCredential | null>(null);
   const [users, setUsers] = useState<SpB2BUser[]>([]);
@@ -548,10 +657,39 @@ const UsersSection: React.FC<{ onToast: (msg: string) => void }> = ({ onToast })
   const copyCredential = async () => {
     if (!credential?.password) return;
     try {
-      await navigator.clipboard.writeText(`Portal: https://myinsurepath.com/b2bapps\nEmail: ${credential.email}\nKata sandi sementara: ${credential.password}\n(Wajib diganti saat login pertama)`);
+      await navigator.clipboard.writeText(`Portal: https://myinsurepath.com/b2bapps\nEmail: ${credential.email}\nKata sandi: ${credential.password}\n(Berlaku permanen — pengguna bisa langsung login)`);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch { /* clipboard opsional */ }
+  };
+
+  // v2.8.8 — setel ulang kata sandi pengguna korporat secara manual. Sandi
+  // baru berlaku permanen (tanpa wajib ganti), selaras dengan pembuatan akun;
+  // ditampilkan sekali via banner kuning yang sama.
+  const [resettingUserId, setResettingUserId] = useState<string | null>(null);
+  const handleSetPassword = async (u: SpB2BUser) => {
+    if (resettingUserId) return;
+    const ok = await confirm({
+      title: 'Setel Kata Sandi Baru?',
+      description: `Kata sandi baru untuk ${u.name || u.email} akan dibuat dan berlaku permanen. Kata sandi lama langsung tidak berlaku.`,
+      confirmLabel: 'Setel Sandi',
+      cancelLabel: 'Batal',
+    });
+    if (!ok) return;
+    setResettingUserId(u.id);
+    const res = await setMitraTempPassword(u.id, false);
+    setResettingUserId(null);
+    if (res.error || !res.tempPassword) {
+      onToast(res.error ?? 'Gagal menyetel kata sandi.');
+      return;
+    }
+    setCredential({
+      name: u.name || u.email,
+      email: res.email ?? u.email,
+      password: res.tempPassword,
+      note: 'Kata sandi baru ini berlaku permanen — pengguna bisa langsung login dengannya. Tidak disimpan di sistem mana pun.',
+    });
+    onToast(`Kata sandi ${u.name || u.email} disetel ulang — tampil sekali di bawah.`);
   };
 
   return (
@@ -609,7 +747,7 @@ const UsersSection: React.FC<{ onToast: (msg: string) => void }> = ({ onToast })
               Tutup
             </button>
           </div>
-          <p className="text-2xs text-amber-700 dark:text-amber-400">Kredensial ini tidak disimpan di sistem mana pun. Pengguna wajib mengganti kata sandi saat login pertama di /b2bapps.</p>
+          <p className="text-2xs text-amber-700 dark:text-amber-400">{credential.note ?? 'Kredensial ini tidak disimpan di sistem mana pun. Kata sandi berlaku permanen — pengguna bisa langsung login di /b2bapps dan mengganti sandinya kapan saja dari menu Profil.'}</p>
         </div>
       )}
 
@@ -638,6 +776,15 @@ const UsersSection: React.FC<{ onToast: (msg: string) => void }> = ({ onToast })
                 </div>
                 {u.verified !== false && (
                   <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-2xs font-black text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">AKTIF</span>
+                )}
+                {callerRole === 'MASTER_ADMIN' && (
+                  <button
+                    onClick={() => handleSetPassword(u)}
+                    disabled={resettingUserId === u.id}
+                    className="inline-flex items-center gap-1 rounded-lg border border-ds-border bg-ds-card px-2 py-1 text-2xs font-bold text-ds-ink2 hover:border-emerald-400 hover:text-emerald-700 disabled:opacity-50"
+                  >
+                    <KeyRound size={11} /> {resettingUserId === u.id ? 'Menyetel…' : 'Setel Sandi'}
+                  </button>
                 )}
               </div>
             ))}

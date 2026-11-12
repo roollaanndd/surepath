@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { SurePathLogo } from './Navbar';
+import { RoleScene } from './shared/SurePathPremiumIcon';
 import { UserRole } from '../types';
 import { ensureProfile, createB2BClientProfile, applyReferralCode } from '../services/supabaseService';
 
@@ -23,47 +24,22 @@ const ROLE_CARDS = [
   {
     role: 'CUSTOMER' as Role,
     title: 'Nasabah',
-    subtitle: 'Personal',
     description: 'Beli asuransi untuk diri sendiri dan keluarga',
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-        <circle cx="12" cy="7" r="4"/>
-      </svg>
-    ),
-    color: '#3b82f6',
-    bg: 'rgba(59,130,246,0.08)',
-    border: 'rgba(59,130,246,0.25)',
+    // Aureate Emerald premium artwork — same family as every nav icon, so the
+    // first screen a new account sees already speaks the brand's icon language.
+    icon: <RoleScene role="CUSTOMER" size={52} />,
   },
   {
     role: 'AGENT' as Role,
     title: 'Mitra',
-    subtitle: 'Asuransi',
     description: 'Jual asuransi dan dapatkan komisi',
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="7" width="20" height="14" rx="2"/>
-        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
-      </svg>
-    ),
-    color: '#06e000',
-    bg: 'rgba(6,224,0,0.08)',
-    border: 'rgba(6,224,0,0.25)',
+    icon: <RoleScene role="AGENT" size={52} />,
   },
   {
     role: 'B2B_CLIENT' as Role,
     title: 'Klien Korporat',
-    subtitle: 'Perusahaan',
     description: 'Solusi asuransi untuk bisnis dan karyawan',
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-        <polyline points="9,22 9,12 15,12 15,22"/>
-      </svg>
-    ),
-    color: '#a855f7',
-    bg: 'rgba(168,85,247,0.08)',
-    border: 'rgba(168,85,247,0.25)',
+    icon: <RoleScene role="B2B_CLIENT" size={52} />,
   },
 ];
 
@@ -191,7 +167,7 @@ const RoleSelectionScreen: React.FC<Props> = ({ authUser, onComplete, onCancel }
                   : 'w-full rounded-2xl border border-white/10 bg-white/5 p-5 cursor-pointer active:bg-white/10 transition-all text-left mb-3'
               }
             >
-              <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center mb-3 text-emerald-400">
+              <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-3">
                 {card.icon}
               </div>
               <p className="text-base font-bold text-white">{card.title}</p>
@@ -234,9 +210,12 @@ const RoleSelectionScreen: React.FC<Props> = ({ authUser, onComplete, onCancel }
             {selected === 'AGENT' && (
               <div className="flex flex-col gap-2">
                 {refCode && (
-                  <div className="px-3 py-2 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center gap-2">
-                    <span className="text-base">🔗</span>
-                    <p className="text-blue-300/90 text-[0.68rem] m-0">
+                  <div className="px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-300 shrink-0" aria-hidden="true">
+                      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                    </svg>
+                    <p className="text-emerald-300/90 text-[0.68rem] m-0">
                       Referral dari mitra <strong>{refCode}</strong> akan otomatis terhubung.
                     </p>
                   </div>

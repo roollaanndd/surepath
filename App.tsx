@@ -17,44 +17,16 @@ import AppUpdateNotification from './components/AppUpdateNotification';
 import { APP_VERSION } from './src/version';
 import { resolveSeo, applyDocumentHead } from './src/seo/seo';
 import { AppRoutes } from './src/app/routes/index';
+import { effectiveAppsFor } from './src/app/routeHelpers';
 
 const ADMIN_ROLES = [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE, UserRole.FINANCE_MANAGER, UserRole.FINANCE_DIRECTOR, UserRole.INSURANCE_ADMIN];
 
 // ── Effective app list (role-authoritative) ──────────────────────────────────
-// allowed_apps is a convenience overlay, but sp_users.role is the source of
-// truth for a user's PRIMARY app. Bug history: the 2026-07-07 backfill froze
-// allowed_apps = ARRAY[role] once, and nothing re-synced it when an admin
-// later changed a role — so agents with a stale ['CUSTOMER'] array were routed
-// into the customer app (or blocked from /agapps) while their role said AGENT.
-// The server now keeps them in sync (trg_sync_allowed_apps_with_role), and
-// this union makes the client correct even against residual bad data: a
-// user can always reach the app their own role entitles them to.
-const APP_FOR_ROLE: Record<string, string> = {
-  OPERATOR: 'OPERATOR',
-  MARKETING: 'MARKETING',
-  AGENT: 'AGENT',
-  B2B_CLIENT: 'CUSTOMER',
-};
-const roleToApp = (role: any): string =>
-  ADMIN_ROLES.includes(role) ? 'ADMIN' : APP_FOR_ROLE[role] ?? 'CUSTOMER';
-
-// Only these ids have a portal route + selector card. The 2026-07-07 backfill
-// wrote RAW role names into allowed_apps (ARRAY[role] → 'MASTER_ADMIN',
-// 'B2B_CLIENT', 'FINANCE_MANAGER', …), so the stored base list must be
-// normalized before it is compared with card ids — otherwise phantom entries
-// inflate the effective list and park users on a one-card selector screen
-// instead of routing them straight into their portal.
-const KNOWN_APP_IDS = ['ADMIN', 'OPERATOR', 'MARKETING', 'AGENT', 'CUSTOMER'];
-
-const effectiveApps = (user: any): string[] => {
-  const allowed: unknown[] | null | undefined = user?.allowed_apps;
-  const base = (Array.isArray(allowed) ? allowed : [])
-    .filter((a): a is string => typeof a === 'string' && KNOWN_APP_IDS.includes(a));
-  const roleApp = roleToApp(user?.role);
-  // B2B_CLIENT routes through its own branch (role check in the render), so its
-  // role-derived app is CUSTOMER — the union below never grants it /agapps.
-  return base.includes(roleApp) ? base : [...base, roleApp];
-};
+// Dipindah ke src/app/routeHelpers.ts (v2.8.9) supaya App.tsx, isolation.tsx,
+// dan selector memakai satu aturan yang sama — termasuk kebijakan baru: agen
+// tidak pernah mendapatkan app pelanggan dari allowed_apps (arahan owner:
+// pastikan agen tidak berpindah ke app nasabah).
+const effectiveApps = effectiveAppsFor;
 
 // Decide where to route a signed-in user.
 // 1. If the effective app list has 2+ entries → '/select-app' (multi-app selector)

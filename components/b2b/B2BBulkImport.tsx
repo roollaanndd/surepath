@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import {
   Upload, Loader2, CheckCircle2, AlertTriangle, ChevronLeft, ChevronRight,
-  ExternalLink, FileSpreadsheet, X,
+  ExternalLink, FileSpreadsheet, FileDown, X,
 } from 'lucide-react';
 import { Language } from '../../types';
 import {
@@ -12,6 +12,7 @@ import {
   buildLineItem, calcBulkTotals, type RawBulkRow, type BuiltLineItem,
   type VehicleClass, type Zone,
 } from '../../services/b2bFleetRating';
+import { downloadBulkQuoteExcel, quoteRowFromLineItem } from '../../services/b2bBulkQuoteExcel';
 import { createB2BBulkBatch, createB2BBulkInvoice, uploadB2BBulkSourceFile } from '../../services/supabaseService';
 
 interface Props {
@@ -103,6 +104,16 @@ const B2BBulkImport: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
 
   const setOverride = (rowNo: number, patch: Partial<RowOverride>) => {
     setOverrides(prev => ({ ...prev, [rowNo]: { ...prev[rowNo], ...patch } }));
+  };
+
+  // v2.8.18 — quotation Excel dari angka engine di layar review ini. Sama
+  // dengan recompute otoritatif server saat submit: satu engine (diuji paritas),
+  // jadi file ini yang dikirim ke klien sudah berisi premi/disc/total final.
+  const handleDownloadQuote = () => {
+    downloadBulkQuoteExcel(
+      items.map((it, i) => quoteRowFromLineItem(it, rawRows[i])),
+      { sourceFileName: fileName || undefined },
+    );
   };
 
   const handleSubmit = async () => {
@@ -359,6 +370,13 @@ const B2BBulkImport: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
             <span className="font-black text-ds-green">{fmtIDR(totals.totalAmount)}</span>
           </div>
         </div>
+
+        <button
+          onClick={handleDownloadQuote}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-sm font-bold hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors"
+        >
+          <FileDown size={16} /> {t('Download Quotation (Excel)', 'Unduh Quotation (Excel)')}
+        </button>
 
         {error && (
           <div className="flex items-start gap-2 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 p-3 text-xs text-rose-700 dark:text-rose-300">

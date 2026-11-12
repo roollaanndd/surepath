@@ -1,5 +1,8 @@
 {
 	"appId": "com.myinsurepath.os",
 	"appName": "SurePath",
-	"webDir": "dist"
+	"webDir": "dist",
+	"android": {
+		"zoomEnabled": false
+	}
 }

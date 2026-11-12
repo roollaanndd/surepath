@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect } from 'react';
 import { RevampedPortalLoader as PortalLoader } from '../../routes/RevampedPortalLoader';
-import { ADMIN_ROLES, hasAppAccess, isPublicStandalonePath } from '../routeHelpers';
+import { ADMIN_ROLES, hasAppAccess, isPublicStandalonePath, roleToAppId } from '../routeHelpers';
 import type { AppRouteProps } from '../routeHelpers';
 import { UserRole } from '../../../types';
 
@@ -31,15 +31,7 @@ import { UserRole } from '../../../types';
 // mengunci pengguna keluar dari app perannya sendiri — semantik yang sama
 // dengan effectiveApps di App.tsx.
 
-const APP_FOR_ROLE: Record<string, 'OPERATOR' | 'MARKETING' | 'AGENT' | 'CUSTOMER'> = {
-  OPERATOR: 'OPERATOR',
-  MARKETING: 'MARKETING',
-  AGENT: 'AGENT',
-  B2B_CLIENT: 'CUSTOMER',
-};
-
-const roleToAppId = (role: any): string =>
-  ADMIN_ROLES.includes(role) ? 'ADMIN' : APP_FOR_ROLE[role] ?? 'CUSTOMER';
+// roleToAppId sekarang dari routeHelpers (satu sumber kebenaran, v2.8.9).
 
 // Wilayah app: prefix path → id app. Pencocokan persis: `path === prefix`
 // atau `path.startsWith(prefix + '/')` — '/admin' tidak menelan '/adminabc'.
@@ -61,9 +53,12 @@ export const territoryAppForPath = (path: string): Territory['app'] | null => {
   return null;
 };
 
-// Apakah pengguna boleh berada di app tsb. Dua pengecualian eksplisit:
+// Apakah pengguna boleh berada di app tsb. Pengecualian eksplisit:
 //   • B2B_CLIENT — satu-satunya app-nya adalah portal B2B (dicek lebih dulu,
 //     sebelum union sempat memperlakukan role-nya sebagai 'CUSTOMER').
+//   • AGENT (v2.8.9, arahan owner "pastikan agen tidak berpindah ke app
+//     nasabah") — wilayah /custapp ditutup total untuk agen, apa pun isinya
+//     allowed_apps. Guard memantulkan agen kembali ke /agapps.
 //   • CUSTOMER — hasAppAccess legacy memperlakukan CUSTOMER sebagai fallback
 //     universal (baris `if (app === 'CUSTOMER') return true`), yang justru
 //     membuat agen/operator jatuh ke app pelanggan. Wilayah /custapp hanya
@@ -71,6 +66,7 @@ export const territoryAppForPath = (path: string): Territory['app'] | null => {
 export const userAllowedInApp = (user: any, app: Territory['app']): boolean => {
   if (user?.role === UserRole.B2B_CLIENT) return app === 'B2B';
   if (app === 'CUSTOMER') {
+    if (user?.role === UserRole.AGENT) return false;
     return roleToAppId(user?.role) === 'CUSTOMER'
       || (Array.isArray(user?.allowed_apps) && user.allowed_apps.includes('CUSTOMER'));
   }
@@ -93,6 +89,19 @@ export const AppIsolationGuard: React.FC<AppRouteProps> = ({ pathname, currentUs
   if (ADMIN_ROLES.includes(currentUser.role)) return null;
   // Alur QR/payment/review tidak pernah dialihkan (invarian isPublicStandalonePath).
   if (isPublicStandalonePath(pathname)) return null;
+
+  // v2.8.21 — Cold start shell Android/PWA memboot di '/' (Capacitor membuka
+  // index.html, bukan path portal terakhir), dan '/' bukan territory mana pun
+  // sehingga guard lama menolaknya — catch-all penutup (CustomerRoutes, sengaja
+  // tanpa role guard) lalu merender UI app nasabah untuk agen yang memaksa-
+  // tutup lalu membuka ulang app. Fix v2.8.9 menutup URL territory; '/' lolos
+  // dari keduanya. Untuk user yang sudah masuk, '/' BUKAN halaman marketing
+  // (MarketingRoutes tidak mengklaimnya; HomePage hanya signed-out) — pantulkan
+  // ke portal miliknya, sama seperti territory yang salah. Halaman publik dan
+  // marketing di atas tetap bebas untuk semua role.
+  if (pathname === '/' || pathname === '/index.html') {
+    return <RedirectHome to={resolvePortalPath(currentUser)} navigate={navigate} />;
+  }
 
   const app = territoryAppForPath(pathname);
   if (!app) return null;

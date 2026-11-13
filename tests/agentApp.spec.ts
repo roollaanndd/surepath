@@ -30,9 +30,14 @@ import { existsSync } from 'node:fs';
 // KONDISIONAL dengan sengaja: kalau path itu di-hardcode, CI (yang punya
 // browser Playwright sendiri) akan gagal meluncur — uji ini jadi mematahkan
 // pipeline alih-alih menjaganya.
-const LOCAL_CHROME = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
+// Nomor build di path berubah setiap image container diperbarui (1194 → 1243),
+// jadi tautan stabil `/opt/pw-browsers/chromium` dicoba lebih dulu.
+const LOCAL_CHROME = [
+  '/opt/pw-browsers/chromium',
+  '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
+].find(p => existsSync(p));
 test.use({
-  launchOptions: existsSync(LOCAL_CHROME) ? { executablePath: LOCAL_CHROME } : {},
+  launchOptions: LOCAL_CHROME ? { executablePath: LOCAL_CHROME } : {},
 });
 
 const APP_VERSION = '2.7.17';

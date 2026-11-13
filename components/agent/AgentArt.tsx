@@ -636,7 +636,7 @@ export const AgentHero: React.FC<{
   className?: string;
   tone?: keyof typeof HERO_TONES;
 }> = ({ title, subtitle, art, children, className = '', tone = 'emerald' }) => (
-  <div className={`relative overflow-hidden rounded-[1.75rem] px-5 py-5 text-white ${className}`}
+  <div className={`sp-agent-hero relative overflow-hidden rounded-[1.75rem] px-5 py-5 text-white ${className}`}
     style={{ background: HERO_TONES[tone].bg, boxShadow: '0 14px 36px -14px rgba(11,17,32,0.55)' }}>
     {/* decorative rings + glow */}
     <div aria-hidden className="absolute -top-14 -right-10 w-48 h-48 rounded-full pointer-events-none"

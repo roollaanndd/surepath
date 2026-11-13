@@ -23,12 +23,17 @@ import {
   getVehicleCategory,
   getBaseRateByBand,
   CAR_TLO_MIN,
+  CAR_COMP_MIN,
   type Zone,
   type VehicleCategory,
 } from './ojkRates';
 
 export type { Zone };
 export type VehicleClass = 'MOTORCYCLE' | 'CAR' | 'HEAVY_EQUIPMENT';
+// Jenis pertanggungan. Impor massal selalu TLO; order unit boleh memilih
+// Comprehensive untuk mobil dan motor (alat berat tetap TLO — tidak ada
+// tarif comprehensive OJK untuk alat berat).
+export type FleetCoverage = 'TLO' | 'COMPREHENSIVE';
 
 // ─── Vehicle classification ────────────────────────────────────────────────
 
@@ -152,6 +157,10 @@ export const PICKUP_TRUCK_TLO_MIN: Record<Zone, number> = { 1: 0.0088, 2: 0.0168
 // with the pilot partner for block business (alat berat/crawler/excavator).
 export const HEAVY_EQUIPMENT_TLO_RATE = 0.0085;
 
+// Comprehensive truk & pickup — SEOJK No. 6/SEOJK.05/2017 Lampiran IV Tabel
+// IV.A kategori 6 (batas bawah, semua uang pertanggungan), per wilayah.
+export const PICKUP_TRUCK_COMP_MIN: Record<Zone, number> = { 1: 0.0242, 2: 0.0239, 3: 0.0223 };
+
 export const DISCOUNT_RATE_STANDARD = 0.25; // motor & mobil
 export const DISCOUNT_RATE_HEAVY = 0.15;    // alat berat
 
@@ -181,6 +190,8 @@ export const MIN_PREMIUM_GROSS = 50_000;
 // indirection services/ojkRates.ts already uses for CAR_TLO_MIN/MOTO_TLO_MIN.
 export interface BulkRateConfig {
   pickupTruckTloMin: Record<Zone, number>;
+  /** Opsional: rate set lama tidak punya kunci ini → PICKUP_TRUCK_COMP_MIN. */
+  pickupTruckCompMin?: Record<Zone, number>;
   heavyEquipmentRate: number;
   discountRateStandard: number;
   discountRateHeavy: number;
@@ -225,24 +236,30 @@ export function selectRate(
   otr: number,
   commercialBodyHint: boolean,
   rateConfig: BulkRateConfig = activeBulkRateConfig,
+  coverage: FleetCoverage = 'TLO',
 ): RateSelection {
+  const comp = coverage === 'COMPREHENSIVE';
   if (vehicleClass === 'MOTORCYCLE') {
     // getBaseRateByBand() reads whatever OJK rate set is currently active
     // (CMS override, or the built-in default) — never a private, possibly
-    // stale copy of the motorcycle TLO table.
-    return { rate: getBaseRateByBand('MOTORCYCLE', 'TLO', zone, 1, 'MIN'), category: null, commercialBody: false };
+    // stale copy of the motorcycle table.
+    return { rate: getBaseRateByBand('MOTORCYCLE', comp ? 'COMPREHENSIVE' : 'TLO', zone, 1, 'MIN'), category: null, commercialBody: false };
   }
   if (vehicleClass === 'HEAVY_EQUIPMENT') {
+    // Alat berat hanya TLO; calcBulkPremium sudah memaksa coverage-nya.
     return { rate: rateConfig.heavyEquipmentRate, category: null, commercialBody: false };
   }
   if (commercialBodyHint) {
-    return { rate: rateConfig.pickupTruckTloMin[zone], category: null, commercialBody: true };
+    // Rate set lama (atau suntingan admin yang tidak lengkap) tidak punya
+    // tabel comprehensive pickup → jatuh ke tarif OJK bawaan per zona.
+    const rate = comp
+      ? (rateConfig.pickupTruckCompMin?.[zone] ?? PICKUP_TRUCK_COMP_MIN[zone])
+      : rateConfig.pickupTruckTloMin[zone];
+    return { rate, category: null, commercialBody: true };
   }
   const category = getVehicleCategory(otr || 0);
-  return { rate: CAR_TLO_MIN[category][zone], category, commercialBody: false };
+  return { rate: (comp ? CAR_COMP_MIN : CAR_TLO_MIN)[category][zone], category, commercialBody: false };
 }
-
-// ─── Premium calc ───────────────────────────────────────────────────────────
 
 // ─── Order unit multi-tahun ─────────────────────────────────────────────────
 // Arahan owner (2026-11-08): polis sampai 6 tahun, nilai pertanggungan
@@ -280,6 +297,9 @@ export interface BulkPremiumInput {
   otr: number;            // used only to band passenger-car category
   tenorMonths: number;
   commercialBodyHint?: boolean;
+  // Jenis pertanggungan (v2.8.24). undefined = TLO (perilaku lama; impor massal
+  // tidak pernah mengisinya). Alat berat selalu TLO apa pun yang diminta.
+  coverage?: FleetCoverage;
   // Order unit multi-tahun (v2.8.23): nilai pertanggungan menyusut per tahun
   // polis. 0/undefined = perilaku lama (impor massal tidak pernah menyusut,
   // supaya tetap cocok dengan metodologi audit mitra).
@@ -308,14 +328,17 @@ export interface BulkPremiumResult {
   premiumAfterDiscount: number;
   adminFee: number;
   totalPremium: number;
+  coverage: FleetCoverage;        // yang benar-benar dipakai (alat berat selalu TLO)
   depreciationRate: number;       // yang benar-benar diterapkan (0 bila tenor ≤ 12 bln)
   schedule: PremiumScheduleRow[]; // kosong bila tidak menyusut
 }
 
 export function calcBulkPremium(input: BulkPremiumInput, rateConfig: BulkRateConfig = activeBulkRateConfig): BulkPremiumResult {
   const { vehicleClass, zone, financingValue, otr, tenorMonths } = input;
+  const coverage: FleetCoverage =
+    input.coverage === 'COMPREHENSIVE' && vehicleClass !== 'HEAVY_EQUIPMENT' ? 'COMPREHENSIVE' : 'TLO';
   const { rate, category, commercialBody } = selectRate(
-    vehicleClass, zone, otr, input.commercialBodyHint ?? false, rateConfig,
+    vehicleClass, zone, otr, input.commercialBodyHint ?? false, rateConfig, coverage,
   );
 
   const tenor = Math.max(1, Math.round(tenorMonths || 12));
@@ -354,7 +377,7 @@ export function calcBulkPremium(input: BulkPremiumInput, rateConfig: BulkRateCon
 
   const totalPremium = premiumAfterDiscount + adminFee;
 
-  return { rate, category, commercialBody, premiumGross, discountRate, discountAmount, premiumAfterDiscount, adminFee, totalPremium, depreciationRate, schedule };
+  return { rate, category, commercialBody, premiumGross, discountRate, discountAmount, premiumAfterDiscount, adminFee, totalPremium, coverage, depreciationRate, schedule };
 }
 
 // ─── Batch totals ───────────────────────────────────────────────────────────
@@ -413,6 +436,7 @@ export interface RawBulkRow {
   // BulkPremiumInput). Baris impor massal tidak pernah mengisinya.
   depreciationRate?: number;
   discountRateOverride?: number;
+  coverage?: FleetCoverage;
   // Reference figures already present in the uploaded file (if any) — shown
   // for comparison, never trusted as the final number. Mirrors exactly what
   // the reference partner's own manual audit methodology does: recompute,
@@ -467,6 +491,7 @@ export function buildLineItem(raw: RawBulkRow): BuiltLineItem {
     commercialBodyHint,
     depreciationRate: raw.depreciationRate,
     discountRateOverride: raw.discountRateOverride,
+    coverage: raw.coverage,
   });
 
   if (raw.referenceTotalPremium != null && raw.referenceTotalPremium > 0) {

@@ -217,19 +217,62 @@ export async function uploadAgentKtp(agentId: string, file: File): Promise<strin
 
 // ─── B2B Document Upload ──────────────────────────────────────────────────────
 
+// Bucket `b2b-documents` hanya menerima daftar tipe MIME tertentu dan maksimum
+// 10 MB. Di sebagian perangkat (Windows tanpa Office, beberapa peramban ponsel)
+// `file.type` untuk .xlsx/.xls/.csv KOSONG atau "application/octet-stream",
+// sehingga penyimpanan menolaknya walau filenya sah. Tipe ditentukan dari
+// ekstensi bila peramban tidak memberinya.
+export const B2B_DOC_MAX_BYTES = 10 * 1024 * 1024;
+const B2B_DOC_MIME_BY_EXT: Record<string, string> = {
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  xls: 'application/vnd.ms-excel',
+  csv: 'text/csv',
+  pdf: 'application/pdf',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  zip: 'application/zip',
+};
+export const B2B_DOC_ACCEPT = [
+  ...Object.keys(B2B_DOC_MIME_BY_EXT).map(e => `.${e}`),
+  ...new Set(Object.values(B2B_DOC_MIME_BY_EXT)),
+].join(',');
+
+/** File dengan tipe MIME yang diterima bucket, atau alasan (Indonesia) kenapa tidak bisa diunggah. */
+export function prepareB2BDocument(file: File): { file: File } | { error: string } {
+  const ext = (file.name.split('.').pop() ?? '').toLowerCase();
+  const allowed = new Set(Object.values(B2B_DOC_MIME_BY_EXT));
+  const mime = allowed.has(file.type) ? file.type : B2B_DOC_MIME_BY_EXT[ext];
+  if (!mime) return { error: `Jenis file .${ext || '?'} tidak didukung. Gunakan PDF, JPG, PNG, Excel (.xlsx/.xls), CSV, atau ZIP.` };
+  if (file.size > B2B_DOC_MAX_BYTES) return { error: `Ukuran file ${(file.size / 1024 / 1024).toFixed(1)} MB melebihi batas 10 MB.` };
+  if (file.size === 0) return { error: 'File kosong (0 byte).' };
+  return { file: mime === file.type ? file : new File([file], file.name, { type: mime }) };
+}
+
+/** Alasan kegagalan terakhir uploadB2BDocument — untuk ditampilkan ke pengguna. */
+let lastB2BUploadError = '';
+export const getLastB2BUploadError = (): string => lastB2BUploadError;
+
 export async function uploadB2BDocument(
   submissionId: string,
   clientId: string,
   file: File,
   docType: string
 ): Promise<string | null> {
-  const ext  = file.name.split('.').pop() ?? 'bin';
+  lastB2BUploadError = '';
+  const prepared = prepareB2BDocument(file);
+  if ('error' in prepared) { lastB2BUploadError = prepared.error; return null; }
+  const ext  = (file.name.split('.').pop() ?? 'bin').toLowerCase();
   const path = `${clientId}/${submissionId}/${docType}-${Date.now()}.${ext}`;
 
   const { error: upErr } = await supabase.storage
     .from('b2b-documents')
-    .upload(path, file, { upsert: true });
-  if (upErr) { console.error('uploadB2BDocument storage:', upErr); return null; }
+    .upload(path, prepared.file, { upsert: true, contentType: prepared.file.type });
+  if (upErr) {
+    console.error('uploadB2BDocument storage:', upErr);
+    lastB2BUploadError = `Unggah ditolak server: ${upErr.message}`;
+    return null;
+  }
 
   const { error: dbErr } = await supabase.from('sp_b2b_documents').insert({
     submission_id: submissionId,
@@ -237,7 +280,7 @@ export async function uploadB2BDocument(
     file_name:     file.name,
     file_path:     path,
     file_size:     file.size,
-    mime_type:     file.type,
+    mime_type:     prepared.file.type,
   });
   if (dbErr) console.warn('sp_b2b_documents insert:', dbErr);
 

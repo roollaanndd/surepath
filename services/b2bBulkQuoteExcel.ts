@@ -83,6 +83,9 @@ export function quoteRowFromBatchItem(it: SpB2BBatchItem): QuoteExcelRow {
 // tidak ada angka premi yang dihitung di sini.
 function batchItemNotes(it: SpB2BBatchItem): string | undefined {
   const notes: string[] = [...(it.flags ?? [])];
+  if (it.coverage_type && it.coverage_type !== 'TLO') {
+    notes.push(`Pertanggungan: ${it.coverage_type === 'COMPREHENSIVE' ? 'Comprehensive' : it.coverage_type}`);
+  }
   if (it.coverage_start_date && it.coverage_end_date) {
     notes.push(`Periode ${it.coverage_start_date} s/d ${it.coverage_end_date}`);
   }

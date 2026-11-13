@@ -6,6 +6,7 @@ import {
 import { Language } from '../../types';
 import {
   parseBulkFile, autoMapColumns, buildRawRows, FIELD_LABELS, REQUIRED_FIELDS,
+  missingRequiredFields, mappingNotices,
   type ColumnMapping, type ParsedSheet,
 } from '../../services/b2bBulkParser';
 import {
@@ -60,21 +61,30 @@ const B2BBulkImport: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
     setFile(f);
     try {
       const parsed = await parseBulkFile(f);
-      if (parsed.headers.length === 0) {
-        setError(t('Could not read any columns from this file.', 'Tidak ada kolom yang terbaca dari file ini.'));
+      if (parsed.headers.filter(h => h.trim() !== '').length === 0) {
+        setError(t(
+          'This file has no readable table. Make sure the sheet has a header row (e.g. Nama, Nilai Pembiayaan, Tenor) followed by one row per vehicle.',
+          'File ini tidak memuat tabel yang bisa dibaca. Pastikan ada satu baris judul kolom (mis. Nama, Nilai Pembiayaan, Tenor) diikuti satu baris per kendaraan.',
+        ));
         setParsing(false);
         return;
       }
       const map = autoMapColumns(parsed.headers);
-      const missing = REQUIRED_FIELDS.filter(f2 => map[f2] == null);
+      const rows = buildRawRows(parsed, map);
+      const missing = missingRequiredFields(map);
       setSheet(parsed);
       setMapping(map);
-      setRawRows(buildRawRows(parsed, map));
+      setRawRows(rows);
       setStep('mapping');
       if (missing.length > 0) {
         setError(t(
-          `Could not auto-detect: ${missing.map(m => FIELD_LABELS[m]).join(', ')}. Map them manually below.`,
-          `Kolom berikut belum terdeteksi otomatis: ${missing.map(m => FIELD_LABELS[m]).join(', ')}. Petakan manual di bawah.`,
+          `Could not auto-detect: ${missing.map(m => FIELD_LABELS[m]).join(', ')}. Pick the matching column below.`,
+          `Kolom berikut belum terdeteksi otomatis: ${missing.map(m => FIELD_LABELS[m]).join(', ')}. Pilih kolom yang sesuai di bawah.`,
+        ));
+      } else if (rows.length === 0) {
+        setError(t(
+          'The columns were recognised but no data rows were found under the header.',
+          'Kolom dikenali, tetapi tidak ada baris data di bawah judul kolom.',
         ));
       }
     } catch (e) {
@@ -88,8 +98,18 @@ const B2BBulkImport: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
   const remapColumn = (field: keyof ColumnMapping, colIndex: number | null) => {
     if (!mapping || !sheet) return;
     const next = { ...mapping, [field]: colIndex };
+    const rows = buildRawRows(sheet, next);
     setMapping(next);
-    setRawRows(buildRawRows(sheet, next));
+    setRawRows(rows);
+    const stillMissing = missingRequiredFields(next);
+    setError(stillMissing.length > 0
+      ? t(
+          `Still not mapped: ${stillMissing.map(m => FIELD_LABELS[m]).join(', ')}.`,
+          `Belum dipetakan: ${stillMissing.map(m => FIELD_LABELS[m]).join(', ')}.`,
+        )
+      : rows.length === 0
+        ? t('No data rows were found under the header.', 'Tidak ada baris data di bawah judul kolom.')
+        : '');
   };
 
   const items: BuiltLineItem[] = useMemo(() => rawRows.map(r => buildLineItem({
@@ -191,10 +211,14 @@ const B2BBulkImport: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
           <span className="text-2xs text-ds-ink3">.xlsx, .xls, .csv</span>
           <input
             type="file"
-            accept=".xlsx,.xls,.csv"
+            // Ekstensi SAJA membuat sebagian pemilih file ponsel menampilkan Excel
+            // sebagai tidak bisa dipilih; tipe MIME-nya ikut dicantumkan.
+            accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv"
             className="hidden"
             disabled={parsing}
-            onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+            // value dikosongkan supaya memilih file yang SAMA lagi (mis. setelah
+            // menekan Kembali) tetap memicu onChange — sebelumnya tidak terjadi apa-apa.
+            onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) handleFile(f); }}
           />
         </label>
 
@@ -209,7 +233,10 @@ const B2BBulkImport: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
 
   // ─── Column mapping step ──────────────────────────────────────────────────
   if (step === 'mapping' && sheet && mapping) {
-    const missing = REQUIRED_FIELDS.filter(f => mapping[f] == null);
+    const missing = missingRequiredFields(mapping);
+    const notices = mappingNotices(mapping);
+    const previewFields = (Object.keys(FIELD_LABELS) as Array<keyof typeof FIELD_LABELS>)
+      .filter(f => mapping[f] != null && ['nasabahName', 'jenisBrg', 'make', 'typeName', 'financingValue', 'otr', 'tenorMonths', 'plateNo'].includes(f));
     return (
       <div className="max-w-5xl mx-auto space-y-4">
         <div className="flex items-center gap-2">
@@ -218,7 +245,47 @@ const B2BBulkImport: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
         </div>
         <p className="text-xs text-ds-ink3">
           {fileName} · {rawRows.length} {t('rows detected', 'baris terdeteksi')}
+          {sheet.sheetName ? ` · ${t('sheet', 'sheet')} "${sheet.sheetName}"` : ''}
+          {sheet.headerRowIndex != null ? ` · ${t('header on row', 'judul kolom di baris')} ${sheet.headerRowIndex + 1}` : ''}
         </p>
+
+        {notices.length > 0 && (
+          <ul className="rounded-xl border border-sky-200 bg-sky-50 dark:border-sky-900 dark:bg-sky-950/30 p-3 space-y-1 text-xs text-sky-900 dark:text-sky-100">
+            {notices.map(n => <li key={n} className="flex items-start gap-2"><AlertTriangle size={13} className="flex-shrink-0 mt-0.5" /> {n}</li>)}
+          </ul>
+        )}
+
+        {/* Pratinjau: tiga baris pertama sebagaimana TERBACA, supaya salah petakan
+            kolom terlihat sebelum dihitung. */}
+        {rawRows.length > 0 && previewFields.length > 0 && (
+          <div className="rounded-2xl border border-slate-200 dark:border-white/10 overflow-x-auto">
+            <table className="w-full text-xs">
+              <caption className="text-left px-4 pt-3 pb-1 text-2xs font-black uppercase tracking-widest text-ds-ink3">
+                {t('Preview — first rows as read', 'Pratinjau — baris pertama sebagaimana terbaca')}
+              </caption>
+              <thead>
+                <tr className="text-left text-ds-ink3">
+                  {previewFields.map(f => <th key={f} className="px-4 py-2 font-bold whitespace-nowrap">{FIELD_LABELS[f]}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {rawRows.slice(0, 3).map(r => (
+                  <tr key={r.rowNo} className="border-t border-slate-100 dark:border-white/5">
+                    {previewFields.map(f => {
+                      const v = (r as unknown as Record<string, unknown>)[f];
+                      const money = f === 'financingValue' || f === 'otr';
+                      return (
+                        <td key={f} className="px-4 py-2 whitespace-nowrap text-ds-ink2">
+                          {v == null || v === '' ? '—' : money ? fmtIDR(Number(v)) : String(v)}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         {error && (
           <div className="flex items-start gap-2 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 p-3 text-xs text-amber-700 dark:text-amber-300">
@@ -250,8 +317,8 @@ const B2BBulkImport: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
             <ChevronLeft size={16} /> {t('Back', 'Kembali')}
           </button>
           <button
-            disabled={missing.length > 0}
-            onClick={() => setStep('review')}
+            disabled={missing.length > 0 || rawRows.length === 0}
+            onClick={() => { setError(''); setStep('review'); }}
             className="flex-1 flex items-center justify-center gap-1 py-3 rounded-2xl bg-emerald-500 text-white text-sm font-black disabled:opacity-40"
           >
             {t('Review & Compute', 'Tinjau & Hitung')} <ChevronRight size={16} />

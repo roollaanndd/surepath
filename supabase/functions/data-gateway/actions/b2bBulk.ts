@@ -14,7 +14,7 @@ import type { GatewayContext, ActionResult } from './types.ts';
 import {
   calcBulkPremium, calcBulkTotals, isValidIsoDate, addMonthsToIsoDate,
   MULTI_YEAR_DEPRECIATION_RATE, MULTI_YEAR_MAX_TENOR_MONTHS,
-  type VehicleClass, type Zone, type BulkPremiumResult,
+  type VehicleClass, type Zone, type BulkPremiumResult, type FleetCoverage,
 } from '../../_shared/b2bFleetRating.ts';
 import { loadActiveBulkRateConfig } from './b2bSettings.ts';
 
@@ -54,6 +54,7 @@ interface ClientItemInput {
   multiYearDepreciation?: boolean; // true → TSI menyusut 10%/tahun (rate dari server)
   discountRate?: number;           // diskon pilihan klien; dijepit ke diskon rate set
   discountShownOnPolicy?: boolean; // diskon dicetak di polis atau tidak
+  coverage?: FleetCoverage;        // v2.8.24 — 'COMPREHENSIVE' hanya mobil & motor; bawaan TLO
 }
 
 // Tanggal efektif boleh hari ini s/d 60 hari ke depan. Sehari kelonggaran di
@@ -95,6 +96,13 @@ function validateItem(raw: unknown, index: number): { item: ClientItemInput; err
   if (multiYearDepreciation && tenorMonths > MULTI_YEAR_MAX_TENOR_MONTHS) {
     return { error: `Baris ${index + 1}: jangka waktu maksimum ${MULTI_YEAR_MAX_TENOR_MONTHS / 12} tahun.` };
   }
+  const coverageRaw = String(r.coverage ?? 'TLO').toUpperCase();
+  if (coverageRaw !== 'TLO' && coverageRaw !== 'COMPREHENSIVE') {
+    return { error: `Baris ${index + 1}: jenis pertanggungan tidak valid.` };
+  }
+  if (coverageRaw === 'COMPREHENSIVE' && vehicleClass === 'HEAVY_EQUIPMENT') {
+    return { error: `Baris ${index + 1}: alat berat hanya tersedia dengan pertanggungan TLO.` };
+  }
   let discountRate: number | undefined;
   if (r.discountRate !== undefined && r.discountRate !== null && r.discountRate !== '') {
     discountRate = Number(r.discountRate);
@@ -133,6 +141,7 @@ function validateItem(raw: unknown, index: number): { item: ClientItemInput; err
       // Tanpa pilihan eksplisit, diskon tetap tertera — sama seperti semua
       // batch sebelum v2.8.23.
       discountShownOnPolicy: r.discountShownOnPolicy === undefined ? true : r.discountShownOnPolicy === true,
+      coverage: coverageRaw as FleetCoverage,
     },
   };
 }
@@ -178,6 +187,7 @@ export async function handleB2BBulkAction(action: string, ctx: GatewayContext): 
           depreciationRate: it.multiYearDepreciation ? MULTI_YEAR_DEPRECIATION_RATE : 0,
           // calcBulkPremium menjepit ini ke 0..diskon rate set aktif.
           discountRateOverride: it.discountRate,
+          coverage: it.coverage,
         });
         return { ...it, premium };
       });
@@ -220,7 +230,7 @@ export async function handleB2BBulkAction(action: string, ctx: GatewayContext): 
         bpkb_no: r.bpkbNo ?? null,
         region_text: r.regionText ?? null,
         zone: r.zone,
-        coverage_type: 'TLO',
+        coverage_type: r.premium.coverage,
         rate: r.premium.rate,
         premium_gross: r.premium.premiumGross,
         discount_rate: r.premium.discountRate,
@@ -247,7 +257,7 @@ export async function handleB2BBulkAction(action: string, ctx: GatewayContext): 
       await db.from('sp_admin_notifications').insert({
         type: 'B2B_BULK_SUBMITTED',
         title: `Impor Massal B2B Baru — ${companyName}`,
-        body: `${companyName} mengajukan ${totals.itemCount} unit TLO, total Rp ${totals.totalAmount.toLocaleString('id-ID')}.`,
+        body: `${companyName} mengajukan ${totals.itemCount} unit${rated.every(r => r.premium.coverage === 'TLO') ? ' TLO' : ''}, total Rp ${totals.totalAmount.toLocaleString('id-ID')}.`,
         metadata: { batch_id: batch.id, batch_number: batch.batch_number },
         read: false,
       }).then(() => {}, () => {});

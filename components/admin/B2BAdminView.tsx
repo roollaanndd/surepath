@@ -544,6 +544,10 @@ const BulkBatchCard: React.FC<{ batch: SpB2BBatch; insurers: InsurerOption[]; on
                       <td className="py-1.5 pr-2 font-bold text-ds-ink dark:text-white max-w-[160px] truncate" title={it.nasabah_name}>{it.nasabah_name}</td>
                       <td className="py-1.5 pr-2 max-w-[170px] truncate" title={[it.make, it.model, it.model_year].filter(Boolean).join(' ') || it.vehicle_class}>
                         {[it.make, it.model, it.model_year].filter(Boolean).join(' ') || it.vehicle_class}
+                        {/* v2.8.24 — penerbit polis harus tahu jenis pertanggungannya. */}
+                        <span className={`ml-1 inline-block rounded-full px-1.5 py-0.5 font-black ${it.coverage_type === 'COMPREHENSIVE' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-slate-100 text-ds-ink2 dark:bg-white/10'}`}>
+                          {it.coverage_type === 'COMPREHENSIVE' ? 'Comprehensive' : 'TLO'}
+                        </span>
                       </td>
                       <td className="py-1.5 pr-2 font-mono">{it.plate_no ?? '—'}</td>
                       <td className="py-1.5 pr-2">{it.zone}</td>

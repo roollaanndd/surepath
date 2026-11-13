@@ -133,7 +133,7 @@ const AgentCommission: React.FC<Props> = ({ agentId, lang, onNavigate }) => {
 
       {/* Balance Hero Card — bank-card look */}
       <AgentArtKeyframes />
-      <div className="mx-4 mt-5 rounded-[1.75rem] p-5 text-white space-y-4 relative overflow-hidden"
+      <div className="sp-agent-hero mx-4 mt-5 rounded-[1.75rem] p-5 text-white space-y-4 relative overflow-hidden"
         style={{ background: 'linear-gradient(120deg, #0B1120 0%, #0E3B2E 55%, #0B5E3B 100%)', boxShadow: '0 16px 40px -14px rgba(11,17,32,0.55)' }}>
         <div aria-hidden className="absolute -top-14 -right-10 w-48 h-48 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(0,193,106,0.26), transparent 70%)' }} />
         <svg aria-hidden className="absolute right-0 top-0 h-full opacity-[0.12] pointer-events-none" viewBox="0 0 200 140" fill="none">

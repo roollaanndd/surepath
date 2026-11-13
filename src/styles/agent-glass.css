@@ -67,10 +67,11 @@
 /* ── 2. Kanvas ────────────────────────────────────────────────────────────── */
 /* Putih bersih. Motif kontur lama dilepas: kaca butuh cahaya lembut di
    belakangnya, bukan garis, supaya buramnya terbaca sebagai kedalaman. */
+/* !important: aturan kanvas lama untuk mode gelap memakainya. */
 .sp-modern-app.sp-agent-premium.ag-app,
 .dark .sp-modern-app.sp-agent-premium.ag-app {
-  background: var(--ag-canvas);
-  background-image: none;
+  background-color: var(--ag-canvas) !important;
+  background-image: none !important;
 }
 
 .ag-aurora {
@@ -447,6 +448,119 @@
   .ag-hero__path path { stroke-dashoffset: 0; }
   .ag-press, .ag-glass--press, .ag-dock__create { transition: none; }
   .ag-press:active, .ag-glass--press:active { transform: none; }
+}
+
+/* ── 10b. Layar dalam: selaraskan gaya lama ke Kaca Pagi ──────────────────── */
+/* Layar selain Beranda ditulis dalam beberapa generasi gaya (label HURUF BESAR
+   ber-tracking lebar, angka monospace, kartu utama biru-hitam, pil filter
+   hitam). Aturan di bawah menyatukannya tanpa menyentuh logika layar: yang
+   diubah hanya rupa, lewat kelas yang sudah ada. Semua di bawah `.ag-app main`
+   sehingga portal lain dan dialog di luar <main> tidak terkena. */
+
+/* Tipografi: huruf kalimat, tanpa tracking lebar, bobot 700, angka Sora. */
+.ag-app main :where(.uppercase) { text-transform: none; }
+.ag-app main :where([class*="tracking-wide"], [class*="tracking-[0"]) { letter-spacing: -0.005em; }
+.ag-app main :where(.font-black) { font-weight: 700; }
+.ag-app main :where(.font-mono) { font-family: inherit; font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }
+/* Angka uang besar di kotak sempit (simulator, ringkasan): Sora lebih lebar
+   daripada monospace lama, jadi diperkecil sedikit dan tidak dipatahkan. */
+.ag-app main :where(.font-mono[class*="text-lg"], .font-mono[class*="text-xl"]) { font-size: 1rem; white-space: nowrap; }
+/* Tidak ada teks di bawah 11px. */
+.ag-app main :where([class*="text-[7px]"], [class*="text-[8px]"], [class*="text-[9px]"], [class*="text-[10px]"], [class*="text-[0.4"], [class*="text-[0.5"], [class*="text-[0.6"]) {
+  font-size: 0.6875rem;
+  line-height: 1.35;
+}
+
+/* Kartu utama tiap layar (AgentHero + kartu saldo): hijau tua berkaca yang
+   sama dengan kartu saldo Beranda, dengan garis jalur dan satu titik oranye. */
+.ag-app .sp-agent-hero {
+  isolation: isolate;
+  border-radius: 28px;
+  background:
+    radial-gradient(120% 90% at 100% 0%, rgba(52, 227, 154, 0.5) 0%, rgba(52, 227, 154, 0) 55%),
+    radial-gradient(90% 80% at 0% 100%, rgba(0, 193, 106, 0.32) 0%, rgba(0, 193, 106, 0) 60%),
+    linear-gradient(150deg, #00382c 0%, #04543f 52%, #067a55 100%) !important;
+  box-shadow: 0 30px 54px -32px rgba(0, 56, 44, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+}
+.ag-app .sp-agent-hero::after {
+  content: "";
+  position: absolute; top: 16px; right: 18px; z-index: -1;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--ag-orange);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9), 0 0 0 7px rgba(249, 115, 22, 0.18);
+}
+/* Panel di dalam kartu utama: kaca putih tipis, bukan kotak gelap. */
+.ag-app .sp-agent-hero :where([class*="bg-white/"], [class*="bg-black/"]) {
+  background: rgba(255, 255, 255, 0.13);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.ag-app .sp-agent-hero :where(h2) { font-size: 1.25rem; letter-spacing: -0.03em; }
+/* Di atas hijau tua: tombol utama menjadi putih (hijau di atas hijau tidak
+   terbaca), dan label kuning/oranye memakai oranye muda yang kontras. */
+.ag-app .sp-agent-hero :where(button, a)[class*="bg-ds-green"]:not([class*="bg-ds-green/"]):not([class*="bg-ds-green-"]) {
+  color: var(--ag-green-ink) !important;
+  background: #fff !important;
+  box-shadow: 0 14px 26px -16px rgba(0, 0, 0, 0.55) !important;
+}
+.ag-app .sp-agent-hero :where([class*="text-ds-amber"], [class*="text-amber-"], [class*="text-yellow-"], [class*="text-orange-"]) { color: #fdba74; }
+.ag-app .sp-agent-hero :where([class*="text-ds-green"], [class*="text-emerald-"]) { color: #a7f3d0; }
+.ag-app .sp-agent-hero :where(p[class*="text-white/"]) { color: rgba(255, 255, 255, 0.74); font-size: 0.75rem; }
+
+/* Permukaan biru-hitam lama (kartu referral, baris juara, tombol navy) →
+   hijau tua yang sama dengan kartu utama. */
+.ag-app main :where(.bg-ds-navy) {
+  background: linear-gradient(150deg, #00382c 0%, #04543f 55%, #067a55 100%);
+  box-shadow: 0 24px 44px -28px rgba(0, 56, 44, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+.ag-app main :where(.bg-ds-navy) { color: #fff; }
+.ag-app main :where(.bg-ds-navy) :where([class*="text-ds-ink"], [class*="text-ds-green"], [class*="text-slate-"], [class*="text-gray-"]) { color: rgba(255, 255, 255, 0.88); }
+.ag-app main :where(.bg-ds-navy) :where([class*="bg-white/"]) {
+  background: rgba(255, 255, 255, 0.13);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* Pil filter: kaca saat diam, hijau saat aktif — sama dengan top menu. */
+.ag-app main :where(button)[class*="rounded-full"][class*="tracking-widest"] {
+  padding: 0.5rem 0.9rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--ag-ink2);
+  background: var(--ag-glass-strong);
+  border: 1px solid var(--ag-glass-edge);
+  box-shadow: 0 0 0 1px var(--ag-hairline);
+}
+.ag-app main :where(button)[class*="rounded-full"][class*="tracking-widest"]:is(.bg-ds-navy, .bg-ds-green, .bg-ds-ink, .bg-emerald-500, .bg-emerald-600) {
+  color: #fff;
+  background: linear-gradient(135deg, #059669, #047857);
+  border-color: transparent;
+  box-shadow: 0 10px 20px -12px rgba(4, 120, 87, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.dark .ag-app main :where(button)[class*="rounded-full"][class*="tracking-widest"]:is(.bg-ds-navy, .bg-ds-green, .bg-ds-ink, .bg-emerald-500, .bg-emerald-600) {
+  color: #04241c;
+  background: linear-gradient(135deg, #34e39a, #10b981);
+}
+
+/* Bilah pencarian/saring bertepi penuh (mis. Klien): lepas latar putih dan
+   garisnya supaya menyatu dengan kanvas. */
+.ag-app main :where(.bg-ds-card.border-b) { background: transparent; border-color: transparent; }
+
+/* Kolom isian: tinggi sentuh 46px, kaca, cincin fokus hijau. */
+.ag-app main :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]), select, textarea) {
+  border-radius: 16px;
+  background-color: var(--ag-glass-strong);
+  border-color: var(--ag-hairline);
+  color: var(--ag-ink);
+}
+.ag-app main :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]), select) { min-height: 46px; }
+
+/* Tombol utama lama (hijau penuh, bersudut besar): gradasi + bayangan kit. */
+.ag-app main :where(button, a)[class*="bg-ds-green"][class*="rounded-"]:not([class*="rounded-full"]):not([class*="bg-ds-green-"]):not([class*="bg-ds-green/"]) {
+  color: #fff;
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  box-shadow: 0 14px 26px -14px rgba(4, 120, 87, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 /* ── 11. Layar lebar ──────────────────────────────────────────────────────── */

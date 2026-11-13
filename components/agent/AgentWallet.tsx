@@ -409,7 +409,7 @@ const AgentWalletView: React.FC = () => {
   return (
     <div className="sp-agent-wallet bg-ds-bg min-h-screen pb-28">
       {/* Balance card — premium bank-card look */}
-      <div className="mx-5 mt-5 rounded-[2rem] p-5 text-white sp-enter relative overflow-hidden"
+      <div className="sp-agent-hero mx-5 mt-5 rounded-[2rem] p-5 text-white sp-enter relative overflow-hidden"
         style={{ background: 'linear-gradient(120deg, #0B1120 0%, #0E3B2E 55%, #0B5E3B 100%)', boxShadow: '0 16px 44px -14px rgba(11,17,32,0.55)' }}>
         <div aria-hidden className="absolute -top-14 -right-12 w-52 h-52 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(0,193,106,0.26), transparent 70%)' }} />
         <svg aria-hidden className="absolute right-0 bottom-0 h-4/5 opacity-[0.10] pointer-events-none" viewBox="0 0 200 140" fill="none">

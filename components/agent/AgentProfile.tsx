@@ -738,14 +738,14 @@ const AgentProfile: React.FC<Props> = ({ agent, agentId, lang, onLogout, onNavig
         </div>
       </div>
 
-      <button type="button" onClick={() => setShowChangePassword(true)} className="mx-5 mt-4 w-full h-12 rounded-xl border border-ds-border bg-ds-card text-ds-ink font-semibold text-sm flex items-center justify-center gap-2">
+      <button type="button" onClick={() => setShowChangePassword(true)} className="mx-5 mt-4 w-[calc(100%-2.5rem)] h-12 rounded-xl border border-ds-border bg-ds-card text-ds-ink font-semibold text-sm flex items-center justify-center gap-2">
         <LockKeyhole className="w-4 h-4" /> {t("Change Password", "Ubah Kata Sandi")}
       </button>
 
       {/* Logout */}
       <button
         onClick={onLogout}
-        className="mx-5 mt-4 w-full h-12 rounded-xl border border-ds-red-lt bg-ds-red-lt text-ds-red font-semibold text-sm active:bg-ds-red active:text-white transition-all flex items-center justify-center gap-2"
+        className="mx-5 mt-4 w-[calc(100%-2.5rem)] h-12 rounded-xl border border-ds-red-lt bg-ds-red-lt text-ds-red font-semibold text-sm active:bg-ds-red active:text-white transition-all flex items-center justify-center gap-2"
       >
         <LogOut className="w-4 h-4" />
         {t('Sign Out', 'Keluar')}

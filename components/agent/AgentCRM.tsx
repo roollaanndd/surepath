@@ -187,7 +187,10 @@ const AgentCRM: React.FC<Props> = ({ agentId, lang, onSelectClient }) => {
                   : 'bg-ds-card border border-ds-border text-ds-ink3'
               }`}
             >
-              {f === 'ALL' ? t('All', 'Semua') : f}
+              {f === 'ALL' ? t('All', 'Semua')
+                : f === 'PROSPECT' ? t('Prospects', 'Prospek')
+                : f === 'ACTIVE' ? t('Active', 'Aktif')
+                : t('Inactive', 'Tidak aktif')}
             </button>
           ))}
         </div>
@@ -197,10 +200,17 @@ const AgentCRM: React.FC<Props> = ({ agentId, lang, onSelectClient }) => {
           <p className="text-sm text-ds-ink2">
             {filtered.length} {t('clients', 'klien')}
           </p>
-          <button onClick={loadData} className="flex items-center gap-1.5 text-xs font-bold text-ds-ink3 hover:text-ds-green transition-colors">
-            <RefreshCw size={12} className={loading ? 'animate-spin motion-reduce:animate-none' : ''} />
-            {t('Refresh', 'Perbarui')}
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={loadData} className="flex items-center gap-1.5 text-xs font-bold text-ds-ink3 hover:text-ds-green transition-colors">
+              <RefreshCw size={12} className={loading ? 'animate-spin motion-reduce:animate-none' : ''} />
+              {t('Refresh', 'Perbarui')}
+            </button>
+            {/* v2.9.0 — menggantikan tombol "+" mengambang yang tertimpa dock dan Pathy. */}
+            <button type="button" onClick={openAdd} className="ag-btn ag-btn--spark ag-btn--sm ag-press" style={{ ['--ag-icon-accent' as string]: '#fff' }}>
+              <Plus size={15} strokeWidth={2.6} />
+              {t('Add client', 'Tambah klien')}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -257,14 +267,6 @@ const AgentCRM: React.FC<Props> = ({ agentId, lang, onSelectClient }) => {
           })
         )}
       </div>
-
-      {/* FAB */}
-      <button
-        onClick={openAdd}
-        className="fixed bottom-24 right-5 w-14 h-14 rounded-full bg-ds-green text-ds-on-green flex items-center justify-center shadow-ds-md active:brightness-90 transition-all z-30"
-      >
-        <Plus size={24} className="text-white" strokeWidth={3} />
-      </button>
 
       {/* ─── Client Detail Modal ─── */}
       {selectedClient && (

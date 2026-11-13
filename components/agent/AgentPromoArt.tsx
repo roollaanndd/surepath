@@ -26,7 +26,9 @@ const Canvas: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <svg
     className="spp absolute inset-0 h-full w-full"
     viewBox="0 0 320 140"
-    preserveAspectRatio="xMidYMid slice"
+    // xMax: subjek tiap adegan digambar di sisi kanan; di potongan tiket yang
+    // sempit (v2.9.0) sisi kanan itulah yang harus tetap terlihat.
+    preserveAspectRatio="xMaxYMid slice"
     fill="none"
     aria-hidden="true"
     focusable="false"

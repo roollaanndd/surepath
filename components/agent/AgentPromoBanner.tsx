@@ -189,7 +189,10 @@ const AgentPromoBanner: React.FC<Props> = ({ lang, onCta, onNavigate, className 
     >
       <PromoArtKeyframes />
 
-      <div className="relative overflow-hidden rounded-[1.75rem] shadow-[0_18px_40px_-26px_rgba(4,53,36,0.55)] ring-1 ring-emerald-900/10">
+      {/* v2.9.0 "Kaca Pagi": kartu promo berbentuk tiket terang — teks di badan
+          tiket, gambar di potongan kanan, garis sobek di antaranya. Jalur data,
+          autoplay, geser, dan tutup tidak berubah. */}
+      <div className="ag-promo">
         {/* Rel geser: satu transform, transisi halus, diam saat reduced-motion. */}
         <div
           className="flex motion-reduce:transition-none"
@@ -210,35 +213,39 @@ const AgentPromoBanner: React.FC<Props> = ({ lang, onCta, onNavigate, className 
                 aria-label={`${slide.headline}. ${slide.cta}`}
                 className="relative w-full shrink-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green focus-visible:ring-inset"
               >
-                <div className="relative h-[150px] w-full overflow-hidden bg-[#063A2B]">
-                  {slide.imageUrl ? (
-                    <img
-                      src={slide.imageUrl}
-                      alt=""
-                      aria-hidden="true"
-                      loading={i === 0 ? 'eager' : 'lazy'}
-                      referrerPolicy="no-referrer"
-                      className="absolute inset-0 h-full w-full object-cover"
-                    />
-                  ) : (
-                    <Art />
-                  )}
-                  {/* Lapis gelap agar teks tetap terbaca di atas gambar apa pun. */}
-                  <div
-                    className="absolute inset-0"
-                    style={{ background: 'linear-gradient(100deg, rgba(4,32,24,.92) 0%, rgba(4,32,24,.72) 42%, rgba(4,32,24,.05) 78%)' }}
-                    aria-hidden="true"
-                  />
-                  <div className="relative z-10 flex h-full max-w-[62%] flex-col justify-center gap-1.5 px-5">
-                    <span className="text-2xs font-black uppercase tracking-[.16em] text-white/70">
-                      {slide.eyebrow}
-                    </span>
-                    <p className="text-[15px] font-black leading-tight text-white">{slide.headline}</p>
-                    <p className="text-2xs font-medium leading-snug text-white/75 line-clamp-2">{slide.body}</p>
-                    <span className="mt-1 inline-flex w-fit items-center gap-1 rounded-full bg-white px-3 py-1.5 text-2xs font-black text-[#0B4935]">
+                <div className="relative grid h-[188px] w-full grid-cols-[minmax(0,1fr)_38%]">
+                  <div className="relative z-10 flex min-w-0 flex-col justify-center gap-1.5 py-4 pl-5 pr-4">
+                    <span className="ag-chip ag-chip--spark w-fit max-w-full truncate">{slide.eyebrow}</span>
+                    <p className="text-[1.0625rem] font-bold leading-[1.2] tracking-[-0.025em] line-clamp-2" style={{ color: 'var(--ag-ink)' }}>
+                      {slide.headline}
+                    </p>
+                    <p className="ag-caption line-clamp-2 leading-snug">{slide.body}</p>
+                    <span
+                      className="ag-btn ag-btn--spark mt-1 w-fit"
+                      style={{ minHeight: 32, padding: '0 12px', borderRadius: 11, fontSize: '0.75rem', ['--ag-icon-accent' as string]: '#fff' }}
+                    >
                       {slide.cta}
-                      <ChevronRight size={12} />
+                      <ChevronRight size={13} strokeWidth={2.6} />
                     </span>
+                  </div>
+                  {/* Potongan tiket: adegan vektor (atau gambar CMS) dalam bingkai
+                      membulat, dipisah garis sobek dari badan tiket. */}
+                  <div className="relative py-3 pr-3">
+                    <span aria-hidden="true" className="absolute -left-px bottom-3 top-3 border-l-[1.5px] border-dashed" style={{ borderColor: 'rgba(234, 88, 12, 0.32)' }} />
+                    <div className="relative ml-2.5 h-full overflow-hidden rounded-[18px] bg-[#063A2B]" style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.14), 0 14px 24px -18px rgba(0,56,44,0.8)' }}>
+                      {slide.imageUrl ? (
+                        <img
+                          src={slide.imageUrl}
+                          alt=""
+                          aria-hidden="true"
+                          loading={i === 0 ? 'eager' : 'lazy'}
+                          referrerPolicy="no-referrer"
+                          className="absolute inset-0 h-full w-full object-cover"
+                        />
+                      ) : (
+                        <Art />
+                      )}
+                    </div>
                   </div>
                 </div>
               </button>
@@ -253,14 +260,14 @@ const AgentPromoBanner: React.FC<Props> = ({ lang, onCta, onNavigate, className 
             type="button"
             onClick={dismissCms}
             aria-label={t('Dismiss promo', 'Tutup promo')}
-            className="absolute right-3 top-3 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-black/30 text-white transition hover:bg-black/45 active:scale-90 motion-reduce:transition-none"
+            className="absolute right-5 top-5 z-20 flex h-7 min-h-0 w-7 items-center justify-center rounded-full bg-black/35 text-white transition hover:bg-black/50 active:scale-90 motion-reduce:transition-none"
           >
             <X size={13} />
           </button>
         )}
 
         {slides.length > 1 && (
-          <div className="absolute bottom-3 right-4 z-20 flex items-center gap-1.5">
+          <div className="absolute bottom-[18px] z-20 flex items-center gap-1.5" style={{ right: 'calc(38% + 14px)' }}>
             {slides.map((slide, i) => (
               <button
                 key={slide.id}
@@ -271,13 +278,13 @@ const AgentPromoBanner: React.FC<Props> = ({ lang, onCta, onNavigate, className 
                 /* h-6 + min-h-0: portal-modernization.css memberi setiap
                    <button> tinggi minimum 44px lewat :where(), yang akan
                    membengkakkan dot 6px menjadi batang tinggi. */
-                className="flex h-6 min-h-0 items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                className="flex h-6 min-h-0 items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ds-green"
               >
                 <span
                   className="block h-1.5 rounded-full transition-all duration-300 motion-reduce:transition-none"
                   style={{
                     width: i === index ? 20 : 7,
-                    background: i === index ? '#FFFFFF' : 'rgba(255,255,255,0.45)',
+                    background: i === index ? 'var(--ag-orange)' : 'rgba(100,116,139,0.32)',
                   }}
                 />
               </button>

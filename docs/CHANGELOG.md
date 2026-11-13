@@ -1,5 +1,75 @@
 # SurePath - Changelog
 
+## v2.9.0 - 2026-11-13
+
+### Apps Mitra: perombakan tampilan total — "Kaca Pagi"
+
+Permintaan owner (12 Nov): apps mitra menjadi super app modern — glassmorphism,
+ikon buatan sendiri, header dan top menu baru, desain promo, klik beranimasi,
+transisi layar halus — dengan tema putih bersih, hijau, dan sedikit oranye.
+
+Bahasa desainnya satu gagasan: kanvas **putih bersih**, cahaya **hijau** yang
+mekar dari atas, panel **kaca buram** yang mengambang, dan **satu aksen oranye**
+yang hanya dipakai untuk "titik tujuan" (membuat penawaran, promo, penanda
+belum dibaca). Panduan lengkap: `docs/AGENT_UI_KIT.md`.
+
+**Kerangka baru (di semua layar)**
+- **Bar kaca atas** — avatar, sapaan (Beranda) atau judul layar, tema, bel
+  dengan lencana oranye. Menguat saat digulir.
+- **Top menu** — rel pil yang meluncur: Ringkasan, Klien, Klaim, Perpanjangan,
+  Jaringan, Peringkat, Endorsemen, Tarik Dana, Pathy. Tujuan yang dulu hanya
+  bisa dicapai lewat ubin Beranda kini satu ketukan dari layar mana pun.
+- **Dock** — lima tujuan yang sama; pil hijau meluncur ke tab aktif, dan
+  **Buat** menjadi tombol oranye di tengah.
+- **Transisi layar berarah** (masuk dari kanan/kiri sesuai urutan layar),
+  tekanan berpegas pada semua elemen yang bisa ditekan, kerangka muat berbentuk
+  konten. Semuanya mati di bawah `prefers-reduced-motion`.
+
+**Ikon "Jalur"** — keluarga ±55 ikon gambar sendiri (grid 24, garis 1,75
+membulat). Tiap ikon punya tepat satu penanda oranye: titik tujuannya. Unggahan
+Icon Manager admin tetap menang atas ikon bawaan.
+
+**Beranda** dibangun ulang: kartu saldo hijau tua berkaca dengan garis jalur
+yang menggambar dirinya menuju titik oranye, tiga aksi dompet dan tiga angka
+bulan ini; rel "Jual sekarang"; kartu promo; delapan fitur mitra; kinerja
+dengan cincin konversi; tip Pathy; perpanjangan; komisi terbaru. Tidak ada
+tujuan atau angka yang hilang dari beranda lama.
+
+**Promo** — kartu berbentuk tiket terang: label oranye, judul, satu baris isi,
+tombol oranye; adegan vektor di potongan kanan dengan garis sobek. Jalur data
+CMS, autoplay, geser, dan tutup tidak berubah.
+
+**Layar dalam** (Polis, Komisi, Dompet, Profil, Klien, Klaim, Perpanjangan,
+Jaringan, Peringkat, Endorsemen, Buat Penawaran) diselaraskan lewat satu lapisan
+gaya di bawah `.ag-app` — logika layar tidak disentuh:
+- kartu utama tiap layar menjadi hijau tua berkaca yang sama dengan Beranda;
+- label HURUF BESAR ber-tracking lebar → huruf kalimat; angka monospace → Sora;
+  tidak ada teks di bawah 11px;
+- pil filter: kaca saat diam, hijau saat aktif; kolom isian 46px berkaca;
+- permukaan biru-hitam lama (kartu referral, baris juara) → hijau tua.
+
+**Perbaikan yang ikut ketemu**
+- Profil: dua tombol bawah melebar 40px keluar layar di 390px (`w-full` +
+  `mx-5`) — geser horizontal lama, kini hilang.
+- Klien: tombol "+" mengambang tertimpa dock dan Pathy → tombol "Tambah klien"
+  di baris jumlah; pil status kini "Prospek / Aktif / Tidak aktif".
+- Tip Pathy: "3A-" (mojibake) → "3×".
+
+**Yang sengaja tidak diubah**
+- Logika, alur data, panggilan gateway, validasi, dan teks hukum di semua layar.
+- Portal lain: semua gaya baru hidup di bawah `.ag-app`; `PortalHeader`,
+  `PortalTabBar`, dan `SuperAppHeader` bersama tidak disentuh.
+- Struktur dalam pembuat penawaran dan wizard underwriting (hanya ikut
+  lapisan gaya); kartu partner bertema tier di Profil; gerbang perjanjian dan
+  onboarding (dirender di luar root apps).
+
+**Uji.** `tests/agentApp.spec.ts` 6/6 lulus (navigasi lima tab, tab Buat,
+gerbang S&K, onboarding, Pathy, kutipan STNK). Guard desain lulus
+(`agentPremiumPolish`, `portalDarkGuard`, `moduleIconIds`, `agentHomeStnkDisc`).
+Ke-12 layar dipotret di 390×844 dengan backend tiruan, terang dan gelap: 0 error
+konsol, tanpa geser horizontal. Path browser di `tests/agentApp.spec.ts`
+diperbarui ke tautan stabil container.
+
 ## v2.8.24 - 2026-11-12
 
 ### B2B: impor Excel yang benar-benar membaca file, Comprehensive, dan pilihan merk/tipe

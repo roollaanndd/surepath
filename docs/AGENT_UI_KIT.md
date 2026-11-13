@@ -99,6 +99,34 @@ punya teks, tidak pernah warna saja.
   animasi masuk kedua di tingkat layar.
 - Semua gerak sudah dimatikan di bawah `prefers-reduced-motion`.
 
+## Lapisan penyelaras layar lama
+
+Layar selain Beranda belum ditulis ulang dengan primitive kit. Supaya tetap
+satu bahasa, `agent-glass.css` bagian **10b** menyelaraskan gaya lamanya lewat
+kelas yang sudah ada, di bawah `.ag-app main`:
+
+| Gaya lama | Menjadi |
+|---|---|
+| `uppercase`, `tracking-wide*`, `font-black` | huruf kalimat, tracking normal, bobot 700 |
+| `font-mono` (angka uang) | Sora dengan `tabular-nums` |
+| `text-[7..10px]` | 11px |
+| `AgentHero` / kartu saldo (`.sp-agent-hero`) | hijau tua berkaca + titik oranye |
+| `bg-ds-navy` | hijau tua |
+| pil filter `rounded-full … tracking-widest` | kaca; hijau saat aktif |
+| `input` / `select` / `textarea` | 46px, kaca, garis halus |
+| `bg-ds-card` / `bg-white` bersudut besar | kaca buram |
+
+Konsekuensinya saat menulis layar baru atau menyunting layar lama:
+
+- Kelas di kolom kiri **tidak lagi berarti apa yang tertulis** di dalam apps
+  mitra. Jangan mengandalkannya; pakai primitive kit dan kelas `.ag-*`.
+- Saat sebuah layar ditulis ulang dengan kit, ia berhenti bergantung pada
+  lapisan ini dengan sendirinya. Bila semua layar sudah pindah, bagian 10b
+  bisa dihapus.
+- `AgentHero` dan `AgentEmpty` (di `AgentArt.tsx`) dipakai juga oleh portal
+  operator dan insurer. Di sana tampilannya tidak berubah: aturan hijau tua
+  hanya berlaku di bawah `.ag-app`.
+
 ## Yang tidak boleh berubah saat mendesain ulang
 
 - **Logika, alur data, panggilan gateway, validasi, dan teks hukum.** Ini

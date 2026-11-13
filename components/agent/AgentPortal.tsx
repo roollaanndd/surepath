@@ -461,7 +461,8 @@ const AgentPortal: React.FC<Props> = ({ agent, onLogout, lang }) => {
         eyebrow={activeTab === 'home' ? `${greeting},` : `${t('SurePath Partner', 'SurePath Mitra')} · ${agent?.agent_code ?? 'SP-AGT'}`}
         title={activeTab === 'home' ? firstName : (screenTitle[activeTab] ?? firstName)}
         initial={(agent?.name?.[0] ?? 'M').toUpperCase()}
-        badge={myTierDef && !myTierDef.is_default ? (
+        // Lencana tier hanya di Beranda: di layar lain ruangnya dipakai judul layar.
+        badge={activeTab === 'home' && myTierDef && !myTierDef.is_default ? (
           <span className="ag-chip shrink-0" style={{ color: myTierDef.color, background: `${myTierDef.color}1f` }}>
             <span aria-hidden="true">{myTierDef.emoji}</span> {myTierDef.name}
           </span>

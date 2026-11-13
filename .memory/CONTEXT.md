@@ -1,5 +1,36 @@
 # SurePath Session Context
-**Updated:** 2026-11-12 (v2.8.23 — Order Unit B2B: tanggal efektif, multi-tahun 6 thn, pilihan diskon)
+**Updated:** 2026-11-13 (v2.9.0 — revamp total apps mitra "Kaca Pagi"; v2.8.24 perbaikan B2B live)
+
+## Terakhir dikerjakan (13 Nov 2026) — v2.9.0 + v2.8.24
+
+**v2.9.0 — Apps Mitra "Kaca Pagi".** Perombakan tampilan total `/agapps`:
+kanvas putih, cahaya hijau, kaca buram, satu aksen oranye. Panduan mengikat:
+`docs/AGENT_UI_KIT.md`.
+- `src/styles/agent-glass.css` — token `--ag-*`, kelas `.ag-*`, semua di bawah
+  `.ag-app` (root AgentPortal). Bagian 10b = lapisan penyelaras layar lama.
+- `components/agent/ui/` — `AgIcon` (ikon "Jalur", ±55), `kit` (AgGlass,
+  AgSection, AgPageHeader, AgButton, AgChip, AgTile, AgRow, AgEmpty, …),
+  `shell` (AgTopBar = bar kaca + top menu, AgDock).
+- `AgentPortal` memakai shell baru; `AgentHome` dan `AgentPromoBanner` ditulis
+  ulang. Layar dalam BELUM ditulis ulang dengan kit — hanya ikut lapisan gaya.
+  Kandidat berikutnya untuk ditulis ulang: AgentCommission, AgentWallet,
+  AgentProfile (kartu partner masih bertema tier gelap), AgentQuoteBuilder.
+- Kontrak e2e yang harus dijaga: `<nav aria-label="Navigasi utama">` (dock),
+  teks "Beranda" hanya sekali di layar (top menu memakai "Ringkasan"), tombol
+  bernama "Pathy" pertama membuka asisten.
+
+**v2.8.24 — perbaikan B2B (live, diuji di produksi).** Impor Excel mencari
+baris header sendiri + kamus kolom luas; Order Unit punya Comprehensive (mobil
+& motor) dan pilihan merk/tipe dari `services/vehicleDatabase.ts`; unggahan yang
+"diam saja" ditutup (pilih ulang file, pesan gagal, tipe MIME dari ekstensi).
+Detail: `docs/CHANGELOG.md` v2.8.24. Belum diuji: submit order sungguhan,
+invoice Xendit, unggah dokumen ke bucket (butuh sesi B2B nyata).
+
+**Catatan operasional**
+- Menjalankan e2e lokal: container tidak punya ffmpeg yang diminta Playwright
+  repo → jalankan dengan config yang mematikan video (`use.video: 'off'`).
+- Jangan menjalankan banyak subagen paralel untuk pekerjaan besar: 12 Nov enam
+  agen sekaligus menghabiskan batas pemakaian 5 jam dan semuanya terhenti.
 
 ## Terakhir dikerjakan (12 Nov 2026) — v2.8.23
 

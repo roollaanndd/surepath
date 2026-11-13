@@ -18,18 +18,31 @@
 //   • Diskon bisa diturunkan dari plafon rate set, dan klien memilih apakah
 //     diskon itu tertera di polis.
 // Ketiganya tetap dihitung/divalidasi ulang oleh server.
+//
+// v2.8.24 — dua hal yang dilaporkan owner hilang dibanding apps mitra:
+//   • Pilihan pertanggungan Comprehensive (mobil & motor) di samping TLO.
+//     Alat berat tetap TLO — tidak ada tarif comprehensive OJK untuknya.
+//   • Merk dan tipe dipilih dari database kendaraan yang sama dengan apps
+//     mitra (services/vehicleDatabase.ts + harga kelolaan admin). Memilih
+//     merk, tipe, dan tahun mengisi harga pasar referensi ke OTR dan nilai
+//     pertanggungan; keduanya tetap bisa disunting, dan kendaraan yang tidak
+//     ada di daftar bisa diketik manual.
 
 import React, { useMemo, useState } from 'react';
 import {
   Car, Bike, Construction, Loader2, CheckCircle2, AlertTriangle, ExternalLink,
-  Info, ClipboardList, CalendarDays, TrendingDown,
+  Info, ClipboardList, CalendarDays, TrendingDown, ShieldCheck, ShieldAlert,
 } from 'lucide-react';
 import { Language } from '../../types';
 import {
-  buildLineItem, getActiveBulkRateConfig, addMonthsToIsoDate, isValidIsoDate,
+  buildLineItem, getActiveBulkRateConfig, addMonthsToIsoDate, isValidIsoDate, isLikelyCommercialBody,
   MULTI_YEAR_DEPRECIATION_RATE,
-  type VehicleClass, type Zone, type BuiltLineItem,
+  type VehicleClass, type Zone, type BuiltLineItem, type FleetCoverage,
 } from '../../services/b2bFleetRating';
+import {
+  VEHICLE_BRANDS, MOTO_BRANDS, getModelsForBrand, getModelsForMotoBrand,
+  getMarketValueForYear, getMarketValueForMotoYear,
+} from '../../services/vehicleDatabase';
 import { createB2BBulkBatch, createB2BBulkInvoice } from '../../services/supabaseService';
 
 interface Props {
@@ -55,6 +68,10 @@ const DURATION_OPTIONS: Array<{ months: number; en: string; id: string }> = [
   { months: 72, en: '6 yr',  id: '6 thn' },
 ];
 const START_DATE_MAX_DAYS_AHEAD = 60;
+// Nilai <option> untuk "tidak ada di daftar" — tidak mungkin bentrok dengan nama merk/tipe.
+const OTHER = '__lainnya__';
+const THIS_YEAR = new Date().getFullYear();
+const YEAR_OPTIONS = Array.from({ length: 22 }, (_, i) => THIS_YEAR + 1 - i);
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
 const localIsoDate = (d: Date) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
@@ -94,13 +111,17 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
   const [rateConfig] = useState(() => getActiveBulkRateConfig());
 
   const [vehicleClass, setVehicleClass] = useState<VehicleClass>('CAR');
+  const [coverage, setCoverage] = useState<FleetCoverage>('COMPREHENSIVE');
+  // true = merk/tipe diketik manual (kendaraan tidak ada di database).
+  const [manualBrand, setManualBrand] = useState(false);
+  const [manualModel, setManualModel] = useState(false);
   const [nasabahName, setNasabahName] = useState('');
   const [nasabahPhone, setNasabahPhone] = useState('');
   const [nasabahAddress, setNasabahAddress] = useState('');
   const [contractNo, setContractNo] = useState('');
   const [make, setMake] = useState('');
   const [model, setModel] = useState('');
-  const [modelYear, setModelYear] = useState('');
+  const [modelYear, setModelYear] = useState(String(THIS_YEAR));
   const [plateNo, setPlateNo] = useState('');
   const [regionText, setRegionText] = useState('');
   const [zoneOverride, setZoneOverride] = useState<Zone | ''>('');
@@ -123,6 +144,73 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
 
   const isCar = vehicleClass === 'CAR';
   const isHeavy = vehicleClass === 'HEAVY_EQUIPMENT';
+  const isMoto = vehicleClass === 'MOTORCYCLE';
+  // Alat berat hanya TLO; pilihan pengguna untuk kelas lain diingat.
+  const effectiveCoverage: FleetCoverage = isHeavy ? 'TLO' : coverage;
+
+  // ── Database kendaraan (sama dengan apps mitra) ───────────────────────────
+  const brandList = isHeavy ? [] : isMoto ? MOTO_BRANDS : VEHICLE_BRANDS;
+  const brandInList = brandList.includes(make);
+  const modelList = useMemo(
+    () => (!brandInList ? [] : isMoto ? getModelsForMotoBrand(make) : getModelsForBrand(make)),
+    [brandInList, isMoto, make],
+  );
+  const modelInList = modelList.includes(model);
+  const yearNum = Number(modelYear) || 0;
+  const marketValue = useMemo(() => {
+    if (isHeavy || !brandInList || !modelInList || !yearNum) return null;
+    return isMoto ? getMarketValueForMotoYear(make, model, yearNum) : getMarketValueForYear(make, model, yearNum);
+  }, [isHeavy, isMoto, brandInList, modelInList, make, model, yearNum]);
+
+  // Harga pasar referensi mengisi OTR dan nilai pertanggungan. Angka yang
+  // sudah diketik sendiri oleh pengguna tidak ditimpa: hanya diisi bila masih
+  // kosong atau masih sama dengan isian otomatis sebelumnya. Dilakukan di
+  // handler (bukan effect) supaya urutannya pasti.
+  const [autoPrice, setAutoPrice] = useState('');
+  const lookupPrice = (cls: VehicleClass, brand: string, mdl: string, year: number): number | null => {
+    if (cls === 'HEAVY_EQUIPMENT' || !brand || !mdl || !year) return null;
+    return cls === 'MOTORCYCLE' ? getMarketValueForMotoYear(brand, mdl, year) : getMarketValueForYear(brand, mdl, year);
+  };
+  const applyPrice = (price: number | null) => {
+    const untouched = (current: string) => current === '' || current === autoPrice;
+    if (price == null || price <= 0) {
+      // Tidak ada harga referensi: buang isian otomatis lama, biarkan ketikan pengguna.
+      if (autoPrice !== '') {
+        if (otr === autoPrice) setOtr('');
+        if (financingValue === autoPrice) setFinancingValue('');
+        setAutoPrice('');
+      }
+      return;
+    }
+    const next = String(Math.round(price));
+    if (untouched(otr)) setOtr(next);
+    if (untouched(financingValue)) setFinancingValue(next);
+    setAutoPrice(next);
+  };
+
+  const changeClass = (next: VehicleClass) => {
+    if (next === vehicleClass) return;
+    setVehicleClass(next);
+    setMake(''); setModel(''); setManualBrand(false); setManualModel(false);
+    setCommercialBody(false);
+    applyPrice(null); // angka dari kendaraan sebelumnya tidak berlaku untuk kelas lain
+  };
+  const changeBrand = (value: string) => {
+    if (value === OTHER) { setManualBrand(true); setManualModel(true); setMake(''); setModel(''); applyPrice(null); return; }
+    setManualBrand(false); setManualModel(false); setMake(value); setModel('');
+    applyPrice(null);
+  };
+  const changeModel = (value: string) => {
+    if (value === OTHER) { setManualModel(true); setModel(''); applyPrice(null); return; }
+    setManualModel(false); setModel(value);
+    // Pickup/truk/van punya tarif sendiri — tebak dari nama tipe, tetap bisa diubah.
+    if (isCar && value) setCommercialBody(isLikelyCommercialBody(`${make} ${value}`));
+    applyPrice(lookupPrice(vehicleClass, make, value, yearNum));
+  };
+  const changeYear = (value: string) => {
+    setModelYear(value);
+    if (brandInList && modelInList) applyPrice(lookupPrice(vehicleClass, make, model, Number(value) || 0));
+  };
   const isMultiYear = tenorMonths > 12;
   const discountCap = isHeavy ? rateConfig.discountRateHeavy : rateConfig.discountRateStandard;
   const discountCapPct = Math.round(discountCap * 10000) / 100;
@@ -154,7 +242,8 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
     zoneOverride: zoneOverride === '' ? undefined : zoneOverride,
     depreciationRate: isMultiYear ? MULTI_YEAR_DEPRECIATION_RATE : 0,
     discountRateOverride: requestedDiscount,
-  }), [vehicleClass, nasabahName, nasabahPhone, nasabahAddress, contractNo, make, model, modelYear, otr, plateNo, regionText, zoneOverride, financingValue, commercialBody, tenorMonths, isCar, isMultiYear, requestedDiscount]);
+    coverage: effectiveCoverage,
+  }), [vehicleClass, nasabahName, nasabahPhone, nasabahAddress, contractNo, make, model, modelYear, otr, plateNo, regionText, zoneOverride, financingValue, commercialBody, tenorMonths, isCar, isMultiYear, requestedDiscount, effectiveCoverage]);
 
   const adminFeeForClass = vehicleClass === 'MOTORCYCLE' ? rateConfig.adminFeeMotorcycle : isHeavy ? rateConfig.adminFeeHeavy : rateConfig.adminFeeCar;
   const zoneLabel = built.zoneSource === 'override'
@@ -167,6 +256,8 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
 
   const validate = (): string | null => {
     if (!nasabahName.trim()) return t('Customer name is required.', 'Nama nasabah wajib diisi.');
+    if (!isHeavy && !make.trim()) return t('Choose the vehicle brand.', 'Pilih merk kendaraan.');
+    if (!isHeavy && !model.trim()) return t('Choose the vehicle type.', 'Pilih tipe kendaraan.');
     if (!financingValue || Number(financingValue) <= 0) return t('Sum insured must be greater than zero.', 'Nilai pertanggungan (TSI) harus lebih dari nol.');
     if (isCar && !commercialBody && (!otr || Number(otr) <= 0)) return t('Passenger car needs OTR price for rate banding.', 'Mobil penumpang perlu harga OTR untuk penentuan kategori tarif.');
     if (modelYear && (Number(modelYear) < 1950 || Number(modelYear) > 2100)) return t('Year looks wrong.', 'Tahun kendaraan tidak masuk akal.');
@@ -215,6 +306,7 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
         multiYearDepreciation: isMultiYear,
         discountRate: requestedDiscount,
         discountShownOnPolicy: discountShown,
+        coverage: effectiveCoverage,
       }],
     });
     setSubmitting(false);
@@ -290,10 +382,10 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
   return (
     <div className="max-w-3xl mx-auto space-y-4">
       <div>
-        <h2 className="font-black text-lg text-ds-ink dark:text-white">{t('Unit Order — TLO', 'Order Unit — TLO')}</h2>
+        <h2 className="font-black text-lg text-ds-ink dark:text-white">{t('Unit Order', 'Order Unit')}</h2>
         <p className="text-sm text-ds-ink3 mt-0.5">{t(
-          'Insure one vehicle (car, motorcycle, or heavy equipment) at the fleet rates your admin maintains — same scheme as the bulk import, no spreadsheet needed.',
-          'Asuransikan satu unit (mobil, motor, atau alat berat) dengan rate fleet yang dikelola admin — skema sama dengan impor massal, tanpa spreadsheet.',
+          'Insure one vehicle (car, motorcycle, or heavy equipment) — Comprehensive or TLO — at the fleet scheme your admin maintains. No spreadsheet needed.',
+          'Asuransikan satu unit (mobil, motor, atau alat berat) — Comprehensive atau TLO — dengan skema fleet yang dikelola admin. Tanpa spreadsheet.',
         )}</p>
       </div>
 
@@ -306,10 +398,8 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
           <p className="font-black text-ds-ink dark:text-white mb-1">{t('Active scheme (managed by SurePath admin)', 'Skema aktif (dikelola admin SurePath)')}</p>
           <p>
             {isHeavy
-              ? <>Rate alat berat <b>{fmtPct(rateConfig.heavyEquipmentRate)}</b> · </>
-              : isCar
-                ? <>Rate mobil mengikuti tabel TLO OJK (penumpang) / {fmtPct(rateConfig.pickupTruckTloMin[built.zone as 1 | 2 | 3])} (pickup/truk) · </>
-                : <>Rate motor mengikuti tabel TLO OJK · </>}
+              ? <>Rate alat berat (TLO) <b>{fmtPct(rateConfig.heavyEquipmentRate)}</b> · </>
+              : <>{t('This unit', 'Unit ini')}: {effectiveCoverage === 'COMPREHENSIVE' ? 'Comprehensive' : 'TLO'}, rate <b>{fmtPct(built.rate)}</b> ({t('OJK floor rate, zone', 'tarif batas bawah OJK, zona')} {built.zone}) · </>}
             {t('discount', 'diskon')} <b>{t('up to', 's/d')} {fmtPct(discountCap)}</b> · {t('admin fee', 'biaya admin')} <b>{fmtIDR(adminFeeForClass)}</b> · {t('minimum', 'minimum')} <b>{fmtIDR(rateConfig.minPremiumGross)}</b>
           </p>
         </div>
@@ -323,7 +413,7 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
             <button
               key={opt.id}
               type="button"
-              onClick={() => setVehicleClass(opt.id)}
+              onClick={() => changeClass(opt.id)}
               className={`flex flex-col items-center gap-1.5 rounded-xl border-2 px-2 py-3 transition-all ${
                 vehicleClass === opt.id
                   ? 'border-emerald-500 bg-emerald-50/60 dark:bg-emerald-500/10'
@@ -350,20 +440,127 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
           </label>
         )}
 
+        {/* Pertanggungan */}
+        <div>
+          <span className={labelCls}>{t('Coverage', 'Jenis pertanggungan')}</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2" role="radiogroup" aria-label={t('Coverage', 'Jenis pertanggungan')}>
+            {([
+              { id: 'COMPREHENSIVE' as const, icon: ShieldCheck, title: 'Comprehensive', note: t('Partial damage, total loss and theft.', 'Kerusakan sebagian, kerugian total, dan kehilangan.') },
+              { id: 'TLO' as const, icon: ShieldAlert, title: 'TLO (Total Loss Only)', note: t('Theft and damage of 75% or more only.', 'Hanya kehilangan dan kerusakan 75% ke atas.') },
+            ]).map(opt => {
+              const disabled = isHeavy && opt.id === 'COMPREHENSIVE';
+              const active = effectiveCoverage === opt.id;
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  disabled={disabled}
+                  onClick={() => setCoverage(opt.id)}
+                  className={`flex items-start gap-3 rounded-xl border-2 px-3.5 py-3 text-left transition-all active:scale-[0.98] disabled:opacity-45 disabled:cursor-not-allowed ${
+                    active
+                      ? 'border-emerald-500 bg-emerald-50/60 dark:bg-emerald-500/10'
+                      : 'border-ds-border bg-white dark:bg-ds-card2 hover:border-emerald-400'
+                  }`}
+                >
+                  <opt.icon size={18} className={`mt-0.5 flex-shrink-0 ${active ? 'text-emerald-600 dark:text-emerald-400' : 'text-ds-ink3'}`} />
+                  <span>
+                    <span className={`block text-sm font-black ${active ? 'text-emerald-700 dark:text-emerald-300' : 'text-ds-ink dark:text-white'}`}>{opt.title}</span>
+                    <span className="block text-2xs text-ds-ink3 leading-relaxed mt-0.5">{opt.note}</span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          {isHeavy && (
+            <p className="text-2xs text-ds-ink3 mt-1.5">{t('Heavy equipment is available with TLO cover only.', 'Alat berat hanya tersedia dengan pertanggungan TLO.')}</p>
+          )}
+        </div>
+
+        {/* Merk · tipe · tahun — dari database kendaraan (sama dengan apps mitra) */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
-            <label className={labelCls}>{t('Brand', 'Merk')}</label>
-            <input className={inputCls} value={make} onChange={e => setMake(e.target.value)} placeholder={isHeavy ? 'Komatsu' : 'Toyota'} />
+            <label className={labelCls} htmlFor="unit-brand">{t('Brand', 'Merk')}{!isHeavy && ' *'}</label>
+            {isHeavy ? (
+              <input id="unit-brand" className={inputCls} value={make} onChange={e => setMake(e.target.value)} placeholder="Komatsu" />
+            ) : (
+              <>
+                <select
+                  id="unit-brand"
+                  className={inputCls}
+                  value={manualBrand ? OTHER : (brandInList ? make : '')}
+                  onChange={e => changeBrand(e.target.value)}
+                >
+                  <option value="">{t('Choose a brand', 'Pilih merk')}</option>
+                  {brandList.map(b => <option key={b} value={b}>{b}</option>)}
+                  <option value={OTHER}>{t('Other — type it in', 'Lainnya — ketik manual')}</option>
+                </select>
+                {manualBrand && (
+                  <input
+                    className={`${inputCls} mt-2`}
+                    value={make}
+                    onChange={e => setMake(e.target.value)}
+                    placeholder={t('Type the brand', 'Ketik merk')}
+                    aria-label={t('Brand (manual)', 'Merk (manual)')}
+                  />
+                )}
+              </>
+            )}
           </div>
           <div>
-            <label className={labelCls}>{t('Type / model', 'Tipe / model')}</label>
-            <input className={inputCls} value={model} onChange={e => setModel(e.target.value)} placeholder={isHeavy ? 'PC200-8' : 'Avanza 1.5 G'} />
+            <label className={labelCls} htmlFor="unit-model">{t('Type / model', 'Tipe / model')}{!isHeavy && ' *'}</label>
+            {isHeavy ? (
+              <input id="unit-model" className={inputCls} value={model} onChange={e => setModel(e.target.value)} placeholder="PC200-8" />
+            ) : (
+              <>
+                {!manualBrand && (
+                  <select
+                    id="unit-model"
+                    className={inputCls}
+                    value={manualModel ? OTHER : (modelInList ? model : '')}
+                    onChange={e => changeModel(e.target.value)}
+                    disabled={!brandInList}
+                  >
+                    <option value="">{brandInList ? t('Choose a type', 'Pilih tipe') : t('Choose the brand first', 'Pilih merk dulu')}</option>
+                    {modelList.map(m => <option key={m} value={m}>{m}</option>)}
+                    {brandInList && <option value={OTHER}>{t('Other — type it in', 'Lainnya — ketik manual')}</option>}
+                  </select>
+                )}
+                {manualModel && (
+                  <input
+                    id={manualBrand ? 'unit-model' : undefined}
+                    className={`${inputCls} ${manualBrand ? '' : 'mt-2'}`}
+                    value={model}
+                    onChange={e => setModel(e.target.value)}
+                    placeholder={t('Type the model', 'Ketik tipe')}
+                    aria-label={t('Type / model (manual)', 'Tipe / model (manual)')}
+                  />
+                )}
+              </>
+            )}
           </div>
           <div>
-            <label className={labelCls}>{t('Year', 'Tahun')}</label>
-            <input className={inputCls} inputMode="numeric" value={modelYear} onChange={e => setModelYear(e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="2023" />
+            <label className={labelCls} htmlFor="unit-year">{t('Year', 'Tahun')}</label>
+            <select id="unit-year" className={inputCls} value={modelYear} onChange={e => changeYear(e.target.value)}>
+              {YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
           </div>
         </div>
+
+        {!isHeavy && marketValue != null && marketValue > 0 && (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 dark:border-emerald-900 dark:bg-emerald-950/30 px-3.5 py-2.5 text-xs leading-relaxed text-emerald-900 dark:text-emerald-100">
+            <span className="font-black">{t('Reference market price', 'Harga pasar referensi')}: {fmtIDR(marketValue)}</span>
+            {' · '}{t('recommended range', 'rentang rekomendasi')} {fmtIDR(marketValue * 0.95)} – {fmtIDR(marketValue * 1.05)}.
+            {' '}{t('Filled into OTR and sum insured below; you can still adjust both.', 'Sudah diisikan ke OTR dan nilai pertanggungan di bawah; keduanya tetap bisa disesuaikan.')}
+          </div>
+        )}
+        {!isHeavy && (manualBrand || manualModel) && (
+          <p className="text-2xs text-ds-ink3">{t(
+            'This vehicle is not in the price list, so enter the OTR price and sum insured yourself.',
+            'Kendaraan ini tidak ada di daftar harga, jadi isi harga OTR dan nilai pertanggungan sendiri.',
+          )}</p>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
@@ -569,7 +766,8 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1.5 text-xs">
           <PreviewRow label={t('Zone', 'Zona')} value={String(built.zone)} />
-          <PreviewRow label={t('Rate (TLO)', 'Rate (TLO)')} value={fmtPct(built.rate)} />
+          <PreviewRow label={t('Coverage', 'Pertanggungan')} value={built.coverage === 'COMPREHENSIVE' ? 'Comprehensive' : 'TLO'} />
+          <PreviewRow label="Rate" value={fmtPct(built.rate)} />
           <PreviewRow label={t('Period', 'Periode')} value={`${fmtDate(startDate, lang)} – ${fmtDate(endDate, lang)}`} />
           <PreviewRow label={t('Gross premium', 'Premi gross')} value={fmtIDR(built.premiumGross)} />
           <PreviewRow

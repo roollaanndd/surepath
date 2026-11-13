@@ -17,6 +17,23 @@ describe('b2bFleetRating — browser/Deno parity', () => {
     expect(deno.MULTI_YEAR_DEPRECIATION_RATE).toBe(browser.MULTI_YEAR_DEPRECIATION_RATE);
     expect(deno.MULTI_YEAR_MAX_TENOR_MONTHS).toBe(browser.MULTI_YEAR_MAX_TENOR_MONTHS);
     expect(deno.MAX_DEPRECIATION_RATE).toBe(browser.MAX_DEPRECIATION_RATE);
+    expect(deno.PICKUP_TRUCK_COMP_MIN).toEqual(browser.PICKUP_TRUCK_COMP_MIN);
+  });
+
+  it('comprehensive: every class, zone and OTR band agrees', () => {
+    const otrs = [100_000_000, 150_000_000, 300_000_000, 600_000_000, 1_200_000_000];
+    for (const zone of [1, 2, 3] as const) {
+      for (const otr of otrs) {
+        for (const commercialBodyHint of [false, true]) {
+          const c = { vehicleClass: 'CAR' as const, zone, financingValue: otr, otr, tenorMonths: 12, commercialBodyHint, coverage: 'COMPREHENSIVE' as const };
+          expect(deno.calcBulkPremium(c)).toEqual(browser.calcBulkPremium(c));
+        }
+      }
+      const moto = { vehicleClass: 'MOTORCYCLE' as const, zone, financingValue: 20_000_000, otr: 20_000_000, tenorMonths: 24, coverage: 'COMPREHENSIVE' as const, depreciationRate: 0.1 };
+      expect(deno.calcBulkPremium(moto)).toEqual(browser.calcBulkPremium(moto));
+      const heavy = { vehicleClass: 'HEAVY_EQUIPMENT' as const, zone, financingValue: 900_000_000, otr: 0, tenorMonths: 12, coverage: 'COMPREHENSIVE' as const };
+      expect(deno.calcBulkPremium(heavy)).toEqual(browser.calcBulkPremium(heavy));
+    }
   });
 
   it('multi-year depreciation, discount override and date helpers agree', () => {
@@ -250,5 +267,74 @@ describe('b2bFleetRating — order unit multi-tahun', () => {
     expect(browser.isValidIsoDate('2026-02-31')).toBe(false);
     expect(browser.isValidIsoDate('12/11/2026')).toBe(false);
     expect(browser.isValidIsoDate(null)).toBe(false);
+  });
+});
+
+// ─── Comprehensive di order unit (v2.8.24) ──────────────────────────────────
+// Laporan owner: order polis satuan B2B tidak punya Comprehensive. Tarif:
+// batas bawah SEOJK No. 6/SEOJK.05/2017 Lampiran IV Tabel IV.A.
+describe('b2bFleetRating — comprehensive', () => {
+  it('tanpa coverage, hasilnya tetap TLO (impor massal tidak berubah)', () => {
+    const r = browser.calcBulkPremium({ vehicleClass: 'CAR', zone: 2, financingValue: 227_845_800, otr: 227_845_800, tenorMonths: 12 });
+    expect(r.coverage).toBe('TLO');
+    expect(r.rate).toBe(0.0038);
+  });
+
+  it('mobil penumpang: tarif mengikuti kategori OTR dan zona', () => {
+    // Kategori 3 (>200–400 jt), Zona 2 → 2,08%.
+    const r = browser.calcBulkPremium({ vehicleClass: 'CAR', zone: 2, financingValue: 227_845_800, otr: 227_845_800, tenorMonths: 12, coverage: 'COMPREHENSIVE' });
+    expect(r.coverage).toBe('COMPREHENSIVE');
+    expect(r.rate).toBe(0.0208);
+    expect(r.premiumGross).toBe(4_739_193);
+    expect(r.discountAmount).toBe(1_184_798);
+    expect(r.totalPremium).toBe(4_739_193 - 1_184_798 + browser.ADMIN_FEE_CAR);
+    // Kategori 1 (≤125 jt), Zona 1 → 3,82%; kategori 5 (>800 jt) → 1,05%.
+    expect(browser.calcBulkPremium({ vehicleClass: 'CAR', zone: 1, financingValue: 100_000_000, otr: 100_000_000, tenorMonths: 12, coverage: 'COMPREHENSIVE' }).rate).toBe(0.0382);
+    expect(browser.calcBulkPremium({ vehicleClass: 'CAR', zone: 3, financingValue: 900_000_000, otr: 900_000_000, tenorMonths: 12, coverage: 'COMPREHENSIVE' }).rate).toBe(0.0105);
+  });
+
+  it('pickup/truk: tarif comprehensive kategori 6 per zona', () => {
+    const rate = (zone: 1 | 2 | 3) => browser.calcBulkPremium({ vehicleClass: 'CAR', zone, financingValue: 100_000_000, otr: 0, tenorMonths: 12, commercialBodyHint: true, coverage: 'COMPREHENSIVE' }).rate;
+    expect([rate(1), rate(2), rate(3)]).toEqual([0.0242, 0.0239, 0.0223]);
+  });
+
+  it('motor: 3,18% di semua zona', () => {
+    for (const zone of [1, 2, 3] as const) {
+      expect(browser.calcBulkPremium({ vehicleClass: 'MOTORCYCLE', zone, financingValue: 16_800_000, otr: 16_800_000, tenorMonths: 12, coverage: 'COMPREHENSIVE' }).rate).toBe(0.0318);
+    }
+  });
+
+  it('alat berat tetap TLO walau Comprehensive diminta', () => {
+    const r = browser.calcBulkPremium({ vehicleClass: 'HEAVY_EQUIPMENT', zone: 3, financingValue: 900_000_000, otr: 0, tenorMonths: 12, coverage: 'COMPREHENSIVE' });
+    expect(r.coverage).toBe('TLO');
+    expect(r.rate).toBe(browser.HEAVY_EQUIPMENT_TLO_RATE);
+  });
+
+  it('comprehensive selalu lebih mahal daripada TLO untuk unit yang sama', () => {
+    for (const zone of [1, 2, 3] as const) {
+      for (const otr of [100_000_000, 250_000_000, 900_000_000]) {
+        const base = { vehicleClass: 'CAR' as const, zone, financingValue: otr, otr, tenorMonths: 12 };
+        expect(browser.calcBulkPremium({ ...base, coverage: 'COMPREHENSIVE' }).premiumGross)
+          .toBeGreaterThan(browser.calcBulkPremium({ ...base, coverage: 'TLO' }).premiumGross);
+      }
+    }
+  });
+
+  it('rate set admin tanpa tabel comprehensive pickup jatuh ke tarif bawaan', () => {
+    const { pickupTruckCompMin: _drop, ...legacy } = { ...browser.DEFAULT_BULK_RATE_CONFIG, pickupTruckCompMin: undefined };
+    void _drop;
+    const r = browser.calcBulkPremium({ vehicleClass: 'CAR', zone: 2, financingValue: 100_000_000, otr: 0, tenorMonths: 12, commercialBodyHint: true, coverage: 'COMPREHENSIVE' }, legacy);
+    expect(r.rate).toBe(0.0239);
+  });
+
+  it('multi-tahun dan diskon pilihan tetap bekerja di Comprehensive', () => {
+    const r = browser.buildLineItem({
+      rowNo: 1, nasabahName: 'PT Contoh', tenorMonths: 24, financingValue: 100_000_000, jenisBrg: 'MOBIL',
+      otr: 100_000_000, vehicleClassOverride: 'CAR', zoneOverride: 1, coverage: 'COMPREHENSIVE',
+      depreciationRate: 0.1, discountRateOverride: 0.1,
+    });
+    expect(r.coverage).toBe('COMPREHENSIVE');
+    expect(r.schedule.map(s => s.premiumGross)).toEqual([3_820_000, 3_438_000]);
+    expect(r.discountRate).toBe(0.1);
   });
 });

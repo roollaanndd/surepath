@@ -7,6 +7,7 @@
 // the same discipline docs/PATHY_AGENT.md documents for the OJK engine.
 
 export type VehicleClass = 'MOTORCYCLE' | 'CAR' | 'HEAVY_EQUIPMENT';
+export type FleetCoverage = 'TLO' | 'COMPREHENSIVE';
 export type Zone = 1 | 2 | 3;
 export type VehicleCategory = 1 | 2 | 3 | 4 | 5;
 
@@ -107,6 +108,17 @@ const CAR_TLO_MIN: ZoneTable = {
 
 const MOTO_TLO_MIN: Record<Zone, number> = { 1: 0.0176, 2: 0.0180, 3: 0.0067 };
 
+// Comprehensive batas bawah (mirror DEFAULT_CAR_COMP_MIN / DEFAULT_MOTO_COMP_MIN
+// di services/ojkRates.ts) — dipakai order unit Comprehensive.
+const CAR_COMP_MIN: ZoneTable = {
+  1: { 1: 0.0382, 2: 0.0326, 3: 0.0253 },
+  2: { 1: 0.0267, 2: 0.0247, 3: 0.0269 },
+  3: { 1: 0.0218, 2: 0.0208, 3: 0.0179 },
+  4: { 1: 0.0120, 2: 0.0120, 3: 0.0114 },
+  5: { 1: 0.0105, 2: 0.0105, 3: 0.0105 },
+};
+const MOTO_COMP_MIN = 0.0318;
+
 const CATEGORY_BANDS: Record<1 | 2 | 3 | 4, number> = {
   1: 125_000_000, 2: 200_000_000, 3: 400_000_000, 4: 800_000_000,
 };
@@ -121,6 +133,10 @@ export function getVehicleCategory(sumInsured: number): VehicleCategory {
 
 export const PICKUP_TRUCK_TLO_MIN: Record<Zone, number> = { 1: 0.0088, 2: 0.0168, 3: 0.0081 };
 export const HEAVY_EQUIPMENT_TLO_RATE = 0.0085;
+
+// Comprehensive truk & pickup — SEOJK No. 6/SEOJK.05/2017 Lampiran IV Tabel
+// IV.A kategori 6 (batas bawah, semua uang pertanggungan), per wilayah.
+export const PICKUP_TRUCK_COMP_MIN: Record<Zone, number> = { 1: 0.0242, 2: 0.0239, 3: 0.0223 };
 
 export const DISCOUNT_RATE_STANDARD = 0.25;
 export const DISCOUNT_RATE_HEAVY = 0.15;
@@ -145,6 +161,8 @@ export const MIN_PREMIUM_GROSS = 50_000;
 // action after it loads the active sp_b2b_fleet_rate_sets row.
 export interface BulkRateConfig {
   pickupTruckTloMin: Record<Zone, number>;
+  /** Opsional: rate set lama tidak punya kunci ini → PICKUP_TRUCK_COMP_MIN. */
+  pickupTruckCompMin?: Record<Zone, number>;
   heavyEquipmentRate: number;
   discountRateStandard: number;
   discountRateHeavy: number;
@@ -189,18 +207,25 @@ export function selectRate(
   otr: number,
   commercialBodyHint: boolean,
   rateConfig: BulkRateConfig = activeBulkRateConfig,
+  coverage: FleetCoverage = 'TLO',
 ): RateSelection {
+  const comp = coverage === 'COMPREHENSIVE';
   if (vehicleClass === 'MOTORCYCLE') {
-    return { rate: MOTO_TLO_MIN[zone], category: null, commercialBody: false };
+    return { rate: comp ? MOTO_COMP_MIN : MOTO_TLO_MIN[zone], category: null, commercialBody: false };
   }
   if (vehicleClass === 'HEAVY_EQUIPMENT') {
     return { rate: rateConfig.heavyEquipmentRate, category: null, commercialBody: false };
   }
   if (commercialBodyHint) {
-    return { rate: rateConfig.pickupTruckTloMin[zone], category: null, commercialBody: true };
+    // Rate set lama (atau suntingan admin yang tidak lengkap) tidak punya
+    // tabel comprehensive pickup → jatuh ke tarif OJK bawaan per zona.
+    const rate = comp
+      ? (rateConfig.pickupTruckCompMin?.[zone] ?? PICKUP_TRUCK_COMP_MIN[zone])
+      : rateConfig.pickupTruckTloMin[zone];
+    return { rate, category: null, commercialBody: true };
   }
   const category = getVehicleCategory(otr || 0);
-  return { rate: CAR_TLO_MIN[category][zone], category, commercialBody: false };
+  return { rate: (comp ? CAR_COMP_MIN : CAR_TLO_MIN)[category][zone], category, commercialBody: false };
 }
 
 // ─── Order unit multi-tahun ─────────────────────────────────────────────────
@@ -239,6 +264,9 @@ export interface BulkPremiumInput {
   otr: number;
   tenorMonths: number;
   commercialBodyHint?: boolean;
+  // Jenis pertanggungan (v2.8.24). undefined = TLO (perilaku lama; impor massal
+  // tidak pernah mengisinya). Alat berat selalu TLO apa pun yang diminta.
+  coverage?: FleetCoverage;
   // Order unit multi-tahun (v2.8.23): nilai pertanggungan menyusut per tahun
   // polis. 0/undefined = perilaku lama (impor massal tidak pernah menyusut,
   // supaya tetap cocok dengan metodologi audit mitra).
@@ -267,14 +295,17 @@ export interface BulkPremiumResult {
   premiumAfterDiscount: number;
   adminFee: number;
   totalPremium: number;
+  coverage: FleetCoverage;        // yang benar-benar dipakai (alat berat selalu TLO)
   depreciationRate: number;       // yang benar-benar diterapkan (0 bila tenor ≤ 12 bln)
   schedule: PremiumScheduleRow[]; // kosong bila tidak menyusut
 }
 
 export function calcBulkPremium(input: BulkPremiumInput, rateConfig: BulkRateConfig = activeBulkRateConfig): BulkPremiumResult {
   const { vehicleClass, zone, financingValue, otr, tenorMonths } = input;
+  const coverage: FleetCoverage =
+    input.coverage === 'COMPREHENSIVE' && vehicleClass !== 'HEAVY_EQUIPMENT' ? 'COMPREHENSIVE' : 'TLO';
   const { rate, category, commercialBody } = selectRate(
-    vehicleClass, zone, otr, input.commercialBodyHint ?? false, rateConfig,
+    vehicleClass, zone, otr, input.commercialBodyHint ?? false, rateConfig, coverage,
   );
 
   const tenor = Math.max(1, Math.round(tenorMonths || 12));
@@ -313,7 +344,7 @@ export function calcBulkPremium(input: BulkPremiumInput, rateConfig: BulkRateCon
 
   const totalPremium = premiumAfterDiscount + adminFee;
 
-  return { rate, category, commercialBody, premiumGross, discountRate, discountAmount, premiumAfterDiscount, adminFee, totalPremium, depreciationRate, schedule };
+  return { rate, category, commercialBody, premiumGross, discountRate, discountAmount, premiumAfterDiscount, adminFee, totalPremium, coverage, depreciationRate, schedule };
 }
 
 export interface BulkTotals {

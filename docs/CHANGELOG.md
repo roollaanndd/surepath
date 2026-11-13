@@ -31,6 +31,30 @@ yang sedikit berbeda dari file mitra pilot ("Nama Konsumen", "Merek", "Nopol",
 - Layar pemetaan kini menampilkan sheet dan baris tempat judul kolom ditemukan
   serta **pratinjau tiga baris pertama sebagaimana terbaca**.
 
+Tiga celah lain yang membuat unggahan B2B bisa "diam saja" tanpa pesan — ketemu
+saat menelusuri log produksi 12 Nov (pengajuan Fleet tersimpan pukul 07.30 UTC
+tanpa satu dokumen pun, dan bucket `b2b-documents` kosong total):
+
+- **Memilih file yang sama dua kali tidak memicu apa pun.** `<input type=file>`
+  tidak mengirim `change` untuk file yang sama; setelah "Kembali" lalu memilih
+  file itu lagi, layar diam. Nilai input kini dikosongkan setiap kali dibaca
+  (Impor Massal dan dokumen Pengajuan Baru).
+- **Unggah dokumen di "Pengajuan Baru" gagal tanpa pesan.** Kegagalan apa pun
+  hanya masuk `console.error`; tombol kembali ke "Unggah". Sekarang alasan
+  kegagalannya tampil di bawah dokumen itu.
+- **Excel/CSV dengan tipe MIME kosong ditolak penyimpanan.** Bucket hanya
+  menerima daftar MIME tertentu, sedangkan di sebagian perangkat `file.type`
+  untuk .xlsx/.xls/.csv kosong atau `application/octet-stream`. Tipe kini
+  ditentukan dari ekstensi (`prepareB2BDocument`), batas 10 MB dan jenis file
+  diperiksa sebelum mengunggah, dan atribut `accept` memuat tipe MIME supaya
+  pemilih file ponsel tidak menampilkan Excel sebagai tidak bisa dipilih.
+
+Catatan dari file mitra pilot yang pernah diunggah owner
+(`DATA_PT_MMF_TLO_audit_lengkap_dikoreksi.xlsx`): file itu terbaca di produksi
+lama maupun kode baru, tetapi pembaca lama menghitung **254** baris — satu baris
+kaki tabel ikut dianggap nasabah dan ditagih biaya admin Rp 25.000. Pembaca baru
+membaca tepat **253** nasabah (total Rp 20.650.092, sebelumnya Rp 20.675.092).
+
 **2. "Order polis satuan tidak ada yang Comprehensive."**
 Order Unit kini punya pilihan **Comprehensive** atau **TLO** untuk mobil dan
 motor (bawaan Comprehensive). Tarif Comprehensive = batas bawah SEOJK No.
@@ -59,7 +83,7 @@ ada sejak awal (sebelumnya selalu diisi `'TLO'`).
 agar Comprehensive dihitung server; gateway lama mengabaikan field `coverage`
 dan menghitung TLO.
 
-**Uji.** 11 tes baru pembaca Excel, 9 tes tarif Comprehensive (termasuk
+**Uji.** 11 tes baru pembaca Excel, 4 tes persiapan unggah dokumen, 9 tes tarif Comprehensive (termasuk
 paritas browser/Deno untuk semua kelas × zona × kategori). Diuji di browser:
 empat file contoh (standar, judul di atas header, nama kolom lain, uang sebagai
 teks) terbaca dengan total identik; Order Unit dicoba mobil/motor/alat berat/

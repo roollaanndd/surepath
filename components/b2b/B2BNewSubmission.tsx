@@ -4,6 +4,8 @@ import { Language } from '../../types';
 import {
   createB2BSubmission,
   uploadB2BDocument,
+  getLastB2BUploadError,
+  B2B_DOC_ACCEPT,
   type SpB2BSubmission,
 } from '../../services/supabaseService';
 import { moduleIcon } from '../shared/ModuleIcon';
@@ -66,6 +68,9 @@ const B2BNewSubmission: React.FC<Props> = ({ clientId, client, onDone, lang }) =
   const [details, setDetails] = useState<Record<string, any>>({});
   const [uploadedDocs, setUploadedDocs] = useState<Record<string, string>>({});
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
+  // Kegagalan unggah per dokumen. Sebelum v2.8.24 kegagalan tidak ditampilkan
+  // sama sekali: tombol kembali ke "Unggah" seolah tidak terjadi apa-apa.
+  const [uploadErrors, setUploadErrors] = useState<Record<string, string>>({});
   const [submissionId, setSubmissionId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -137,11 +142,17 @@ const B2BNewSubmission: React.FC<Props> = ({ clientId, client, onDone, lang }) =
   };
 
   const handleUpload = async (key: string, file: File) => {
-    const sid = submissionId ?? await ensureSubmission();
-    if (!sid) return;
+    setUploadErrors(prev => ({ ...prev, [key]: '' }));
     setUploadingKey(key);
+    const sid = submissionId ?? await ensureSubmission();
+    if (!sid) {
+      setUploadErrors(prev => ({ ...prev, [key]: t('Could not save the submission, so the document was not uploaded. Check your connection and try again.', 'Pengajuan belum bisa disimpan, jadi dokumen tidak terunggah. Periksa koneksi lalu coba lagi.') }));
+      setUploadingKey(null);
+      return;
+    }
     const url = await uploadB2BDocument(sid, clientId, file, key);
     if (url) setUploadedDocs(prev => ({ ...prev, [key]: url }));
+    else setUploadErrors(prev => ({ ...prev, [key]: getLastB2BUploadError() || t('Upload failed. Try again.', 'Unggah gagal. Coba lagi.') }));
     setUploadingKey(null);
   };
 
@@ -246,10 +257,13 @@ const B2BNewSubmission: React.FC<Props> = ({ clientId, client, onDone, lang }) =
           <div key={key} className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 flex items-center justify-between gap-3">
             <div className="flex-1 min-w-0">
               <div className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate">{label}</div>
-              {uploadedDocs[key] && (
+              {uploadedDocs[key] && !uploadErrors[key] && (
                 <div className="flex items-center gap-1 mt-1 text-ds-green text-[11px] font-bold">
                   <CheckCircle2 size={12} /> {t('Uploaded', 'Terunggah')}
                 </div>
+              )}
+              {uploadErrors[key] && (
+                <p role="alert" className="mt-1 text-[11px] font-bold text-rose-600 dark:text-rose-400 leading-snug">{uploadErrors[key]}</p>
               )}
             </div>
             <label className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold cursor-pointer transition-colors ${
@@ -265,7 +279,10 @@ const B2BNewSubmission: React.FC<Props> = ({ clientId, client, onDone, lang }) =
               <input
                 type="file"
                 className="hidden"
-                onChange={e => { const f = e.target.files?.[0]; if (f) handleUpload(key, f); }}
+                accept={B2B_DOC_ACCEPT}
+                disabled={uploadingKey !== null}
+                // value dikosongkan supaya memilih file yang SAMA lagi tetap memicu onChange.
+                onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) handleUpload(key, f); }}
               />
             </label>
           </div>

@@ -3,6 +3,7 @@
 // Xendit invoice edge function for a batch. See services/b2bFleetRating.ts
 // for the rating engine and services/b2bBulkParser.ts for the file reader.
 import { callGateway, supabase } from './db';
+import { prepareB2BDocument } from './storage';
 import type { VehicleClass, Zone, FleetCoverage } from './b2bFleetRating';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
@@ -218,9 +219,12 @@ export async function adminAssignB2BBulkInsurer(batchId: string, insurerId: stri
 // ─── Document upload (reuses the b2b-documents bucket) ────────────────────
 
 export async function uploadB2BBulkSourceFile(clientId: string, batchNumberHint: string, file: File): Promise<string | null> {
-  const ext = file.name.split('.').pop() ?? 'bin';
+  const ext = (file.name.split('.').pop() ?? 'bin').toLowerCase();
   const path = `${clientId}/bulk-source/${batchNumberHint}-${Date.now()}.${ext}`;
-  const { error } = await supabase.storage.from('b2b-documents').upload(path, file, { upsert: true });
+  // Tipe MIME ditentukan dari ekstensi bila peramban tidak memberinya (lihat storage.ts).
+  const prepared = prepareB2BDocument(file);
+  if ('error' in prepared) { console.error('uploadB2BBulkSourceFile:', prepared.error); return null; }
+  const { error } = await supabase.storage.from('b2b-documents').upload(path, prepared.file, { upsert: true, contentType: prepared.file.type });
   if (error) { console.error('uploadB2BBulkSourceFile:', error); return null; }
   const { data } = supabase.storage.from('b2b-documents').getPublicUrl(path);
   return data.publicUrl;

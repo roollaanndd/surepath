@@ -211,10 +211,14 @@ const B2BBulkImport: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
           <span className="text-2xs text-ds-ink3">.xlsx, .xls, .csv</span>
           <input
             type="file"
-            accept=".xlsx,.xls,.csv"
+            // Ekstensi SAJA membuat sebagian pemilih file ponsel menampilkan Excel
+            // sebagai tidak bisa dipilih; tipe MIME-nya ikut dicantumkan.
+            accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv"
             className="hidden"
             disabled={parsing}
-            onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+            // value dikosongkan supaya memilih file yang SAMA lagi (mis. setelah
+            // menekan Kembali) tetap memicu onChange — sebelumnya tidak terjadi apa-apa.
+            onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) handleFile(f); }}
           />
         </label>
 

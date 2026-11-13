@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import * as XLSX from 'xlsx';
+import { prepareB2BDocument, B2B_DOC_ACCEPT, B2B_DOC_MAX_BYTES } from '../storage';
 import {
   autoMapColumns, buildRawRows, parseBulkFile, findHeaderRow, missingRequiredFields, mappingNotices, toNumber,
 } from '../b2bBulkParser';
@@ -178,5 +179,53 @@ describe('b2bBulkParser — file dunia nyata', () => {
 
   it('findHeaderRow jatuh ke baris berisi pertama bila tidak ada yang dikenali', () => {
     expect(findHeaderRow([[], [null, null], ['foo', 'bar'], ['1', '2']])).toBe(2);
+  });
+});
+
+// ─── v2.8.24 — unggah dokumen B2B yang "diam saja" ──────────────────────────
+// Bucket b2b-documents menolak tipe MIME di luar daftarnya. Di sebagian
+// perangkat file.type untuk Excel/CSV kosong, sehingga file sah ditolak dan
+// (sebelum perbaikan) layar tidak menampilkan apa pun.
+describe('prepareB2BDocument', () => {
+  const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+  it('mengisi tipe MIME dari ekstensi bila peramban tidak memberinya', () => {
+    for (const [name, type, expected] of [
+      ['armada.xlsx', '', XLSX_MIME],
+      ['armada.XLSX', 'application/octet-stream', XLSX_MIME],
+      ['lama.xls', '', 'application/vnd.ms-excel'],
+      ['data.csv', '', 'text/csv'],
+      ['npwp.pdf', '', 'application/pdf'],
+    ] as const) {
+      const r = prepareB2BDocument(new File(['x'], name, { type }));
+      expect('file' in r && r.file.type, name).toBe(expected);
+      expect('file' in r && r.file.name).toBe(name);
+    }
+  });
+
+  it('membiarkan file yang tipenya sudah benar apa adanya', () => {
+    const f = new File(['x'], 'a.xlsx', { type: XLSX_MIME });
+    const r = prepareB2BDocument(f);
+    expect('file' in r && r.file).toBe(f);
+    // CSV di Windows sering berlabel application/vnd.ms-excel — itu diterima bucket.
+    const csv = prepareB2BDocument(new File(['x'], 'a.csv', { type: 'application/vnd.ms-excel' }));
+    expect('file' in csv && csv.file.type).toBe('application/vnd.ms-excel');
+  });
+
+  it('menolak dengan alasan yang bisa dibaca: tipe asing, terlalu besar, kosong', () => {
+    const exe = prepareB2BDocument(new File(['x'], 'a.exe', { type: 'application/x-msdownload' }));
+    expect('error' in exe && exe.error).toMatch(/tidak didukung/);
+    const big = new File(['x'], 'besar.xlsx', { type: XLSX_MIME });
+    Object.defineProperty(big, 'size', { value: B2B_DOC_MAX_BYTES + 1 });
+    const bigR = prepareB2BDocument(big);
+    expect('error' in bigR && bigR.error).toMatch(/10 MB/);
+    const empty = prepareB2BDocument(new File([], 'kosong.xlsx', { type: XLSX_MIME }));
+    expect('error' in empty && empty.error).toMatch(/kosong/);
+  });
+
+  it('atribut accept memuat ekstensi dan tipe MIME (pemilih file ponsel butuh MIME)', () => {
+    expect(B2B_DOC_ACCEPT).toContain('.xlsx');
+    expect(B2B_DOC_ACCEPT).toContain(XLSX_MIME);
+    expect(B2B_DOC_ACCEPT).toContain('text/csv');
   });
 });

@@ -64,13 +64,14 @@ import PathyAiView from './PathyAiView';
 import ContactLeadsAdmin from './ContactLeadsAdmin';
 import AdminWorkspaceSwitcher from './AdminWorkspaceSwitcher';
 import ModuleIcon from '../shared/ModuleIcon';
-import { AdminToastProvider } from './dashboard/ui';
+import { AdminToastProvider, AdminPageSkeleton, ADMIN_VIEW_SKELETON_VARIANT } from './dashboard/ui';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 
-// Suspense fallback for lazy-loaded admin views
-const AdminViewLoader = () => (
-  <div className="flex items-center justify-center min-h-[60vh]">
-    <Loader2 size={32} className="animate-spin text-ds-green" />
-  </div>
+// v2.9.6 — Suspense fallback kini menampilkan skeleton sesuai bentuk konten
+// tab aktif (bukan spinner), supaya tidak ada layout shift dan terasa lebih
+// cepat. Varian dipetakan di ADMIN_VIEW_SKELETON_VARIANT.
+const AdminViewLoader: React.FC<{ tab?: string }> = ({ tab }) => (
+  <AdminPageSkeleton variant={ADMIN_VIEW_SKELETON_VARIANT[tab ?? ''] ?? 'dashboard'} />
 );
 
 // ─── Menu definition ────────────────────────────────────────────────────────
@@ -623,48 +624,16 @@ const AdminPortal = ({
                 <p className="text-2xs font-black uppercase tracking-[0.24em] text-ds-ink3">{group.label}</p>
               </div>
             )}
-            {sections.map(section => {
-              const first = section.children[0];
-              const badge = navBadgeForSection(section.children);
-              const active = section.children.includes(activeTab);
-              return (
-                <button
-                  key={section.id}
-                  onClick={() => { goToTab(first); setMobileOpen(false); }}
-                  title={isRail ? section.label : undefined}
-                  aria-current={active ? 'page' : undefined}
-                  className={`relative w-full flex items-center rounded-2xl transition-all text-left sp-interactive-surface group/nav ${
-                    isRail ? 'justify-center px-0 py-3' : 'gap-3 px-4 py-2.5'
-                  } ${
-                    active
-                      ? 'border border-ds-green/25 bg-ds-green-tint text-ds-green shadow-sm'
-                      : 'border border-transparent text-ds-ink2 hover:text-ds-ink hover:bg-ds-card2'
-                  }`}
-                >
-                  {active && (
-                    <span aria-hidden className={`sp-accent-bar absolute rounded-full bg-emerald-300 ${isRail ? 'left-0 top-1/2 -translate-y-1/2 w-[3px] h-7' : 'left-0 top-1/2 -translate-y-1/2 w-1 h-6'}`} />
-                  )}
-                  <span className={`relative flex-shrink-0 ${active ? 'drop-shadow-sm' : ''}`}>
-                    <PathyNavIcon id={first} size={isRail ? 30 : 28} active={active} />
-                    {isRail && badge > 0 && (
-                      <span className="absolute -top-1 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-amber-400 text-2xs font-black text-emerald-950 flex items-center justify-center shadow">
-                        {badge > 99 ? '99+' : badge}
-                      </span>
-                    )}
-                  </span>
-                  {!isRail && (
-                    <>
-                      <span className="text-2xs font-bold tracking-wide flex-1 min-w-0 truncate">{section.label}</span>
-                      {badge > 0 && (
-                        <span className="sp-badge-pop flex-shrink-0 min-w-[20px] h-5 px-1.5 rounded-full bg-amber-400/90 text-2xs font-black text-emerald-950 flex items-center justify-center shadow-sm">
-                          {badge > 99 ? '99+' : badge}
-                        </span>
-                      )}
-                    </>
-                  )}
-                </button>
-              );
-            })}
+            {sections.map(section => (
+              <AdminSectionNavButton
+                key={section.id}
+                section={section}
+                badge={navBadgeForSection(section.children)}
+                active={section.children.includes(activeTab)}
+                isRail={isRail}
+                onClick={() => { goToTab(section.children[0]); setMobileOpen(false); }}
+              />
+            ))}
           </div>
         ))}
       </nav>
@@ -1254,10 +1223,10 @@ const AdminPortal = ({
               </div>
             )}
 
-            <Suspense fallback={<AdminViewLoader />}>
-              <div key={activeTab} className="sp-page-enter">
+            <Suspense fallback={<AdminViewLoader tab={activeTab} />}>
+              <AdminPageTransition pageKey={activeTab}>
                 {renderContent()}
-              </div>
+              </AdminPageTransition>
             </Suspense>
 
             {/* Ruang untuk bar navigasi bawah di layar < 1024px. */}
@@ -1316,6 +1285,112 @@ const AdminPortal = ({
       </main>
     </div>
     </AdminToastProvider>
+  );
+};
+
+/* v2.9.6 — Section nav button dengan motion animations yang keren.
+ *  • motion.layoutId "admin-nav-pill" + "admin-nav-bar" meluncur mulus
+ *    antar item saat active section berganti.
+ *  • Icon scale + glow saat aktif, hover translateX halus.
+ *  • Badge ikut berdenyut (scale 1 → 1.08) setiap 2 detik saat > 0.
+ *  • Reduced-motion menonaktifkan semua animasi — fallback statis.
+ */
+const AdminSectionNavButton: React.FC<{
+  section: { id: string; label: string; children: string[] };
+  badge: number;
+  active: boolean;
+  isRail: boolean;
+  onClick: () => void;
+}> = ({ section, badge, active, isRail, onClick }) => {
+  const reduce = useReducedMotion();
+  const first = section.children[0];
+  const base = `relative w-full flex items-center rounded-2xl transition-colors text-left sp-interactive-surface group/nav ${
+    isRail ? 'justify-center px-0 py-3' : 'gap-3 px-4 py-2.5'
+  } ${
+    active
+      ? 'text-ds-green'
+      : 'text-ds-ink2 hover:text-ds-ink'
+  }`;
+  return (
+    <motion.button
+      type="button"
+      onClick={onClick}
+      title={isRail ? section.label : undefined}
+      aria-current={active ? 'page' : undefined}
+      whileHover={reduce ? undefined : (active ? undefined : (isRail ? { scale: 1.05 } : { x: 2 }))}
+      whileTap={reduce ? undefined : { scale: 0.97 }}
+      className={base}
+    >
+      {/* Pil highlight aktif — meluncur antar section via layoutId */}
+      {active && (
+        <motion.span
+          layoutId="admin-nav-pill"
+          className="absolute inset-0 rounded-2xl border border-ds-green/25 bg-ds-green-tint shadow-sm"
+          transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 460, damping: 36 }}
+          aria-hidden
+        />
+      )}
+      {/* Garis aksen kiri — meluncur antar section via layoutId */}
+      {active && (
+        <motion.span
+          layoutId="admin-nav-bar"
+          aria-hidden
+          className={`absolute rounded-full bg-emerald-300 ${isRail ? 'left-0 top-1/2 -translate-y-1/2 w-[3px] h-7' : 'left-0 top-1/2 -translate-y-1/2 w-1 h-6'}`}
+          transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 520, damping: 36 }}
+        />
+      )}
+      <motion.span
+        className={`relative flex-shrink-0 z-10 ${active ? 'drop-shadow-sm' : ''}`}
+        animate={active && !reduce ? { rotate: [0, -4, 0], scale: [1, 1.04, 1] } : {}}
+        transition={{ duration: 0.45, ease: 'easeOut' }}
+      >
+        <PathyNavIcon id={first} size={isRail ? 30 : 28} active={active} />
+        {isRail && badge > 0 && (
+          <motion.span
+            className="absolute -top-1 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-amber-400 text-2xs font-black text-emerald-950 flex items-center justify-center shadow"
+            animate={reduce ? {} : { scale: [1, 1.08, 1] }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            {badge > 99 ? '99+' : badge}
+          </motion.span>
+        )}
+      </motion.span>
+      {!isRail && (
+        <>
+          <span className="relative z-10 text-2xs font-bold tracking-wide flex-1 min-w-0 truncate">{section.label}</span>
+          {badge > 0 && (
+            <motion.span
+              className="relative z-10 flex-shrink-0 min-w-[20px] h-5 px-1.5 rounded-full bg-amber-400/90 text-2xs font-black text-emerald-950 flex items-center justify-center shadow-sm"
+              animate={reduce ? {} : { scale: [1, 1.08, 1] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              {badge > 99 ? '99+' : badge}
+            </motion.span>
+          )}
+        </>
+      )}
+    </motion.button>
+  );
+};
+
+/* v2.9.6 — Transisi halaman admin: fade + slide-up + blur ringan, mirrors
+ * B2BPortal pattern. mode="wait" memastikan layar lama keluar dulu. CSS
+ * sp-page-enter lama digantikan di sini sehingga durasi + kurva konsisten
+ * dengan seluruh dashboard dan dihormati prefers-reduced-motion. */
+const AdminPageTransition: React.FC<{ pageKey: string; children: React.ReactNode }> = ({ pageKey, children }) => {
+  const reduce = useReducedMotion();
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={pageKey}
+        initial={reduce ? { opacity: 0 } : { opacity: 0, y: 8, filter: 'blur(4px)' }}
+        animate={reduce ? { opacity: 1 } : { opacity: 1, y: 0, filter: 'blur(0px)' }}
+        exit={reduce ? { opacity: 0 } : { opacity: 0, y: -4, filter: 'blur(2px)' }}
+        transition={reduce ? { duration: 0 } : { duration: 0.26, ease: [0.2, 0.8, 0.2, 1] }}
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
   );
 };
 

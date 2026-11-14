@@ -171,6 +171,151 @@ export const AdminSkeletonTable: React.FC<{ rows?: number; cols?: number }> = ({
   </div>
 );
 
+/* v2.9.6 — Full page skeleton dengan bentuk konten yang akan muncul.
+ *
+ * Varian:
+ *  • dashboard: hero + KPI strip + two columns
+ *  • list     : judul + filter + tabel
+ *  • form     : judul + 4 field + action bar
+ *  • chart    : judul + KPI + chart area + legend
+ *
+ * Pakai .sp-stagger / inline animation delay supaya setiap bagian masuk
+ * bergantian. Tidak ada spinner — bentuk konten yang menyerupai final
+ * membuat loading terasa lebih cepat (reduce perceived latency).
+ */
+export const AdminPageSkeleton: React.FC<{ variant?: 'dashboard' | 'list' | 'form' | 'chart' }> = ({ variant = 'dashboard' }) => {
+  if (variant === 'form') {
+    return (
+      <div className="max-w-3xl mx-auto space-y-4 py-3" role="status" aria-busy="true" aria-label="Memuat…">
+        <AdminSkeleton width="45%" height={22} />
+        <AdminSkeleton width="70%" height={11} />
+        <div className="rounded-2xl border border-ds-border bg-ds-card p-5 space-y-3 mt-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} style={{ animationDelay: `${i * 60}ms` }}>
+              <AdminSkeleton width={80} height={9} />
+              <AdminSkeleton height={40} rounded="lg" className="mt-1.5" />
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-end gap-3">
+          <AdminSkeleton width={120} height={38} rounded="lg" />
+          <AdminSkeleton width={120} height={38} rounded="lg" />
+        </div>
+      </div>
+    );
+  }
+  if (variant === 'list') {
+    return (
+      <div className="max-w-7xl mx-auto space-y-4" role="status" aria-busy="true" aria-label="Memuat…">
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-2">
+            <AdminSkeleton width={200} height={22} />
+            <AdminSkeleton width={320} height={11} />
+          </div>
+          <AdminSkeleton width={140} height={38} rounded="lg" />
+        </div>
+        <div className="rounded-2xl border border-ds-border bg-ds-card p-4">
+          <div className="flex items-center gap-2 mb-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <AdminSkeleton key={i} width={78} height={28} rounded="full" />
+            ))}
+            <AdminSkeleton width={240} height={30} rounded="lg" className="ml-auto" />
+          </div>
+          <AdminSkeletonTable rows={7} cols={5} />
+        </div>
+      </div>
+    );
+  }
+  if (variant === 'chart') {
+    return (
+      <div className="max-w-7xl mx-auto space-y-5" role="status" aria-busy="true" aria-label="Memuat…">
+        <div className="space-y-2">
+          <AdminSkeleton width={200} height={22} />
+          <AdminSkeleton width={340} height={11} />
+        </div>
+        <AdminSkeletonKpiRow count={4} />
+        <div className="rounded-2xl border border-ds-border bg-ds-card p-5 space-y-3">
+          <div className="flex items-center justify-between">
+            <AdminSkeleton width={160} height={14} />
+            <div className="flex gap-2">
+              <AdminSkeleton width={60} height={26} rounded="full" />
+              <AdminSkeleton width={60} height={26} rounded="full" />
+            </div>
+          </div>
+          <AdminSkeleton height={260} rounded="lg" />
+          <div className="flex flex-wrap gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <AdminSkeleton width={12} height={12} rounded="full" />
+                <AdminSkeleton width={70} height={10} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+  /* dashboard */
+  return (
+    <div className="max-w-7xl mx-auto space-y-5" role="status" aria-busy="true" aria-label="Memuat…">
+      <AdminSkeletonHero />
+      <AdminSkeletonKpiRow count={4} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {Array.from({ length: 2 }).map((_, i) => (
+          <div key={i} className="rounded-2xl border border-ds-border bg-ds-card p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <AdminSkeleton width={160} height={14} />
+              <AdminSkeleton width={60} height={10} />
+            </div>
+            <AdminSkeletonTable rows={4} cols={3} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+/** Peta id tab admin → varian skeleton yang paling cocok. Tab yang tidak
+ *  terdaftar jatuh ke 'dashboard'. */
+export const ADMIN_VIEW_SKELETON_VARIANT: Record<string, 'dashboard' | 'list' | 'form' | 'chart'> = {
+  dashboard: 'dashboard',
+  ops_console: 'dashboard',
+  analytics: 'chart',
+  financial: 'chart',
+  policy_orders: 'list',
+  approvals: 'list',
+  claims_admin: 'list',
+  endorsements: 'list',
+  documents: 'list',
+  payments: 'list',
+  withdrawals: 'list',
+  agents: 'list',
+  agent_agreements: 'list',
+  commission_ledger: 'list',
+  manual_credit: 'list',
+  credit_approvals: 'list',
+  b2b: 'list',
+  user_mgmt: 'list',
+  contact_leads: 'list',
+  vehicle_pricelist: 'list',
+  activity_log: 'list',
+  security: 'list',
+  pathy_logs: 'list',
+  product_config: 'form',
+  tier_promo: 'form',
+  insurers: 'form',
+  ojk_rates: 'form',
+  b2b_fleet_rates: 'form',
+  b2b_plans: 'form',
+  website_editor: 'form',
+  portal_icons: 'form',
+  tnc_admin: 'form',
+  settings: 'form',
+  ai_admin: 'dashboard',
+  ai_finance: 'dashboard',
+  pathy_ai: 'dashboard',
+};
+
 /* ──────────────────────────────────────────────────────────────────────────
    Pill — base and age-smart. Age pill colours itself from how many hours
    an item has been waiting: fresh (<2h) is neutral, 2-6h amber, >6h red.

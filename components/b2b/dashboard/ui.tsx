@@ -12,6 +12,7 @@ import type { LucideIcon } from 'lucide-react';
 import {
   Search, Bell, Sun, Moon, LogOut, ChevronRight, X, Menu,
 } from 'lucide-react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 
 /* ──────────────────────────────────────────────────────────────────────────
    Ambient background + global animations.
@@ -362,9 +363,20 @@ export interface B2BNavItem {
   label: string;
   icon: LucideIcon;
   badge?: number;
+  /** Primary CTA — aksen oranye + indikator kecil berdenyut. */
+  featured?: boolean;
+  /** Pengelompokan visual: label section di atas item. */
+  groupLabel?: string;
   children?: { id: string; label: string }[];
 }
 
+/* v2.9.5 — Nav button dengan animasi keren:
+ *  • Pil indikator aktif yang meluncur mulus antar item (motion.layoutId).
+ *  • Ikon berputar lembut saat aktif + micro-scale saat hover.
+ *  • Badge berdenyut lembut saat ada angka > 0.
+ *  • Child panel expand dengan tinggi auto → animasi slide.
+ *  • Item "featured" (primary CTA) punya aksen oranye + glow halus.
+ */
 const B2BNavButton: React.FC<{
   item: B2BNavItem;
   activeId: string;
@@ -373,59 +385,124 @@ const B2BNavButton: React.FC<{
   const Icon = item.icon;
   const parentActive = item.id === activeId || item.children?.some(c => c.id === activeId);
   const [open, setOpen] = useState(parentActive);
+  const reduce = useReducedMotion();
 
   useEffect(() => { if (parentActive) setOpen(true); }, [parentActive]);
 
   const handleClick = () => {
     if (item.children?.length) {
       setOpen(o => !o);
-      // Also select the first child to show something immediately
       if (!open && item.children[0]) onSelect(item.children[0].id);
     } else {
       onSelect(item.id);
     }
   };
 
-  const base = 'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all duration-150';
-  const activeStyle = parentActive
-    ? { background: 'linear-gradient(115deg, rgba(67,56,202,0.10), rgba(79,70,229,0.06))', color: '#3730a3' }
-    : {};
+  const base = 'relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all duration-200';
+  const featured = item.featured;
 
   return (
     <div>
-      <button
+      <motion.button
         type="button"
         onClick={handleClick}
-        className={`${base} ${parentActive ? 'font-bold' : 'text-slate-600 hover:bg-indigo-50/60 hover:text-slate-900 font-medium'}`}
-        style={activeStyle}
+        whileHover={reduce ? undefined : { x: parentActive ? 0 : 2 }}
+        whileTap={reduce ? undefined : { scale: 0.97 }}
+        className={`${base} ${parentActive ? 'font-bold text-indigo-900' : featured ? 'font-bold text-orange-700 hover:text-orange-800' : 'text-slate-600 hover:text-slate-900 font-medium'}`}
       >
-        <Icon size={16} strokeWidth={parentActive ? 2.25 : 2} />
-        <span className="text-xs tracking-wide flex-1">{item.label}</span>
+        {/* Pil indikator aktif, meluncur antar menu via layoutId */}
+        {parentActive && (
+          <motion.span
+            layoutId="b2b-nav-pill"
+            className="absolute inset-0 rounded-xl"
+            style={{ background: featured
+              ? 'linear-gradient(115deg, rgba(234,88,12,0.14), rgba(249,115,22,0.08))'
+              : 'linear-gradient(115deg, rgba(67,56,202,0.12), rgba(79,70,229,0.08))' }}
+            transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 460, damping: 36 }}
+            aria-hidden
+          />
+        )}
+        {/* Garis aksen kiri saat aktif */}
+        {parentActive && (
+          <motion.span
+            layoutId="b2b-nav-bar"
+            className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-full"
+            style={{ background: featured ? '#ea580c' : '#4338ca' }}
+            transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 520, damping: 36 }}
+            aria-hidden
+          />
+        )}
+        <motion.span
+          className="relative z-10 flex items-center justify-center"
+          animate={parentActive && !reduce ? { rotate: [0, -6, 0] } : {}}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+        >
+          <Icon size={16} strokeWidth={parentActive ? 2.4 : 2} />
+        </motion.span>
+        <span className="relative z-10 text-xs tracking-wide flex-1 flex items-center gap-1.5">
+          {item.label}
+          {featured && (
+            <motion.span
+              aria-hidden
+              className="inline-block w-1 h-1 rounded-full bg-orange-500"
+              animate={reduce ? {} : { scale: [1, 1.5, 1], opacity: [1, 0.6, 1] }}
+              transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+            />
+          )}
+        </span>
         {typeof item.badge === 'number' && item.badge > 0 && (
-          <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-indigo-600 text-white min-w-[18px] text-center">{item.badge}</span>
+          <motion.span
+            className="relative z-10 text-[9px] font-black px-1.5 py-0.5 rounded-full bg-indigo-600 text-white min-w-[18px] text-center"
+            animate={reduce ? {} : { scale: [1, 1.08, 1] }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            {item.badge}
+          </motion.span>
         )}
         {item.children?.length ? (
-          <ChevronRight size={12} className={`transition-transform ${open ? 'rotate-90' : ''}`} />
+          <motion.span
+            className="relative z-10"
+            animate={{ rotate: open ? 90 : 0 }}
+            transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 420, damping: 30 }}
+            aria-hidden
+          >
+            <ChevronRight size={12} />
+          </motion.span>
         ) : null}
-      </button>
-      {item.children?.length && open && (
-        <div className="ml-7 mt-0.5 space-y-0.5 border-l border-indigo-100 pl-3">
-          {item.children.map(c => (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => onSelect(c.id)}
-              className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] transition-colors ${
-                c.id === activeId
-                  ? 'bg-indigo-50 text-indigo-700 font-bold'
-                  : 'text-slate-500 hover:text-slate-900 hover:bg-indigo-50/40 font-medium'
-              }`}
-            >
-              {c.label}
-            </button>
-          ))}
-        </div>
-      )}
+      </motion.button>
+      <AnimatePresence initial={false}>
+        {item.children?.length && open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 380, damping: 32, mass: 0.6 }}
+            className="overflow-hidden"
+          >
+            <div className="ml-7 mt-0.5 space-y-0.5 border-l border-indigo-100 pl-3 pb-1">
+              {item.children.map((c, i) => (
+                <motion.button
+                  key={c.id}
+                  type="button"
+                  initial={reduce ? false : { opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.03 + i * 0.03, duration: 0.25, ease: 'easeOut' }}
+                  whileHover={reduce ? undefined : { x: 3 }}
+                  whileTap={reduce ? undefined : { scale: 0.98 }}
+                  onClick={() => onSelect(c.id)}
+                  className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] transition-colors ${
+                    c.id === activeId
+                      ? 'bg-indigo-50 text-indigo-700 font-bold'
+                      : 'text-slate-500 hover:text-slate-900 hover:bg-indigo-50/40 font-medium'
+                  }`}
+                >
+                  {c.label}
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
@@ -488,14 +565,24 @@ export const B2BShell: React.FC<B2BShellProps> = ({
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto b2b-scroll p-3 space-y-0.5">
-        {nav.map(item => (
-          <B2BNavButton
-            key={item.id}
-            item={item}
-            activeId={activeId}
-            onSelect={(id) => { onSelect(id); setDrawerOpen(false); }}
-          />
-        ))}
+        {nav.map((item, idx) => {
+          const prevGroup = idx > 0 ? nav[idx - 1].groupLabel : undefined;
+          const showGroup = item.groupLabel && item.groupLabel !== prevGroup;
+          return (
+            <React.Fragment key={item.id}>
+              {showGroup && (
+                <div className={`px-2 ${idx === 0 ? 'pt-0' : 'pt-3'} pb-1 text-[9px] font-black text-slate-400 uppercase tracking-widest`}>
+                  {item.groupLabel}
+                </div>
+              )}
+              <B2BNavButton
+                item={item}
+                activeId={activeId}
+                onSelect={(id) => { onSelect(id); setDrawerOpen(false); }}
+              />
+            </React.Fragment>
+          );
+        })}
       </nav>
 
       {/* User footer */}
@@ -765,6 +852,128 @@ export const B2BKpiSkeleton: React.FC = () => (
     <B2BSkeleton width="40%" height={10} className="mt-2" />
   </B2BGlass>
 );
+
+/* v2.9.5 — Full page skeleton dengan bentuk konten yang akan muncul.
+ *
+ * Varian:
+ *  • dashboard: hero + KPI strip + two list columns
+ *  • list     : judul + filter bar + tabel/baris
+ *  • form     : judul + 6 input + action bar
+ *  • calendar : judul + grid bulan
+ *
+ * Pakai .b2b-stagger supaya setiap bagian masuk bergantian (bukan serentak).
+ */
+export const B2BPageSkeleton: React.FC<{ variant?: 'dashboard' | 'list' | 'form' | 'calendar' }> = ({ variant = 'dashboard' }) => {
+  if (variant === 'form') {
+    return (
+      <div className="max-w-3xl mx-auto b2b-stagger space-y-4 py-3">
+        <div className="space-y-2">
+          <B2BSkeleton width="55%" height={22} />
+          <B2BSkeleton width="80%" height={12} />
+        </div>
+        <B2BGlass className="p-5 space-y-4">
+          <B2BSkeleton width="40%" height={11} />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <B2BSkeleton key={i} height={46} rounded="lg" />
+            ))}
+          </div>
+        </B2BGlass>
+        <B2BGlass className="p-5 space-y-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i}>
+              <B2BSkeleton width={90} height={10} />
+              <B2BSkeleton height={42} rounded="lg" className="mt-1.5" />
+            </div>
+          ))}
+        </B2BGlass>
+        <B2BGlass className="p-5 space-y-2">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="flex justify-between">
+              <B2BSkeleton width="40%" height={12} />
+              <B2BSkeleton width="20%" height={12} />
+            </div>
+          ))}
+          <div className="pt-2 border-t border-slate-100 flex justify-between items-center">
+            <B2BSkeleton width="20%" height={10} />
+            <B2BSkeleton width="35%" height={20} />
+          </div>
+        </B2BGlass>
+      </div>
+    );
+  }
+  if (variant === 'list') {
+    return (
+      <div className="max-w-7xl mx-auto b2b-stagger space-y-4">
+        <div className="flex items-center justify-between gap-4">
+          <div className="space-y-2">
+            <B2BSkeleton width={180} height={22} />
+            <B2BSkeleton width={260} height={11} />
+          </div>
+          <B2BSkeleton width={140} height={40} rounded="lg" />
+        </div>
+        <B2BGlass className="p-3">
+          <div className="flex items-center gap-2 mb-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <B2BSkeleton key={i} width={72} height={28} rounded="full" />
+            ))}
+            <B2BSkeleton width={240} height={30} rounded="lg" className="ml-auto" />
+          </div>
+          <B2BTableSkeleton rows={6} cols={5} />
+        </B2BGlass>
+      </div>
+    );
+  }
+  if (variant === 'calendar') {
+    return (
+      <div className="max-w-7xl mx-auto b2b-stagger space-y-4">
+        <div className="space-y-2">
+          <B2BSkeleton width={240} height={22} />
+          <B2BSkeleton width={320} height={11} />
+        </div>
+        <B2BGlass className="p-5">
+          <div className="grid grid-cols-7 gap-2">
+            {Array.from({ length: 35 }).map((_, i) => (
+              <B2BSkeleton key={i} height={72} rounded="md" />
+            ))}
+          </div>
+        </B2BGlass>
+      </div>
+    );
+  }
+  /* dashboard */
+  return (
+    <div className="max-w-7xl mx-auto b2b-stagger space-y-5">
+      <B2BGlass className="p-6 lg:p-8">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="space-y-2">
+            <B2BSkeleton width={140} height={11} />
+            <B2BSkeleton width={320} height={28} />
+            <B2BSkeleton width={420} height={11} />
+          </div>
+          <div className="flex gap-2">
+            <B2BSkeleton width={130} height={40} rounded="lg" />
+            <B2BSkeleton width={130} height={40} rounded="lg" />
+          </div>
+        </div>
+      </B2BGlass>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+        {Array.from({ length: 4 }).map((_, i) => <B2BKpiSkeleton key={i} />)}
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {Array.from({ length: 2 }).map((_, i) => (
+          <B2BGlass key={i} className="p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <B2BSkeleton width={140} height={14} />
+              <B2BSkeleton width={60} height={10} />
+            </div>
+            <B2BTableSkeleton rows={4} cols={3} />
+          </B2BGlass>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 /* ──────────────────────────────────────────────────────────────────────────
    CountUp — smoothly animates a number from 0 → `value` over a short

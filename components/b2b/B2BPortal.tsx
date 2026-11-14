@@ -11,8 +11,9 @@
 
 import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import {
-  LayoutDashboard, FileText, FileCheck, Layers, User, Sparkles, ShieldCheck, CalendarDays,
+  LayoutDashboard, Plus, User, Sparkles, ShieldCheck, CalendarDays, History,
 } from 'lucide-react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { Language, UserRole } from '../../types';
 import {
   getB2BSubmissions, getAllB2BSubmissions,
@@ -24,6 +25,7 @@ import PathyChat, { PATHY_OPEN_EVENT } from '../shared/PathyChat';
 import { useDarkMode } from '../shared/theme';
 import {
   B2BAmbient, B2BShell, B2BGlass, B2BToastProvider, B2BCommandPalette,
+  B2BPageSkeleton,
   type B2BNavItem,
 } from './dashboard/ui';
 import B2BDashboard from './B2BDashboard';
@@ -110,46 +112,67 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
 
   useEffect(() => { void loadData(); }, [client?.id, isMaster]);
 
-  const handleSelect = (id: string) => setActiveId(id as Section);
+  const handleSelect = (id: string) => {
+    // "new-order" adalah parent header-only — klik membuka dropdown dan
+    // pilih item pertama (Order Unit). Dicegah agar activeId tetap valid.
+    if (id === 'new-order') { setActiveId('new-unit'); return; }
+    if (id === 'history')   { setActiveId('batches'); return; }
+    setActiveId(id as Section);
+  };
+
+  // v2.9.5 — Rearrange: pisahkan "Buat" (aksi utama, oranye) dari "Riwayat"
+  // (status/lihat). Pola ini pola app modern — Compose/Create jadi CTA
+  // paling menonjol dan terpisah dari daftar. Kalender dipindah ke bawah
+  // sebagai alat bantu. Group label membantu scan sidebar lebih cepat.
+  const pendingRequests = submissions.filter(s => s.status === 'SUBMITTED' || s.status === 'REVIEWING').length;
+  const pendingQuotes = quotes.filter(q => q.status === 'PENDING').length;
 
   const nav: B2BNavItem[] = useMemo(() => [
-    { id: 'dashboard', label: t('Dashboard', 'Dashboard'), icon: LayoutDashboard },
-    { id: 'fleet', label: t('Fleet Renewals', 'Kalender Armada'), icon: CalendarDays },
+    { id: 'dashboard', label: t('Dashboard', 'Dashboard'), icon: LayoutDashboard, groupLabel: t('Overview', 'Ikhtisar') },
     {
-      id: 'submissions', label: t('Requests', 'Pengajuan'), icon: FileText,
-      badge: submissions.filter(s => s.status === 'SUBMITTED' || s.status === 'REVIEWING').length,
+      id: 'new-order',
+      label: t('Create order', 'Buat order'),
+      icon: Plus,
+      featured: true,
+      groupLabel: t('Create', 'Aksi'),
       children: [
-        { id: 'submissions', label: t('Single', 'Satuan') },
-        { id: 'batches',     label: t('Bulk Fleet', 'Armada Massal') },
-      ],
-    },
-    {
-      id: 'quotes', label: t('Quotes', 'Penawaran'), icon: FileCheck,
-      badge: quotes.filter(q => q.status === 'PENDING').length,
-    },
-    {
-      id: 'new-single', label: t('Create', 'Buat'), icon: Layers,
-      children: [
-        { id: 'new-unit',   label: t('Unit Order (Car & Heavy Equipment)', 'Order Unit (Mobil & Alat Berat)') },
-        { id: 'new-single', label: t('New Request', 'Pengajuan Baru') },
+        { id: 'new-unit',   label: t('Unit (Vehicle)', 'Order Unit') },
         { id: 'new-bulk',   label: t('Bulk Import', 'Impor Massal') },
+        { id: 'new-single', label: t('Other Request', 'Pengajuan Lain') },
       ],
     },
-    { id: 'profile', label: t('Profile', 'Profil'), icon: User },
-  ], [submissions, quotes, lang]);
+    {
+      id: 'history',
+      label: t('Activity', 'Riwayat'),
+      icon: History,
+      badge: pendingRequests + pendingQuotes,
+      groupLabel: t('Monitor', 'Pantau'),
+      children: [
+        { id: 'batches',     label: t('Orders & Batches', 'Order Unit & Batch') },
+        { id: 'submissions', label: t('Requests', 'Pengajuan') },
+        { id: 'quotes',      label: t('Quotes', 'Penawaran') },
+      ],
+    },
+    { id: 'fleet', label: t('Fleet Calendar', 'Kalender Armada'), icon: CalendarDays, groupLabel: t('Monitor', 'Pantau') },
+    { id: 'profile', label: t('Profile', 'Profil'), icon: User, groupLabel: t('Account', 'Akun') },
+  ], [pendingRequests, pendingQuotes, lang]);
 
   const breadcrumb = useMemo((): string[] => {
+    const root = t('Portal B2B', 'Portal B2B');
+    const crCreate = t('Create', 'Buat');
+    const crMonitor = t('Activity', 'Riwayat');
     switch (activeId) {
-      case 'dashboard':   return [t('Portal B2B', 'Portal B2B'), t('Dashboard', 'Dashboard')];
-      case 'fleet':       return [t('Portal B2B', 'Portal B2B'), t('Fleet Renewals', 'Kalender Armada')];
-      case 'new-unit':    return [t('Portal B2B', 'Portal B2B'), t('Create', 'Buat'), t('Unit Order', 'Order Unit')];
-      case 'new-single':  return [t('Portal B2B', 'Portal B2B'), t('Create', 'Buat'), t('New Request', 'Pengajuan Baru')];
-      case 'new-bulk':    return [t('Portal B2B', 'Portal B2B'), t('Create', 'Buat'), t('Bulk Import', 'Impor Massal')];
-      case 'submissions': return [t('Portal B2B', 'Portal B2B'), t('Requests', 'Pengajuan'), t('Single', 'Satuan')];
-      case 'batches':     return [t('Portal B2B', 'Portal B2B'), t('Requests', 'Pengajuan'), t('Bulk Fleet', 'Armada Massal')];
-      case 'quotes':      return [t('Portal B2B', 'Portal B2B'), t('Quotes', 'Penawaran')];
-      case 'profile':     return [t('Portal B2B', 'Portal B2B'), t('Profile', 'Profil')];
+      case 'dashboard':   return [root, t('Dashboard', 'Dashboard')];
+      case 'fleet':       return [root, t('Fleet Calendar', 'Kalender Armada')];
+      case 'new-unit':    return [root, crCreate, t('Unit Order', 'Order Unit')];
+      case 'new-single':  return [root, crCreate, t('Other Request', 'Pengajuan Lain')];
+      case 'new-bulk':    return [root, crCreate, t('Bulk Import', 'Impor Massal')];
+      case 'submissions': return [root, crMonitor, t('Requests', 'Pengajuan')];
+      case 'batches':     return [root, crMonitor, t('Orders & Batches', 'Order Unit & Batch')];
+      case 'quotes':      return [root, crMonitor, t('Quotes', 'Penawaran')];
+      case 'profile':     return [root, t('Profile', 'Profil')];
     }
+    return [root];
   }, [activeId, lang]);
 
   const masterName = client?.name || 'Master Admin';
@@ -203,7 +226,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
         );
       case 'new-unit':
         return (
-          <Suspense fallback={<div className="text-sm text-slate-400 text-center py-16">Memuat…</div>}>
+          <Suspense fallback={<B2BPageSkeleton variant="form" />}>
             <B2BUnitOrder
               clientId={client?.id ?? ''}
               client={client}
@@ -214,7 +237,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
         );
       case 'new-single':
         return (
-          <Suspense fallback={<div className="text-sm text-slate-400 text-center py-16">Memuat…</div>}>
+          <Suspense fallback={<B2BPageSkeleton variant="form" />}>
             <B2BNewSubmission
               clientId={client?.id ?? ''}
               client={client}
@@ -225,7 +248,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
         );
       case 'new-bulk':
         return (
-          <Suspense fallback={<div className="text-sm text-slate-400 text-center py-16">Memuat…</div>}>
+          <Suspense fallback={<B2BPageSkeleton variant="form" />}>
             <B2BBulkImport
               clientId={client?.id ?? ''}
               client={client}
@@ -236,7 +259,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
         );
       case 'submissions':
         return (
-          <Suspense fallback={<div className="text-sm text-slate-400 text-center py-16">Memuat…</div>}>
+          <Suspense fallback={<B2BPageSkeleton variant="list" />}>
             <B2BSubmissions
               clientId={client?.id ?? ''}
               lang={lang}
@@ -247,13 +270,13 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
         );
       case 'batches':
         return (
-          <Suspense fallback={<div className="text-sm text-slate-400 text-center py-16">Memuat…</div>}>
+          <Suspense fallback={<B2BPageSkeleton variant="list" />}>
             <B2BBulkBatches clientId={client?.id ?? ''} lang={lang} allClients={isMaster} />
           </Suspense>
         );
       case 'quotes':
         return (
-          <Suspense fallback={<div className="text-sm text-slate-400 text-center py-16">Memuat…</div>}>
+          <Suspense fallback={<B2BPageSkeleton variant="list" />}>
             <B2BQuotes
               clientId={client?.id ?? ''}
               lang={lang}
@@ -265,7 +288,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
         );
       case 'profile':
         return (
-          <Suspense fallback={<div className="text-sm text-slate-400 text-center py-16">Memuat…</div>}>
+          <Suspense fallback={<B2BPageSkeleton variant="form" />}>
             <B2BProfile
               client={client}
               clientId={client?.id ?? ''}
@@ -312,7 +335,9 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
           </button>
         }
       >
-        {renderContent()}
+        <PageTransition pageKey={activeId}>
+          {renderContent()}
+        </PageTransition>
       </B2BShell>
 
       {/* Pathy floating chat — same instance as before, but the launcher
@@ -324,6 +349,28 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
       />
     </div>
     </B2BToastProvider>
+  );
+};
+
+/* v2.9.5 — Transisi halaman: fade + slide-up ringan saat berpindah tab,
+ * serupa agent app .ag-screen tapi disesuaikan dengan konteks dashboard.
+ * `mode="wait"` memastikan screen lama keluar sebelum yang baru masuk —
+ * tidak ada dua layar yang di-render bersamaan. Pengguna reduced-motion
+ * tetap mendapat pergantian langsung tanpa animasi. */
+const PageTransition: React.FC<{ pageKey: string; children: React.ReactNode }> = ({ pageKey, children }) => {
+  const reduce = useReducedMotion();
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={pageKey}
+        initial={reduce ? { opacity: 0 } : { opacity: 0, y: 8, filter: 'blur(4px)' }}
+        animate={reduce ? { opacity: 1 } : { opacity: 1, y: 0, filter: 'blur(0px)' }}
+        exit={reduce ? { opacity: 0 } : { opacity: 0, y: -4, filter: 'blur(2px)' }}
+        transition={reduce ? { duration: 0 } : { duration: 0.28, ease: [0.2, 0.8, 0.2, 1] }}
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
   );
 };
 

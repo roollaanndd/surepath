@@ -392,7 +392,7 @@ export async function handleB2BBulkAction(action: string, ctx: GatewayContext): 
       // v2.9.4 Phase 3 — Resolve plan_id → nama paket sekali, map kembali di
       // klien. Admin perlu melihat NAMA paket ("Premium"), bukan UUID atau
       // kata generik "Paket". Dibaca hanya kalau ada item yang memakai paket.
-      const planIds = Array.from(new Set((items ?? []).map(it => it.plan_id).filter((x: string | null): x is string => !!x)));
+      const planIds = Array.from(new Set((items ?? []).map((it: { plan_id: string | null }) => it.plan_id).filter((x: string | null): x is string => !!x)));
       const plansMap: Record<string, { name: string; code: string; loading_rate: number }> = {};
       if (planIds.length > 0) {
         const { data: plans } = await db.from('sp_b2b_plans').select('id, name, code, loading_rate').in('id', planIds);

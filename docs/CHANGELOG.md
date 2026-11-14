@@ -1,6 +1,16 @@
 # SurePath - Changelog
 
-<<<<<<< HEAD
+## v2.9.4 - 2026-11-14
+
+### B2B Phase 3 — Admin dashboard polish + data sync audit
+
+- **Gateway `b2b_bulk_get_batch`** sekarang mengembalikan `plans: Record<planId, {name, code, loading_rate}>` untuk menampilkan nama paket di admin tanpa query tambahan.
+- **Admin `B2BAdminView`**:
+  - Nama paket (mis. "Premium") ditampilkan di kolom Perluasan/Paket, bukan hanya kata generik "Paket".
+  - Warna chip paket sesuai loading: amber untuk positif, emerald untuk negatif, indigo netral.
+  - **Search bar global** untuk tab B2B / Bulk / Life — cari di nomor batch, perusahaan, insurer, polis, PIC, atau kode produk. Ikon kaca pembesar + tombol ✕ untuk clear.
+- Perluasan, paket, foto, nilai pertanggungan, premium — semuanya mengalir end-to-end dari order unit klien B2B → gateway (validasi + recompute) → admin batch detail (chip + thumbnail foto + nama paket).
+
 ## v2.9.3 - 2026-11-14
 
 ### B2B Phase 2 — UX friendliness pass
@@ -9,8 +19,6 @@
 - **Sticky bottom action bar** — total premi + tombol Unduh Proposal + Kirim Order selalu terlihat di pojok bawah layar. Pengguna tak perlu gulir balik ke atas untuk melihat total atau turun ke bawah untuk submit.
 - **Util `.no-scrollbar`** untuk stepper horizontal yang bisa di-swipe tanpa scrollbar visual.
 
-=======
->>>>>>> origin/main
 ## v2.9.2 - 2026-11-14
 
 ### B2B Phase 1 — Kartu paket dengan plus/minus + CMS admin

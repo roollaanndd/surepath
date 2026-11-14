@@ -151,10 +151,26 @@ export interface B2BBulkPaymentSummary {
   created_at: string;
 }
 
-export async function getB2BBulkBatch(batchId: string): Promise<{ batch: SpB2BBatch; items: SpB2BBatchItem[]; payment: B2BBulkPaymentSummary | null } | null> {
+export interface B2BPlanSummary {
+  name: string;
+  code: string;
+  loading_rate: number;
+}
+
+export async function getB2BBulkBatch(batchId: string): Promise<{
+  batch: SpB2BBatch;
+  items: SpB2BBatchItem[];
+  payment: B2BBulkPaymentSummary | null;
+  plans?: Record<string, B2BPlanSummary>;
+} | null> {
   const { data, error } = await callGateway('b2b_bulk_get_batch', { batch_id: batchId });
   if (error) { console.error('getB2BBulkBatch:', error); return null; }
-  return data as { batch: SpB2BBatch; items: SpB2BBatchItem[]; payment: B2BBulkPaymentSummary | null };
+  return data as {
+    batch: SpB2BBatch;
+    items: SpB2BBatchItem[];
+    payment: B2BBulkPaymentSummary | null;
+    plans?: Record<string, B2BPlanSummary>;
+  };
 }
 
 export async function adminGetAllB2BBulkBatches(): Promise<SpB2BBatch[]> {

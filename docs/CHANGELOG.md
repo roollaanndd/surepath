@@ -1,5 +1,16 @@
 # SurePath - Changelog
 
+<<<<<<< HEAD
+## v2.9.3 - 2026-11-14
+
+### B2B Phase 2 — UX friendliness pass
+
+- **Mini stepper progress** di header `B2BUnitOrder`: lima chip (Pertanggungan, Kendaraan, Nasabah, Paket, Foto) berubah hijau saat selesai, dengan garis penghubung. Membantu klien tahu posisi dan berapa langkah lagi.
+- **Sticky bottom action bar** — total premi + tombol Unduh Proposal + Kirim Order selalu terlihat di pojok bawah layar. Pengguna tak perlu gulir balik ke atas untuk melihat total atau turun ke bawah untuk submit.
+- **Util `.no-scrollbar`** untuk stepper horizontal yang bisa di-swipe tanpa scrollbar visual.
+
+=======
+>>>>>>> origin/main
 ## v2.9.2 - 2026-11-14
 
 ### B2B Phase 1 — Kartu paket dengan plus/minus + CMS admin

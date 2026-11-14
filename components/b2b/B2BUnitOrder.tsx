@@ -49,7 +49,7 @@ import {
   listActiveB2BPlans, type SpB2BPlan,
 } from '../../services/supabaseService';
 import { uploadB2BVehiclePhoto } from '../../services/storage';
-import { downloadBulkQuoteExcel, quoteRowFromLineItem } from '../../services/b2bBulkQuoteExcel';
+import { generateB2BProposalPdf } from '../../services/b2bProposalPdf';
 
 interface Props {
   clientId: string;
@@ -378,24 +378,42 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
 
   const removePhoto = (slot: string) => setPhotos(prev => prev.filter(p => p.slot !== slot));
 
-  // ── Unduh proposal ─────────────────────────────────────────────────────
-  const handleDownloadProposal = () => {
+  // ── Unduh proposal (PDF, selaras agent app — watermark + aksen oranye) ──
+  const handleDownloadProposal = async () => {
     const v = validate();
     if (v) { setError(v); return; }
     setError('');
-    const row = quoteRowFromLineItem(
-      built,
-      {
-        nasabahName: nasabahName.trim(),
-        contractNo: contractNo.trim() || undefined,
-        financingValue: Number(financingValue) || 0,
-        otr: Number(otr) || undefined,
-        tenorMonths,
-      },
-      { planName: selectedPlan?.name },
-    );
     const companyName = String(client?.company_name ?? client?.companyName ?? client?.name ?? 'Klien B2B').trim() || 'Klien B2B';
-    downloadBulkQuoteExcel([row], { companyName, sourceFileName: t('unit-order', 'order-satuan') });
+    try {
+      await generateB2BProposalPdf({
+        companyName,
+        nasabahName: nasabahName.trim(),
+        nasabahPhone: nasabahPhone.trim() || undefined,
+        nasabahAddress: nasabahAddress.trim() || undefined,
+        contractNo: contractNo.trim() || undefined,
+        make: make.trim() || undefined,
+        model: model.trim() || undefined,
+        modelYear: Number(modelYear) || undefined,
+        plateNo: plateNo.trim() || undefined,
+        regionText: regionText.trim() || undefined,
+        financingValue: Number(financingValue) || 0,
+        otr: isCar ? (Number(otr) || undefined) : undefined,
+        tenorMonths,
+        coverageStartDate: startDate,
+        coverageEndDate: endDate,
+        multiYear: isMultiYear,
+        discountShownOnPolicy: discountShown,
+        planName: selectedPlan?.name,
+        planDescription: selectedPlan?.description ?? undefined,
+        planBenefits: selectedPlan?.benefits,
+        planLoadingPct: selectedPlan ? Number(selectedPlan.loading_rate) : 0,
+        line: built,
+        photoCount: photos.length,
+      });
+    } catch (e) {
+      setError(t('Failed to download proposal.', 'Gagal mengunduh proposal.'));
+      console.error('[B2B] generateB2BProposalPdf:', e);
+    }
   };
 
   const handleCreateInvoice = async () => {

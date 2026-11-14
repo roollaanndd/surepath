@@ -2,6 +2,14 @@
 
 ## v2.9.1 - 2026-11-14
 
+### B2B UX polish + website layering fix (follow-up owner)
+
+Permintaan tambahan owner pada hari yang sama:
+- **B2B animated click** — rule `.sp-b2b-root :active { transform: scale(.96); filter: brightness(.97); }` di `src/styles/portal-modernization.css` sekarang mencakup `button`, `a`, `[role=button]`, `.cursor-pointer`, `[data-pressable]` + hover-lift 1px, mengikuti pegas agent. `-webkit-tap-highlight-color: transparent` dan dimatikan lewat `prefers-reduced-motion`.
+- **Proposal B2B redesign (`services/b2bProposalPdf.ts`)** — PDF A4 1-halaman dengan wordmark Sure(Path) + titik oranye, watermark diagonal "SUREPATH · B2B" 8% opasitas, bar aksen oranye per bagian, kartu paket emerald, pita Total Premi oranye kontras, catatan verifikasi + disclaimer OJK. Palet mengikuti "Kaca Pagi" (emerald #059669 + orange #ea580c). `B2BUnitOrder` sekarang memakai PDF ini, bukan Excel, sejalan dengan agent app (`services/quotationSlipPdf.ts`).
+- **Homepage stats (`src/pages/HomePage.tsx`)** — section `InteractiveStats` (5 Produk / 24/7 / 60 detik / 100%) dulunya `background: transparent` → video promo bocor di antara hero dark dan section WHY. Diganti gradient full-cover: dark hero → WHY panel (dark mode) atau cream opaque (light mode), sehingga menyatu.
+- **Produk Info page (`src/pages/ProductInfoPage.tsx`)** — wrapper `rgba(6,9,18,0.86)` pada div `min-h-screen` memperlihatkan 14% video terang + bisa tak menutup viewport saat zoom-out. Dipindah ke overlay `fixed inset-0 zIndex: -1` yang selalu mengunci viewport, body & html forced `#06090c` sebagai fallback. Tidak ada lagi pita terang di tepi layar.
+
 ### B2B — perluasan, foto kendaraan, paket admin, proposal, aksen warna
 
 Permintaan owner (13 Nov) untuk portal B2B: tambah pilihan perluasan sesuai

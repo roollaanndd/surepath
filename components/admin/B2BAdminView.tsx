@@ -399,6 +399,63 @@ const BULK_STATUS_CLS: Record<string, string> = {
 
 const fmtIDRBulk = (n: number) => 'Rp ' + Math.round(n).toLocaleString('id-ID');
 
+// v2.9.1 — Perluasan + paket + foto rangkuman di tabel admin.
+const ADDON_LABEL_ADMIN: Record<string, string> = {
+  flood: 'Banjir', earthquake: 'Gempa', srcc: 'SRCC', terrorism: 'Terorisme',
+  authorizedWorkshop: 'Bengkel Resmi', paDriver: 'PA Pengemudi',
+};
+function renderAddonsAndPlan(it: SpB2BBatchItem): React.ReactElement {
+  const addons = (it.addons ?? {}) as Record<string, unknown>;
+  const chips: Array<{ k: string; label: string }> = [];
+  for (const [k, label] of Object.entries(ADDON_LABEL_ADMIN)) {
+    if (addons[k]) chips.push({ k, label });
+  }
+  const tpl = Number(addons.tplLimit) || 0;
+  if (tpl > 0) chips.push({ k: 'tpl', label: `TPL ${(tpl / 1_000_000).toFixed(0)}jt` });
+  const seats = Number(addons.paPassengerSeats) || 0;
+  if (seats > 0) chips.push({ k: 'paPassenger', label: `PA ${seats} kursi` });
+  const hasAddon = chips.length > 0 || (it.addon_premium ?? 0) > 0;
+  const plan = it.plan_id ? 'Paket' : null; // nama dicoba di-resolve via join nanti bila perlu
+  if (!hasAddon && !plan && (it.plan_loading ?? 0) === 0) return <span className="text-ds-ink3">—</span>;
+  return (
+    <div className="flex flex-col gap-0.5" title={hasAddon ? `+${fmtIDRBulk(it.addon_premium ?? 0)} perluasan` : undefined}>
+      {chips.length > 0 && (
+        <div className="flex flex-wrap gap-0.5">
+          {chips.slice(0, 3).map(c => (
+            <span key={c.k} className="rounded-full bg-sky-100 px-1.5 py-0.5 font-black text-sky-800 dark:bg-sky-900/30 dark:text-sky-300">{c.label}</span>
+          ))}
+          {chips.length > 3 && <span className="rounded-full bg-slate-200 px-1.5 py-0.5 font-black text-slate-700 dark:bg-white/10">+{chips.length - 3}</span>}
+        </div>
+      )}
+      {(it.addon_premium ?? 0) > 0 && (
+        <span className="text-ds-ink3 tabular-nums text-right font-mono">+{fmtIDRBulk(it.addon_premium ?? 0)}</span>
+      )}
+      {plan && (
+        <span className={`rounded-full px-1.5 py-0.5 font-black ${(it.plan_loading ?? 0) > 0 ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'}`}>
+          Paket {(it.plan_loading ?? 0) !== 0 ? (`(${(it.plan_loading ?? 0) > 0 ? '+' : ''}${fmtIDRBulk(it.plan_loading ?? 0)})`) : ''}
+        </span>
+      )}
+    </div>
+  );
+}
+function renderPhotos(it: SpB2BBatchItem): React.ReactElement {
+  const photos = it.vehicle_photos ?? [];
+  if (!photos.length) return <span className="text-ds-ink3">—</span>;
+  return (
+    <div className="flex items-center gap-0.5">
+      {photos.slice(0, 3).map((p, i) => (
+        <a key={i} href={p.url} target="_blank" rel="noreferrer" title={p.slot}>
+          {}
+          <img src={p.url} className="h-7 w-7 rounded-md object-cover border border-ds-border hover:scale-125 transition-transform" />
+        </a>
+      ))}
+      {photos.length > 3 && (
+        <span className="ml-1 text-2xs font-black text-ds-ink3">+{photos.length - 3}</span>
+      )}
+    </div>
+  );
+}
+
 const BulkBatchCard: React.FC<{ batch: SpB2BBatch; insurers: InsurerOption[]; onUpdated: () => void; onToast: (m: string) => void }> = ({ batch, insurers, onUpdated, onToast }) => {
   const [showIssueForm, setShowIssueForm] = useState(false);
   const [policyNumber, setPolicyNumber] = useState(batch.master_policy_number ?? '');
@@ -532,6 +589,8 @@ const BulkBatchCard: React.FC<{ batch: SpB2BBatch; insurers: InsurerOption[]; on
                     <th className="py-1.5 pr-2 font-black">Plat</th>
                     <th className="py-1.5 pr-2 font-black">Zona</th>
                     <th className="py-1.5 pr-2 font-black">Periode</th>
+                    <th className="py-1.5 pr-2 font-black">Perluasan / Paket</th>
+                    <th className="py-1.5 pr-2 font-black">Foto</th>
                     <th className="py-1.5 pr-2 font-black text-right">TSI</th>
                     <th className="py-1.5 pr-2 font-black text-right">Premi Total</th>
                     <th className="py-1.5 pr-2 font-black">Status</th>
@@ -573,6 +632,12 @@ const BulkBatchCard: React.FC<{ batch: SpB2BBatch; insurers: InsurerOption[]; on
                             diskon tidak tertera di polis
                           </span>
                         )}
+                      </td>
+                      <td className="py-1.5 pr-2">
+                        {renderAddonsAndPlan(it)}
+                      </td>
+                      <td className="py-1.5 pr-2">
+                        {renderPhotos(it)}
                       </td>
                       <td className="py-1.5 pr-2 text-right tabular-nums">{fmtIDRBulk(it.financing_value)}</td>
                       <td className="py-1.5 pr-2 text-right tabular-nums font-bold">{fmtIDRBulk(it.total_premium)}</td>

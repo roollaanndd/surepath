@@ -1,5 +1,71 @@
 # SurePath - Changelog
 
+## v2.9.1 - 2026-11-14
+
+### B2B — perluasan, foto kendaraan, paket admin, proposal, aksen warna
+
+Permintaan owner (13 Nov) untuk portal B2B: tambah pilihan perluasan sesuai
+formula agent/admin, implementasikan koneksi admin dashboard, perbaiki error
+"company name" saat order Comprehensive, tambah paket asuransi yang
+dikendalikan dari admin, tombol unduh proposal, aksen warna lebih hidup, dan
+submit foto kendaraan seperti agent app.
+
+**Order Unit B2B (`components/b2b/B2BUnitOrder.tsx`)**
+- **Perluasan pertanggungan**: Banjir, Gempa Bumi, Huru-hara (SRCC), Terorisme &
+  Sabotase, Bengkel Resmi/ATPM (Comprehensive saja), PA Pengemudi, PA Penumpang
+  (0–7 kursi), TPL progresif (Rp 10/25/50/100 jt). Rate acuan OJK IV.B, bisa
+  di-override dari rate set admin.
+- **Paket asuransi** — klien pilih dari daftar `sp_b2b_plans` aktif
+  (Basic/Standard/Premium di-benih default). `loading_rate` paket diterapkan
+  server-side pada premi setelah diskon.
+- **Foto kendaraan wajib** — minimal 3 slot (depan, belakang, nomor rangka,
+  samping kiri/kanan, STNK). Unggah ke bucket `b2b-documents` di bawah
+  `clientId/vehicle-photos/`, URL ditandatangan 60 hari, disematkan ke item.
+- **Unduh proposal** — tombol Excel sebelum submit, memakai
+  `services/b2bBulkQuoteExcel.ts` dan mencantumkan rate, perluasan, paket.
+- **Perbaikan `company_name` error**: server fallback ke `sp_users.name` →
+  `'Klien B2B'` saat kosong (tidak lagi menolak order).
+
+**Rating engine (`services/b2bFleetRating.ts` + Deno mirror)**
+- `FleetAddOns`, `FleetAddonRates`, `DEFAULT_FLEET_ADDON_RATES`, `TPL_OPTIONS`,
+  `calcFleetAddonPremium()`.
+- `BulkRateConfig.addonRates?` (opsional, rate set lama fallback ke default).
+- `BulkPremiumInput.addons`, `.planLoadingRate`; `BulkPremiumResult.addonPremium`,
+  `.addonsDetail`, `.planLoading`; `calcBulkTotals` menjumlahkan keduanya.
+- Impor massal tanpa addons tetap byte-for-byte identik dengan v2.9.0
+  (parity test lulus — 31/31).
+
+**Admin dashboard**
+- Menu baru **Katalog & Harga → Paket B2B** (`b2b_plans`), CRUD penuh
+  (`components/admin/B2BPlansAdmin.tsx`): kode, nama, deskripsi, loading rate,
+  manfaat, urutan, aktif/nonaktif. Hapus otomatis jatuh ke nonaktif bila sudah
+  dipakai di order.
+- **Detail batch** menampilkan kolom **Perluasan / Paket** (chip banjir/gempa/
+  SRCC/…, loading rupiah paket) dan **Foto** (thumbnail dengan hover zoom,
+  klik membuka signed URL).
+
+**Portal B2B**
+- Hero dashboard pakai gradient tri-warna (indigo → emerald → oranye) dengan
+  dua blob sinar, titik pulse oranye, tombol primary CTA menjadi gradient.
+- Tone baru `spark` untuk `B2BPill` dan `B2BKpi` (oranye) — dipakai saat ada
+  aksi yang perlu perhatian.
+
+**Backend / DB**
+- Migrasi `20261113120000_b2b_plans_addons_photos.sql`: tabel `sp_b2b_plans`
+  (deny-all RLS, benih 3 paket), kolom baru di `sp_b2b_batch_items`:
+  `addons jsonb`, `addon_premium`, `plan_id`, `plan_loading`, `vehicle_photos`.
+- Gateway actions baru: `list_active_b2b_plans`, `admin_list_b2b_plans`,
+  `admin_save_b2b_plan`, `admin_delete_b2b_plan`.
+- `b2bBulk.ts` gateway: validasi addons (seats 0–7, TPL int), resolve plan dari
+  id ke loading_rate, URL foto wajib `https://`, persist semua field baru.
+
+**Catatan**
+- Edge functions (`data-gateway`) dan migrasi database **harus di-deploy** agar
+  perubahan ini berfungsi di produksi. Workflow GitHub Actions
+  `deploy-edge-functions.yml` menanganinya saat merge ke `main`.
+- Perilaku lama (impor massal Excel) tidak berubah; parity test memastikan
+  premi identik bila addons/plan tidak dikirim.
+
 ## v2.9.0 - 2026-11-13
 
 ### Apps Mitra: perombakan tampilan total — "Kaca Pagi"

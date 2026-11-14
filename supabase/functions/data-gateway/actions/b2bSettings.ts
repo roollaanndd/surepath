@@ -110,6 +110,67 @@ export async function handleB2BSettingsAction(action: string, ctx: GatewayContex
       return json({ data: { success: true } });
     }
 
+    // ─── B2B plans (paket asuransi B2B) ──────────────────────────────────
+    // Dikelola admin di dashboard (admin_*), dibaca klien B2B (list_active_b2b_plans).
+    case 'list_active_b2b_plans': {
+      if (!caller.spUser && !caller.isAdmin) return json({ error: 'No profile' }, 403);
+      const { data, error } = await db.from('sp_b2b_plans').select('id, code, name, description, loading_rate, benefits, sort_order').eq('is_active', true).order('sort_order', { ascending: true });
+      if (error) return json({ error: error.message }, 400);
+      return json({ data: data ?? [] });
+    }
+
+    case 'admin_list_b2b_plans': {
+      if (!caller.isAdmin) return json({ error: 'Forbidden: admin only' }, 403);
+      const { data, error } = await db.from('sp_b2b_plans').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: false });
+      if (error) return json({ error: error.message }, 400);
+      return json({ data: data ?? [] });
+    }
+
+    case 'admin_save_b2b_plan': {
+      if (!CAN_EDIT_RATES.includes(caller.role ?? '')) return json({ error: 'Forbidden' }, 403);
+      const code = String(params.code ?? '').trim().toUpperCase();
+      const name = String(params.name ?? '').trim();
+      if (!code || !name) return json({ error: 'code dan name wajib diisi' }, 400);
+      const loadingRate = Number(params.loading_rate);
+      if (!Number.isFinite(loadingRate) || loadingRate < -0.5 || loadingRate > 1) {
+        return json({ error: 'loading_rate harus di antara −50% dan 100%' }, 400);
+      }
+      const benefits = Array.isArray(params.benefits) ? params.benefits.map(String).slice(0, 20) : [];
+      const payload = {
+        code,
+        name: name.slice(0, 80),
+        description: params.description != null ? String(params.description).slice(0, 500) : null,
+        loading_rate: loadingRate,
+        benefits,
+        is_active: params.is_active === false ? false : true,
+        sort_order: Number(params.sort_order) || 0,
+        updated_at: new Date().toISOString(),
+      };
+      if (params.id) {
+        const { data, error } = await db.from('sp_b2b_plans').update(payload).eq('id', String(params.id)).select().maybeSingle();
+        if (error) return json({ error: error.message }, 400);
+        return json({ data });
+      }
+      const { data, error } = await db.from('sp_b2b_plans').insert({ ...payload, created_by: caller.spUser?.id ?? null }).select().single();
+      if (error) return json({ error: error.message }, 400);
+      return json({ data });
+    }
+
+    case 'admin_delete_b2b_plan': {
+      if (!CAN_EDIT_RATES.includes(caller.role ?? '')) return json({ error: 'Forbidden' }, 403);
+      const id = String(params.id ?? '');
+      if (!id) return json({ error: 'id required' }, 400);
+      // Cek apakah paket masih dipakai; kalau ya, non-aktifkan saja, jangan hapus.
+      const { count } = await db.from('sp_b2b_batch_items').select('id', { head: true, count: 'exact' }).eq('plan_id', id);
+      if ((count ?? 0) > 0) {
+        await db.from('sp_b2b_plans').update({ is_active: false, updated_at: new Date().toISOString() }).eq('id', id);
+        return json({ data: { success: true, deactivated: true } });
+      }
+      const { error } = await db.from('sp_b2b_plans').delete().eq('id', id);
+      if (error) return json({ error: error.message }, 400);
+      return json({ data: { success: true } });
+    }
+
     // ─── T&C documents ──────────────────────────────────────────────────────
     case 'get_active_tnc': {
       if (!caller.spUser) return json({ error: 'No profile' }, 403);

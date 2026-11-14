@@ -162,33 +162,46 @@ const B2BDashboard: React.FC<Props> = ({
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* ── Hero line — company, role, quick actions ────────────────────── */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
+      <div
+        className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 rounded-3xl p-6 lg:p-8 border overflow-hidden"
+        style={{
+          background: 'linear-gradient(120deg, #eef2ff 0%, #ecfdf5 55%, #fff7ed 100%)',
+          borderColor: 'rgba(79, 70, 229, 0.15)',
+        }}
+      >
+        <div aria-hidden className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-gradient-to-br from-orange-200/60 via-amber-100/40 to-transparent blur-3xl pointer-events-none" />
+        <div aria-hidden className="absolute -left-20 -bottom-28 h-56 w-56 rounded-full bg-gradient-to-br from-indigo-200/50 via-emerald-100/40 to-transparent blur-3xl pointer-events-none" />
+        <div className="relative">
           <div className="flex items-center gap-2 mb-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-            <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">
+            <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+            <span className="text-[10px] font-bold text-indigo-700 uppercase tracking-widest">
               {t('B2B Dashboard', 'Dashboard B2B')}
             </span>
           </div>
           <h1 className="text-2xl lg:text-3xl font-black text-slate-900" style={{ letterSpacing: '-0.025em' }}>
             {t('Welcome back, ', 'Selamat datang, ')}
-            <span style={{ background: 'linear-gradient(115deg, #4338ca, #059669)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>
+            <span style={{ background: 'linear-gradient(115deg, #4338ca 0%, #059669 60%, #ea580c 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>
               {companyName}
             </span>
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-slate-600 mt-1">
             {t('Overview of your fleet policies, quotes, and bulk batches.',
                'Ringkasan polis armada, penawaran, dan batch massal Anda.')}
           </p>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="relative flex items-center gap-2 flex-wrap">
           <B2BButton variant="ghost" icon={FilePlus} onClick={() => onNavigate('new-single')}>
             {t('New Submission', 'Pengajuan Baru')}
           </B2BButton>
-          <B2BButton variant="primary" icon={Upload} onClick={() => onNavigateBulk?.('new-bulk')}>
-            {t('Bulk Import', 'Impor Massal')}
-          </B2BButton>
+          <button
+            type="button"
+            onClick={() => onNavigateBulk?.('new-bulk')}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-white shadow-lg transition-all hover:brightness-110 active:scale-95"
+            style={{ background: 'linear-gradient(115deg, #4338ca 0%, #059669 100%)', boxShadow: '0 10px 25px -8px rgba(5,150,105,0.45)' }}
+          >
+            <Upload size={14} /> {t('Bulk Import', 'Impor Massal')}
+          </button>
         </div>
       </div>
 

@@ -170,6 +170,8 @@ export interface BulkRateConfig {
   adminFeeCar: number;
   adminFeeHeavy: number;
   minPremiumGross: number;
+  /** Opsional: rate perluasan. Default DEFAULT_FLEET_ADDON_RATES. */
+  addonRates?: FleetAddonRates;
 }
 
 export const DEFAULT_BULK_RATE_CONFIG: BulkRateConfig = {
@@ -236,6 +238,89 @@ export const MULTI_YEAR_DEPRECIATION_RATE = 0.10;
 export const MULTI_YEAR_MAX_TENOR_MONTHS = 72;
 export const MAX_DEPRECIATION_RATE = 0.5; // pagar pengaman mesin, bukan produk
 
+// ─── Perluasan (add-ons) — mirror services/b2bFleetRating.ts ────────────────
+export interface FleetAddOns {
+  flood?: boolean;
+  earthquake?: boolean;
+  srcc?: boolean;
+  terrorism?: boolean;
+  tplLimit?: number;
+  authorizedWorkshop?: boolean;
+  paDriver?: boolean;
+  paPassengerSeats?: number;
+}
+
+export interface FleetAddonRates {
+  flood: number;
+  earthquake: number;
+  srccComp: number;
+  srccTlo: number;
+  tplBand1Rate: number; tplBand1Cap: number;
+  tplBand2Rate: number; tplBand2Cap: number;
+  tplBand3Rate: number; tplBand3Cap: number;
+  paDriver: number;
+  paPassengerPerSeat: number;
+  authorizedWorkshopLoading: number;
+}
+
+export const DEFAULT_FLEET_ADDON_RATES: FleetAddonRates = {
+  flood: 0.0015,
+  earthquake: 0.0012,
+  srccComp: 0.0005,
+  srccTlo: 0.00035,
+  tplBand1Rate: 0.01,   tplBand1Cap: 25_000_000,
+  tplBand2Rate: 0.005,  tplBand2Cap: 25_000_000,
+  tplBand3Rate: 0.0025, tplBand3Cap: 50_000_000,
+  paDriver: 50_000,
+  paPassengerPerSeat: 25_000,
+  authorizedWorkshopLoading: 0.10,
+};
+
+function calcTplPremiumFleet(limit: number, rates: FleetAddonRates): number {
+  if (!limit || limit <= 0) return 0;
+  const { tplBand1Rate, tplBand1Cap, tplBand2Rate, tplBand2Cap, tplBand3Rate, tplBand3Cap } = rates;
+  let p = 0;
+  p += Math.min(limit, tplBand1Cap) * tplBand1Rate;
+  if (limit > tplBand1Cap) p += Math.min(limit - tplBand1Cap, tplBand2Cap) * tplBand2Rate;
+  if (limit > tplBand1Cap + tplBand2Cap) {
+    p += Math.min(limit - tplBand1Cap - tplBand2Cap, tplBand3Cap) * tplBand3Rate;
+  }
+  return Math.round(p);
+}
+
+export interface FleetAddonCalcResult {
+  total: number;
+  detail: Record<string, number>;
+}
+
+export function calcFleetAddonPremium(
+  addons: FleetAddOns | undefined,
+  sumInsured: number,
+  coverage: FleetCoverage,
+  basePremium: number,
+  vehicleClass: VehicleClass,
+  rateConfig: BulkRateConfig = activeBulkRateConfig,
+): FleetAddonCalcResult {
+  if (!addons || vehicleClass === 'HEAVY_EQUIPMENT') return { total: 0, detail: {} };
+  const rates = rateConfig.addonRates ?? DEFAULT_FLEET_ADDON_RATES;
+  const srccRate = coverage === 'COMPREHENSIVE' ? rates.srccComp : rates.srccTlo;
+  const detail: Record<string, number> = {};
+  if (addons.flood)            detail.flood        = Math.round(sumInsured * rates.flood);
+  if (addons.earthquake)       detail.earthquake   = Math.round(sumInsured * rates.earthquake);
+  if (addons.srcc)             detail.srcc         = Math.round(sumInsured * srccRate);
+  if (addons.terrorism)        detail.terrorism    = Math.round(sumInsured * srccRate);
+  const tplPrem = calcTplPremiumFleet(addons.tplLimit ?? 0, rates);
+  if (tplPrem > 0)             detail.tpl          = tplPrem;
+  if (addons.authorizedWorkshop && coverage === 'COMPREHENSIVE') {
+    detail.authorizedWorkshop  = Math.round(basePremium * rates.authorizedWorkshopLoading);
+  }
+  if (addons.paDriver)         detail.paDriver     = rates.paDriver;
+  const seats = Math.max(0, Math.min(7, Math.round(addons.paPassengerSeats ?? 0)));
+  if (seats > 0)               detail.paPassenger  = seats * rates.paPassengerPerSeat;
+  const total = Object.values(detail).reduce((x, y) => x + y, 0);
+  return { total, detail };
+}
+
 // Tanggal efektif: "YYYY-MM-DD" yang benar-benar ada di kalender.
 export function isValidIsoDate(iso: string | null | undefined): boolean {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso ?? ''));
@@ -275,6 +360,8 @@ export interface BulkPremiumInput {
   // rate set aktif untuk kelasnya — klien hanya bisa MENURUNKAN, tidak pernah
   // menaikkan. undefined = pakai diskon rate set (perilaku lama).
   discountRateOverride?: number;
+  addons?: FleetAddOns;
+  planLoadingRate?: number;
 }
 
 // Satu baris jadwal premi per tahun polis (hanya terisi bila menyusut).
@@ -295,9 +382,12 @@ export interface BulkPremiumResult {
   premiumAfterDiscount: number;
   adminFee: number;
   totalPremium: number;
-  coverage: FleetCoverage;        // yang benar-benar dipakai (alat berat selalu TLO)
-  depreciationRate: number;       // yang benar-benar diterapkan (0 bila tenor ≤ 12 bln)
-  schedule: PremiumScheduleRow[]; // kosong bila tidak menyusut
+  coverage: FleetCoverage;
+  depreciationRate: number;
+  schedule: PremiumScheduleRow[];
+  addonPremium: number;
+  addonsDetail: Record<string, number>;
+  planLoading: number;
 }
 
 export function calcBulkPremium(input: BulkPremiumInput, rateConfig: BulkRateConfig = activeBulkRateConfig): BulkPremiumResult {
@@ -342,9 +432,19 @@ export function calcBulkPremium(input: BulkPremiumInput, rateConfig: BulkRateCon
     vehicleClass === 'HEAVY_EQUIPMENT' ? rateConfig.adminFeeHeavy :
     rateConfig.adminFeeCar;
 
-  const totalPremium = premiumAfterDiscount + adminFee;
+  const { total: addonPremium, detail: addonsDetail } = calcFleetAddonPremium(
+    input.addons, financingValue, coverage, premiumGross, vehicleClass, rateConfig,
+  );
+  const planLoadingRate = Math.max(-0.5, Math.min(1, Number.isFinite(input.planLoadingRate) ? (input.planLoadingRate as number) : 0));
+  const planLoading = Math.round(premiumAfterDiscount * planLoadingRate);
 
-  return { rate, category, commercialBody, premiumGross, discountRate, discountAmount, premiumAfterDiscount, adminFee, totalPremium, coverage, depreciationRate, schedule };
+  const totalPremium = premiumAfterDiscount + planLoading + addonPremium + adminFee;
+
+  return {
+    rate, category, commercialBody, premiumGross, discountRate, discountAmount,
+    premiumAfterDiscount, adminFee, totalPremium, coverage, depreciationRate, schedule,
+    addonPremium, addonsDetail, planLoading,
+  };
 }
 
 export interface BulkTotals {
@@ -353,16 +453,20 @@ export interface BulkTotals {
   totalDiscount: number;
   totalPremiumNet: number;
   totalAdminFee: number;
+  totalAddons: number;
+  totalPlanLoading: number;
   totalAmount: number;
 }
 
-export function calcBulkTotals(items: Array<Pick<BulkPremiumResult, 'premiumGross' | 'discountAmount' | 'premiumAfterDiscount' | 'adminFee' | 'totalPremium'>>): BulkTotals {
+export function calcBulkTotals(items: Array<Pick<BulkPremiumResult, 'premiumGross' | 'discountAmount' | 'premiumAfterDiscount' | 'adminFee' | 'totalPremium' | 'addonPremium' | 'planLoading'>>): BulkTotals {
   return items.reduce((acc, it) => ({
     itemCount: acc.itemCount + 1,
     totalPremiumGross: acc.totalPremiumGross + it.premiumGross,
     totalDiscount: acc.totalDiscount + it.discountAmount,
     totalPremiumNet: acc.totalPremiumNet + it.premiumAfterDiscount,
     totalAdminFee: acc.totalAdminFee + it.adminFee,
+    totalAddons: acc.totalAddons + (it.addonPremium ?? 0),
+    totalPlanLoading: acc.totalPlanLoading + (it.planLoading ?? 0),
     totalAmount: acc.totalAmount + it.totalPremium,
-  }), { itemCount: 0, totalPremiumGross: 0, totalDiscount: 0, totalPremiumNet: 0, totalAdminFee: 0, totalAmount: 0 });
+  }), { itemCount: 0, totalPremiumGross: 0, totalDiscount: 0, totalPremiumNet: 0, totalAdminFee: 0, totalAddons: 0, totalPlanLoading: 0, totalAmount: 0 });
 }

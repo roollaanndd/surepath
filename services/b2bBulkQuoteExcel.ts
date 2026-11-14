@@ -35,6 +35,10 @@ export interface QuoteExcelRow {
   premiumAfterDiscount: number;
   adminFee: number;
   totalPremium: number;
+  // v2.9.1 — perluasan + paket (opsional; 0 untuk baris lama & impor massal).
+  addonPremium?: number;
+  planLoading?: number;
+  planName?: string;
   catatan?: string;
 }
 
@@ -74,6 +78,8 @@ export function quoteRowFromBatchItem(it: SpB2BBatchItem): QuoteExcelRow {
     premiumAfterDiscount: it.premium_after_discount,
     adminFee: it.admin_fee,
     totalPremium: it.total_premium,
+    addonPremium: it.addon_premium ?? 0,
+    planLoading: it.plan_loading ?? 0,
     catatan: batchItemNotes(it),
   };
 }
@@ -102,6 +108,7 @@ function batchItemNotes(it: SpB2BBatchItem): string | undefined {
 export function quoteRowFromLineItem(
   item: BuiltLineItem,
   raw: Pick<RawBulkRow, 'nasabahName' | 'contractNo' | 'financingValue' | 'otr' | 'tenorMonths'>,
+  extras: { planName?: string } = {},
 ): QuoteExcelRow {
   return {
     nama: raw.nasabahName || `Baris ${item.rowNo}`,
@@ -118,6 +125,9 @@ export function quoteRowFromLineItem(
     premiumAfterDiscount: item.premiumAfterDiscount,
     adminFee: item.adminFee,
     totalPremium: item.totalPremium,
+    addonPremium: item.addonPremium,
+    planLoading: item.planLoading,
+    planName: extras.planName,
     catatan: item.flags.length ? item.flags.join(' | ') : undefined,
   };
 }
@@ -136,7 +146,15 @@ export interface BulkQuoteWorkbook {
 
 export function buildBulkQuoteWorkbook(rows: QuoteExcelRow[], opts: BulkQuoteOptions = {}): BulkQuoteWorkbook {
   // calcBulkTotals hanya menjumlahkan kolom uang — persis seperti server.
-  const totals = calcBulkTotals(rows);
+  const totals = calcBulkTotals(rows.map(r => ({
+    premiumGross: r.premiumGross,
+    discountAmount: r.discountAmount,
+    premiumAfterDiscount: r.premiumAfterDiscount,
+    adminFee: r.adminFee,
+    totalPremium: r.totalPremium,
+    addonPremium: r.addonPremium ?? 0,
+    planLoading: r.planLoading ?? 0,
+  })));
 
   const today = new Date().toISOString().slice(0, 10);
   const wb = XLSX.utils.book_new();

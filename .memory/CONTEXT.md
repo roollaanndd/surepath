@@ -1,5 +1,54 @@
 # SurePath Session Context
-**Updated:** 2026-11-13 (v2.9.0 — revamp total apps mitra "Kaca Pagi"; v2.8.24 perbaikan B2B live)
+**Updated:** 2026-11-14 (v2.9.1 — B2B perluasan/foto/paket/proposal/warna; v2.9.0 agent revamp)
+
+## Terakhir dikerjakan (14 Nov 2026) — v2.9.1
+
+**v2.9.1 — B2B lanjut.** Permintaan owner: pilihan perluasan sesuai formula
+agent/admin, koneksi admin dashboard, perbaiki `company_name` error,
+paket asuransi B2B yang dikontrol admin, unduh proposal, foto kendaraan
+wajib, aksen warna lebih hidup.
+
+Status: belum diuji produksi — migrasi `20261113120000_b2b_plans_addons_photos.sql`
+dan edge function perlu di-deploy (workflow GitHub Actions saat merge ke main;
+Supabase MCP `apply_migration` timeout di sesi ini).
+
+**Berkas kunci yang disentuh**
+- `services/b2bFleetRating.ts` + `supabase/functions/_shared/b2bFleetRating.ts`
+  (parity): `FleetAddOns`, `calcFleetAddonPremium`, `BulkRateConfig.addonRates?`,
+  `BulkPremiumInput.addons/planLoadingRate`, `BulkPremiumResult.addonPremium/addonsDetail/planLoading`.
+- `supabase/functions/data-gateway/actions/b2bBulk.ts` — validasi addons,
+  resolve plan_id → loading_rate, URL foto `https://`, fallback company_name
+  ke `sp_users.name` / `'Klien B2B'`.
+- `supabase/functions/data-gateway/actions/b2bSettings.ts` — actions baru
+  `list_active_b2b_plans`, `admin_list/save/delete_b2b_plan`.
+- `components/b2b/B2BUnitOrder.tsx` — panel paket, perluasan (chip toggle +
+  TPL select + PA penumpang), foto (6 slot drag-drop ke bucket), tombol
+  "Unduh proposal", preview premi menampilkan rincian addons/paket.
+- `components/admin/B2BPlansAdmin.tsx` + nav baru `b2b_plans` di
+  Katalog & Harga → Asuransi & Rate. CRUD paket.
+- `components/admin/B2BAdminView.tsx` — kolom tabel baru:
+  Perluasan/Paket (chip + rupiah), Foto (thumbnail hover zoom, klik URL).
+- `services/storage.ts` — `uploadB2BVehiclePhoto(clientId, slot, file)`
+  → signed URL 60 hari.
+- `components/b2b/B2BDashboard.tsx` + `components/b2b/dashboard/ui.tsx` —
+  hero gradient tri-warna (indigo→emerald→oranye) + tone baru `spark`
+  (oranye) di Pill & KPI.
+- Migrasi: `supabase/migrations/20261113120000_b2b_plans_addons_photos.sql`
+  (tabel sp_b2b_plans deny-all RLS + benih 3 paket, 5 kolom baru di
+  sp_b2b_batch_items).
+
+**Catatan uji**
+- `vitest run`: 792/794 lulus (b2bBulkEndToEnd pre-existing — perubahan rate
+  owner 11 Nov; CI continue-on-error).
+- `tsc --noEmit`, `eslint .` 0 error, `npm run build` lulus (v2.9.1,
+  versionCode 79, package.json 2.9.1).
+
+**Masih belum dipenuhi** (agent app deeper redesign)
+- User meminta: "Tidak perlu ikut strucktur design yg lama, km ubah
+  sesuai yg menurut km bs menjadi pembaruan dan refreshment". Untuk
+  v2.9.1 fokus full ke B2B; agent inner-screen rewrite (AgentCommission,
+  AgentWallet, AgentProfile, AgentQuoteBuilder, wizards) ditunda ke PR
+  berikutnya — belum disentuh.
 
 ## Terakhir dikerjakan (13 Nov 2026) — v2.9.0 + v2.8.24
 

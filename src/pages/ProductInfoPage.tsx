@@ -16,8 +16,10 @@ const ICONS: Record<string, React.FC<{ size?: number; style?: React.CSSPropertie
 };
 
 // Page-scoped animation CSS — respects prefers-reduced-motion.
+// Body & html latar hitam pekat agar tidak ada warna terang menyeruak saat
+// halaman di-zoom out atau konten lebih pendek dari viewport.
 const PAGE_CSS = `
-  body { background: hsl(222 47% 11%) !important; }
+  html, body { background: #06090c !important; }
   @keyframes pip-rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes pip-glow { 0%,100% { transform: translate(-50%,0) scale(1); opacity: .5; } 50% { transform: translate(-50%,-4%) scale(1.12); opacity: .8; } }
   .pip-rise { opacity: 0; animation: pip-rise .6s cubic-bezier(.22,1,.36,1) forwards; }
@@ -40,7 +42,7 @@ const ProductInfoPage: React.FC<Props> = ({ productId, lang, onBack, onSignIn })
 
   if (!product || !Icon) {
     return (
-      <div className="min-h-screen flex items-center justify-center font-sora" style={{ background: 'rgba(6,9,18,0.86)' }}>
+      <div className="min-h-screen flex items-center justify-center font-sora" style={{ background: '#06090c' }}>
         <div className="text-center">
           <p className="text-white mb-4">{isEN ? 'Product not found.' : 'Produk tidak ditemukan.'}</p>
           <button onClick={onBack} className="text-sm font-bold" style={{ color: '#22c55e' }}>
@@ -57,15 +59,20 @@ const ProductInfoPage: React.FC<Props> = ({ productId, lang, onBack, onSignIn })
     : (isEN ? 'Buy Now' : 'Beli Sekarang');
 
   return (
-    <div className="min-h-screen font-sora text-white" style={{ background: 'rgba(6,9,18,0.86)', position: 'relative' }}>
+    <div className="min-h-screen font-sora text-white" style={{ background: 'transparent', position: 'relative' }}>
       <style>{PAGE_CSS}</style>
       {/* Fixed looping video background — matches the rest of the site. These two
           pages sit outside SiteLayout, so they carry their own copy, the same way
           PremiumCalculatorPage already does. */}
       <video autoPlay muted loop playsInline preload="auto"
-        style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none', userSelect: 'none', zIndex: -1 }}>
+        style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none', userSelect: 'none', zIndex: -2 }}>
         <source src="/bg3.mp4" type="video/mp4" />
       </video>
+      {/* v2.9.1 — overlay fixed, bukan background wrapper. Saat zoom-out atau
+          halaman lebih pendek dari viewport, overlay tetap menutup penuh
+          sehingga tidak ada bagian video terang yang bocor di tepi layar. */}
+      <div aria-hidden className="fixed inset-0 pointer-events-none"
+        style={{ background: 'rgba(6,9,18,0.86)', zIndex: -1 }} />
 
       <div className="fixed inset-0 pointer-events-none opacity-[0.03]"
         style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />

@@ -28,22 +28,28 @@
 //     pertanggungan; keduanya tetap bisa disunting, dan kendaraan yang tidak
 //     ada di daftar bisa diketik manual.
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Car, Bike, Construction, Loader2, CheckCircle2, AlertTriangle, ExternalLink,
   Info, ClipboardList, CalendarDays, TrendingDown, ShieldCheck, ShieldAlert,
+  Camera, Upload, X, Package, Download, Droplets, Mountain, Flame, Users, Wrench, Sparkles,
 } from 'lucide-react';
 import { Language } from '../../types';
 import {
   buildLineItem, getActiveBulkRateConfig, addMonthsToIsoDate, isValidIsoDate, isLikelyCommercialBody,
-  MULTI_YEAR_DEPRECIATION_RATE,
-  type VehicleClass, type Zone, type BuiltLineItem, type FleetCoverage,
+  MULTI_YEAR_DEPRECIATION_RATE, TPL_OPTIONS,
+  type VehicleClass, type Zone, type BuiltLineItem, type FleetCoverage, type FleetAddOns,
 } from '../../services/b2bFleetRating';
 import {
   VEHICLE_BRANDS, MOTO_BRANDS, getModelsForBrand, getModelsForMotoBrand,
   getMarketValueForYear, getMarketValueForMotoYear,
 } from '../../services/vehicleDatabase';
-import { createB2BBulkBatch, createB2BBulkInvoice } from '../../services/supabaseService';
+import {
+  createB2BBulkBatch, createB2BBulkInvoice,
+  listActiveB2BPlans, type SpB2BPlan,
+} from '../../services/supabaseService';
+import { uploadB2BVehiclePhoto } from '../../services/storage';
+import { generateB2BProposalPdf } from '../../services/b2bProposalPdf';
 
 interface Props {
   clientId: string;
@@ -136,6 +142,23 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
   const [discountPct, setDiscountPct] = useState('');
   const [discountShown, setDiscountShown] = useState(true);
 
+  // v2.9.1 — perluasan, paket, foto kendaraan.
+  const [addons, setAddons] = useState<FleetAddOns>({
+    flood: false, earthquake: false, srcc: false, terrorism: false,
+    tplLimit: 0, authorizedWorkshop: false, paDriver: false, paPassengerSeats: 0,
+  });
+  const [plans, setPlans] = useState<SpB2BPlan[]>([]);
+  const [planId, setPlanId] = useState<string>('');
+  const [photos, setPhotos] = useState<Array<{ slot: string; label: string; url: string; size_bytes: number }>>([]);
+  const [uploadingSlot, setUploadingSlot] = useState<string>('');
+  const [photoError, setPhotoError] = useState('');
+
+  useEffect(() => {
+    let alive = true;
+    listActiveB2BPlans().then(ps => { if (alive) setPlans(ps); });
+    return () => { alive = false; };
+  }, []);
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [invoiceLoading, setInvoiceLoading] = useState(false);
@@ -221,6 +244,9 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
     : Math.min(Math.max((Number(discountPct.replace(',', '.')) || 0) / 100, 0), discountCap);
   const endDate = addMonthsToIsoDate(startDate, tenorMonths);
 
+  // Paket yang sedang dipilih (null = tidak ada).
+  const selectedPlan = useMemo(() => plans.find(p => p.id === planId) ?? null, [plans, planId]);
+
   // Preview live — mesin rating yang sama persis dengan impor massal.
   const built: BuiltLineItem = useMemo(() => buildLineItem({
     rowNo: 1,
@@ -243,7 +269,9 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
     depreciationRate: isMultiYear ? MULTI_YEAR_DEPRECIATION_RATE : 0,
     discountRateOverride: requestedDiscount,
     coverage: effectiveCoverage,
-  }), [vehicleClass, nasabahName, nasabahPhone, nasabahAddress, contractNo, make, model, modelYear, otr, plateNo, regionText, zoneOverride, financingValue, commercialBody, tenorMonths, isCar, isMultiYear, requestedDiscount, effectiveCoverage]);
+    addons,
+    planLoadingRate: selectedPlan ? Number(selectedPlan.loading_rate) : 0,
+  }), [vehicleClass, nasabahName, nasabahPhone, nasabahAddress, contractNo, make, model, modelYear, otr, plateNo, regionText, zoneOverride, financingValue, commercialBody, tenorMonths, isCar, isMultiYear, requestedDiscount, effectiveCoverage, addons, selectedPlan]);
 
   const adminFeeForClass = vehicleClass === 'MOTORCYCLE' ? rateConfig.adminFeeMotorcycle : isHeavy ? rateConfig.adminFeeHeavy : rateConfig.adminFeeCar;
   const zoneLabel = built.zoneSource === 'override'
@@ -273,6 +301,13 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
         return t(`Discount must be between 0 and ${discountCapPct}%.`, `Diskon harus antara 0 dan ${discountCapPct}%.`);
       }
     }
+    // v2.9.1 — foto kendaraan wajib minimal 3 (depan, belakang, nomor rangka).
+    if (!isHeavy && photos.length < 3) {
+      return t(
+        'Upload at least 3 vehicle photos (front, back, chassis number).',
+        'Unggah minimal 3 foto kendaraan (depan, belakang, nomor rangka).',
+      );
+    }
     return null;
   };
 
@@ -281,8 +316,13 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
     if (v) { setError(v); return; }
     setError('');
     setSubmitting(true);
+    // Nama perusahaan: pakai apa pun yang ada di profil klien; server akan
+    // mengambil alih dari sp_users bila kosong (fallback name → 'Klien B2B').
+    const companyName = String(
+      client?.company_name ?? client?.companyName ?? client?.name ?? '',
+    ).trim();
     const result = await createB2BBulkBatch({
-      companyName: client?.company_name ?? '',
+      companyName,
       sourceFileName: t('unit-order', 'order-satuan'),
       items: [{
         rowNo: 1,
@@ -307,6 +347,9 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
         discountRate: requestedDiscount,
         discountShownOnPolicy: discountShown,
         coverage: effectiveCoverage,
+        addons: isHeavy ? undefined : addons,
+        planId: planId || null,
+        vehiclePhotos: photos.map(p => ({ slot: p.slot, url: p.url, size_bytes: p.size_bytes })),
       }],
     });
     setSubmitting(false);
@@ -317,6 +360,60 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
       total: result.totals?.totalAmount ?? built.totalPremium,
       period: `${fmtDate(startDate, lang)} – ${fmtDate(endDate, lang)}`,
     });
+  };
+
+  // ── Foto kendaraan ──────────────────────────────────────────────────────
+  const handlePhotoUpload = async (slot: string, label: string, file: File | undefined) => {
+    if (!file) return;
+    setPhotoError('');
+    setUploadingSlot(slot);
+    const res = await uploadB2BVehiclePhoto(clientId, slot, file);
+    setUploadingSlot('');
+    if ('error' in res) { setPhotoError(res.error); return; }
+    setPhotos(prev => {
+      const without = prev.filter(p => p.slot !== slot);
+      return [...without, { slot, label, url: res.url, size_bytes: res.size_bytes }];
+    });
+  };
+
+  const removePhoto = (slot: string) => setPhotos(prev => prev.filter(p => p.slot !== slot));
+
+  // ── Unduh proposal (PDF, selaras agent app — watermark + aksen oranye) ──
+  const handleDownloadProposal = async () => {
+    const v = validate();
+    if (v) { setError(v); return; }
+    setError('');
+    const companyName = String(client?.company_name ?? client?.companyName ?? client?.name ?? 'Klien B2B').trim() || 'Klien B2B';
+    try {
+      await generateB2BProposalPdf({
+        companyName,
+        nasabahName: nasabahName.trim(),
+        nasabahPhone: nasabahPhone.trim() || undefined,
+        nasabahAddress: nasabahAddress.trim() || undefined,
+        contractNo: contractNo.trim() || undefined,
+        make: make.trim() || undefined,
+        model: model.trim() || undefined,
+        modelYear: Number(modelYear) || undefined,
+        plateNo: plateNo.trim() || undefined,
+        regionText: regionText.trim() || undefined,
+        financingValue: Number(financingValue) || 0,
+        otr: isCar ? (Number(otr) || undefined) : undefined,
+        tenorMonths,
+        coverageStartDate: startDate,
+        coverageEndDate: endDate,
+        multiYear: isMultiYear,
+        discountShownOnPolicy: discountShown,
+        planName: selectedPlan?.name,
+        planDescription: selectedPlan?.description ?? undefined,
+        planBenefits: selectedPlan?.benefits,
+        planLoadingPct: selectedPlan ? Number(selectedPlan.loading_rate) : 0,
+        line: built,
+        photoCount: photos.length,
+      });
+    } catch (e) {
+      setError(t('Failed to download proposal.', 'Gagal mengunduh proposal.'));
+      console.error('[B2B] generateB2BProposalPdf:', e);
+    }
   };
 
   const handleCreateInvoice = async () => {
@@ -759,8 +856,166 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
         </div>
       </div>
 
+      {/* Paket asuransi B2B */}
+      {plans.length > 0 && (
+        <div className="rounded-2xl border border-ds-border bg-gradient-to-br from-indigo-50/60 via-white to-emerald-50/50 dark:from-indigo-950/30 dark:via-ds-card2 dark:to-emerald-950/20 p-5 space-y-3">
+          <p className={labelCls + ' flex items-center gap-1.5'}><Package size={11} /> {t('Insurance plan', 'Paket asuransi')}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <button
+              type="button"
+              onClick={() => setPlanId('')}
+              className={`text-left rounded-xl border-2 p-3 transition-all ${!planId ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 shadow-sm' : 'border-ds-border bg-white dark:bg-ds-card2 hover:border-emerald-300'}`}
+            >
+              <p className="text-xs font-black text-ds-ink dark:text-white">{t('No plan', 'Tanpa paket')}</p>
+              <p className="text-2xs text-ds-ink3 mt-1">{t('Standard price without plan loading', 'Harga standar tanpa loading paket')}</p>
+            </button>
+            {plans.map(p => {
+              const active = planId === p.id;
+              const sign = p.loading_rate > 0 ? '+' : p.loading_rate < 0 ? '' : '';
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setPlanId(p.id)}
+                  className={`text-left rounded-xl border-2 p-3 transition-all ${active ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 shadow-sm' : 'border-ds-border bg-white dark:bg-ds-card2 hover:border-emerald-300'}`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-black text-ds-ink dark:text-white">{p.name}</p>
+                    {p.loading_rate !== 0 && (
+                      <span className={`text-2xs font-black px-2 py-0.5 rounded-full ${p.loading_rate > 0 ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-200' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200'}`}>
+                        {sign}{(p.loading_rate * 100).toFixed(1)}%
+                      </span>
+                    )}
+                  </div>
+                  {p.description && <p className="text-2xs text-ds-ink3 mt-1 line-clamp-2">{p.description}</p>}
+                  {p.benefits.length > 0 && (
+                    <ul className="mt-2 space-y-0.5">
+                      {p.benefits.slice(0, 3).map((b, i) => (
+                        <li key={i} className="text-2xs font-bold text-ds-ink2 flex items-start gap-1">
+                          <CheckCircle2 size={10} className="mt-0.5 flex-shrink-0 text-emerald-500" /> {b}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Perluasan pertanggungan */}
+      {!isHeavy && (
+        <div className="rounded-2xl border border-ds-border bg-white dark:bg-ds-card2 p-5 space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className={labelCls + ' flex items-center gap-1.5'}><Sparkles size={11} /> {t('Coverage extensions', 'Perluasan pertanggungan')}</p>
+              <p className="text-2xs text-ds-ink3 mt-0.5">{t('Optional riders based on OJK rates', 'Tambahan opsional sesuai tarif OJK')}</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <AddonToggle icon={Droplets} label={t('Flood', 'Banjir')} checked={!!addons.flood}
+              onChange={v => setAddons(a => ({ ...a, flood: v }))} tint="sky" />
+            <AddonToggle icon={Mountain} label={t('Earthquake', 'Gempa Bumi')} checked={!!addons.earthquake}
+              onChange={v => setAddons(a => ({ ...a, earthquake: v }))} tint="amber" />
+            <AddonToggle icon={Flame} label={t('Riots (SRCC)', 'Huru-hara (SRCC)')} checked={!!addons.srcc}
+              onChange={v => setAddons(a => ({ ...a, srcc: v }))} tint="orange" />
+            <AddonToggle icon={ShieldAlert} label={t('Terrorism & sabotage', 'Terorisme & sabotase')} checked={!!addons.terrorism}
+              onChange={v => setAddons(a => ({ ...a, terrorism: v }))} tint="rose" />
+            {effectiveCoverage === 'COMPREHENSIVE' && (
+              <AddonToggle icon={Wrench} label={t('Authorized workshop (ATPM)', 'Bengkel resmi (ATPM)')} checked={!!addons.authorizedWorkshop}
+                onChange={v => setAddons(a => ({ ...a, authorizedWorkshop: v }))} tint="emerald" />
+            )}
+            <AddonToggle icon={Users} label={t('PA Driver', 'PA Pengemudi')} checked={!!addons.paDriver}
+              onChange={v => setAddons(a => ({ ...a, paDriver: v }))} tint="emerald" />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+            <div>
+              <label className={labelCls}>{t('TPL (third party liability)', 'TPL (tanggung jawab pihak ketiga)')}</label>
+              <select
+                className={inputCls}
+                value={addons.tplLimit ?? 0}
+                onChange={e => setAddons(a => ({ ...a, tplLimit: Number(e.target.value) }))}
+              >
+                {TPL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className={labelCls}>{t('PA Passenger (seats)', 'PA Penumpang (kursi)')}</label>
+              <select
+                className={inputCls}
+                value={addons.paPassengerSeats ?? 0}
+                onChange={e => setAddons(a => ({ ...a, paPassengerSeats: Number(e.target.value) }))}
+              >
+                {[0, 1, 2, 3, 4, 5, 6, 7].map(n => <option key={n} value={n}>{n === 0 ? t('None', 'Tidak Ada') : `${n} ${t('seats', 'kursi')}`}</option>)}
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Foto kendaraan */}
+      {!isHeavy && (
+        <div className="rounded-2xl border border-ds-border bg-white dark:bg-ds-card2 p-5 space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className={labelCls + ' flex items-center gap-1.5'}><Camera size={11} /> {t('Vehicle photos', 'Foto kendaraan')} *</p>
+              <p className="text-2xs text-ds-ink3 mt-0.5">{t('Minimum 3 photos, JPG/PNG up to 10 MB', 'Minimal 3 foto, JPG/PNG maks 10 MB')}</p>
+            </div>
+            <span className={`text-2xs font-black px-2 py-0.5 rounded-full ${photos.length >= 3 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200' : 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-200'}`}>
+              {photos.length}/3+
+            </span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {PHOTO_SLOTS.map(ps => {
+              const existing = photos.find(p => p.slot === ps.slot);
+              const uploading = uploadingSlot === ps.slot;
+              return (
+                <label key={ps.slot} className="relative aspect-[4/3] rounded-xl border-2 border-dashed border-ds-border hover:border-emerald-400 bg-slate-50/60 dark:bg-ds-card/60 cursor-pointer overflow-hidden transition-colors group">
+                  {existing ? (
+                    <>
+                      {}
+                      <img src={existing.url} className="absolute inset-0 w-full h-full object-cover" alt={ps.label} />
+                      <button
+                        type="button"
+                        onClick={e => { e.preventDefault(); removePhoto(ps.slot); }}
+                        className="absolute top-1.5 right-1.5 rounded-full bg-rose-600 p-1 text-white opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                        aria-label={t('Remove photo', 'Hapus foto')}
+                      >
+                        <X size={12} />
+                      </button>
+                      <p className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent px-2 py-1 text-2xs font-black text-white">{t(ps.labelEn, ps.label)}</p>
+                    </>
+                  ) : (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-center p-2">
+                      {uploading
+                        ? <Loader2 size={20} className="animate-spin text-emerald-500" />
+                        : <Upload size={20} className="text-ds-ink3 group-hover:text-emerald-500 transition-colors" />}
+                      <p className="text-2xs font-black text-ds-ink2">{t(ps.labelEn, ps.label)}</p>
+                      <p className="text-2xs text-ds-ink3">{uploading ? t('Uploading…', 'Mengunggah…') : t('Click to upload', 'Klik untuk unggah')}</p>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png"
+                    className="sr-only"
+                    disabled={uploading}
+                    onChange={e => {
+                      const f = e.target.files?.[0];
+                      e.target.value = '';
+                      if (f) handlePhotoUpload(ps.slot, ps.label, f);
+                    }}
+                  />
+                </label>
+              );
+            })}
+          </div>
+          {photoError && <p className="text-xs font-bold text-rose-600" role="alert">{photoError}</p>}
+        </div>
+      )}
+
       {/* Preview premi */}
-      <div className="rounded-2xl border-2 border-emerald-400/60 bg-emerald-500/5 p-5 space-y-2">
+      <div className="rounded-2xl border-2 border-emerald-400/60 bg-gradient-to-br from-emerald-50/80 via-white to-indigo-50/40 dark:from-emerald-950/30 dark:via-ds-card2 dark:to-indigo-950/20 p-5 space-y-2">
         <p className="text-2xs font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
           <Info size={11} className="inline" /> {t('Premium preview (server re-computes on submit)', 'Preview premi (server hitung ulang saat submit)')}
         </p>
@@ -774,8 +1029,30 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
             label={`${t('Discount', 'Diskon')} (${fmtPct(built.discountRate)}${discountShown ? '' : t(', not on policy', ', tidak tertera')})`}
             value={`−${fmtIDR(built.discountAmount)}`}
           />
+          {selectedPlan && built.planLoading !== 0 && (
+            <PreviewRow
+              label={`${t('Plan', 'Paket')} ${selectedPlan.name}`}
+              value={`${built.planLoading > 0 ? '+' : ''}${fmtIDR(built.planLoading)}`}
+            />
+          )}
+          {built.addonPremium > 0 && (
+            <PreviewRow label={t('Extensions', 'Perluasan')} value={`+${fmtIDR(built.addonPremium)}`} />
+          )}
           <PreviewRow label={t('Admin fee', 'Biaya admin')} value={fmtIDR(built.adminFee)} />
         </div>
+        {built.addonPremium > 0 && Object.keys(built.addonsDetail).length > 0 && (
+          <div className="rounded-xl bg-white/60 dark:bg-ds-card/60 border border-emerald-200/60 dark:border-emerald-900/40 px-3 py-2">
+            <p className="text-2xs font-black uppercase tracking-widest text-ds-ink3 mb-1">{t('Extension breakdown', 'Rincian perluasan')}</p>
+            <div className="grid grid-cols-2 gap-x-3 text-2xs">
+              {Object.entries(built.addonsDetail).map(([k, v]) => (
+                <div key={k} className="flex items-center justify-between">
+                  <span className="text-ds-ink2">{ADDON_LABELS[k] ?? k}</span>
+                  <span className="font-black text-ds-ink">{fmtIDR(v)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="pt-2 border-t border-emerald-400/30 flex items-center justify-between">
           <span className="text-xs font-black uppercase tracking-widest text-ds-ink3">{t('Total premium', 'Total premi')}</span>
           <span className="text-lg font-black text-emerald-700 dark:text-emerald-300">{fmtIDR(built.totalPremium)}</span>
@@ -793,17 +1070,69 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
 
       {error && <p role="alert" className="text-xs font-bold text-rose-600">{error}</p>}
 
-      <div className="flex items-center justify-end gap-3 pb-4">
+      <div className="flex flex-wrap items-center justify-end gap-3 pb-4">
+        <button
+          type="button"
+          onClick={handleDownloadProposal}
+          className="inline-flex items-center gap-2 rounded-xl border-2 border-indigo-400/70 bg-white dark:bg-ds-card2 px-5 py-3 text-xs font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 active:scale-95 transition-all"
+        >
+          <Download size={14} /> {t('Download proposal', 'Unduh proposal')}
+        </button>
         <button
           onClick={handleSubmit}
           disabled={submitting}
-          className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-xs font-black uppercase tracking-widest text-white hover:bg-emerald-500 active:scale-95 transition-all disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-500 px-6 py-3 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-emerald-500/30 hover:brightness-110 active:scale-95 transition-all disabled:opacity-50"
         >
           {submitting ? <Loader2 size={14} className="animate-spin" /> : <ClipboardList size={14} />}
           {t('Submit unit order', 'Kirim order unit')}
         </button>
       </div>
     </div>
+  );
+};
+
+const PHOTO_SLOTS: Array<{ slot: string; label: string; labelEn: string }> = [
+  { slot: 'depan', label: 'Depan', labelEn: 'Front' },
+  { slot: 'belakang', label: 'Belakang', labelEn: 'Back' },
+  { slot: 'samping-kiri', label: 'Samping Kiri', labelEn: 'Left' },
+  { slot: 'samping-kanan', label: 'Samping Kanan', labelEn: 'Right' },
+  { slot: 'rangka', label: 'No. Rangka', labelEn: 'Chassis no.' },
+  { slot: 'stnk', label: 'STNK', labelEn: 'STNK' },
+];
+
+const ADDON_LABELS: Record<string, string> = {
+  flood: 'Banjir',
+  earthquake: 'Gempa Bumi',
+  srcc: 'Huru-hara (SRCC)',
+  terrorism: 'Terorisme & Sabotase',
+  tpl: 'TPL (Pihak Ketiga)',
+  authorizedWorkshop: 'Bengkel Resmi',
+  paDriver: 'PA Pengemudi',
+  paPassenger: 'PA Penumpang',
+};
+
+interface AddonToggleProps {
+  icon: React.FC<{ size?: number; className?: string }>;
+  label: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  tint: 'sky' | 'amber' | 'orange' | 'rose' | 'emerald';
+}
+const ADDON_TINT: Record<AddonToggleProps['tint'], { bg: string; text: string; border: string }> = {
+  sky:     { bg: 'bg-sky-50 dark:bg-sky-950/30',     text: 'text-sky-700 dark:text-sky-300',         border: 'border-sky-400' },
+  amber:   { bg: 'bg-amber-50 dark:bg-amber-950/30', text: 'text-amber-700 dark:text-amber-300',     border: 'border-amber-400' },
+  orange:  { bg: 'bg-orange-50 dark:bg-orange-950/30', text: 'text-orange-700 dark:text-orange-300', border: 'border-orange-400' },
+  rose:    { bg: 'bg-rose-50 dark:bg-rose-950/30',   text: 'text-rose-700 dark:text-rose-300',       border: 'border-rose-400' },
+  emerald: { bg: 'bg-emerald-50 dark:bg-emerald-950/30', text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-400' },
+};
+const AddonToggle: React.FC<AddonToggleProps> = ({ icon: Icon, label, checked, onChange, tint }) => {
+  const c = ADDON_TINT[tint];
+  return (
+    <label className={`flex items-center gap-2.5 rounded-xl border-2 p-3 cursor-pointer transition-all ${checked ? `${c.border} ${c.bg}` : 'border-ds-border bg-white dark:bg-ds-card2 hover:border-emerald-300'}`}>
+      <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} className="w-4 h-4 accent-emerald-600" />
+      <Icon size={16} className={checked ? c.text : 'text-ds-ink3'} />
+      <span className={`text-xs font-bold flex-1 ${checked ? 'text-ds-ink dark:text-white' : 'text-ds-ink2'}`}>{label}</span>
+    </label>
   );
 };
 

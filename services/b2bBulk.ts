@@ -4,7 +4,7 @@
 // for the rating engine and services/b2bBulkParser.ts for the file reader.
 import { callGateway, supabase } from './db';
 import { prepareB2BDocument } from './storage';
-import type { VehicleClass, Zone, FleetCoverage } from './b2bFleetRating';
+import type { VehicleClass, Zone, FleetCoverage, FleetAddOns } from './b2bFleetRating';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 
@@ -78,6 +78,12 @@ export interface SpB2BBatchItem {
   depreciation_rate: number;
   premium_schedule: Array<{ year: number; months: number; sumInsured: number; premiumGross: number }>;
   discount_shown_on_policy: boolean;
+  // v2.9.1 (order unit): perluasan, paket, foto. Baris lama: {}, 0, null, [].
+  addons: FleetAddOns;
+  addon_premium: number;
+  plan_id: string | null;
+  plan_loading: number;
+  vehicle_photos: Array<{ slot: string; url: string; size_bytes?: number | null; uploaded_at?: string }>;
   created_at: string;
   updated_at: string;
 }
@@ -112,6 +118,10 @@ export interface CreateB2BBulkItemInput {
   discountShownOnPolicy?: boolean;
   /** 'COMPREHENSIVE' hanya mobil & motor; bawaan TLO. */
   coverage?: FleetCoverage;
+  /** v2.9.1 — perluasan, paket, foto. */
+  addons?: FleetAddOns;
+  planId?: string | null;
+  vehiclePhotos?: Array<{ slot: string; url: string; size_bytes?: number }>;
 }
 
 export async function createB2BBulkBatch(input: {
@@ -331,4 +341,52 @@ export async function adminDeleteB2BFleetRateSet(id: string): Promise<boolean> {
   const { error } = await callGateway('admin_delete_b2b_fleet_rate_set', { id });
   if (error) { console.error('adminDeleteB2BFleetRateSet:', error); return false; }
   return true;
+}
+
+// ─── B2B Plans (paket asuransi B2B, v2.9.1) ────────────────────────────────
+
+export interface SpB2BPlan {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  loading_rate: number;        // 0.10 = +10% di atas premi setelah diskon
+  benefits: string[];
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function listActiveB2BPlans(): Promise<SpB2BPlan[]> {
+  const { data, error } = await callGateway('list_active_b2b_plans', {});
+  if (error) { console.error('listActiveB2BPlans:', error); return []; }
+  return (data ?? []) as SpB2BPlan[];
+}
+
+export async function adminListB2BPlans(): Promise<SpB2BPlan[]> {
+  const { data, error } = await callGateway('admin_list_b2b_plans', {});
+  if (error) { console.error('adminListB2BPlans:', error); return []; }
+  return (data ?? []) as SpB2BPlan[];
+}
+
+export async function adminSaveB2BPlan(input: {
+  id?: string;
+  code: string;
+  name: string;
+  description?: string | null;
+  loading_rate: number;
+  benefits: string[];
+  is_active?: boolean;
+  sort_order?: number;
+}): Promise<SpB2BPlan | null> {
+  const { data, error } = await callGateway('admin_save_b2b_plan', input);
+  if (error) { console.error('adminSaveB2BPlan:', error); return null; }
+  return data as SpB2BPlan;
+}
+
+export async function adminDeleteB2BPlan(id: string): Promise<{ success: boolean; deactivated?: boolean }> {
+  const { data, error } = await callGateway('admin_delete_b2b_plan', { id });
+  if (error) { console.error('adminDeleteB2BPlan:', error); return { success: false }; }
+  return (data ?? { success: false }) as { success: boolean; deactivated?: boolean };
 }

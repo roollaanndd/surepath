@@ -27,6 +27,7 @@ const AgentAgreementsAdmin = lazy(() => import('./AgentAgreementsAdmin'));
 const InsurerAdmin = lazy(() => import('./InsurerAdmin'));
 const OjkRateAdmin = lazy(() => import('./OjkRateAdmin'));
 const B2BFleetRateAdmin = lazy(() => import('./B2BFleetRateAdmin'));
+const B2BPlansAdmin = lazy(() => import('./B2BPlansAdmin'));
 const TncAdmin = lazy(() => import('./TncAdmin'));
 const VehiclePricelistAdmin = lazy(() => import('./VehiclePricelistAdmin'));
 const WebsiteEditorAdmin = lazy(() => import('./WebsiteEditorAdmin'));
@@ -111,6 +112,7 @@ const TAB_SUBTITLE: Record<string, string> = {
   insurers: 'Perusahaan asuransi rekanan.',
   ojk_rates: 'Tarif acuan resmi OJK (SEOJK).',
   b2b_fleet_rates: 'Tarif pickup/truk, alat berat, diskon, dan biaya admin untuk impor massal B2B.',
+  b2b_plans: 'Paket asuransi B2B yang bisa dipilih klien saat memesan (loading atau diskon paket).',
   tnc_admin: 'Syarat & Ketentuan yang ditandatangani mitra saat bergabung.',
   financial: 'Kesehatan keuangan dan laporan periode platform.',
   vehicle_pricelist: 'Database harga kendaraan.',
@@ -783,6 +785,7 @@ const AdminPortal = ({
       case 'insurers':         return <InsurerAdmin />;
       case 'ojk_rates':        return <OjkRateAdmin />;
       case 'b2b_fleet_rates':  return <B2BFleetRateAdmin />;
+      case 'b2b_plans':        return <B2BPlansAdmin />;
       case 'tnc_admin':        return <TncAdmin />;
       case 'vehicle_pricelist':return <VehiclePricelistAdmin />;
       case 'commission_ledger':return <CommissionLedger />;

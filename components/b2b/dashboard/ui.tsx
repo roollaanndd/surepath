@@ -166,7 +166,7 @@ export const B2BSectionHeader: React.FC<{
    payment), success (paid/issued/accepted), danger (rejected/cancelled).
    Content stays whatever text the caller gives (Indonesian labels).
 ────────────────────────────────────────────────────────────────────────── */
-export type B2BPillTone = 'neutral' | 'info' | 'warn' | 'success' | 'danger' | 'accent';
+export type B2BPillTone = 'neutral' | 'info' | 'warn' | 'success' | 'danger' | 'accent' | 'spark';
 const PILL_STYLE: Record<B2BPillTone, string> = {
   neutral: 'bg-slate-100 text-slate-700',
   info:    'bg-blue-50 text-blue-700',
@@ -174,6 +174,7 @@ const PILL_STYLE: Record<B2BPillTone, string> = {
   success: 'bg-emerald-50 text-emerald-700',
   danger:  'bg-rose-50 text-rose-700',
   accent:  'bg-indigo-50 text-indigo-700',
+  spark:   'bg-orange-50 text-orange-700',
 };
 export const B2BPill: React.FC<{ tone?: B2BPillTone; children: React.ReactNode; className?: string }> = ({ tone = 'neutral', children, className = '' }) => (
   <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${PILL_STYLE[tone]} ${className}`}>
@@ -189,7 +190,7 @@ export const B2BKpi: React.FC<{
   label: string;
   value: string | number;
   hint?: string;
-  tone?: 'default' | 'accent' | 'warn' | 'success';
+  tone?: 'default' | 'accent' | 'warn' | 'success' | 'spark';
   icon?: LucideIcon;
   /** Format the counted-up number — used only when value is a plain number. */
   format?: (n: number) => string;
@@ -201,6 +202,7 @@ export const B2BKpi: React.FC<{
     accent:  'text-indigo-600',
     warn:    'text-amber-600',
     success: 'text-emerald-600',
+    spark:   'text-orange-600',
   }[tone];
   const numeric = typeof value === 'number';
   return (

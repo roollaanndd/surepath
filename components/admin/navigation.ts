@@ -67,7 +67,7 @@ export const ADMIN_NAV: NavGroup[] = [
     label: 'Katalog & Harga',
     sections: [
       { id: 'products', label: 'Produk & Tier', childIds: ['product_config', 'tier_promo'] },
-      { id: 'insurers', label: 'Asuransi & Rate', childIds: ['insurers', 'ojk_rates', 'b2b_fleet_rates'] },
+      { id: 'insurers', label: 'Asuransi & Rate', childIds: ['insurers', 'ojk_rates', 'b2b_fleet_rates', 'b2b_plans'] },
       { id: 'vehicles', label: 'Harga Kendaraan', childIds: ['vehicle_pricelist'] },
     ],
   },
@@ -99,7 +99,7 @@ export const LEGACY_LEAF_IDS = [
   'user_mgmt', 'payments', 'withdrawals',
   'policy_orders', 'approvals', 'claims_admin', 'endorsements', 'documents',
   'agents', 'agent_agreements', 'tnc_admin', 'commission_ledger', 'manual_credit', 'credit_approvals', 'b2b',
-  'product_config', 'tier_promo', 'insurers', 'ojk_rates', 'b2b_fleet_rates', 'financial',
+  'product_config', 'tier_promo', 'insurers', 'ojk_rates', 'b2b_fleet_rates', 'b2b_plans', 'financial',
   'vehicle_pricelist', 'website_editor', 'portal_icons', 'ai_admin', 'ai_finance',
   'pathy_logs', 'pathy_ai', 'activity_log', 'security', 'settings',
 ] as const;
@@ -199,6 +199,7 @@ export const ADMIN_MENU_ITEMS: AdminMenuItem[] = [
   { id: 'insurers',         label: 'Perusahaan Asuransi',       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN] },
   { id: 'ojk_rates',        label: 'Rate OJK',     roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.INSURANCE_ADMIN] },
   { id: 'b2b_fleet_rates',  label: 'Rate Fleet B2B', roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE_MANAGER] },
+  { id: 'b2b_plans',        label: 'Paket B2B',       roles: [UserRole.MASTER_ADMIN, UserRole.ADMIN, UserRole.FINANCE_MANAGER] },
   // 'financial' absorbs the former 'reports' menu; ADMIN gains access to match
   // the reports audience it replaces.
   { id: 'financial',        label: 'Keuangan & Laporan',      roles: [UserRole.MASTER_ADMIN, UserRole.FINANCE, UserRole.ADMIN] },

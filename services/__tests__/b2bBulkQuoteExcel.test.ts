@@ -98,6 +98,7 @@ describe('buildBulkQuoteWorkbook', () => {
       policy_number: null, certificate_document_url: null,
       coverage_start_date: null, coverage_end_date: null, depreciation_rate: 0,
       premium_schedule: [], discount_shown_on_policy: true,
+      addons: {}, addon_premium: 0, plan_id: null, plan_loading: 0, vehicle_photos: [],
       created_at: '', updated_at: '',
     } satisfies SpB2BBatchItem;
     const row = quoteRowFromBatchItem(item);

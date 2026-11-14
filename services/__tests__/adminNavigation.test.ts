@@ -22,7 +22,7 @@ describe('navigasi Admin CMS', () => {
     expect(new Set(ALL_CHILD_IDS).size).toBe(ALL_CHILD_IDS.length);
     expect([...ALL_CHILD_IDS].sort()).toEqual([...LEGACY_LEAF_IDS].sort());
 
-    expect(ALL_CHILD_IDS).toHaveLength(35); // +contact_leads +pathy_ai (v2.8.0) +manual_credit +credit_approvals (v2.7.58)
+    expect(ALL_CHILD_IDS).toHaveLength(36); // +b2b_plans (v2.9.1)
   });
 
   it('setiap section punya minimal satu view', () => {

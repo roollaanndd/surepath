@@ -320,10 +320,15 @@ const InteractiveStats: React.FC<{ darkMode: boolean; lang: any }> = ({ darkMode
     { target: 100,  suffix: '%',    label: 'Tarif Transparan',   color: '#7C3AED' },
   ];
 
+  // v2.9.1 — latar penuh (bukan transparent) agar menyatu dengan hero dark di
+  // atas dan section WHY di bawah. Latar transparan sebelumnya memperlihatkan
+  // video promo di belakang → ada pita terang di antara dua section gelap.
+  const bg = darkMode
+    ? 'linear-gradient(to bottom, hsl(220 30% 6%) 0%, hsl(222 28% 7%) 60%, rgba(22,30,50,0.95) 100%)'
+    : 'linear-gradient(to bottom, rgba(245,242,237,0.98) 0%, rgba(245,242,237,0.94) 100%)';
+
   return (
-    <section ref={ref} className="py-16 px-6" style={{
-      background: 'transparent',
-    }}>
+    <section ref={ref} className="py-16 px-6 relative" style={{ background: bg }}>
       <div className="max-w-5xl mx-auto">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
           {STATS.map((stat, i) => (

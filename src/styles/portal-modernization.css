@@ -935,13 +935,26 @@
   .sp-admin-root :where(button:not(:disabled), a, [role="button"]:not([aria-disabled="true"])):active {
     transform: scale(0.97);
   }
-  .sp-b2b-root :where(button, a, [role="button"]) {
-    transition-property: color, background-color, border-color, box-shadow, opacity, transform;
-    transition-duration: 150ms;
-    transition-timing-function: ease-out;
+  .sp-b2b-root :where(button, a, [role="button"], .cursor-pointer, [data-pressable]) {
+    transition-property: color, background-color, border-color, box-shadow, opacity, transform, filter;
+    transition-duration: 180ms;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    -webkit-tap-highlight-color: transparent;
   }
-  .sp-b2b-root :where(button:not(:disabled), a, [role="button"]):active {
-    transform: scale(0.97);
+  /* Press — pegas pendek: sedikit mengecil + geser ke bawah supaya terasa
+     klik, bukan sekadar skala. Pakai timing function yang sama dengan agent
+     .ag-press agar terasa satu keluarga. */
+  .sp-b2b-root :where(button:not(:disabled), a, [role="button"]:not([aria-disabled="true"]), .cursor-pointer, [data-pressable]):active {
+    transform: scale(0.96);
+    filter: brightness(0.97);
+  }
+  /* Hover subtle — angkat sedikit. Hanya untuk elemen klikable di dalam
+     kartu/baris daftar (opt-in via data-pressable atau .cursor-pointer),
+     bukan semua button (yang punya hover-nya sendiri). */
+  @media (hover: hover) {
+    .sp-b2b-root :where(.cursor-pointer, [data-pressable]):hover {
+      transform: translateY(-1px);
+    }
   }
 }
 

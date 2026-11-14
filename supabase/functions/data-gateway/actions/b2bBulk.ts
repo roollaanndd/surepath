@@ -15,6 +15,7 @@ import {
   calcBulkPremium, calcBulkTotals, isValidIsoDate, addMonthsToIsoDate,
   MULTI_YEAR_DEPRECIATION_RATE, MULTI_YEAR_MAX_TENOR_MONTHS,
   type VehicleClass, type Zone, type BulkPremiumResult, type FleetCoverage,
+  type FleetAddOns,
 } from '../../_shared/b2bFleetRating.ts';
 import { loadActiveBulkRateConfig } from './b2bSettings.ts';
 
@@ -55,6 +56,10 @@ interface ClientItemInput {
   discountRate?: number;           // diskon pilihan klien; dijepit ke diskon rate set
   discountShownOnPolicy?: boolean; // diskon dicetak di polis atau tidak
   coverage?: FleetCoverage;        // v2.8.24 — 'COMPREHENSIVE' hanya mobil & motor; bawaan TLO
+  // v2.9.1 — perluasan, paket, foto kendaraan (order unit saja).
+  addons?: FleetAddOns;
+  planId?: string | null;          // id paket sp_b2b_plans, server yang resolve loading_rate
+  vehiclePhotos?: Array<{ slot: string; url: string; size_bytes?: number }>;
 }
 
 // Tanggal efektif boleh hari ini s/d 60 hari ke depan. Sehari kelonggaran di
@@ -111,6 +116,41 @@ function validateItem(raw: unknown, index: number): { item: ClientItemInput; err
     }
   }
 
+  // Perluasan (opsional). Alat berat mengabaikannya di calcBulkPremium —
+  // tetap kita terima dan simpan agar admin bisa melihat apa yang diminta.
+  let addons: FleetAddOns | undefined;
+  if (r.addons && typeof r.addons === 'object') {
+    const a = r.addons as Record<string, unknown>;
+    addons = {
+      flood: a.flood === true,
+      earthquake: a.earthquake === true,
+      srcc: a.srcc === true,
+      terrorism: a.terrorism === true,
+      authorizedWorkshop: a.authorizedWorkshop === true,
+      paDriver: a.paDriver === true,
+      tplLimit: Math.max(0, Math.round(Number(a.tplLimit) || 0)),
+      paPassengerSeats: Math.max(0, Math.min(7, Math.round(Number(a.paPassengerSeats) || 0))),
+    };
+  }
+
+  const planId = r.planId ? String(r.planId).trim() : null;
+  // Foto kendaraan: hanya URL + slot — URL harus diawali https:// supabase
+  // storage; sisanya ditolak agar tidak mengarah ke sumber tak dikenal.
+  const vehiclePhotos: Array<{ slot: string; url: string; size_bytes?: number }> = [];
+  if (Array.isArray(r.vehiclePhotos)) {
+    for (const p of r.vehiclePhotos) {
+      if (!p || typeof p !== 'object') continue;
+      const pr = p as Record<string, unknown>;
+      const slot = String(pr.slot ?? '').trim().slice(0, 40);
+      const url = String(pr.url ?? '').trim();
+      if (!slot || !url) continue;
+      if (!/^https:\/\//i.test(url)) continue;
+      const size = Number(pr.size_bytes);
+      vehiclePhotos.push({ slot, url, size_bytes: Number.isFinite(size) ? size : undefined });
+      if (vehiclePhotos.length >= 12) break;
+    }
+  }
+
   return {
     item: {
       rowNo: Number(r.rowNo) || index + 1,
@@ -142,6 +182,9 @@ function validateItem(raw: unknown, index: number): { item: ClientItemInput; err
       // batch sebelum v2.8.23.
       discountShownOnPolicy: r.discountShownOnPolicy === undefined ? true : r.discountShownOnPolicy === true,
       coverage: coverageRaw as FleetCoverage,
+      addons,
+      planId,
+      vehiclePhotos,
     },
   };
 }
@@ -160,8 +203,16 @@ export async function handleB2BBulkAction(action: string, ctx: GatewayContext): 
       if (rawItems.length === 0) return err('items tidak boleh kosong', 400);
       if (rawItems.length > 2000) return err('Maksimum 2000 baris per batch', 400);
 
-      const companyName = String(params.company_name ?? caller.spUser?.company_name ?? '').trim();
-      if (!companyName) return err('company_name wajib diisi', 400);
+      // Nama perusahaan diambil dari parameter, lalu fallback ke profil B2B
+      // pemanggil. Order unit (satu baris) tidak punya field perusahaan di
+      // form — perusahaan sudah terikat ke akun. Bila semuanya kosong kita
+      // pakai nama pemilik akun daripada menolak orderan.
+      const companyName = String(
+        params.company_name
+        ?? caller.spUser?.company_name
+        ?? caller.spUser?.name
+        ?? 'Klien B2B',
+      ).trim() || 'Klien B2B';
       const sourceFileName = params.source_file_name ? String(params.source_file_name).slice(0, 255) : null;
 
       const validated: ClientItemInput[] = [];
@@ -175,7 +226,24 @@ export async function handleB2BBulkAction(action: string, ctx: GatewayContext): 
       // Loads whatever admin-edited rate set is currently active (or leaves
       // the built-in defaults if none is) before pricing a single row.
       await loadActiveBulkRateConfig(db);
+
+      // Paket asuransi — resolve loading_rate dari sp_b2b_plans setelah
+      // mengumpulkan semua id unik agar hanya satu query.
+      const planIds = Array.from(new Set(validated.map(v => v.planId).filter((x): x is string => !!x)));
+      const planMap = new Map<string, { id: string; loading_rate: number; code: string; name: string }>();
+      if (planIds.length > 0) {
+        const { data: plans } = await db
+          .from('sp_b2b_plans')
+          .select('id, loading_rate, code, name, is_active')
+          .in('id', planIds);
+        for (const p of plans ?? []) {
+          if (!p.is_active) continue;
+          planMap.set(p.id, p);
+        }
+      }
+
       const rated = validated.map(it => {
+        const plan = it.planId ? planMap.get(it.planId) ?? null : null;
         const premium: BulkPremiumResult = calcBulkPremium({
           vehicleClass: it.vehicleClass,
           zone: it.zone,
@@ -188,8 +256,10 @@ export async function handleB2BBulkAction(action: string, ctx: GatewayContext): 
           // calcBulkPremium menjepit ini ke 0..diskon rate set aktif.
           discountRateOverride: it.discountRate,
           coverage: it.coverage,
+          addons: it.addons,
+          planLoadingRate: plan ? Number(plan.loading_rate) : 0,
         });
-        return { ...it, premium };
+        return { ...it, plan, premium };
       });
 
       const totals = calcBulkTotals(rated.map(r => r.premium));
@@ -245,6 +315,14 @@ export async function handleB2BBulkAction(action: string, ctx: GatewayContext): 
         depreciation_rate: r.premium.depreciationRate,
         premium_schedule: r.premium.schedule,
         discount_shown_on_policy: r.discountShownOnPolicy ?? true,
+        addons: r.addons ?? {},
+        addon_premium: r.premium.addonPremium,
+        plan_id: r.plan?.id ?? null,
+        plan_loading: r.premium.planLoading,
+        vehicle_photos: (r.vehiclePhotos ?? []).map(p => ({
+          slot: p.slot, url: p.url, size_bytes: p.size_bytes ?? null,
+          uploaded_at: new Date().toISOString(),
+        })),
       }));
 
       const { error: itemsErr } = await db.from('sp_b2b_batch_items').insert(itemRows);

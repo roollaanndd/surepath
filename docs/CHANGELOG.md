@@ -1,5 +1,26 @@
 # SurePath - Changelog
 
+## v2.9.6 - 2026-11-14
+
+### Admin dashboard — animated menu + page transitions + skeleton
+
+Pola yang sama dengan portal B2B (v2.9.5) sekarang diterapkan di admin dashboard.
+
+**Animasi menu (`AdminSectionNavButton`)**
+- `motion.layoutId` "admin-nav-pill" + "admin-nav-bar" — pil highlight hijau dan garis aksen kiri meluncur mulus antar section saat active berganti (spring 460/36).
+- Ikon berputar + micro-scale saat aktif (−4°→0°, 1→1.04).
+- Hover translateX 2px (full) / scale 1.05 (rail), tap scale 0.97.
+- Badge amber berdenyut (scale 1 → 1.08) setiap 2 detik saat angka > 0.
+- `prefers-reduced-motion` dihormati.
+
+**Transisi halaman (`AdminPageTransition`)**
+- `AnimatePresence mode="wait"` + motion.div keyed on `activeTab`: fade + translateY + 4px blur → 0, durasi 260ms, kurva (0.2, 0.8, 0.2, 1). Menggantikan CSS `sp-page-enter` lama agar konsisten dengan B2B.
+
+**Loading skeleton animated (`AdminPageSkeleton`)**
+- 4 varian: `dashboard` (hero + KPI + two list cards), `list` (header + filter + table), `form` (judul + 5 field + action), `chart` (judul + KPI + chart area + legend).
+- Map `ADMIN_VIEW_SKELETON_VARIANT` memilih varian dari `activeTab` (ex: analytics → chart, policy_orders → list, settings → form).
+- `AdminViewLoader` diganti dari spinner (`Loader2` saja) ke skeleton sesuai bentuk konten — tidak ada layout shift, perceived latency lebih kecil.
+
 ## v2.9.5 - 2026-11-14
 
 ### B2B — rearrange menu + animated page transitions + loading skeletons

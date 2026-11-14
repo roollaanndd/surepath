@@ -1,6 +1,35 @@
 # SurePath - Changelog
 
-<<<<<<< HEAD
+## v2.9.5 - 2026-11-14
+
+### B2B — rearrange menu + animated page transitions + loading skeletons
+
+Permintaan owner: re-arrange menu B2B lebih user-friendly, loading skeleton animated untuk setiap perpindahan halaman, menu animations lebih interaktif.
+
+**Nav rearranged (`components/b2b/B2BPortal.tsx`)**
+- Dari 6 item (Dashboard, Fleet, Requests (parent), Quotes, Create (parent), Profile) → 5 item yang dikelompokkan dengan section label:
+  - **Ikhtisar**: Dashboard
+  - **Aksi**: **Buat Order** (CTA utama oranye dengan titik berdenyut) — Unit / Impor Massal / Pengajuan Lain
+  - **Pantau**: **Riwayat** (merged Requests + Quotes) + Kalender Armada
+  - **Akun**: Profil
+- "Create" dibuat menonjol sebagai primary action; "Requests + Quotes" digabung ke "Riwayat" karena dua-duanya adalah monitor list.
+
+**Animasi menu (`components/b2b/dashboard/ui.tsx` → `B2BNavButton`)**
+- `motion.layoutId` "b2b-nav-pill" + "b2b-nav-bar" — pil highlight dan bar aksen kiri meluncur mulus antar item aktif (spring 460/36).
+- Ikon berputar lembut saat aktif (−6°→0°), hover translateX 2px.
+- Badge berdenyut (scale 1 → 1.08) setiap 2 detik.
+- Child panel expand dengan animasi height-auto spring + staggered slide-in per child.
+- Primary CTA ("Buat Order") punya aksen oranye dan titik berdenyut 1.6s loop.
+
+**Transisi halaman (`B2BPortal` → `PageTransition`)**
+- AnimatePresence mode="wait" + motion.div keyed on activeId: fade + translateY + 4px blur → 0 blur, durasi 280ms dengan kurva (0.2, 0.8, 0.2, 1). Layar lama keluar dulu sebelum baru masuk.
+- Reduced-motion dihormati — pergantian langsung tanpa animasi.
+
+**Loading skeleton animated (`B2BPageSkeleton`)**
+- Komponen baru dengan 4 varian: `dashboard` (hero + KPI strip + two list cards), `list` (header + filter bar + tabel), `form` (judul + inputs + total panel), `calendar` (grid 35-cell).
+- Setiap `Suspense fallback` di B2BPortal diganti dari text "Memuat…" ke skeleton yang menyerupai bentuk konten yang akan muncul (prevents layout shift & feels faster).
+- Dipakai juga oleh `.b2b-stagger` sehingga section masuk bergantian — bukan flash serentak.
+
 ## v2.9.4 - 2026-11-14
 
 ### B2B Phase 3 — Admin dashboard polish + data sync audit
@@ -12,9 +41,6 @@
   - **Search bar global** untuk tab B2B / Bulk / Life — cari di nomor batch, perusahaan, insurer, polis, PIC, atau kode produk. Ikon kaca pembesar + tombol ✕ untuk clear.
 - Perluasan, paket, foto, nilai pertanggungan, premium — semuanya mengalir end-to-end dari order unit klien B2B → gateway (validasi + recompute) → admin batch detail (chip + thumbnail foto + nama paket).
 
-=======
-<<<<<<< HEAD
->>>>>>> origin/main
 ## v2.9.3 - 2026-11-14
 
 ### B2B Phase 2 — UX friendliness pass
@@ -23,11 +49,6 @@
 - **Sticky bottom action bar** — total premi + tombol Unduh Proposal + Kirim Order selalu terlihat di pojok bawah layar. Pengguna tak perlu gulir balik ke atas untuk melihat total atau turun ke bawah untuk submit.
 - **Util `.no-scrollbar`** untuk stepper horizontal yang bisa di-swipe tanpa scrollbar visual.
 
-<<<<<<< HEAD
-=======
-=======
->>>>>>> origin/main
->>>>>>> origin/main
 ## v2.9.2 - 2026-11-14
 
 ### B2B Phase 1 — Kartu paket dengan plus/minus + CMS admin

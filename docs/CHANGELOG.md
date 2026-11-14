@@ -1,5 +1,24 @@
 # SurePath - Changelog
 
+## v2.9.2 - 2026-11-14
+
+### B2B Phase 1 — Kartu paket dengan plus/minus + CMS admin
+
+Permintaan owner: tampilkan plus dan minus pada kartu masing-masing asuransi dengan desain modern & kreatif, dikontrol admin.
+
+**Database**
+- Migrasi `20261114120000_b2b_plans_pros_cons.sql`: kolom `pros jsonb` + `cons jsonb` di `sp_b2b_plans`, benih plus/minus untuk Basic/Standard/Premium (diisi kalau kosong).
+
+**Gateway**
+- `list_active_b2b_plans` & `admin_save_b2b_plan` sekarang membaca & menerima `pros`/`cons` (maks 12 item, 160 karakter per item).
+
+**Admin dashboard (`components/admin/B2BPlansAdmin.tsx`)**
+- Dua textarea bersebelahan: **Kelebihan** (hijau) dan **Kekurangan** (merah), satu item per baris. Bantu admin menuliskan trade-off jujur.
+
+**Portal B2B (`components/b2b/B2BUnitOrder.tsx`)**
+- Pemilihan paket pakai `PlanCard` baru: tier card dengan bar gradient atas, aksen per paket (indigo / orange / violet / emerald), badge **Rekomendasi** oranye untuk tier tengah, dan dua kolom plus-minus di bawah sehingga klien melihat trade-off sebelum memilih.
+- Kartu kini `data-pressable` → animated click & hover lift ikut rule `.sp-b2b-root`.
+
 ## v2.9.1 - 2026-11-14
 
 ### B2B UX polish + website layering fix (follow-up owner)

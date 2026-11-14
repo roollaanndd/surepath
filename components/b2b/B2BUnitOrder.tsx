@@ -856,50 +856,49 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
         </div>
       </div>
 
-      {/* Paket asuransi B2B */}
+      {/* Paket asuransi B2B — kartu modern dengan plus/minus + highlight */}
       {plans.length > 0 && (
-        <div className="rounded-2xl border border-ds-border bg-gradient-to-br from-indigo-50/60 via-white to-emerald-50/50 dark:from-indigo-950/30 dark:via-ds-card2 dark:to-emerald-950/20 p-5 space-y-3">
-          <p className={labelCls + ' flex items-center gap-1.5'}><Package size={11} /> {t('Insurance plan', 'Paket asuransi')}</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            <button
-              type="button"
+        <div className="rounded-2xl border border-ds-border bg-gradient-to-br from-indigo-50/60 via-white to-orange-50/40 dark:from-indigo-950/30 dark:via-ds-card2 dark:to-orange-950/20 p-5 space-y-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className={labelCls + ' flex items-center gap-1.5'}><Package size={11} /> {t('Insurance plan', 'Paket asuransi')}</p>
+              <p className="text-2xs text-ds-ink3 mt-0.5">{t('Pick a plan — pros & cons are set by admin', 'Pilih paket — kelebihan dan kekurangan dikelola admin')}</p>
+            </div>
+            {selectedPlan && (
+              <button
+                type="button"
+                onClick={() => setPlanId('')}
+                className="text-2xs font-black uppercase tracking-widest text-ds-ink3 hover:text-ds-ink2 underline underline-offset-2"
+              >
+                {t('Clear', 'Hapus pilihan')}
+              </button>
+            )}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+            {/* Tanpa paket — kartu polos tanpa loading */}
+            <PlanCard
+              label={t('No plan', 'Tanpa paket')}
+              description={t('Standard price, no plan loading', 'Harga standar, tanpa loading paket')}
+              active={!planId}
+              accent="slate"
+              loadingPct={null}
               onClick={() => setPlanId('')}
-              className={`text-left rounded-xl border-2 p-3 transition-all ${!planId ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 shadow-sm' : 'border-ds-border bg-white dark:bg-ds-card2 hover:border-emerald-300'}`}
-            >
-              <p className="text-xs font-black text-ds-ink dark:text-white">{t('No plan', 'Tanpa paket')}</p>
-              <p className="text-2xs text-ds-ink3 mt-1">{t('Standard price without plan loading', 'Harga standar tanpa loading paket')}</p>
-            </button>
-            {plans.map(p => {
-              const active = planId === p.id;
-              const sign = p.loading_rate > 0 ? '+' : p.loading_rate < 0 ? '' : '';
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => setPlanId(p.id)}
-                  className={`text-left rounded-xl border-2 p-3 transition-all ${active ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 shadow-sm' : 'border-ds-border bg-white dark:bg-ds-card2 hover:border-emerald-300'}`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-black text-ds-ink dark:text-white">{p.name}</p>
-                    {p.loading_rate !== 0 && (
-                      <span className={`text-2xs font-black px-2 py-0.5 rounded-full ${p.loading_rate > 0 ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-200' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200'}`}>
-                        {sign}{(p.loading_rate * 100).toFixed(1)}%
-                      </span>
-                    )}
-                  </div>
-                  {p.description && <p className="text-2xs text-ds-ink3 mt-1 line-clamp-2">{p.description}</p>}
-                  {p.benefits.length > 0 && (
-                    <ul className="mt-2 space-y-0.5">
-                      {p.benefits.slice(0, 3).map((b, i) => (
-                        <li key={i} className="text-2xs font-bold text-ds-ink2 flex items-start gap-1">
-                          <CheckCircle2 size={10} className="mt-0.5 flex-shrink-0 text-emerald-500" /> {b}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </button>
-              );
-            })}
+            />
+            {plans.map((p, i) => (
+              <PlanCard
+                key={p.id}
+                label={p.name}
+                description={p.description}
+                active={planId === p.id}
+                accent={PLAN_ACCENTS[i % PLAN_ACCENTS.length]}
+                loadingPct={p.loading_rate}
+                benefits={p.benefits}
+                pros={p.pros}
+                cons={p.cons}
+                featured={p.loading_rate === 0.05 /* mid-tier default: Standard */}
+                onClick={() => setPlanId(p.id)}
+              />
+            ))}
           </div>
         </div>
       )}
@@ -1142,5 +1141,132 @@ const PreviewRow: React.FC<{ label: string; value: string }> = ({ label, value }
     <span className="font-bold text-ds-ink dark:text-white">{value}</span>
   </div>
 );
+
+/* ─── Kartu paket asuransi (v2.9.2) ──────────────────────────────────────────
+ * Kartu modern berbentuk "tier card" dengan aksen warna per paket, loading
+ * tag di sudut, dua kolom plus-minus di bawah, dan highlight untuk paket
+ * unggulan ("featured" → badge "Rekomendasi" oranye).
+ *   accent: tema warna panel + icon bar, bukan loading.
+ *   loadingPct: + = tambah premi (amber), 0 = netral (slate), − = diskon (emerald).
+ *   pros / cons: dari admin dashboard (sp_b2b_plans). Dipotong 5 item di kartu.
+ */
+type PlanAccent = 'indigo' | 'emerald' | 'orange' | 'violet' | 'slate';
+const PLAN_ACCENTS: PlanAccent[] = ['indigo', 'orange', 'violet', 'emerald'];
+const PLAN_ACCENT: Record<PlanAccent, { ring: string; ringActive: string; bg: string; dot: string; text: string; grad: string }> = {
+  indigo:  { ring: 'border-indigo-200/60 dark:border-indigo-900/40',   ringActive: 'border-indigo-500 ring-2 ring-indigo-500/30',   bg: 'bg-indigo-50/60 dark:bg-indigo-950/30',   dot: 'bg-indigo-500',   text: 'text-indigo-700 dark:text-indigo-300',   grad: 'from-indigo-500 to-indigo-400' },
+  emerald: { ring: 'border-emerald-200/60 dark:border-emerald-900/40', ringActive: 'border-emerald-500 ring-2 ring-emerald-500/30', bg: 'bg-emerald-50/60 dark:bg-emerald-950/30', dot: 'bg-emerald-500', text: 'text-emerald-700 dark:text-emerald-300', grad: 'from-emerald-500 to-emerald-400' },
+  orange:  { ring: 'border-orange-200/60 dark:border-orange-900/40',   ringActive: 'border-orange-500 ring-2 ring-orange-500/30',   bg: 'bg-orange-50/60 dark:bg-orange-950/30',   dot: 'bg-orange-500',   text: 'text-orange-700 dark:text-orange-300',   grad: 'from-orange-500 to-amber-400' },
+  violet:  { ring: 'border-violet-200/60 dark:border-violet-900/40',   ringActive: 'border-violet-500 ring-2 ring-violet-500/30',   bg: 'bg-violet-50/60 dark:bg-violet-950/30',   dot: 'bg-violet-500',   text: 'text-violet-700 dark:text-violet-300',   grad: 'from-violet-500 to-purple-400' },
+  slate:   { ring: 'border-slate-200/60 dark:border-slate-700/50',     ringActive: 'border-slate-500 ring-2 ring-slate-400/30',     bg: 'bg-slate-50/60 dark:bg-slate-900/40',     dot: 'bg-slate-500',   text: 'text-slate-700 dark:text-slate-300',     grad: 'from-slate-500 to-slate-400' },
+};
+
+interface PlanCardProps {
+  label: string;
+  description?: string | null;
+  active: boolean;
+  accent: PlanAccent;
+  /** null untuk "Tanpa paket", 0/+n/−n untuk paket dengan/sans loading. */
+  loadingPct: number | null;
+  benefits?: string[];
+  pros?: string[];
+  cons?: string[];
+  featured?: boolean;
+  onClick: () => void;
+}
+const PlanCard: React.FC<PlanCardProps> = ({
+  label, description, active, accent, loadingPct, benefits, pros, cons, featured, onClick,
+}) => {
+  const c = PLAN_ACCENT[accent];
+  const loadingLabel =
+    loadingPct == null ? null :
+    loadingPct > 0 ? `+${(loadingPct * 100).toFixed(1).replace(/\.0$/, '')}%` :
+    loadingPct < 0 ? `${(loadingPct * 100).toFixed(1).replace(/\.0$/, '')}%` :
+    '0%';
+  const loadingTone =
+    loadingPct == null ? 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' :
+    loadingPct > 0 ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-200' :
+    loadingPct < 0 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200' :
+    'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300';
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      data-pressable
+      className={[
+        'relative text-left rounded-2xl border-2 overflow-hidden transition-all',
+        'bg-white dark:bg-ds-card2',
+        active ? c.ringActive + ' shadow-md' : c.ring + ' hover:' + c.ring.replace('border-', 'border-').replace('/60', '').replace('/40', ''),
+      ].join(' ')}
+    >
+      {featured && (
+        <span className="absolute top-2.5 right-2.5 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-gradient-to-r from-orange-500 to-amber-400 text-white shadow">
+          Rekomendasi
+        </span>
+      )}
+      {/* Bar gradient atas */}
+      <div className={`h-1 w-full bg-gradient-to-r ${c.grad}`} aria-hidden />
+      <div className={`p-4 ${active ? c.bg : ''}`}>
+        <div className="flex items-center gap-2 mb-1">
+          <span className={`inline-block w-1.5 h-1.5 rounded-full ${c.dot}`} />
+          <p className={`text-sm font-black ${active ? c.text : 'text-ds-ink dark:text-white'}`}>{label}</p>
+        </div>
+        <div className="flex items-start justify-between gap-2 mb-2">
+          {description ? (
+            <p className="text-2xs text-ds-ink3 line-clamp-2 flex-1">{description}</p>
+          ) : <span />}
+          {loadingLabel !== null && (
+            <span className={`text-2xs font-black px-2 py-0.5 rounded-full shrink-0 ${loadingTone}`}>
+              {loadingLabel}
+            </span>
+          )}
+        </div>
+        {/* Manfaat utama (kalau ada) */}
+        {benefits && benefits.length > 0 && (
+          <ul className="mt-2 space-y-0.5">
+            {benefits.slice(0, 3).map((b, i) => (
+              <li key={i} className="text-2xs font-bold text-ds-ink2 flex items-start gap-1">
+                <CheckCircle2 size={10} className="mt-0.5 flex-shrink-0 text-emerald-500" /> {b}
+              </li>
+            ))}
+          </ul>
+        )}
+        {/* Plus / minus */}
+        {((pros && pros.length) || (cons && cons.length)) && (
+          <div className="mt-3 pt-3 border-t border-ds-border/60 grid grid-cols-2 gap-x-3 gap-y-1">
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-400 mb-1 flex items-center gap-1">
+                <span className="w-1 h-1 rounded-full bg-emerald-500" /> Plus
+              </p>
+              {(pros ?? []).slice(0, 5).map((it, i) => (
+                <p key={i} className="text-[11px] leading-snug text-ds-ink2 flex items-start gap-1 mb-0.5">
+                  <span className="text-emerald-500 shrink-0 font-black">+</span>{it}
+                </p>
+              ))}
+              {!pros?.length && <p className="text-[11px] text-ds-ink3 italic">—</p>}
+            </div>
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-widest text-rose-700 dark:text-rose-400 mb-1 flex items-center gap-1">
+                <span className="w-1 h-1 rounded-full bg-rose-500" /> Minus
+              </p>
+              {(cons ?? []).slice(0, 5).map((it, i) => (
+                <p key={i} className="text-[11px] leading-snug text-ds-ink2 flex items-start gap-1 mb-0.5">
+                  <span className="text-rose-500 shrink-0 font-black">−</span>{it}
+                </p>
+              ))}
+              {!cons?.length && <p className="text-[11px] text-ds-ink3 italic">—</p>}
+            </div>
+          </div>
+        )}
+        {/* Checkmark aktif */}
+        {active && (
+          <div className="mt-3 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
+            <CheckCircle2 size={12} /> Terpilih
+          </div>
+        )}
+      </div>
+    </button>
+  );
+};
 
 export default B2BUnitOrder;

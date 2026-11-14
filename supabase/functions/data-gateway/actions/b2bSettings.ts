@@ -114,7 +114,7 @@ export async function handleB2BSettingsAction(action: string, ctx: GatewayContex
     // Dikelola admin di dashboard (admin_*), dibaca klien B2B (list_active_b2b_plans).
     case 'list_active_b2b_plans': {
       if (!caller.spUser && !caller.isAdmin) return json({ error: 'No profile' }, 403);
-      const { data, error } = await db.from('sp_b2b_plans').select('id, code, name, description, loading_rate, benefits, sort_order').eq('is_active', true).order('sort_order', { ascending: true });
+      const { data, error } = await db.from('sp_b2b_plans').select('id, code, name, description, loading_rate, benefits, pros, cons, sort_order').eq('is_active', true).order('sort_order', { ascending: true });
       if (error) return json({ error: error.message }, 400);
       return json({ data: data ?? [] });
     }
@@ -136,12 +136,16 @@ export async function handleB2BSettingsAction(action: string, ctx: GatewayContex
         return json({ error: 'loading_rate harus di antara −50% dan 100%' }, 400);
       }
       const benefits = Array.isArray(params.benefits) ? params.benefits.map(String).slice(0, 20) : [];
+      const pros = Array.isArray(params.pros) ? params.pros.map((x: unknown) => String(x).slice(0, 160)).filter(Boolean).slice(0, 12) : [];
+      const cons = Array.isArray(params.cons) ? params.cons.map((x: unknown) => String(x).slice(0, 160)).filter(Boolean).slice(0, 12) : [];
       const payload = {
         code,
         name: name.slice(0, 80),
         description: params.description != null ? String(params.description).slice(0, 500) : null,
         loading_rate: loadingRate,
         benefits,
+        pros,
+        cons,
         is_active: params.is_active === false ? false : true,
         sort_order: Number(params.sort_order) || 0,
         updated_at: new Date().toISOString(),

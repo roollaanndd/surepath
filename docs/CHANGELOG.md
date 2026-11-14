@@ -1,5 +1,6 @@
 # SurePath - Changelog
 
+<<<<<<< HEAD
 ## v2.9.4 - 2026-11-14
 
 ### B2B Phase 3 — Admin dashboard polish + data sync audit
@@ -11,6 +12,9 @@
   - **Search bar global** untuk tab B2B / Bulk / Life — cari di nomor batch, perusahaan, insurer, polis, PIC, atau kode produk. Ikon kaca pembesar + tombol ✕ untuk clear.
 - Perluasan, paket, foto, nilai pertanggungan, premium — semuanya mengalir end-to-end dari order unit klien B2B → gateway (validasi + recompute) → admin batch detail (chip + thumbnail foto + nama paket).
 
+=======
+<<<<<<< HEAD
+>>>>>>> origin/main
 ## v2.9.3 - 2026-11-14
 
 ### B2B Phase 2 — UX friendliness pass
@@ -19,6 +23,11 @@
 - **Sticky bottom action bar** — total premi + tombol Unduh Proposal + Kirim Order selalu terlihat di pojok bawah layar. Pengguna tak perlu gulir balik ke atas untuk melihat total atau turun ke bawah untuk submit.
 - **Util `.no-scrollbar`** untuk stepper horizontal yang bisa di-swipe tanpa scrollbar visual.
 
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> origin/main
+>>>>>>> origin/main
 ## v2.9.2 - 2026-11-14
 
 ### B2B Phase 1 — Kartu paket dengan plus/minus + CMS admin

@@ -425,6 +425,20 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
     else setError(t('Failed to create invoice. Try again.', 'Gagal membuat invoice. Coba lagi.'));
   };
 
+  // v2.9.2 Phase 2 — Progress mini-stepper: tanda centang hijau untuk tiap
+  // bagian yang sudah terisi, abu untuk yang kosong. Membantu klien tahu
+  // berapa langkah lagi dan tidak lupa mengisi (mis. foto kendaraan wajib).
+  // Dihitung sebelum early return 'batchResult' agar jumlah hook tetap sama
+  // di semua render.
+  const steps: Array<{ id: string; label: string; done: boolean }> = useMemo(() => [
+    { id: 'coverage', label: t('Coverage', 'Pertanggungan'), done: !!vehicleClass && (isHeavy || !!coverage) },
+    { id: 'vehicle',  label: t('Vehicle', 'Kendaraan'),       done: isHeavy ? Number(financingValue) > 0 : (!!make.trim() && !!model.trim() && Number(financingValue) > 0) },
+    { id: 'customer', label: t('Customer', 'Nasabah'),        done: !!nasabahName.trim() },
+    { id: 'plan',     label: t('Plan',     'Paket'),          done: true /* opsional */ },
+    { id: 'photos',   label: t('Photos',   'Foto'),           done: isHeavy || photos.length >= 3 },
+  ], [vehicleClass, coverage, isHeavy, make, model, financingValue, nasabahName, photos.length, t]);
+  const doneCount = steps.filter(s => s.done).length;
+
   // ── Panel sukses ────────────────────────────────────────────────────────────
   if (batchResult) {
     return (
@@ -484,6 +498,19 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
           'Insure one vehicle (car, motorcycle, or heavy equipment) — Comprehensive or TLO — at the fleet scheme your admin maintains. No spreadsheet needed.',
           'Asuransikan satu unit (mobil, motor, atau alat berat) — Comprehensive atau TLO — dengan skema fleet yang dikelola admin. Tanpa spreadsheet.',
         )}</p>
+        {/* Mini-stepper progress */}
+        <div className="mt-3 flex items-center gap-2 overflow-x-auto no-scrollbar">
+          {steps.map((s, i) => (
+            <React.Fragment key={s.id}>
+              <div className={`flex items-center gap-1.5 shrink-0 rounded-full px-2.5 py-1 text-2xs font-black uppercase tracking-widest transition-colors ${s.done ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200' : 'bg-slate-100 text-ds-ink3 dark:bg-slate-800/50'}`}>
+                {s.done ? <CheckCircle2 size={11} /> : <span className="inline-block w-1.5 h-1.5 rounded-full bg-current opacity-50" />}
+                {s.label}
+              </div>
+              {i < steps.length - 1 && <span className={`w-2 h-px shrink-0 ${steps[i].done && steps[i + 1].done ? 'bg-emerald-400' : 'bg-ds-border'}`} />}
+            </React.Fragment>
+          ))}
+          <span className="ml-auto shrink-0 text-2xs font-black text-ds-ink3 whitespace-nowrap">{doneCount}/{steps.length}</span>
+        </div>
       </div>
 
       {/* Skema rate aktif — transparan untuk klien, sumbernya dikelola admin */}
@@ -1069,22 +1096,39 @@ const B2BUnitOrder: React.FC<Props> = ({ clientId, client, onDone, lang }) => {
 
       {error && <p role="alert" className="text-xs font-bold text-rose-600">{error}</p>}
 
-      <div className="flex flex-wrap items-center justify-end gap-3 pb-4">
-        <button
-          type="button"
-          onClick={handleDownloadProposal}
-          className="inline-flex items-center gap-2 rounded-xl border-2 border-indigo-400/70 bg-white dark:bg-ds-card2 px-5 py-3 text-xs font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 active:scale-95 transition-all"
-        >
-          <Download size={14} /> {t('Download proposal', 'Unduh proposal')}
-        </button>
-        <button
-          onClick={handleSubmit}
-          disabled={submitting}
-          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-500 px-6 py-3 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-emerald-500/30 hover:brightness-110 active:scale-95 transition-all disabled:opacity-50"
-        >
-          {submitting ? <Loader2 size={14} className="animate-spin" /> : <ClipboardList size={14} />}
-          {t('Submit unit order', 'Kirim order unit')}
-        </button>
+      {/* v2.9.2 Phase 2 — Sticky action bar: total premi + CTA selalu
+          terlihat sehingga pengguna tak perlu gulir balik ke atas untuk
+          melihat angka atau turun ke bawah untuk submit. Tersembunyi di
+          layar sukses karena order sudah selesai di sana. */}
+      <div className="h-24" aria-hidden /> {/* spacer agar konten di atas tidak tertutup */}
+      <div className="fixed bottom-0 inset-x-0 z-30 border-t border-ds-border bg-white/95 dark:bg-ds-card2/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-black uppercase tracking-widest text-ds-ink3">{t('Total premium', 'Total premi')}</p>
+            <div className="flex items-baseline gap-2">
+              <p className="text-base sm:text-lg font-black text-emerald-700 dark:text-emerald-300 tabular-nums truncate">{fmtIDR(built.totalPremium)}</p>
+              {selectedPlan && (
+                <span className="hidden sm:inline text-2xs font-bold text-ds-ink3 truncate">· {selectedPlan.name}</span>
+              )}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleDownloadProposal}
+            title={t('Download proposal PDF', 'Unduh proposal PDF')}
+            className="shrink-0 inline-flex items-center gap-1.5 rounded-xl border-2 border-indigo-400/70 bg-white dark:bg-ds-card2 px-3 py-2 text-xs font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/30"
+          >
+            <Download size={14} /><span className="hidden sm:inline">{t('Proposal', 'Proposal')}</span>
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={submitting}
+            className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-500 px-4 sm:px-5 py-2.5 text-xs font-black uppercase tracking-widest text-white shadow-md shadow-emerald-500/30 hover:brightness-110 disabled:opacity-50"
+          >
+            {submitting ? <Loader2 size={14} className="animate-spin" /> : <ClipboardList size={14} />}
+            <span>{t('Submit', 'Kirim order')}</span>
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -931,6 +931,12 @@
    sebentar (0.97). Rule transisi transform untuk admin sudah ada di 5; B2B
    mendapat pasangan setara di bawah. Seluruh blok di-guard reduced-motion,
    jadi pengguna yang mematikan animasi tidak mendapat efek apa pun. */
+/* v2.9.2 Phase 2 — util scrollbar-less horizontal (dipakai stepper progress
+   di B2BUnitOrder). Masih bisa di-swipe/drag, hanya bar-nya yang
+   disembunyikan. Di luar media reduced-motion karena bukan efek gerak. */
+.sp-b2b-root .no-scrollbar::-webkit-scrollbar { display: none; }
+.sp-b2b-root .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
 @media (prefers-reduced-motion: no-preference) {
   .sp-admin-root :where(button:not(:disabled), a, [role="button"]:not([aria-disabled="true"])):active {
     transform: scale(0.97);

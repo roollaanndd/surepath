@@ -1240,7 +1240,9 @@ const PlanCard: React.FC<PlanCardProps> = ({
       className={[
         'relative text-left rounded-2xl border-2 overflow-hidden transition-all',
         'bg-white dark:bg-ds-card2',
-        active ? c.ringActive + ' shadow-md' : c.ring + ' hover:' + c.ring.replace('border-', 'border-').replace('/60', '').replace('/40', ''),
+        // hover: hilangkan modifier /60 atau /40 agar warna border lebih
+        // pekat saat hover (border-indigo-200/60 → hover:border-indigo-200).
+        active ? c.ringActive + ' shadow-md' : c.ring + ' hover:' + c.ring.replace(/\/\d+/g, ''),
       ].join(' ')}
     >
       {featured && (

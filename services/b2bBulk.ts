@@ -352,6 +352,8 @@ export interface SpB2BPlan {
   description: string | null;
   loading_rate: number;        // 0.10 = +10% di atas premi setelah diskon
   benefits: string[];
+  pros: string[];              // v2.9.2 — kelebihan
+  cons: string[];              // v2.9.2 — kekurangan / batasan
   is_active: boolean;
   sort_order: number;
   created_at: string;
@@ -377,6 +379,8 @@ export async function adminSaveB2BPlan(input: {
   description?: string | null;
   loading_rate: number;
   benefits: string[];
+  pros?: string[];
+  cons?: string[];
   is_active?: boolean;
   sort_order?: number;
 }): Promise<SpB2BPlan | null> {

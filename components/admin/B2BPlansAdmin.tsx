@@ -19,12 +19,16 @@ interface EditState {
   description: string;
   loading_rate: string;    // percent (string input)
   benefits: string;        // one per line
+  pros: string;            // v2.9.2 — one per line
+  cons: string;            // v2.9.2 — one per line
   is_active: boolean;
   sort_order: string;
 }
 
 const EMPTY: EditState = {
-  code: '', name: '', description: '', loading_rate: '0', benefits: '', is_active: true, sort_order: '0',
+  code: '', name: '', description: '', loading_rate: '0',
+  benefits: '', pros: '', cons: '',
+  is_active: true, sort_order: '0',
 };
 
 function toEditState(p: SpB2BPlan): EditState {
@@ -32,6 +36,8 @@ function toEditState(p: SpB2BPlan): EditState {
     id: p.id, code: p.code, name: p.name, description: p.description ?? '',
     loading_rate: (p.loading_rate * 100).toFixed(2).replace(/\.00$/, ''),
     benefits: p.benefits.join('\n'),
+    pros: (p.pros ?? []).join('\n'),
+    cons: (p.cons ?? []).join('\n'),
     is_active: p.is_active,
     sort_order: String(p.sort_order ?? 0),
   };
@@ -66,6 +72,8 @@ const B2BPlansAdmin: React.FC = () => {
       setError('Loading harus antara −50 dan 100%.'); return;
     }
     const benefits = edit.benefits.split(/\n+/).map(s => s.trim()).filter(Boolean).slice(0, 20);
+    const pros = edit.pros.split(/\n+/).map(s => s.trim()).filter(Boolean).slice(0, 12);
+    const cons = edit.cons.split(/\n+/).map(s => s.trim()).filter(Boolean).slice(0, 12);
     setSaving(true);
     const res = await adminSaveB2BPlan({
       id: edit.id,
@@ -74,6 +82,8 @@ const B2BPlansAdmin: React.FC = () => {
       description: edit.description.trim() || null,
       loading_rate: pct / 100,
       benefits,
+      pros,
+      cons,
       is_active: edit.is_active,
       sort_order: Number(edit.sort_order) || 0,
     });
@@ -241,9 +251,37 @@ const B2BPlansAdmin: React.FC = () => {
                 className="w-full bg-white dark:bg-ds-card border border-ds-border rounded-xl px-3 py-2 text-xs outline-none focus:border-emerald-500/50 font-mono"
                 value={edit.benefits}
                 onChange={e => setEdit({ ...edit, benefits: e.target.value })}
-                rows={4}
+                rows={3}
                 placeholder={'Bengkel resmi/ATPM\nKlaim prioritas\nMobil pengganti'}
               />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="text-2xs font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-400 mb-1 block flex items-center gap-1">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" /> Kelebihan (plus)
+                </label>
+                <textarea
+                  className="w-full bg-white dark:bg-ds-card border border-emerald-200 dark:border-emerald-900/40 rounded-xl px-3 py-2 text-xs outline-none focus:border-emerald-500/50 font-mono"
+                  value={edit.pros}
+                  onChange={e => setEdit({ ...edit, pros: e.target.value })}
+                  rows={4}
+                  placeholder={'Klaim prioritas\nMobil pengganti saat klaim\nBengkel resmi/ATPM'}
+                />
+                <p className="text-2xs text-ds-ink3 mt-1">Maks 12 baris. Ditampilkan di kartu paket klien.</p>
+              </div>
+              <div>
+                <label className="text-2xs font-black uppercase tracking-widest text-rose-700 dark:text-rose-400 mb-1 block flex items-center gap-1">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-rose-500" /> Kekurangan (minus)
+                </label>
+                <textarea
+                  className="w-full bg-white dark:bg-ds-card border border-rose-200 dark:border-rose-900/40 rounded-xl px-3 py-2 text-xs outline-none focus:border-rose-500/50 font-mono"
+                  value={edit.cons}
+                  onChange={e => setEdit({ ...edit, cons: e.target.value })}
+                  rows={4}
+                  placeholder={'Loading +10% di atas standar\nPremi lebih tinggi'}
+                />
+                <p className="text-2xs text-ds-ink3 mt-1">Jujur soal batasan — bantu klien memilih yang pas.</p>
+              </div>
             </div>
             <label className="flex items-center gap-2 text-xs font-bold text-ds-ink2">
               <input type="checkbox" checked={edit.is_active} onChange={e => setEdit({ ...edit, is_active: e.target.checked })} className="w-4 h-4 accent-emerald-600" />

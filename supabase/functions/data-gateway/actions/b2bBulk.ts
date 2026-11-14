@@ -389,7 +389,22 @@ export async function handleB2BBulkAction(action: string, ctx: GatewayContext): 
         masterPolicySignedUrl = signed?.signedUrl ?? null;
       }
 
-      return ok({ batch: { ...batch, master_policy_signed_url: masterPolicySignedUrl }, items: items ?? [], payment: payment ?? null });
+      // v2.9.4 Phase 3 — Resolve plan_id → nama paket sekali, map kembali di
+      // klien. Admin perlu melihat NAMA paket ("Premium"), bukan UUID atau
+      // kata generik "Paket". Dibaca hanya kalau ada item yang memakai paket.
+      const planIds = Array.from(new Set((items ?? []).map((it: { plan_id: string | null }) => it.plan_id).filter((x: string | null): x is string => !!x)));
+      const plansMap: Record<string, { name: string; code: string; loading_rate: number }> = {};
+      if (planIds.length > 0) {
+        const { data: plans } = await db.from('sp_b2b_plans').select('id, name, code, loading_rate').in('id', planIds);
+        for (const p of plans ?? []) plansMap[p.id] = { name: p.name, code: p.code, loading_rate: Number(p.loading_rate) };
+      }
+
+      return ok({
+        batch: { ...batch, master_policy_signed_url: masterPolicySignedUrl },
+        items: items ?? [],
+        payment: payment ?? null,
+        plans: plansMap,
+      });
     }
 
     // ── Client: decide an insurer quote ─────────────────────────────────────

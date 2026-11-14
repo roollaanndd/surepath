@@ -404,7 +404,10 @@ const ADDON_LABEL_ADMIN: Record<string, string> = {
   flood: 'Banjir', earthquake: 'Gempa', srcc: 'SRCC', terrorism: 'Terorisme',
   authorizedWorkshop: 'Bengkel Resmi', paDriver: 'PA Pengemudi',
 };
-function renderAddonsAndPlan(it: SpB2BBatchItem): React.ReactElement {
+function renderAddonsAndPlan(
+  it: SpB2BBatchItem,
+  plansMap: Record<string, { name: string; code: string; loading_rate: number }> = {},
+): React.ReactElement {
   const addons = (it.addons ?? {}) as Record<string, unknown>;
   const chips: Array<{ k: string; label: string }> = [];
   for (const [k, label] of Object.entries(ADDON_LABEL_ADMIN)) {
@@ -415,7 +418,9 @@ function renderAddonsAndPlan(it: SpB2BBatchItem): React.ReactElement {
   const seats = Number(addons.paPassengerSeats) || 0;
   if (seats > 0) chips.push({ k: 'paPassenger', label: `PA ${seats} kursi` });
   const hasAddon = chips.length > 0 || (it.addon_premium ?? 0) > 0;
-  const plan = it.plan_id ? 'Paket' : null; // nama dicoba di-resolve via join nanti bila perlu
+  // v2.9.4 Phase 3 — nama paket di-resolve dari plansMap yang dikirim gateway.
+  const planInfo = it.plan_id ? plansMap[it.plan_id] : null;
+  const plan = planInfo ? planInfo.name : (it.plan_id ? 'Paket' : null);
   if (!hasAddon && !plan && (it.plan_loading ?? 0) === 0) return <span className="text-ds-ink3">—</span>;
   return (
     <div className="flex flex-col gap-0.5" title={hasAddon ? `+${fmtIDRBulk(it.addon_premium ?? 0)} perluasan` : undefined}>
@@ -431,8 +436,8 @@ function renderAddonsAndPlan(it: SpB2BBatchItem): React.ReactElement {
         <span className="text-ds-ink3 tabular-nums text-right font-mono">+{fmtIDRBulk(it.addon_premium ?? 0)}</span>
       )}
       {plan && (
-        <span className={`rounded-full px-1.5 py-0.5 font-black ${(it.plan_loading ?? 0) > 0 ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'}`}>
-          Paket {(it.plan_loading ?? 0) !== 0 ? (`(${(it.plan_loading ?? 0) > 0 ? '+' : ''}${fmtIDRBulk(it.plan_loading ?? 0)})`) : ''}
+        <span className={`rounded-full px-1.5 py-0.5 font-black ${(it.plan_loading ?? 0) > 0 ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' : (it.plan_loading ?? 0) < 0 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300'}`}>
+          {plan}{(it.plan_loading ?? 0) !== 0 ? ` (${(it.plan_loading ?? 0) > 0 ? '+' : ''}${fmtIDRBulk(it.plan_loading ?? 0)})` : ''}
         </span>
       )}
     </div>
@@ -473,6 +478,7 @@ const BulkBatchCard: React.FC<{ batch: SpB2BBatch; insurers: InsurerOption[]; on
   const [showDetail, setShowDetail] = useState(false);
   const [detailItems, setDetailItems] = useState<SpB2BBatchItem[] | null>(null);
   const [detailPayment, setDetailPayment] = useState<{ invoice_url?: string; status?: string } | null>(null);
+  const [detailPlans, setDetailPlans] = useState<Record<string, { name: string; code: string; loading_rate: number }>>({});
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailErr, setDetailErr] = useState('');
 
@@ -485,6 +491,7 @@ const BulkBatchCard: React.FC<{ batch: SpB2BBatch; insurers: InsurerOption[]; on
     if (!res) { setDetailErr('Gagal memuat detail batch. Coba lagi.'); return; }
     setDetailItems(res.items ?? []);
     setDetailPayment(res.payment ?? null);
+    setDetailPlans(res.plans ?? {});
   };
 
   const toggleDetail = () => {
@@ -634,7 +641,7 @@ const BulkBatchCard: React.FC<{ batch: SpB2BBatch; insurers: InsurerOption[]; on
                         )}
                       </td>
                       <td className="py-1.5 pr-2">
-                        {renderAddonsAndPlan(it)}
+                        {renderAddonsAndPlan(it, detailPlans)}
                       </td>
                       <td className="py-1.5 pr-2">
                         {renderPhotos(it)}
@@ -903,6 +910,9 @@ const B2BAdminView: React.FC = () => {
   const [b2bFilter, setB2bFilter] = useState('ALL');
   const [bulkFilter, setBulkFilter] = useState('ALL');
   const [lifeFilter, setLifeFilter] = useState('ALL');
+  // v2.9.4 Phase 3 — search query per-tab. Mencari di nomor batch, nama
+  // perusahaan, nama insurer, atau nomor polis. Non-sensitif ke case.
+  const [searchQ, setSearchQ] = useState('');
   const [toast, setToast] = useState('');
 
   const load = useCallback(async () => {
@@ -934,9 +944,22 @@ const B2BAdminView: React.FC = () => {
 
   const showToast = (msg: string) => setToast(msg);
 
-  const visibleB2b = b2bFilter === 'ALL' ? b2bSubs : b2bSubs.filter(s => s.status === b2bFilter);
-  const visibleBulk = bulkFilter === 'ALL' ? bulkBatches : bulkBatches.filter(b => b.status === bulkFilter);
-  const visibleLife = lifeFilter === 'ALL' ? lifeApps : lifeApps.filter(a => a.status === lifeFilter);
+  const q = searchQ.trim().toLowerCase();
+  const matchesB2B = (s: SpB2BSubmission) =>
+    !q || (s.company_name?.toLowerCase().includes(q))
+       || (s.pic_name?.toLowerCase().includes(q) ?? false)
+       || (s.product_type?.toLowerCase().includes(q));
+  const matchesBulk = (b: SpB2BBatch) =>
+    !q || b.batch_number?.toLowerCase().includes(q)
+       || b.company_name?.toLowerCase().includes(q)
+       || (b.insurer_name?.toLowerCase().includes(q) ?? false)
+       || (b.master_policy_number?.toLowerCase().includes(q) ?? false);
+  const matchesLife = (a: SpLifeApplication) =>
+    !q || a.client_name?.toLowerCase().includes(q)
+       || (a.product_code?.toLowerCase().includes(q));
+  const visibleB2b = (b2bFilter === 'ALL' ? b2bSubs : b2bSubs.filter(s => s.status === b2bFilter)).filter(matchesB2B);
+  const visibleBulk = (bulkFilter === 'ALL' ? bulkBatches : bulkBatches.filter(b => b.status === bulkFilter)).filter(matchesBulk);
+  const visibleLife = (lifeFilter === 'ALL' ? lifeApps : lifeApps.filter(a => a.status === lifeFilter)).filter(matchesLife);
 
   return (
     <div className="min-h-full bg-slate-50 dark:bg-ds-card">
@@ -953,8 +976,8 @@ const B2BAdminView: React.FC = () => {
         </button>
       </div>
 
-      {/* Filter Pills */}
-      <div className="flex gap-2 px-5 pb-3 overflow-x-auto">
+      {/* Filter Pills + search */}
+      <div className="flex gap-2 px-5 pb-3 overflow-x-auto items-center">
         {tab === 'b2b' && ['ALL', ...B2B_STATUSES].map(f => (
           <FilterPill key={f} label={f} active={b2bFilter === f} onClick={() => setB2bFilter(f)} />
         ))}
@@ -964,6 +987,20 @@ const B2BAdminView: React.FC = () => {
         {tab === 'life' && ['ALL', ...LIFE_STATUSES].map(f => (
           <FilterPill key={f} label={f} active={lifeFilter === f} onClick={() => setLifeFilter(f)} />
         ))}
+        {tab !== 'users' && (
+          <div className="ml-auto relative flex-shrink-0">
+            <input
+              value={searchQ}
+              onChange={e => setSearchQ(e.target.value)}
+              placeholder={tab === 'bulk' ? 'Cari batch / perusahaan / polis…' : tab === 'b2b' ? 'Cari perusahaan / PIC…' : 'Cari nasabah / produk…'}
+              className="w-64 pl-8 pr-2 py-1.5 text-xs rounded-lg border border-ds-border bg-white dark:bg-ds-card2 outline-none focus:border-indigo-400"
+            />
+            <svg aria-hidden className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ds-ink3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" /></svg>
+            {searchQ && (
+              <button onClick={() => setSearchQ('')} aria-label="Hapus pencarian" className="absolute right-1 top-1/2 -translate-y-1/2 p-1 text-ds-ink3 hover:text-ds-ink2 text-xs">✕</button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Content */}

@@ -1,5 +1,65 @@
 # SurePath - Changelog
 
+## v2.9.31 - 2026-11-21
+
+### Portal B2B — Klaim (roadmap #1)
+
+Klien korporat sekarang dapat mengajukan dan memantau klaim armada
+langsung dari portal — sebelumnya satu-satunya jalur adalah email/telepon
+ke admin, yang menghilangkan SLA visibility dan membuat input tidak
+terstruktur.
+
+**Komponen UI baru:**
+- `components/b2b/B2BClaims.tsx` — daftar klaim milik klien dengan status
+  chip (Diajukan / Dalam Review / Disetujui / Ditolak / Dibayar). Paginasi
+  50/load. Setiap kartu menampilkan nomor klaim (mono), nama unit,
+  estimasi kerugian, deskripsi (2 baris truncate), tanggal kejadian +
+  lokasi + tanggal pengajuan.
+- `components/b2b/B2BNewClaim.tsx` — form pengajuan: unit (plat/nomor
+  rangka, wajib), tanggal kejadian (wajib, max hari ini), estimasi
+  kerugian (IDR, opsional), lokasi, deskripsi singkat (wajib min 10
+  karakter), kronologi, foto (opsional, maks 10, 8 MB/foto dengan
+  `uploadGuard`).
+
+**Gateway actions baru** (`supabase/functions/data-gateway/actions/claims.ts`):
+- `b2b_my_claims` — role-gated `B2B_CLIENT`, filter `client_id` otomatis
+  dari caller JWT, paginasi `[1..200]` default 100, terbaru dulu.
+- `b2b_submit_claim` — role-gated `B2B_CLIENT`. Payload disederhanakan:
+  unit_label, incident_date, description, location, chronology,
+  amount_estimated, photo_urls. Server menulis `client_id = caller`,
+  `user_id = caller`, `client_name = caller.company_name`, dan
+  menggenerate `claim_number = B2B-YYYY-XXXXXXXX`. `claim_type` di-set
+  `'B2B_VEHICLE'`, `product_type` = `'FLEET_MV'`. Admin dinotifikasi
+  via `sp_notifications` (`B2B_CLAIM_SUBMITTED`).
+
+**Service wrapper** (`services/claims.ts`):
+- `getMyB2BClaims({ limit, offset })` → `SpClaim[]`
+- `submitB2BClaim(payload: B2BClaimPayload)` → `{ data, error?, code? }`
+
+**Sidebar B2B** sekarang:
+Dashboard · Create Order · Activity (riwayat batches/requests/quotes) ·
+Fleet Calendar · Payments · Documents · Analytics · **Klaim (baru)** ·
+Activity Log · Workshop · Profile.
+
+Admin Master tetap terbatas Monitor Mode untuk klaim (informasi CMS
+diarahkan ke tab Klaim di admin). PR terpisah akan menambah tab B2B
+Claims review di `B2BAdminView`.
+
+**Trade-off jujur:**
+- Tidak ada AI fraud detection seperti customer `ClaimManager` — admin
+  mereview manual. Pipeline forensik customer dibangun untuk konteks
+  retail 1-unit; adaptasi ke fleet butuh training data khusus.
+- Foto upload ke bucket `claim-photos` existing (public URL). Bila
+  bucket ini perlu dikunci (sensitif saat klien meng-upload pelat
+  kendaraan terdeteksi di gambar), migrasi ke signed URL adalah PR
+  terpisah.
+- `policy_number` di-overload sebagai `unit_label` (plat/chasis) karena
+  B2B tidak selalu punya `policy_id` individual (master policy). Admin
+  CMS yang sudah menampilkan `policy_number` prominently akan otomatis
+  menampilkan unit — tidak perlu perubahan admin UI.
+
+**Butuh deploy edge function** (auto-deploy sudah berjalan sejak v2.9.29).
+
 ## v2.9.30 - 2026-11-21
 
 ### Stop leaking `error.message` to the browser — 201 call sites

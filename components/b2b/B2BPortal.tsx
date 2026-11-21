@@ -11,7 +11,7 @@
 
 import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import {
-  LayoutDashboard, Plus, User, Sparkles, ShieldCheck, CalendarDays, History, Wrench, Banknote, ClipboardList, BarChart3, FolderOpen,
+  LayoutDashboard, Plus, User, Sparkles, ShieldCheck, CalendarDays, History, Wrench, Banknote, ClipboardList, BarChart3, FolderOpen, FileWarning,
 } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { Language, UserRole } from '../../types';
@@ -44,6 +44,8 @@ const B2BAuditLog      = lazy(() => import('./B2BAuditLog'));
 const B2BPayments      = lazy(() => import('./B2BPayments'));
 const B2BAnalytics     = lazy(() => import('./B2BAnalytics'));
 const B2BDocuments     = lazy(() => import('./B2BDocuments'));
+const B2BClaims        = lazy(() => import('./B2BClaims'));
+const B2BNewClaim      = lazy(() => import('./B2BNewClaim'));
 const WorkshopDirectory = lazy(() => import('../shared/WorkshopDirectory'));
 
 interface Props {
@@ -62,7 +64,7 @@ type Section =
   | 'submissions' | 'batches'
   | 'quotes'
   | 'workshops'
-  | 'payments' | 'audit' | 'analytics' | 'documents'
+  | 'payments' | 'audit' | 'analytics' | 'documents' | 'claims' | 'new-claim'
   | 'profile';
 
 const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
@@ -167,6 +169,7 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
     { id: 'payments', label: t('Payments', 'Pembayaran'), icon: Banknote, groupLabel: t('Monitor', 'Pantau') },
     { id: 'documents', label: t('Documents', 'Dokumen'), icon: FolderOpen, groupLabel: t('Monitor', 'Pantau') },
     { id: 'analytics', label: t('Analytics', 'Analitik'), icon: BarChart3, groupLabel: t('Monitor', 'Pantau') },
+    { id: 'claims', label: t('Claims', 'Klaim'), icon: FileWarning, groupLabel: t('Monitor', 'Pantau') },
     { id: 'audit', label: t('Activity Log', 'Riwayat Aktivitas'), icon: ClipboardList, groupLabel: t('Monitor', 'Pantau') },
     { id: 'workshops', label: t('Workshop directory', 'Direktori Bengkel'), icon: Wrench, groupLabel: t('Monitor', 'Pantau') },
     { id: 'profile', label: t('Profile', 'Profil'), icon: User, groupLabel: t('Account', 'Akun') },
@@ -189,6 +192,8 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
       case 'payments':    return [root, crMonitor, t('Payments', 'Pembayaran')];
       case 'documents':   return [root, crMonitor, t('Documents', 'Dokumen')];
       case 'analytics':   return [root, crMonitor, t('Analytics', 'Analitik')];
+      case 'claims':      return [root, crMonitor, t('Claims', 'Klaim')];
+      case 'new-claim':   return [root, crMonitor, t('Claims', 'Klaim'), t('New', 'Baru')];
       case 'audit':       return [root, crMonitor, t('Activity Log', 'Riwayat Aktivitas')];
       case 'profile':     return [root, t('Profile', 'Profil')];
     }
@@ -371,6 +376,40 @@ const B2BPortal: React.FC<Props> = ({ client, onLogout, lang }) => {
         return (
           <Suspense fallback={<B2BPageSkeleton variant="list" />}>
             <B2BDocuments lang={lang} />
+          </Suspense>
+        );
+      case 'claims':
+        if (isMaster) {
+          return (
+            <div className="max-w-md mx-auto mt-8">
+              <B2BGlass className="p-6 text-center space-y-3">
+                <div className="mx-auto w-11 h-11 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(79,70,229,0.1)' }}>
+                  <ShieldCheck size={18} className="text-indigo-600" />
+                </div>
+                <p className="font-black text-sm text-slate-900">{t('Monitor Mode', 'Mode Pantau')}</p>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  {t('Client claims are reviewed under CMS → Klaim.',
+                     'Klaim klien direview di CMS → Klaim.')}
+                </p>
+              </B2BGlass>
+            </div>
+          );
+        }
+        return (
+          <Suspense fallback={<B2BPageSkeleton variant="list" />}>
+            <B2BClaims lang={lang} onNewClaim={() => setActiveId('new-claim')} />
+          </Suspense>
+        );
+      case 'new-claim':
+        if (isMaster) return null; // master jatuh ke daftar klaim lewat 'claims'
+        return (
+          <Suspense fallback={<B2BPageSkeleton variant="form" />}>
+            <B2BNewClaim
+              clientId={client?.id ?? ''}
+              lang={lang}
+              onDone={() => setActiveId('claims')}
+              onCancel={() => setActiveId('claims')}
+            />
           </Suspense>
         );
       case 'audit':

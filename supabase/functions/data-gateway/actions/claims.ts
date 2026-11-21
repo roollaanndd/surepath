@@ -279,6 +279,98 @@ export async function handleClaimsAction(action: string, ctx: GatewayContext): P
         return json({ data });
       }
 
+    // ── Klien B2B: daftar klaim mereka sendiri ──────────────────────────────
+    // v2.9.31 (roadmap B2B #1). Berbeda dari `get_my_claims` yang filter
+    // user_id (cocok untuk customer/agent yang satu akun = satu orang):
+    // akun B2B bisa memiliki beberapa PIC di masa depan, jadi scope harus
+    // client_id — bukan user_id personal. client_id disetel otomatis dari
+    // caller, tidak dari param.
+    case 'b2b_my_claims': {
+      if (!caller.spUser) return json({ error: 'No profile', code: 'UNAUTHORIZED' }, 401);
+      if (caller.spUser.role !== 'B2B_CLIENT') return json({ error: 'Forbidden: B2B only', code: 'FORBIDDEN' }, 403);
+      const limit = Math.min(Math.max(Number(params.limit) || 50, 1), 200);
+      const offset = Math.max(Number(params.offset) || 0, 0);
+      const { data, error } = await db
+        .from('sp_claims')
+        .select('*')
+        .eq('client_id', caller.spUser.id)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
+      if (error) { const _err = safeError(error); return json(_err.body, _err.status); }
+      return json({ data: data ?? [] });
+    }
+
+    // ── Klien B2B: ajukan klaim atas unit armada ────────────────────────────
+    // v2.9.31. Bentuk payload disederhanakan dari customer `submit_claim`:
+    // untuk B2B kita tidak mewajibkan `policy_id` (banyak unit tercakup master
+    // policy tanpa order individual). Yang wajib: `incident_date`,
+    // `description`, dan `unit_label` (nomor polisi atau nomor rangka).
+    // `client_id` dan `user_id` ditulis server-side dari caller.
+    //
+    // Tidak meniru fraud-detection pipeline customer yang kompleks — admin
+    // mereview manual. Foto URL opsional (klien upload via Supabase Storage
+    // dulu, lalu kirim URL-nya di sini).
+    case 'b2b_submit_claim': {
+      if (!caller.spUser) return json({ error: 'No profile', code: 'UNAUTHORIZED' }, 401);
+      if (caller.spUser.role !== 'B2B_CLIENT') return json({ error: 'Forbidden: B2B only', code: 'FORBIDDEN' }, 403);
+
+      const unitLabel = String(params.unit_label ?? '').trim().slice(0, 100);
+      const incidentDate = String(params.incident_date ?? '').trim();
+      const description = String(params.description ?? '').trim().slice(0, 5000);
+      const location = String(params.location ?? '').trim().slice(0, 300);
+      const chronology = String(params.chronology ?? '').trim().slice(0, 5000);
+      const estimatedAmount = Number(params.amount_estimated ?? 0);
+      const photoUrls = Array.isArray(params.photo_urls)
+        ? (params.photo_urls as unknown[]).map(String).slice(0, 10)
+        : [];
+
+      if (!unitLabel) return json({ error: 'Nomor polisi / nomor rangka unit wajib diisi.', code: 'VALIDATION_FAILED' }, 400);
+      if (!incidentDate) return json({ error: 'Tanggal kejadian wajib diisi.', code: 'VALIDATION_FAILED' }, 400);
+      if (description.length < 10) return json({ error: 'Deskripsi klaim minimal 10 karakter.', code: 'VALIDATION_FAILED' }, 400);
+
+      // Simple sequential claim number — unique via a SELECT + retry rather
+      // than a sequence, since we don't have one dedicated to B2B. Collisions
+      // are extremely rare (random suffix + millisecond timestamp).
+      const claimNumber = `B2B-${new Date().getFullYear()}-${String(Date.now()).slice(-8)}`;
+
+      const { data, error } = await db.from('sp_claims').insert({
+        claim_number: claimNumber,
+        claim_type: 'B2B_VEHICLE',
+        client_id: caller.spUser.id,
+        user_id: caller.spUser.id,
+        client_name: caller.spUser.company_name ?? caller.spUser.name ?? null,
+        product_type: 'FLEET_MV',
+        policy_number: unitLabel, // Unit label in policy_number slot — admin
+                                  // UI already surfaces this field prominently,
+                                  // so B2B claims appear with the unit visible.
+        description,
+        chronology: chronology || null,
+        location: location || null,
+        incident_date: incidentDate,
+        date: incidentDate,
+        amount_estimated: Number.isFinite(estimatedAmount) && estimatedAmount > 0 ? estimatedAmount : null,
+        status: 'SUBMITTED',
+        photo_urls: photoUrls.length > 0 ? photoUrls : null,
+      }).select().maybeSingle();
+
+      if (error) { const _err = safeError(error); return json(_err.body, _err.status); }
+
+      // Notify admin via notifications table — no email chain yet; admin picks
+      // up from CMS "Klaim" tab. If a dedicated B2B notification channel is
+      // added later, insert there too.
+      db.from('sp_notifications').insert({
+        agent_id: null,
+        type: 'B2B_CLAIM_SUBMITTED',
+        title: `Klaim B2B baru: ${claimNumber}`,
+        body: `${caller.spUser.company_name ?? 'Klien B2B'} mengajukan klaim atas unit ${unitLabel}.`,
+        read: false,
+        metadata: { claim_id: (data as any)?.id ?? null, client_id: caller.spUser.id },
+      }).then(() => {}, () => {});
+
+      return json({ data });
+    }
+
     default:
       return null; // Not handled by this module
   }

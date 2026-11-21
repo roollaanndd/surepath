@@ -99,3 +99,46 @@ export async function getCustomerClaims(_userId: string, strict = false): Promis
   }
   return (data ?? []) as SpClaim[];
 }
+
+// ─── B2B claims (v2.9.31) ─────────────────────────────────────────────────────
+
+/** List claims owned by the current B2B client (`client_id = caller`). */
+export async function getMyB2BClaims(opts: { limit?: number; offset?: number } = {}): Promise<SpClaim[]> {
+  const { data, error } = await callGateway('b2b_my_claims', {
+    limit: opts.limit,
+    offset: opts.offset,
+  });
+  if (error) { console.error('getMyB2BClaims:', error); return []; }
+  return (data ?? []) as SpClaim[];
+}
+
+export interface B2BClaimPayload {
+  /** Nomor polisi atau nomor rangka unit — wajib. */
+  unit_label: string;
+  /** Tanggal kejadian, format YYYY-MM-DD — wajib. */
+  incident_date: string;
+  /** Deskripsi singkat (minimal 10 karakter) — wajib. */
+  description: string;
+  /** Lokasi kejadian, opsional. */
+  location?: string;
+  /** Kronologi lengkap, opsional. */
+  chronology?: string;
+  /** Estimasi nilai kerugian dalam IDR, opsional. */
+  amount_estimated?: number;
+  /** URL foto yang sudah di-upload ke Supabase Storage, maks 10. */
+  photo_urls?: string[];
+}
+
+/**
+ * Submit a B2B claim. Server fills `client_id`, `user_id`, and generates
+ * `claim_number`. Returns the created row, or `null` on failure (details in
+ * `error`).
+ */
+export async function submitB2BClaim(payload: B2BClaimPayload): Promise<{ data: SpClaim | null; error?: string; code?: string }> {
+  const response = await callGateway('b2b_submit_claim', payload as unknown as Record<string, unknown>);
+  if (response.error) {
+    console.error('submitB2BClaim:', response.error);
+    return { data: null, error: response.error, code: typeof response.code === 'string' ? response.code : undefined };
+  }
+  return { data: (response.data as SpClaim | null) ?? null };
+}
